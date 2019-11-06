@@ -800,7 +800,7 @@ class local_mail_renderer extends plugin_renderer_base {
             $content .= html_writer::tag('span', $text, array('class' => 'groupselector groupname'));
         } else {
             if ($COURSE->groupmode == VISIBLEGROUPS or has_capability('moodle/site:accessallgroups', $context)) {
-                unset($options);
+                $options = array();
                 foreach ($groups as $key => $group) {
                     $options[$key] = $group->name;
                 }
@@ -818,7 +818,7 @@ class local_mail_renderer extends plugin_renderer_base {
                 $content .= html_writer::tag('span', groups_get_group_name($owngroups[0][0]), array('class' => 'groupname'));
                 $content .= html_writer::end_tag('span');
             } else if (count($owngroups[0]) > 1) {// SEPARATEGROUPS and user in several groups.
-                unset($options);
+                $options = array();
                 foreach ($owngroups[0] as $key => $group) {
                     $options[$group] = groups_get_group_name($group);
                 }
