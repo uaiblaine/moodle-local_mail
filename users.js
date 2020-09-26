@@ -8,7 +8,7 @@ YUI(M.yui.loader).use('node', function(Y) {
                 '<input type="hidden" name="rs" value="" />' +
                 '<input type="hidden" name="sesskey" value="' + M.cfg.sesskey +'" />' +
                 '<label for="local_mail_role">' + M.util.get_string('bulkmessage', 'local_mail') + '</label>' +
-                '<select name="local_mail_role">' +
+                '<select class="select custom-select" name="local_mail_role">' +
                 '<option value="">' + M.util.get_string('choosedots', 'moodle') + '</option>' +
                 '<option value="0">' + M.util.get_string('to', 'local_mail') + '</option>' +
                 '<option value="1">' + M.util.get_string('cc', 'local_mail') + '</option>' +

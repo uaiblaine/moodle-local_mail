@@ -37,8 +37,7 @@ function local_mail_extend_navigation($root) {
 
     // User profile.
 
-    if (empty($CFG->messaging) and
-        $PAGE->url->compare(new moodle_url('/user/view.php'), URL_MATCH_BASE) and
+    if ($PAGE->url->compare(new moodle_url('/user/view.php'), URL_MATCH_BASE) and
         has_capability('local/mail:usemail', $context)) {
         $userid = optional_param('id', false, PARAM_INT);
         if (local_mail_valid_recipient($userid)) {
@@ -51,8 +50,7 @@ function local_mail_extend_navigation($root) {
 
     // Users list.
 
-    if (empty($CFG->messaging) and
-        $PAGE->url->compare(new moodle_url('/user/index.php'), URL_MATCH_BASE) and
+    if ($PAGE->url->compare(new moodle_url('/user/index.php'), URL_MATCH_BASE) and
         has_capability('local/mail:usemail', $context)) {
         $userid = optional_param('id', false, PARAM_INT);
         $vars = array('course' => $COURSE->id);
