@@ -172,7 +172,7 @@ class mail_compose_form extends moodleform {
 
         foreach ($users as $user) {
             $content .= html_writer::start_tag('div', array('class' => 'mail_recipient'));
-            $options = array('courseid' => $message->course(),
+            $options = array('courseid' => $message->course()->id,
                              'link' => false, 'alttext' => false);
             $content .= $OUTPUT->user_picture($user, $options);
             $content .= html_writer::tag('span', s(fullname($user)));
