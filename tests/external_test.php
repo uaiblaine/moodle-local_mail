@@ -29,7 +29,7 @@ class local_mail_external_test extends advanced_testcase {
     private $user2;
     private $user3;
 
-    public function setUp() {
+    public function setUp(): void {
         $this->resetAfterTest(true);
         $generator = $this->getDataGenerator();
         $this->course3 = $generator->create_course(['shortname' => 'C3', 'fullname' => 'Course 3']);

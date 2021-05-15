@@ -85,7 +85,7 @@ class local_mail_message_test extends local_mail_testcase {
         }
     }
 
-    public function setUp() {
+    public function setUp(): void {
         global $DB;
 
         parent::setUp();
@@ -117,7 +117,9 @@ class local_mail_message_test extends local_mail_testcase {
         $this->course2 = (object) array_combine($course[0], $course[2]);
 
         // When adding users, we need them to have all the fields that Moodle gets for the user.
-        $fields = user_picture::fields('', array('username', 'maildisplay'));
+        $userfields = \core_user\fields::for_userpic();
+        $userfields->including(...array('username', 'maildisplay'));
+        $fields = $userfields->get_sql('', false, '', '', false)->selects;
         $this->user1 = $DB->get_record('user', array('id' => $user[1][0]), $fields, MUST_EXIST);
         $this->user2 = $DB->get_record('user', array('id' => $user[2][0]), $fields, MUST_EXIST);
         $this->user3 = $DB->get_record('user', array('id' => $user[3][0]), $fields, MUST_EXIST);
@@ -164,10 +166,10 @@ class local_mail_message_test extends local_mail_testcase {
         $this->assertCount(1, $message->recipients('to'));
         $this->assertCount(1, $message->recipients('cc'));
         $this->assertCount(0, $message->recipients('bcc'));
-        $this->assertContains($this->user2, $message->recipients());
-        $this->assertContains($this->user3, $message->recipients());
-        $this->assertContains($this->user2, $message->recipients('to'));
-        $this->assertContains($this->user3, $message->recipients('cc'));
+        $this->assertEqualsCanonicalizing($this->user2, $message->recipients()[0]);
+        $this->assertEqualsCanonicalizing($this->user3, $message->recipients()[1]);
+        $this->assertEqualsCanonicalizing($this->user2, $message->recipients('to')[0]);
+        $this->assertEqualsCanonicalizing($this->user3, $message->recipients('cc')[0]);
         $this->assertMessage($message);
     }
 
@@ -361,8 +363,8 @@ class local_mail_message_test extends local_mail_testcase {
         $this->assertCount(1, $result->recipients('to'));
         $this->assertCount(1, $result->recipients('cc'));
         $this->assertCount(0, $result->recipients('bcc'));
-        $this->assertContains($this->user2, $result->recipients('to'));
-        $this->assertContains($this->user3, $result->recipients('cc'));
+        $this->assertEqualsCanonicalizing($this->user2, $result->recipients('to')[0]);
+        $this->assertEqualsCanonicalizing($this->user3, $result->recipients('cc')[0]);
         $this->assertFalse($result->unread(202));
         $this->assertTrue($result->starred(202));
         $this->assertEquals(LOCAL_MAIL_MESSAGE_VISIBLE, $result->deleted(202));
@@ -370,8 +372,8 @@ class local_mail_message_test extends local_mail_testcase {
         $this->assertFalse($result->starred(203));
         $this->assertEquals(LOCAL_MAIL_MESSAGE_VISIBLE, $result->deleted(203));
         $this->assertCount(2, $result->labels());
-        $this->assertContains($label1, $result->labels());
-        $this->assertContains($label2, $result->labels());
+        $this->assertEqualsCanonicalizing($label1, $result->labels()[0]);
+        $this->assertEqualsCanonicalizing($label2, $result->labels()[1]);
 
         $this->assertFalse(local_mail_message::fetch(505));
     }
@@ -516,8 +518,8 @@ class local_mail_message_test extends local_mail_testcase {
         $this->assertCount(0, $message->recipients('to'));
         $this->assertCount(1, $message->recipients('cc'));
         $this->assertCount(0, $message->recipients('bcc'));
-        $this->assertContains($this->user3, $message->recipients());
-        $this->assertContains($this->user3, $message->recipients('cc'));
+        $this->assertEqualsCanonicalizing($this->user3, $message->recipients()[0]);
+        $this->assertEqualsCanonicalizing($this->user3, $message->recipients('cc')[0]);
         $this->assertMessage($message);
     }
 
@@ -544,7 +546,7 @@ class local_mail_message_test extends local_mail_testcase {
         $this->assertEquals(array($message), $result->references());
         $this->assertEquals($this->user2, $result->sender());
         $this->assertCount(1, $result->recipients());
-        $this->assertContains($this->user1, $result->recipients('to'));
+        $this->assertEqualsCanonicalizing($this->user1, $result->recipients('to')[0]);
         $this->assertCount(1, $result->labels());
         $this->assertContains($label, $result->labels());
         $this->assertMessage($result);
@@ -562,8 +564,8 @@ class local_mail_message_test extends local_mail_testcase {
         $result = $message->reply(202, true);
 
         $this->assertCount(2, $result->recipients());
-        $this->assertContains($this->user1, $result->recipients('to'));
-        $this->assertContains($this->user3, $result->recipients('cc'));
+        $this->assertEqualsCanonicalizing($this->user1, $result->recipients('to')[0]);
+        $this->assertEqualsCanonicalizing($this->user3, $result->recipients('cc')[0]);
         $this->assertMessage($result);
     }
 
@@ -702,7 +704,7 @@ class local_mail_message_test extends local_mail_testcase {
 
         $message->send();
 
-        $this->assertContains($label, $message->labels());
+        $this->assertEqualsCanonicalizing($label, $message->labels()[0]);
         $this->assertMessage($message);
         $this->assertIndex(201, 'label', $label->id(), $message->time(), $message->id(), true);
     }

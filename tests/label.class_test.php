@@ -103,8 +103,8 @@ class local_mail_label_test extends local_mail_testcase {
         $result = local_mail_label::fetch_user(201);
 
         $this->assertCount(2, $result);
-        $this->assertContains($label1, $result);
-        $this->assertContains($label2, $result);
+        $this->assertEqualsCanonicalizing($label1, $result[0]);
+        $this->assertEqualsCanonicalizing($label2, $result[1]);
     }
 
     public function test_save() {

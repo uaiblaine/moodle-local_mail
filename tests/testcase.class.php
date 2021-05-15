@@ -27,11 +27,6 @@ global $CFG;
 
 abstract class local_mail_testcase extends advanced_testcase {
 
-    static public function assertContains($needle, $haystack, $message = '',
-                                   $ignoreCase = false, $checkForObjectIdentity = false, $checkForNonObjectIdentity = false) {
-        parent::assertContains($needle, $haystack, $message, $ignoreCase, $checkForObjectIdentity, $checkForNonObjectIdentity);
-    }
-
     static public function assertIndex($userid, $type, $item, $time, $messageid, $unread) {
         self::assertRecords('index', array(
             'userid' => $userid,
@@ -41,11 +36,6 @@ abstract class local_mail_testcase extends advanced_testcase {
             'messageid' => $messageid,
             'unread' => $unread,
         ));
-    }
-
-    static public function assertNotContains($needle, $haystack, $message = '',
-                                      $ignoreCase = false, $checkForObjectIdentity = false, $checkForNonObjectIdentity = false) {
-        parent::assertNotContains($needle, $haystack, $message, $ignoreCase, $checkForObjectIdentity, $checkForNonObjectIdentity);
     }
 
     static public function assertNotIndex($userid, $type, $item, $message) {
@@ -80,11 +70,11 @@ abstract class local_mail_testcase extends advanced_testcase {
         }
     }
 
-    public function setUp() {
+    public function setUp(): void {
         $this->resetAfterTest(false);
     }
 
-    public function tearDown() {
+    public function tearDown(): void {
         global $DB;
         $DB->delete_records_select('course', 'id > 100');
         $DB->delete_records_select('user', 'id > 200');
