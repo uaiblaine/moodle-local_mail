@@ -204,7 +204,9 @@ class local_mail_message {
             . ' ORDER BY mr.id ASC';
         $refrecords = $DB->get_records_sql($sql);
 
-        $mainuserfields = user_picture::fields('u', array('username', 'maildisplay'), 'usermoodleid');
+        $userfields = \core_user\fields::for_userpic();
+        $userfields->including(...array('username', 'maildisplay'));
+        $mainuserfields = $userfields->get_sql('u', false, '', 'usermoodleid', false)->selects;
         $sql = 'SELECT mu.id AS recordid, mu.messageid, mu.userid, mu.role,'
             . ' mu.unread, mu.starred, mu.deleted,'
             . $mainuserfields
@@ -855,9 +857,11 @@ class local_mail_message {
                 $message->unread[$r->userid] = (bool) $r->unread;
                 $message->starred[$r->userid] = (bool) $r->starred;
                 $message->deleted[$r->userid] = (int) $r->deleted;
-                $fields = user_picture::fields('', array('username', 'maildisplay'));
+                $userfields = \core_user\fields::for_userpic();
+                $userfields->including(...array('username', 'maildisplay'));
+                $fields = $userfields->get_sql('', false, '', '', false)->selects;
                 $userfields = array();
-                foreach (explode(',', $fields) as $value) {
+                foreach (explode(', ', $fields) as $value) {
                     if ($value === 'id') {
                         continue;
                     }
@@ -887,7 +891,9 @@ class local_mail_message {
     private static function fetch_user($userid) {
         global $DB;
         $conditions = array('id' => $userid);
-        $fields = user_picture::fields('', array('username', 'maildisplay'));
+        $userfields = \core_user\fields::for_userpic();
+        $userfields->including(...array('username', 'maildisplay'));
+        $fields = $userfields->get_sql('', false, '', '', false)->selects;
         return $DB->get_record('user', $conditions, $fields, MUST_EXIST);
     }
 

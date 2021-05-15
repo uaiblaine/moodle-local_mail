@@ -316,10 +316,12 @@ function local_mail_getsqlrecipients($courseid, $search, $groupid, $roleid, $rec
     $joins = array("FROM {user} u");
     $wheres = array();
 
-    $mainuserfields = user_picture::fields('u', array('username', 'email', 'city', 'country', 'lang', 'timezone', 'maildisplay'));
+    $userfields = \core_user\fields::for_userpic();
+    $userfields->including(...array('username', 'city', 'country', 'lang', 'timezone', 'maildisplay'));
+    $mainuserfields = $userfields->get_sql('u', false, '', '', false)->selects;
 
-    $extrasql = get_extra_user_fields_sql($context, 'u', '', array(
-            'id', 'firstname', 'lastname'));
+    $extrafields = \core_user\fields::for_identity($context, false)->excluding(...array('id', 'firstname', 'lastname'));
+    $extrasql = $extrafields->get_sql('u')->selects;
     $select = "SELECT $mainuserfields$extrasql";
     $joins[] = "JOIN ($esql) e ON e.id = u.id";
 
