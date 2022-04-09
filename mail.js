@@ -696,15 +696,13 @@ YUI(M.yui.loader, {lang: M.local_mail_lang}).use('io-base', 'node', 'json-parse'
         var node = Y.one('.mail_toolbar');
 
         if (window.scrollY > posheader) {
-            node.addClass('fixed');
             if (navbar && navbar.getStyle('position') != 'fixed') {
                 node.setStyle('top', '0');
             } else {
                 node.setStyle('top', posheader + 'px');
             }
-        } else {
-            node.removeClass('fixed');
         }
+
         mail_position_button_menu('assignlbl', 'labelselect');
         mail_position_button_menu('more_actions', 'actselect');
     };
@@ -1704,14 +1702,16 @@ YUI(M.yui.loader, {lang: M.local_mail_lang}).use('io-base', 'node', 'json-parse'
         }
     }, '#textsearch, #textsearchfrom, #textsearchto');
 
-    Y.on('scroll', function(e) {
-        mail_fixed_toolbar_buttons();
-    });
+    if (!Y.one("body .uses-drawers")) {
+        Y.on('scroll', function(e) {
+            mail_fixed_toolbar_buttons();
+        });
 
-    Y.one(window).on('resize', function(e){
-        mail_fixed_toolbar_buttons();
-        mail_show_hide_toolbar_buttons();
-    });
+        Y.one(window).on('resize', function(e){
+            mail_fixed_toolbar_buttons();
+            mail_show_hide_toolbar_buttons();
+        });
+    }
 
     // Initialize.
     init();

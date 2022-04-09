@@ -76,7 +76,7 @@ function local_mail_setup_page($course, $url) {
     global $PAGE;
 
     $PAGE->set_url($url);
-    $PAGE->set_pagelayout('standard');
+    $PAGE->set_pagelayout('incourse');
     $PAGE->requires->css('/local/mail/styles.css');
 
     if (get_config('local_mail', 'legacynav')) {
