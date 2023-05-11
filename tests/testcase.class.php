@@ -21,14 +21,16 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+namespace local_mail;
+
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 
-abstract class local_mail_testcase extends advanced_testcase {
+abstract class testcase extends \advanced_testcase {
 
-    static public function assertIndex($userid, $type, $item, $time, $messageid, $unread) {
-        self::assertRecords('index', array(
+    public static function assert_index($userid, $type, $item, $time, $messageid, $unread) {
+        self::assert_records('index', array(
             'userid' => $userid,
             'type' => $type,
             'item' => $item,
@@ -38,8 +40,8 @@ abstract class local_mail_testcase extends advanced_testcase {
         ));
     }
 
-    static public function assertNotIndex($userid, $type, $item, $message) {
-        self::assertNotRecords('index', array(
+    public static function assert_not_index($userid, $type, $item, $message) {
+        self::assert_not_records('index', array(
             'userid' => $userid,
             'type' => $type,
             'item' => $item,
@@ -47,17 +49,17 @@ abstract class local_mail_testcase extends advanced_testcase {
         ));
     }
 
-    static public function assertNotRecords($table, array $conditions = array()) {
+    public static function assert_not_records($table, array $conditions = array()) {
         global $DB;
         self::assertFalse($DB->record_exists('local_mail_' . $table, $conditions));
     }
 
-    static public function assertRecords($table, array $conditions = array()) {
+    public static function assert_records($table, array $conditions = array()) {
         global $DB;
         self::assertTrue($DB->record_exists('local_mail_' . $table, $conditions));
     }
 
-    static public function loadRecords($table, $rows) {
+    public static function load_records($table, $rows) {
         global $DB;
         $columns = array_shift($rows);
         foreach ($rows as $row) {

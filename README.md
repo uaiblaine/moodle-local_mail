@@ -1,5 +1,4 @@
-Local mail plugin for Moodle
-============================
+# Local mail plugin for Moodle
 
 This plugin allows users to send messages to each other, using an
 interface and features similar to webmail clients. Messages are tied
@@ -7,27 +6,44 @@ to courses, so users can only contact other participants in courses
 the user is enrolled in. Reading/sending of messages is done through a
 new item in the navigation block called "My Mail".
 
-Project page: http://github.com/IOC/moodle-local-mail
+Project page: https://gitlab.com/reskity/moodle-local_mail
 
-Source code of the mobile addon:
-https://github.com/albertgasset/moodlemobile-local_mail
+## Authors
 
-Authors
--------
+- Marc Català <reskit@gmail.com>
+- Albert Gasset <albertgasset@fsfe.org>
 
-Marc Català <reskit@gmail.com>
-Albert Gasset <albertgasset@fsfe.org>
+## Installation
 
-Installation
-------------
-
-Unpack archive inside /path/to/moodle/local/mail
+Unpack archive inside `/path/to/moodle/local/mail`
 
 For general instructions on installing plugins see:
-http://docs.moodle.org/24/en/Installing_plugins
+https://docs.moodle.org/401/en/Installing_plugins
 
-Copyright
----------
+## Developement
+
+### Unit tests
+
+See: https://moodledev.io/general/development/tools/phpunit
+
+Initialize test environment:
+```
+php admin/tool/phpunit/cli/init.php
+php admin/tool/phpunit/cli/util.php --buildcomponentconfigs
+```
+
+Run unit tests:
+```
+vendor/bin/phpunit -c local/mail
+```
+
+Run unit tests and generate code coverage report:
+```
+php -dpcov.enabled=1 vendor/bin/phpunit -c local/mail \
+    --coverage-html=local/mail/coverage
+```
+
+## Copyright
 
 Copyright © 2012,2013 Institut Obert de Catalunya
 
