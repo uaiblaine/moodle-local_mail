@@ -79,25 +79,10 @@ function local_mail_setup_page($course, $url) {
     $PAGE->set_pagelayout('incourse');
     $PAGE->requires->css('/local/mail/styles.css');
 
-    if (get_config('local_mail', 'legacynav')) {
-        // Legacy navigation.
-        $title = get_string('mymail', 'local_mail');
-        $PAGE->set_title($course->shortname . ': ' . $title);
-        $PAGE->set_heading($course->fullname);
-        return;
-    }
-
-    // New navigation.
-
     $PAGE->set_title(get_string('pluginname', 'local_mail'));
     $PAGE->set_context(context_course::instance($course->id));
 
     $PAGE->navbar->add(get_string('pluginname', 'local_mail'));
-
-    $composeurl = new moodle_url('/local/mail/compose.php');
-    $createurl = new moodle_url('/local/mail/create.php');
-    $preferencesurl = new moodle_url('/local/mail/preferences.php');
-    $viewurl = new moodle_url('/local/mail/view.php');
 
     $navtitle = null;
     $navurl = null;
