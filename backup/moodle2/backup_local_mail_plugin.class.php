@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 class backup_local_mail_plugin extends backup_local_plugin {
 
     protected function define_course_plugin_structure() {
@@ -23,7 +21,7 @@ class backup_local_mail_plugin extends backup_local_plugin {
             return;
         }
 
-        if (!$this->get_setting_value('users') or $this->get_setting_value('anonymize')) {
+        if (!$this->get_setting_value('users') || $this->get_setting_value('anonymize')) {
             return;
         }
 

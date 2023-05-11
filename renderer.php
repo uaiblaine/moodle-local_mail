@@ -21,15 +21,10 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
-
 class local_mail_renderer extends plugin_renderer_base {
 
     private function custom_image_url($imagename, $component = 'moodle') {
-        if (method_exists($this->output, 'image_url')) {
-            return $this->output->image_url($imagename, $component);
-        }
-        return $this->output->pix_url($imagename, $component);
+        return $this->output->image_url($imagename, $component);
     }
 
     public function date($message, $viewmail = false) {
@@ -84,7 +79,7 @@ class local_mail_renderer extends plugin_renderer_base {
         $output = html_writer::start_tag('span', array('class' => 'mail_group_labels'));
         $labels = $message->labels($USER->id);
         foreach ($labels as $label) {
-            if ($type === 'label' and $label->id() === $labelid) {
+            if ($type === 'label' && $label->id() === $labelid) {
                 continue;
             }
             $text = html_writer::tag('span', s($label->name()),
@@ -134,15 +129,15 @@ class local_mail_renderer extends plugin_renderer_base {
                         $this->attachment($message) .
                         $this->date($message));
             $context = context_course::instance($message->course()->id);
-            $draftmessage = ($message->editable($userid) and
-                    (array_key_exists($message->course()->id, local_mail_get_my_courses()) or
+            $draftmessage = ($message->editable($userid) &&
+                    (array_key_exists($message->course()->id, local_mail_get_my_courses()) ||
                     has_capability('moodle/course:view', $context)));
             if ($draftmessage) {
                 $url = new moodle_url('/local/mail/compose.php', array('m' => $message->id()));
             } else {
                 $params = array('t' => $type, 'm' => $message->id(), 'offset' => $offset);
-                $type == 'course' and $params['c'] = $itemid;
-                $type == 'label' and $params['l'] = $itemid;
+                $type == 'course' && $params['c'] = $itemid;
+                $type == 'label' && $params['l'] = $itemid;
                 $url = new moodle_url("/local/mail/view.php", $params);
             }
             if ($message->unread($userid)) {
@@ -151,7 +146,7 @@ class local_mail_renderer extends plugin_renderer_base {
             $output .= $this->output->container_start('mail_item ' . $unreadclass);
             $attributes = array('href' => $url, 'class' => 'mail_link');
             $output .= $checkbox . $flags . html_writer::tag('a', $content, $attributes);
-            $output .= $this->output->container_end('mail_item');
+            $output .= $this->output->container_end();
         }
 
         $output .= $this->output->container_end();
@@ -180,7 +175,7 @@ class local_mail_renderer extends plugin_renderer_base {
 
         $next = '<input value="'. $this->output->rarrow() .'" type="submit" name="nextpage" title="'
             . get_string('next') . '" class="mail_button singlebutton"';
-        if ($offset === false or ($offset + $count) == $totalcount) {
+        if ($offset === false || ($offset + $count) == $totalcount) {
             $next .= ' disabled="disabled"';
         }
         $next .= ' />';
@@ -192,11 +187,11 @@ class local_mail_renderer extends plugin_renderer_base {
 
         $content = '';
 
-        if ($type != 'drafts' and $message->draft()) {
+        if ($type != 'drafts' && $message->draft()) {
             $content .= $this->label_draft();
         }
 
-        if ($type != 'course' or $itemid != $message->course()->id) {
+        if ($type != 'course' || $itemid != $message->course()->id) {
             $content .= $this->label_course($message->course());
         }
 
@@ -696,22 +691,6 @@ class local_mail_renderer extends plugin_renderer_base {
         $output .= html_writer::end_tag('span');
         $output .= html_writer::end_tag('div');
         $output .= html_writer::end_tag('div');
-        /*$attributes = array(
-            'type' => 'button',
-            'id' => 'buttoncancelsearch',
-            'name' => 'buttoncancelsearch',
-            'value' => get_string('cancel', 'local_mail'),
-            'class' => 'btn btn-secondary mail_button_cancel_search mail_hidden'
-        );
-        $output .= html_writer::empty_tag('input', $attributes);
-        $attributes = array(
-            'type' => 'button',
-            'id' => 'buttonsearch',
-            'name' => 'buttonsearch',
-            'value' => get_string('search', 'local_mail'),
-            'class' => 'btn btn-secondary mail_button_search'
-        );
-        $output .= html_writer::empty_tag('input', $attributes);*/
         $output .= html_writer::end_tag('div');
         $output .= html_writer::end_tag('div');
 
@@ -743,7 +722,7 @@ class local_mail_renderer extends plugin_renderer_base {
                     'class' => 'mail_label_color  mail_label_' . $color
                 );
                 $content .= html_writer::tag('div', 'a', $attributes);
-                if (($count % $cols == 0) and $count < $total) {
+                if (($count % $cols == 0) && $count < $total) {
                     $content .= html_writer::end_tag('div');
                     $content .= html_writer::start_tag('div', array('class' => 'mail_label_colors_row'));
                 }
@@ -767,8 +746,8 @@ class local_mail_renderer extends plugin_renderer_base {
         $content = html_writer::start_tag('div', $attributes);
         $context = context_course::instance($courseid);
 
-        if ($COURSE->groupmode == SEPARATEGROUPS and !has_capability('moodle/site:accessallgroups', $context)
-            and empty($owngroups[0])) {
+        if ($COURSE->groupmode == SEPARATEGROUPS && !has_capability('moodle/site:accessallgroups', $context)
+                && empty($owngroups[0])) {
             return '';
         }
         $content .= html_writer::start_tag('div', array('class' => 'mail_recipients_toolbar'));
@@ -795,11 +774,11 @@ class local_mail_renderer extends plugin_renderer_base {
         $content .= html_writer::end_tag('span');
         // Groups.
         $groups = groups_get_all_groups($courseid);
-        if ($COURSE->groupmode == NOGROUPS or ($COURSE->groupmode == VISIBLEGROUPS and empty($groups))) {
+        if ($COURSE->groupmode == NOGROUPS || ($COURSE->groupmode == VISIBLEGROUPS && empty($groups))) {
             $text = get_string('allparticipants', 'moodle');
             $content .= html_writer::tag('span', $text, array('class' => 'groupselector groupname'));
         } else {
-            if ($COURSE->groupmode == VISIBLEGROUPS or has_capability('moodle/site:accessallgroups', $context)) {
+            if ($COURSE->groupmode == VISIBLEGROUPS || has_capability('moodle/site:accessallgroups', $context)) {
                 $options = array();
                 foreach ($groups as $key => $group) {
                     $options[$key] = $group->name;
@@ -889,7 +868,7 @@ class local_mail_renderer extends plugin_renderer_base {
             return '';
         }
         foreach ($participants as $key => $participant) {
-            $selected = ($participant->role == 'to' or $participant->role == 'cc' or $participant->role == 'bcc');
+            $selected = ($participant->role == 'to' || $participant->role == 'cc' || $participant->role == 'bcc');
             if ($selected) {
                 $rolestring = get_string('shortadd'.$participant->role, 'local_mail').':';
                 $hidden = '';
@@ -1008,7 +987,7 @@ class local_mail_renderer extends plugin_renderer_base {
             foreach (array('to', 'cc', 'bcc') as $role) {
                 $recipients = $message->recipients($role);
                 if (!empty($recipients)) {
-                    if ($role == 'bcc' and $message->sender()->id !== $USER->id) {
+                    if ($role == 'bcc' && $message->sender()->id !== $USER->id) {
                         continue;
                     }
                     $output .= html_writer::start_tag('div');
@@ -1104,21 +1083,21 @@ class local_mail_renderer extends plugin_renderer_base {
             $viewcourse = array_key_exists($courseid, local_mail_get_my_courses());
             $output = $this->reply($viewcourse);
             // All recipients.
-            $output .= $this->replyall(($viewcourse and $replyall));
+            $output .= $this->replyall(($viewcourse && $replyall));
             $output .= $this->forward($viewcourse);
             $toolbardown = true;
         } else if ($type === 'forward') {
             $viewcourse = array_key_exists($courseid, local_mail_get_my_courses());
             $output = $this->reply($viewcourse, true);
             // All recipients.
-            $output .= $this->replyall(($viewcourse and $replyall), true);
+            $output .= $this->replyall(($viewcourse && $replyall), true);
             $output .= $this->forward($viewcourse);
             $toolbardown = true;
         } else {
             $toggle = $this->toggle_buttons();
             $selectall = $this->selectall();
             $labels = $extended = $goback = $search = $selectedlbl = '';
-            if (!$trash and $type !== 'trash') {
+            if (!$trash && $type !== 'trash') {
                 $labels = $this->labels($type);
             }
             $read = $unread = '';
@@ -1144,7 +1123,7 @@ class local_mail_renderer extends plugin_renderer_base {
                                         $paging['totalcount']);
                 $search = $this->search();
             } else {
-                $goback = $this->goback($paging);
+                $goback = $this->goback();
             }
             if ($type === 'label') {
                 $extended = $this->optlabels();

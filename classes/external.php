@@ -233,15 +233,24 @@ class local_mail_external extends external_api {
             'type' => new external_value(PARAM_ALPHA, 'Type of index: inbox, starred, drafts, sent, trash, course or label'),
             'itemid' => new external_value(PARAM_INT, 'ID of the course or label of the index'),
             'query' => new external_single_structure([
-                'beforeid' => new external_value(PARAM_INT, 'ID of the message where to start searching older messages', VALUE_OPTIONAL),
-                'afterid' => new external_value(PARAM_INT, 'ID of the message where to start searching newer messages', VALUE_OPTIONAL),
-                'content' => new external_value(PARAM_TEXT, 'Text to search then contents of the message', VALUE_OPTIONAL),
-                'sender' => new external_value(PARAM_TEXT, 'Text to search the name of the sender', VALUE_OPTIONAL),
-                'recipients' => new external_value(PARAM_TEXT, 'Text to search the names of the recipients', VALUE_OPTIONAL),
-                'unread' => new external_value(PARAM_BOOL, 'Search only unread messsages', VALUE_OPTIONAL),
-                'attachments' => new external_value(PARAM_BOOL, 'Search only messages with attachments', VALUE_OPTIONAL),
-                'time' => new external_value(PARAM_INT, 'Search only messages older than this timestamp', VALUE_OPTIONAL),
-                'limit' => new external_value(PARAM_INT, 'Maximum number of messages to return', VALUE_OPTIONAL),
+                'beforeid' => new external_value(
+                    PARAM_INT, 'ID of the message where to start searching older messages', VALUE_OPTIONAL),
+                'afterid' => new external_value(
+                    PARAM_INT, 'ID of the message where to start searching newer messages', VALUE_OPTIONAL),
+                'content' => new external_value(
+                    PARAM_TEXT, 'Text to search then contents of the message', VALUE_OPTIONAL),
+                'sender' => new external_value(
+                    PARAM_TEXT, 'Text to search the name of the sender', VALUE_OPTIONAL),
+                'recipients' => new external_value(
+                    PARAM_TEXT, 'Text to search the names of the recipients', VALUE_OPTIONAL),
+                'unread' => new external_value(
+                    PARAM_BOOL, 'Search only unread messsages', VALUE_OPTIONAL),
+                'attachments' => new external_value(
+                    PARAM_BOOL, 'Search only messages with attachments', VALUE_OPTIONAL),
+                'time' => new external_value(
+                    PARAM_INT, 'Search only messages older than this timestamp', VALUE_OPTIONAL),
+                'limit' => new external_value(
+                    PARAM_INT, 'Maximum number of messages to return', VALUE_OPTIONAL),
             ]),
         ]);
     }
@@ -307,7 +316,7 @@ class local_mail_external extends external_api {
         if (!empty($params['query']['beforeid'])) {
             $query['before'] = (int) $params['query']['beforeid'];
         }
-        if (!empty($params['query']['afterid']) and empty($params['query']['beforeid'])) {
+        if (!empty($params['query']['afterid']) && empty($params['query']['beforeid'])) {
             $query['after'] = (int) $params['query']['afterid'];
         }
         if (!empty($params['query']['content'])) {
@@ -472,7 +481,7 @@ class local_mail_external extends external_api {
 
         $message = local_mail_message::fetch($id);
 
-        if (!$message or !$message->viewable($USER->id)) {
+        if (!$message || !$message->viewable($USER->id)) {
             throw new moodle_exception('invalidmessage', 'local_mail');
         }
 
@@ -521,7 +530,7 @@ class local_mail_external extends external_api {
 
         foreach (['to', 'cc', 'bcc'] as $type) {
             foreach ($message->recipients($type) as $user) {
-                if ($type == 'bcc' and $USER->id != $user->id and $USER->id != $message->sender()->id) {
+                if ($type == 'bcc' && $USER->id != $user->id && $USER->id != $message->sender()->id) {
                     continue;
                 }
                 $result['recipients'][] = [
@@ -596,7 +605,7 @@ class local_mail_external extends external_api {
 
         $message = local_mail_message::fetch($params['id']);
 
-        if (!$message or !$message->viewable($USER->id)) {
+        if (!$message || !$message->viewable($USER->id)) {
             throw new moodle_exception('invalidmessage', 'local_mail');
         }
 

@@ -21,8 +21,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 class local_mail_label {
 
     private $id;
@@ -30,12 +28,12 @@ class local_mail_label {
     private $name;
     private $color;
 
-    static public function create($userid, $name, $color='') {
+    public static function create($userid, $name, $color='') {
         global $DB;
 
         assert($userid > 0);
         assert(strlen($name) > 0);
-        assert(!$color or in_array($color, self::valid_colors()));
+        assert(!$color || in_array($color, self::valid_colors()));
 
         $record = new stdClass;
         $record->userid = $userid;
@@ -47,7 +45,7 @@ class local_mail_label {
         return self::from_record($record);
     }
 
-    static public function fetch($id) {
+    public static function fetch($id) {
         global $DB;
 
         $record = $DB->get_record('local_mail_labels', array('id' => $id));
@@ -59,7 +57,7 @@ class local_mail_label {
         return false;
     }
 
-    static public function fetch_user($userid) {
+    public static function fetch_user($userid) {
         global $DB;
 
         $result = array();
@@ -72,7 +70,7 @@ class local_mail_label {
         return $result;
     }
 
-    static public function from_record($record) {
+    public static function from_record($record) {
         $label = new self;
         $label->id = (int) $record->id;
         $label->userid = (int) $record->userid;
@@ -81,7 +79,7 @@ class local_mail_label {
         return $label;
     }
 
-    static public function valid_colors() {
+    public static function valid_colors() {
         return array('lightred', 'lightorange', 'lightyellow', 'lightgreen', 'lightblue', 'lightpurple', 'lightgray',
                      'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray',
                      'darkred', 'darkorange', 'darkyellow', 'darkgreen', 'darkblue', 'darkpurple', 'black');
@@ -116,7 +114,7 @@ class local_mail_label {
     public function save($name, $color) {
         global $DB;
 
-        assert(!$color or in_array($color, self::valid_colors()));
+        assert(!$color || in_array($color, self::valid_colors()));
         assert(strlen($name) > 0);
 
         $record = new stdClass;

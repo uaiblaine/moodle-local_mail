@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 class restore_local_mail_plugin extends restore_local_plugin {
 
     protected function define_course_plugin_structure() {
@@ -78,22 +76,22 @@ class restore_local_mail_plugin extends restore_local_plugin {
 
         $message = $DB->get_record('local_mail_messages', array('id' => $data->messageid), '*', MUST_EXIST);
 
-        if (!$message->draft and $data->role != 'from' and !$data->deleted) {
+        if (!$message->draft && $data->role != 'from' && !$data->deleted) {
             $this->add_to_index($data->userid, 'inbox', 0, $message->id, $message->time, $data->unread);
         }
-        if ($message->draft and $data->role == 'from' and !$data->deleted) {
+        if ($message->draft && $data->role == 'from' && !$data->deleted) {
             $this->add_to_index($data->userid, 'draft', 0, $message->id, $message->time, $data->unread);
         }
-        if (!$message->draft and $data->role == 'from' and !$data->deleted) {
+        if (!$message->draft && $data->role == 'from' && !$data->deleted) {
             $this->add_to_index($data->userid, 'sent', 0, $message->id, $message->time, $data->unread);
         }
-        if ($data->starred and !$data->deleted) {
+        if ($data->starred && !$data->deleted) {
             $this->add_to_index($data->userid, 'starred', 0, $message->id, $message->time, $data->unread);
         }
-        if ((!$message->draft or $data->role == 'from') and !$data->deleted) {
+        if ((!$message->draft || $data->role == 'from') && !$data->deleted) {
             $this->add_to_index($data->userid, 'course', $message->courseid, $message->id, $message->time, $data->unread);
         }
-        if ($data->deleted and $data->deleted == 1) {
+        if ($data->deleted && $data->deleted == 1) {
             $this->add_to_index($data->userid, 'trash', 0, $message->id, $message->time, $data->unread);
         }
 

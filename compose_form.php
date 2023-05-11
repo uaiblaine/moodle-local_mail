@@ -45,19 +45,19 @@ class mail_compose_form extends moodleform {
 
         // Recipients.
 
-        if ($message and $message->recipients('to')) {
+        if ($message && $message->recipients('to')) {
             $text = $this->format_recipients($message->recipients('to'));
             $label = get_string('to', 'local_mail');
             $mform->addElement('static', 'to', $label, $text);
         }
 
-        if ($message and $message->recipients('cc')) {
+        if ($message && $message->recipients('cc')) {
             $text = $this->format_recipients($message->recipients('cc'));
             $label = get_string('cc', 'local_mail');
             $mform->addElement('static', 'cc', $label, $text);
         }
 
-        if ($message and $message->recipients('bcc')) {
+        if ($message && $message->recipients('bcc')) {
             $text = $this->format_recipients($message->recipients('bcc'));
             $label = get_string('bcc', 'local_mail');
             $mform->addElement('static', 'bcc', $label, $text);
@@ -101,7 +101,7 @@ class mail_compose_form extends moodleform {
 
         $buttonarray[] = $mform->createElement('submit', 'recipientshidden', '', array('class' => 'mail_hidden'));
 
-        $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
+        $mform->addGroup($buttonarray, 'buttonar', '', ' ', false);
         $mform->closeHeaderBefore('buttonar');
     }
 
@@ -116,17 +116,17 @@ class mail_compose_form extends moodleform {
         }
 
         // Course selected.
-        if (isset($data['course']) and $data['course'] == SITEID) {
+        if (isset($data['course']) && $data['course'] == SITEID) {
             $errors['course'] = get_string('erroremptycourse', 'local_mail');
         }
 
-        // Empty subject?
-        if (!empty($data['send']) and !trim($data['subject'])) {
+        // Empty subject.
+        if (!empty($data['send']) && !trim($data['subject'])) {
             $errors['subject'] = get_string('erroremptysubject', 'local_mail');
         }
 
         // At least one recipient.
-        if (!empty($data['send']) and (!$message or !$message->recipients())) {
+        if (!empty($data['send']) && (!$message || !$message->recipients())) {
             $errors['recipients'] = get_string('erroremptyrecipients', 'local_mail');
         }
 

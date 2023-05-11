@@ -25,6 +25,8 @@ require_once('../../config.php');
 require_once('locallib.php');
 require_once('create_form.php');
 
+global $SITE;
+
 $courseid = optional_param('c', $SITE->id, PARAM_INT);
 $recipient = optional_param('r', false, PARAM_INT);
 $recipients = optional_param('rs', '', PARAM_SEQUENCE);
@@ -33,15 +35,16 @@ $role = optional_param('local_mail_role', 0, PARAM_INT);
 // Setup page.
 
 if (!$course = $DB->get_record('course', array('id' => $courseid))) {
-    print_error('invalidcourse', 'error');
+    throw new moodle_exception('invalidcourse', 'error');
 }
 $url = new moodle_url('/local/mail/create.php');
+require_login($course, false);
 local_mail_setup_page($course, $url);
 $context = context_course::instance($course->id);
 
 // Create message.
 
-if ($course->id != $SITE->id and has_capability('local/mail:usemail', $context)) {
+if ($course->id != $SITE->id && has_capability('local/mail:usemail', $context)) {
     require_sesskey();
     $message = local_mail_message::create($USER->id, $course->id);
     if ($recipients) {

@@ -24,6 +24,9 @@
 define('AJAX_SCRIPT', true);
 
 require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
+
+global $CFG, $SITE; $USER;
+
 require_once($CFG->dirroot . '/local/mail/lib.php');
 
 $action     = optional_param('action', false, PARAM_ALPHA);
@@ -73,6 +76,7 @@ if (!$course = $DB->get_record('course', array('id' => $courseid))) {
     echo json_encode(array('msgerror' => get_string('invalidcourse', 'error')));
     die;
 }
+require_login($course, false);
 local_mail_setup_page($course, $url);
 
 if ($courseid != $SITE->id) {
@@ -116,7 +120,7 @@ $nomessageactions = array(
     'emptytrash'
 );
 
-if ($action and in_array($action, $validactions) and !empty($USER->id)) {
+if ($action && in_array($action, $validactions) && !empty($USER->id)) {
 
     if (!confirm_sesskey($sesskey)) {
         echo json_encode(array('msgerror' => get_string('invalidsesskey', 'error')));
@@ -125,14 +129,14 @@ if ($action and in_array($action, $validactions) and !empty($USER->id)) {
     $params = array();
     $offset = max(0, $offset);
 
-    if (empty($msgs) and !in_array($action, $nomessageactions)) {
+    if (empty($msgs) && !in_array($action, $nomessageactions)) {
         echo json_encode(array('msgerror' => get_string('nomessageserror', 'local_mail')));
         die;
     }
     if (!in_array($action, $nomessageactions)) {
-        if ($action == 'viewmail' or $action == 'getrecipients' or $action == 'updaterecipients') {
+        if ($action == 'viewmail' || $action == 'getrecipients' || $action == 'updaterecipients') {
             $message = local_mail_message::fetch($msgs);
-            if (!$message or !$message->viewable($USER->id)) {
+            if (!$message || !$message->viewable($USER->id)) {
                 echo json_encode(array('msgerror' => get_string('invalidmessage', 'local_mail')));
                 die;
             }
@@ -172,7 +176,6 @@ if ($action and in_array($action, $validactions) and !empty($USER->id)) {
                             'type' => $type,
                             'mailview' => $mailview,
                             'itemid' => $itemid,
-                            'type' => $type,
                             'offset' => $offset,
                             'mailpagesize' => $mailpagesize
                         ));
@@ -185,7 +188,7 @@ if ($action and in_array($action, $validactions) and !empty($USER->id)) {
         array_push($params, $messages);
         array_push($params, false);
         if ($mailview) {
-            if ($type != 'course' and $type != 'label') {
+            if ($type != 'course' && $type != 'label') {
                 $itemid = 0;
             }
             array_push($params, array(
@@ -196,11 +199,11 @@ if ($action and in_array($action, $validactions) and !empty($USER->id)) {
                                 )
             );
         }
-    } else if ($action === 'delete' or $action === 'restore') {
+    } else if ($action === 'delete' || $action === 'restore') {
         $func = 'local_mail_setdelete';
         array_push($params, $messages);
         array_push($params, ($action == 'delete'));
-        if ($type != 'course' and $type != 'label') {
+        if ($type != 'course' && $type != 'label') {
             $itemid = 0;
         }
         array_push($params, $itemid);
@@ -212,7 +215,7 @@ if ($action and in_array($action, $validactions) and !empty($USER->id)) {
     } else if ($action === 'discard') {
         $func = 'local_mail_discard';
         array_push($params, $messages);
-        if ($type != 'course' and $type != 'label') {
+        if ($type != 'course' && $type != 'label') {
             $itemid = 0;
         }
         array_push($params, $itemid);
@@ -248,7 +251,7 @@ if ($action and in_array($action, $validactions) and !empty($USER->id)) {
         array_push($params, $itemid);
     } else if ($action === 'goback') {
         $func = 'local_mail_setgoback';
-        if ($type != 'course' and $type != 'label') {
+        if ($type != 'course' && $type != 'label') {
             $itemid = 0;
         }
         array_push($params, $itemid);
@@ -312,7 +315,7 @@ if ($action and in_array($action, $validactions) and !empty($USER->id)) {
     } else if ($action === 'hide') {
         $func = 'local_mail_hide';
         array_push($params, $messages);
-        if ($type != 'course' and $type != 'label') {
+        if ($type != 'course' && $type != 'label') {
             $itemid = 0;
         }
         array_push($params, $itemid);
@@ -341,7 +344,7 @@ function local_mail_setstarred ($messages, $bool, $search, $data = false) {
         }
     }
 
-    if ($data and !$data['mailview'] and $data['type'] == 'starred' and !$bool) {
+    if ($data && !$data['mailview'] && $data['type'] == 'starred' && !$bool) {
         $totalcount = local_mail_message::count_index($USER->id, $data['type'], $data['itemid']);
         if ($data['offset'] > $totalcount - 1) {
             $data['offset'] = max(0, $data['offset'] - $data['mailpagesize']);
@@ -473,7 +476,7 @@ function local_mail_discard($messages, $itemid, $type, $offset, $mailpagesize, $
     $content = '';
     $totalcount = local_mail_message::count_index($USER->id, $type, $itemid);
     foreach ($messages as $message) {
-        if ($message->viewable($USER->id) and $message->draft()) {
+        if ($message->viewable($USER->id) && $message->draft()) {
             $message->discard();
             array_push($ids, $message->id());
             $totalcount -= 1;
@@ -546,12 +549,12 @@ function local_mail_assignlabels($messages, $labelids, $labeltsids, $data, $sear
 
     $labels = local_mail_label::fetch_user($USER->id);
     foreach ($messages as $message) {
-        if ($message->viewable($USER->id) and !$message->deleted($USER->id)) {
+        if ($message->viewable($USER->id) && !$message->deleted($USER->id)) {
             foreach ($labels as $label) {
                 if (in_array($label->id(), $labelids)) {
                     $message->add_label($label);
                 } else {
-                    if ($data['type'] == 'label' and $label->id() == $data['itemid']) {
+                    if ($data['type'] == 'label' && $label->id() == $data['itemid']) {
                         $rethtml = true;
                     }
                     if (!in_array($label->id(), $labeltsids)) {
@@ -693,10 +696,10 @@ function local_mail_setlabel($type, $labelid, $labelname, $labelcolor) {
         $labels = local_mail_label::fetch_user($USER->id);
         $repeatedname = false;
         foreach ($labels as $l) {
-            $repeatedname = $repeatedname || (($l->name() === $labelname) and ($l->id() != $labelid));
+            $repeatedname = $repeatedname || (($l->name() === $labelname) && ($l->id() != $labelid));
         }
         if (!$repeatedname) {
-            if ($labelname and (!$labelcolor or in_array($labelcolor, $colors))) {
+            if ($labelname && (!$labelcolor || in_array($labelcolor, $colors))) {
                 $label->save($labelname, $labelcolor);
             } else {
                 $stringname = (!$labelname ? 'erroremptylabelname' : 'errorinvalidcolor');
@@ -723,17 +726,17 @@ function local_mail_newlabel($messages, $labelname, $labelcolor, $data) {
     $labelname = trim($labelname);
     $labelname = preg_replace('/\s+/', ' ', $labelname);
     $colors = local_mail_label::valid_colors();
-    $validcolor = (!$labelcolor or in_array($labelcolor, $colors));
+    $validcolor = (!$labelcolor || in_array($labelcolor, $colors));
     $labels = local_mail_label::fetch_user($USER->id);
     $repeatedname = false;
     foreach ($labels as $label) {
         $repeatedname = $repeatedname || ($label->name() === $labelname);
     }
     if (!$repeatedname) {
-        if (!empty($labelname) and $validcolor) {
+        if (!empty($labelname) && $validcolor) {
             $newlabel = local_mail_label::create($USER->id, $labelname, $labelcolor);
             foreach ($messages as $message) {
-                if ($message->viewable($USER->id) and !$message->deleted($USER->id)) {
+                if ($message->viewable($USER->id) && !$message->deleted($USER->id)) {
                     $message->add_label($newlabel);
                 }
             }
@@ -816,7 +819,7 @@ function local_mail_getrecipients($message, $search, $groupid, $roleid) {
 
     $context = context_course::instance($message->course()->id);
 
-    if ($message->course()->groupmode == SEPARATEGROUPS and !has_capability('moodle/site:accessallgroups', $context)) {
+    if ($message->course()->groupmode == SEPARATEGROUPS && !has_capability('moodle/site:accessallgroups', $context)) {
         $groups = groups_get_user_groups($message->course()->id, $message->sender()->id);
         if (count($groups[0]) == 0) {
                 $mailoutput = $PAGE->get_renderer('local_mail');
@@ -880,7 +883,7 @@ function local_mail_updaterecipients($message, $recipients, $roles) {
     $groupid = 0;
     $severalseparategroups = false;
 
-    if ($message->course()->groupmode == SEPARATEGROUPS and !has_capability('moodle/site:accessallgroups', $context)) {
+    if ($message->course()->groupmode == SEPARATEGROUPS && !has_capability('moodle/site:accessallgroups', $context)) {
         $groups = groups_get_user_groups($message->course()->id, $message->sender()->id);
         if (count($groups[0]) == 0) {
                 return array(
@@ -980,7 +983,7 @@ function local_mail_searchmessages($type, $itemid, $query, $offset = false, $per
             $messages = array_slice($messages, 0, count($messages) - 1);
             $next = true;
         }
-    } else if (!empty($query['after']) and $nummsgs < ($query['limit'])) {
+    } else if (!empty($query['after']) && $nummsgs < ($query['limit'])) {
         $query['limit'] -= $nummsgs;
         $query['after'] = '';
         $query['before'] = (isset($messages[$nummsgs - 1]) ? $messages[$nummsgs - 1]->id() : '');
@@ -993,8 +996,8 @@ function local_mail_searchmessages($type, $itemid, $query, $offset = false, $per
         $messages = array_merge($messages, $newmessages);
     }
     $content = local_mail_print_messages($itemid, $type, 0, $messages, false);
-    $prev = ($prev or !empty($query['before']));
-    $next = ($next or !empty($query['after']));
+    $prev = ($prev || !empty($query['before']));
+    $next = ($next || !empty($query['after']));
     if (!$prev) {
         $query['perpageid'] = 0;
     }

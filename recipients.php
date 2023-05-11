@@ -32,8 +32,8 @@ $messageid = required_param('m', PARAM_INT);
 // Fetch message.
 
 $message = local_mail_message::fetch($messageid);
-if (!$message or !$message->editable($USER->id)) {
-    print_error('invalidmessage', 'local_mail');
+if (!$message || !$message->editable($USER->id)) {
+    throw new \moodle_exception('invalidmessage', 'local_mail');
 }
 
 // Set up page.
@@ -41,6 +41,7 @@ if (!$message or !$message->editable($USER->id)) {
 $params = array('m' => $messageid);
 $url = new moodle_url('/local/mail/recipients.php', $params);
 $activeurl = new moodle_url('/local/mail/compose.php', $params);
+require_login($message->course()->id, false);
 local_mail_setup_page($message->course(), $url);
 navigation_node::override_active_url($activeurl);
 
@@ -48,8 +49,8 @@ navigation_node::override_active_url($activeurl);
 
 $groupid = groups_get_course_group($COURSE, true);
 
-if (!$groupid and $COURSE->groupmode == SEPARATEGROUPS and
-    !has_capability('moodle/site:accessallgroups', $PAGE->context)) {
+if (!$groupid && $COURSE->groupmode == SEPARATEGROUPS &&
+        !has_capability('moodle/site:accessallgroups', $PAGE->context)) {
     echo $OUTPUT->header();
     echo $OUTPUT->heading(get_string('notingroup', 'local_mail'));
     echo $OUTPUT->continue_button($activeurl);

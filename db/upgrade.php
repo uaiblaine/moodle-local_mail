@@ -20,8 +20,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
-
 function xmldb_local_mail_upgrade($oldversion) {
     global $CFG, $DB;
 
@@ -229,7 +227,8 @@ function xmldb_local_mail_upgrade($oldversion) {
 
         // Define index userid_type_item_time_messageid (unique) to be added to local_mail_index.
         $table = new xmldb_table('local_mail_index');
-        $index = new xmldb_index('userid_type_item_time_messageid', XMLDB_INDEX_UNIQUE, array('userid', 'type', 'item', 'time', 'messageid'));
+        $index = new xmldb_index('userid_type_item_time_messageid', XMLDB_INDEX_UNIQUE,
+            array('userid', 'type', 'item', 'time', 'messageid'));
 
         // Conditionally launch add index userid_type_item_time_messageid.
         if (!$dbman->index_exists($table, $index)) {

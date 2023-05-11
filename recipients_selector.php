@@ -23,13 +23,15 @@
 
 defined('MOODLE_INTERNAL') || die;
 
+global $CFG;
+
 require_once("{$CFG->dirroot}/user/selector/lib.php");
 require_once("{$CFG->dirroot}/local/mail/lib.php");
 
 class mail_recipients_selector extends groups_user_selector_base {
 
     public function find_users($search) {
-        global $DB, $USER;
+        global $CFG, $DB, $USER;
 
         $mailmaxusers = (isset($CFG->maxusersperpage) ? $CFG->maxusersperpage : $this->maxusersperpage);
 

@@ -27,6 +27,7 @@ require_once($CFG->dirroot.'/local/mail/preferences_form.php');
 $url = new moodle_url('/local/mail/preferences.php');
 $viewurl = new moodle_url('/local/mail/view.php', array('t' => 'inbox'));
 
+require_login($SITE, false);
 local_mail_setup_page($SITE, new moodle_url($url));
 $title = get_string('preferences');
 

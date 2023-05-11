@@ -71,14 +71,14 @@ if ($type == 'label') {
 if ($removelbl) {
     require_sesskey();
     $label = local_mail_label::fetch($labelid);
-    if (!$label or $label->userid() != $USER->id) {
-        print_error('invalidlabel', 'local_mail');
+    if (!$label || $label->userid() != $USER->id) {
+        throw new \moodle_exception('invalidlabel', 'local_mail');
     }
 
     $courseid = $courseid ?: $SITE->id;
 
     if (!$course = $DB->get_record('course', array('id' => $courseid))) {
-        print_error('invalidcourse', 'error');
+        throw new \moodle_exception('invalidcourse', 'error');
     }
 
     // Check whether user can use mail in that course.
@@ -87,11 +87,12 @@ if ($removelbl) {
         require_capability('local/mail:usemail', $context);
     }
 
+    require_login($course, false);
     local_mail_setup_page($course, $url);
 
     if ($confirmlbl) {
         if ($label->userid() != $USER->id) {
-            print_error('invalidlabel', 'local_mail');
+            throw new \moodle_exception('invalidlabel', 'local_mail');
         }
         $label->delete();
         $url->param('t', 'inbox');
@@ -110,14 +111,14 @@ if ($removelbl) {
 } else if ($editlbl) {
     require_sesskey();
     $label = local_mail_label::fetch($labelid);
-    if (!$label or $label->userid() != $USER->id) {
-        print_error('invalidlabel', 'local_mail');
+    if (!$label || $label->userid() != $USER->id) {
+        throw new \moodle_exception('invalidlabel', 'local_mail');
     }
 
     $courseid = $courseid ?: $SITE->id;
 
     if (!$course = $DB->get_record('course', array('id' => $courseid))) {
-        print_error('invalidcourse', 'error');
+        throw new \moodle_exception('invalidcourse', 'error');
     }
 
     // Check whether user can use mail in that course.
@@ -127,6 +128,7 @@ if ($removelbl) {
     }
 
     $url->param('offset', $offset);
+    require_login($course, false);
     local_mail_setup_page($course, $url);
 
     // Set up form.
@@ -153,9 +155,9 @@ if ($removelbl) {
             $labels = local_mail_label::fetch_user($USER->id);
             $repeatedname = false;
             foreach ($labels as $lbl) {
-                $repeatedname = $repeatedname || (($lbl->name() === $data->labelname) and ($lbl->id() != $labelid));
+                $repeatedname = $repeatedname || (($lbl->name() === $data->labelname) && ($lbl->id() != $labelid));
             }
-            if (!$repeatedname and $data->labelname and (!$data->labelcolor or in_array($data->labelcolor, $colors))) {
+            if (!$repeatedname && $data->labelname && (!$data->labelcolor || in_array($data->labelcolor, $colors))) {
                 $label->save($data->labelname, $data->labelcolor);
             }
         }
@@ -172,7 +174,7 @@ if ($removelbl) {
     $courseid = $courseid ?: $SITE->id;
 
     if (!$course = $DB->get_record('course', array('id' => $courseid))) {
-        print_error('invalidcourse', 'error');
+        throw new \moodle_exception('invalidcourse', 'error');
     }
 
     // Check whether user can use mail in that course.
@@ -182,10 +184,11 @@ if ($removelbl) {
     }
 
     $url->param('offset', $offset);
+    require_login($course, false);
     local_mail_setup_page($course, $url);
 
     // Check whether there are messages to assign or not.
-    if (!$messageid and empty($msgs)) {
+    if (!$messageid && empty($msgs)) {
         echo $OUTPUT->header();
         echo html_writer::tag('p', get_string('noselectedmessages', 'local_mail'), array('class' => 'box errorbox'));
         $continuebutton = new single_button($url, get_string('continue'));
@@ -217,13 +220,13 @@ if ($removelbl) {
     if ($messageid) {
         $message = local_mail_message::fetch($messageid);
         if ($message->deleted($USER->id)) {
-            print_error('invalidmessage', 'local_mail');
+            throw new \moodle_exception('invalidmessage', 'local_mail');
         }
     } else {
         $messages = local_mail_message::fetch_many($msgs);
         foreach ($messages as $message) {
             if ($message->deleted($USER->id)) {
-                print_error('invalidmessage', 'local_mail');
+                throw new \moodle_exception('invalidmessage', 'local_mail');
             }
         }
     }
@@ -255,12 +258,12 @@ if ($removelbl) {
             $newlabel = false;
             $data->newlabelname = trim(clean_param($data->newlabelname, PARAM_TEXT));
             $data->newlabelname = preg_replace('/\s+/', ' ', $data->newlabelname);
-            $validcolor = (!$data->newlabelcolor or in_array($data->newlabelcolor, $colors));
+            $validcolor = (!$data->newlabelcolor || in_array($data->newlabelcolor, $colors));
             $repeatedname = false;
             foreach ($labels as $label) {
                 $repeatedname = $repeatedname || ($label->name() === $data->newlabelname);
             }
-            if (!$repeatedname and !empty($data->newlabelname) and $validcolor) {
+            if (!$repeatedname && !empty($data->newlabelname) && $validcolor) {
                 $newlabel = local_mail_label::create($USER->id, $data->newlabelname, $data->newlabelcolor);
                 if (!isset($data->labelid)) {
                     $data->labelid = array();
@@ -269,8 +272,8 @@ if ($removelbl) {
             }
             if ($messageid) {
                 $message = local_mail_message::fetch($messageid);
-                if (!$message or !$message->viewable($USER->id) or $message->deleted($USER->id)) {
-                    print_error('nomessages', 'local_mail');
+                if (!$message || !$message->viewable($USER->id) || $message->deleted($USER->id)) {
+                    throw new \moodle_exception('nomessages', 'local_mail');
                 }
                 if (isset($data->labelid)) {
                     $data->labelid = clean_param_array($data->labelid, PARAM_INT);
@@ -291,8 +294,8 @@ if ($removelbl) {
                         $labels = local_mail_label::fetch_user($USER->id);
                     }
                     foreach ($messages as $message) {
-                        if (!$message->viewable($USER->id) or $message->deleted($USER->id)) {
-                            print_error('invalidmessage', 'local_mail');
+                        if (!$message->viewable($USER->id) || $message->deleted($USER->id)) {
+                            throw new \moodle_exception('invalidmessage', 'local_mail');
                         }
                         if (isset($data->labelid)) {
                             foreach ($labels as $label) {
@@ -320,13 +323,14 @@ if ($removelbl) {
     echo $OUTPUT->footer();
 
 } else if ($messageid) {
+    require_login($SITE, false);
     local_mail_setup_page($SITE, new moodle_url($url, array('m' => $messageid)));
 
     // Fetch message.
 
     $message = local_mail_message::fetch($messageid);
-    if (!$message or !$message->viewable($USER->id)) {
-        print_error('invalidmessage', 'local_mail');
+    if (!$message || !$message->viewable($USER->id)) {
+        throw new \moodle_exception('invalidmessage', 'local_mail');
     }
 
     navigation_node::override_active_url($url);
@@ -346,7 +350,7 @@ if ($removelbl) {
     if ($hide) {
         require_sesskey();
         if ($confirmmsg) {
-            if ($message->viewable($USER->id) and $message->deleted($USER->id)) {
+            if ($message->viewable($USER->id) && $message->deleted($USER->id)) {
                 $message->set_invisible($USER->id);
             }
             redirect($url);
@@ -366,7 +370,7 @@ if ($removelbl) {
 
     if ($starred) {
         require_sesskey();
-        if (!$message->deleted($USER->id) and $message->id() === $starred) {
+        if (!$message->deleted($USER->id) && $message->id() === $starred) {
             $message->set_starred($USER->id, !$message->starred($USER->id));
         }
         $url->param('m', $message->id());
@@ -503,7 +507,7 @@ if ($removelbl) {
 } else {
     $mailpagesize = get_user_preferences('local_mail_mailsperpage', MAIL_PAGESIZE, $USER->id);
 
-    if ($prevpage or $nextpage) {
+    if ($prevpage || $nextpage) {
         if ($prevpage) {
             $offset = max(0, $offset - $mailpagesize);
         } else if ($nextpage) {
@@ -515,7 +519,7 @@ if ($removelbl) {
 
     // Set up messages.
 
-    $itemid = ($labelid?:$courseid);
+    $itemid = ($labelid ?: $courseid);
 
     $totalcount = local_mail_message::count_index($USER->id, $type, $itemid);
     $messages = local_mail_message::fetch_index($USER->id, $type, $itemid, $offset, $mailpagesize);
@@ -526,7 +530,7 @@ if ($removelbl) {
     $courseid = $courseid ?: $SITE->id;
 
     if (!$course = $DB->get_record('course', array('id' => $courseid))) {
-        print_error('invalidcourse', 'error');
+        throw new \moodle_exception('invalidcourse', 'error');
     }
 
     // Check whether user can use mail in that course.
@@ -535,6 +539,7 @@ if ($removelbl) {
         require_capability('local/mail:usemail', $context);
     }
 
+    require_login($course, false);
     local_mail_setup_page($course, $url);
     $url->param('offset', $offset);
 
@@ -550,9 +555,7 @@ if ($removelbl) {
             }
         }
         if ($offset > $totalcount - 1) {
-            $url->offset = max(0, $offset - $mailpagesize);
-        } else {
-            $url->offset = $offset;
+            $url->param('offset', max(0, $offset - $mailpagesize));
         }
         redirect($url);
     }
@@ -562,16 +565,14 @@ if ($removelbl) {
         if ($confirmmsg) {
             foreach ($messages as $message) {
                 if (in_array($message->id(), $msgs)) {
-                    if ($message->viewable($USER->id) and $message->deleted($USER->id)) {
+                    if ($message->viewable($USER->id) && $message->deleted($USER->id)) {
                         $message->set_invisible($USER->id);
                     }
                     $totalcount -= 1;
                 }
             }
             if ($offset > $totalcount - 1) {
-                $url->offset = max(0, $offset - $mailpagesize);
-            } else {
-                $url->offset = $offset;
+                $url->param('offset', max(0, $offset - $mailpagesize));
             }
             redirect($url);
         } else {
@@ -593,7 +594,7 @@ if ($removelbl) {
         require_sesskey();
         if ($confirmmsg) {
             local_mail_message::empty_trash($USER->id);
-            $url->offset = 0;
+            $url->param('offset', 0);
             redirect($url);
         } else {
             echo $OUTPUT->header();
@@ -612,16 +613,14 @@ if ($removelbl) {
         require_sesskey();
         foreach ($messages as $message) {
             if (in_array($message->id(), $msgs)) {
-                if ($message->viewable($USER->id) and $message->draft()) {
+                if ($message->viewable($USER->id) && $message->draft()) {
                     $message->discard();
                 }
                 $totalcount -= 1;
             }
         }
         if ($offset > $totalcount - 1) {
-            $url->offset = max(0, $offset - $mailpagesize);
-        } else {
-            $url->offset = $offset;
+            $url->param('offset', max(0, $offset - $mailpagesize));
         }
         redirect($url);
     }
@@ -630,8 +629,8 @@ if ($removelbl) {
     if ($starred) {
         require_sesskey();
         $message = local_mail_message::fetch($starred);
-        if (!$message or !$message->viewable($USER->id) or $message->deleted($USER->id)) {
-            print_error('invalidmessage', 'local_mail');
+        if (!$message || !$message->viewable($USER->id) || $message->deleted($USER->id)) {
+            throw new \moodle_exception('invalidmessage', 'local_mail');
         }
         $message->set_starred($USER->id, !$message->starred($USER->id));
         redirect($url);

@@ -26,14 +26,16 @@ require_once('locallib.php');
 require_once('compose_form.php');
 require_once('recipients_selector.php');
 
+global $PAGE;
+
 $messageid = required_param('m', PARAM_INT);
 $remove = optional_param_array('remove', false, PARAM_INT);
 
 // Fetch message.
 
 $message = local_mail_message::fetch($messageid);
-if (!$message or !$message->editable($USER->id)) {
-    print_error('local_mail', 'invalidmessage');
+if (!$message || !$message->editable($USER->id)) {
+    throw new \moodle_exception('local_mail', 'invalidmessage');
 }
 
 // Fetch references.
@@ -44,6 +46,7 @@ $references = $message->references();
 
 $url = new moodle_url('/local/mail/compose.php');
 $url->param('m', $message->id());
+require_login($message->course()->id, false);
 local_mail_setup_page($message->course(), $url);
 
 // Remove recipients.

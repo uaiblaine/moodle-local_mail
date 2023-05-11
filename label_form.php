@@ -64,13 +64,13 @@ class mail_label_form extends moodleform {
         $label = get_string('cancel');
         $buttonarray[] = $mform->createElement('submit', 'cancel', $label);
 
-        $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
+        $mform->addGroup($buttonarray, 'buttonar', '', ' ', false);
         $mform->closeHeaderBefore('buttonar');
     }
 
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
-        if (empty($data['cancel']) and !trim($data['labelname'])) {
+        if (empty($data['cancel']) && !trim($data['labelname'])) {
             $errors['labelname'] = get_string('erroremptylabelname', 'local_mail');
         }
         return $errors;

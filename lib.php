@@ -37,8 +37,8 @@ function local_mail_extend_navigation($root) {
 
     // User profile.
 
-    if ($PAGE->url->compare(new moodle_url('/user/view.php'), URL_MATCH_BASE) and
-        has_capability('local/mail:usemail', $context)) {
+    if ($PAGE->url->compare(new moodle_url('/user/view.php'), URL_MATCH_BASE) &&
+            has_capability('local/mail:usemail', $context)) {
         $userid = optional_param('id', false, PARAM_INT);
         if (local_mail_valid_recipient($userid)) {
             $vars = array('course' => $COURSE->id, 'recipient' => $userid);
@@ -50,8 +50,8 @@ function local_mail_extend_navigation($root) {
 
     // Users list.
 
-    if ($PAGE->url->compare(new moodle_url('/user/index.php'), URL_MATCH_BASE) and
-        has_capability('local/mail:usemail', $context)) {
+    if ($PAGE->url->compare(new moodle_url('/user/index.php'), URL_MATCH_BASE) &&
+            has_capability('local/mail:usemail', $context)) {
         $userid = optional_param('id', false, PARAM_INT);
         $vars = array('course' => $COURSE->id);
         $PAGE->requires->string_for_js('choosedots', 'moodle');
@@ -67,8 +67,8 @@ function local_mail_extend_navigation($root) {
 
     // Block completion_progress.
 
-    if ($PAGE->url->compare(new moodle_url('/blocks/completion_progress/overview.php'), URL_MATCH_BASE) and
-        has_capability('local/mail:usemail', $context)) {
+    if ($PAGE->url->compare(new moodle_url('/blocks/completion_progress/overview.php'), URL_MATCH_BASE) &&
+            has_capability('local/mail:usemail', $context)) {
         $userid = optional_param('id', false, PARAM_INT);
         $vars = array('course' => $COURSE->id);
         $PAGE->requires->string_for_js('choosedots', 'moodle');
@@ -109,8 +109,8 @@ function local_mail_extend_navigation($root) {
     $url = new moodle_url('/local/mail/compose.php');
     $urlrecipients = new moodle_url('/local/mail/recipients.php');
 
-    if ($PAGE->url->compare($url, URL_MATCH_BASE) or
-        $PAGE->url->compare($urlrecipients, URL_MATCH_BASE)) {
+    if ($PAGE->url->compare($url, URL_MATCH_BASE) ||
+            $PAGE->url->compare($urlrecipients, URL_MATCH_BASE)) {
         $url->param('m', $PAGE->url->param('m'));
     } else {
         $url = new moodle_url('/local/mail/create.php');
@@ -213,7 +213,7 @@ function local_mail_pluginfile($course, $cm, $context, $filearea, $args,
 
     $messageid = (int) array_shift($args);
     $message = local_mail_message::fetch($messageid);
-    if ($filearea != 'message' or !$message or !$message->viewable($USER->id, true)) {
+    if ($filearea != 'message' || !$message || !$message->viewable($USER->id, true)) {
         return false;
     }
 
@@ -222,7 +222,8 @@ function local_mail_pluginfile($course, $cm, $context, $filearea, $args,
     $fs = get_file_storage();
     $relativepath = implode('/', $args);
     $fullpath = "/$context->id/local_mail/$filearea/$messageid/$relativepath";
-    if (!$file = $fs->get_file_by_hash(sha1($fullpath)) or $file->is_directory()) {
+    $file = $fs->get_file_by_hash(sha1($fullpath));
+    if (!$file || $file->is_directory()) {
         return false;
     }
 
@@ -247,14 +248,14 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
 /**
  * Context of the navigation bar popover template.
  *
- * @return array
+ * @return array|null
  */
 function local_mail_render_navbar_context() {
     global $CFG, $COURSE, $PAGE, $USER;
 
-    if (!isloggedin() or isguestuser() or user_not_fully_set_up($USER) or
-            get_user_preferences('auth_forcepasswordchange') or
-            ($CFG->sitepolicy and !$USER->policyagreed and !is_siteadmin())) {
+    if (!isloggedin() || isguestuser() || user_not_fully_set_up($USER) ||
+            get_user_preferences('auth_forcepasswordchange') ||
+            ($CFG->sitepolicy && !$USER->policyagreed && !is_siteadmin())) {
         return null;
     }
 

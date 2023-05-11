@@ -81,7 +81,6 @@ function local_mail_setup_page($course, $url) {
 
     if (get_config('local_mail', 'legacynav')) {
         // Legacy navigation.
-        require_login($course->id, false);
         $title = get_string('mymail', 'local_mail');
         $PAGE->set_title($course->shortname . ': ' . $title);
         $PAGE->set_heading($course->fullname);
@@ -90,7 +89,6 @@ function local_mail_setup_page($course, $url) {
 
     // New navigation.
 
-    require_login($course->id, false);
     $PAGE->set_title(get_string('pluginname', 'local_mail'));
     $PAGE->set_context(context_course::instance($course->id));
 
@@ -234,7 +232,7 @@ function local_mail_get_my_courses() {
 function local_mail_valid_recipient($recipient) {
     global $COURSE, $USER;
 
-    if (!$recipient or $recipient == $USER->id) {
+    if (!$recipient || $recipient == $USER->id) {
         return false;
     }
 
@@ -244,8 +242,8 @@ function local_mail_valid_recipient($recipient) {
         return false;
     }
 
-    if ($COURSE->groupmode == SEPARATEGROUPS and
-        !has_capability('moodle/site:accessallgroups', $context)) {
+    if ($COURSE->groupmode == SEPARATEGROUPS &&
+            !has_capability('moodle/site:accessallgroups', $context)) {
         $ugroups = groups_get_all_groups($COURSE->id, $USER->id,
                                          $COURSE->defaultgroupingid, 'g.id');
         $rgroups = groups_get_all_groups($COURSE->id, $recipient,
@@ -265,9 +263,9 @@ function local_mail_add_recipients($message, $recipients, $role) {
     $groupid = 0;
     $severalseparategroups = false;
     $roles = array('to', 'cc', 'bcc');
-    $role = ($role >= 0 and $role < 3) ? $role : 0;
+    $role = ($role >= 0 && $role < 3) ? $role : 0;
 
-    if ($message->course()->groupmode == SEPARATEGROUPS and !has_capability('moodle/site:accessallgroups', $context)) {
+    if ($message->course()->groupmode == SEPARATEGROUPS && !has_capability('moodle/site:accessallgroups', $context)) {
         $groups = groups_get_user_groups($message->course()->id, $message->sender()->id);
         if (count($groups[0]) == 0) {
             return;

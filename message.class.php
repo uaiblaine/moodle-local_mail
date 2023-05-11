@@ -52,7 +52,7 @@ class local_mail_message {
     private $deleted = array();
     private $labels = array();
 
-    static public function count_index($userid, $type, $itemid=0) {
+    public static function count_index($userid, $type, $itemid=0) {
         global $DB;
 
         assert(in_array($type, self::$indextypes));
@@ -61,7 +61,7 @@ class local_mail_message {
         return $DB->count_records('local_mail_index', $conditions);
     }
 
-    static public function count_menu($userid) {
+    public static function count_menu($userid) {
         global $DB;
 
         $result = new stdClass;
@@ -77,20 +77,20 @@ class local_mail_message {
         $records = $DB->get_records_sql($sql, array('userid' => $userid));
 
         foreach ($records as $record) {
-            if ($record->type == 'inbox' and $record->unread) {
+            if ($record->type == 'inbox' && $record->unread) {
                 $result->inbox = (int) $record->count;
             } else if ($record->type == 'drafts') {
                 if (!isset($result->drafts)) {
                     $result->drafts = 0;
                 }
                 $result->drafts += (int) $record->count;
-            } else if ($record->type == 'course' and $record->unread) {
+            } else if ($record->type == 'course' && $record->unread) {
                 $context = context_course::instance($record->item);
                 if (!has_capability('local/mail:usemail', $context)) {
                     $result->inbox -= (int) $record->count;
                 }
                 $result->courses[(int) $record->item] = (int) $record->count;
-            } else if ($record->type == 'label' and $record->unread) {
+            } else if ($record->type == 'label' && $record->unread) {
                 $result->labels[(int) $record->item] = (int) $record->count;
             }
         }
@@ -98,7 +98,7 @@ class local_mail_message {
         return $result;
     }
 
-    static public function create($userid, $courseid, $time=false) {
+    public static function create($userid, $courseid, $time=false) {
         global $DB;
 
         $transaction = $DB->start_delegated_transaction();
@@ -133,7 +133,7 @@ class local_mail_message {
         return $message;
     }
 
-    static public function delete_course($courseid) {
+    public static function delete_course($courseid) {
         global $DB;
 
         $transaction = $DB->start_delegated_transaction();
@@ -147,12 +147,12 @@ class local_mail_message {
         $transaction->allow_commit();
     }
 
-    static public function fetch($id) {
+    public static function fetch($id) {
         $messages = self::fetch_many(array($id));
         return reset($messages);
     }
 
-    static public function fetch_index($userid, $type, $item=0, $limitfrom=0, $limitnum=0) {
+    public static function fetch_index($userid, $type, $item=0, $limitfrom=0, $limitnum=0) {
         global $DB;
 
         assert(in_array($type, self::$indextypes));
@@ -163,7 +163,7 @@ class local_mail_message {
         return self::fetch_many(array_keys($records));
     }
 
-    static public function fetch_many(array $ids) {
+    public static function fetch_many(array $ids) {
         global $DB;
 
         $messages = array();
@@ -231,18 +231,18 @@ class local_mail_message {
         return $messages;
     }
 
-    static public function search_index($userid, $type, $item, array $query) {
+    public static function search_index($userid, $type, $item, array $query) {
         global $DB;
 
         assert(in_array($type, self::$indextypes));
-        assert(empty($query['before']) or empty($query['after']));
+        assert(empty($query['before']) || empty($query['after']));
 
         $query['pattern'] = isset($query['pattern']) ? trim($query['pattern']) : '';
         $query['searchfrom'] = isset($query['searchfrom']) ? trim($query['searchfrom']) : '';
         $query['searchto'] = isset($query['searchto']) ? trim($query['searchto']) : '';
 
         $sql = 'SELECT i.messageid FROM {local_mail_index} i';
-        if ($query['pattern'] !== '' OR !empty($query['attach'])) {
+        if ($query['pattern'] !== '' || !empty($query['attach'])) {
             $sql .= ' JOIN {local_mail_messages} m ON m.id = i.messageid';
         }
         $sql .= ' WHERE i.userid = :userid AND type = :type AND i.item = :item';
@@ -254,7 +254,7 @@ class local_mail_message {
             list($rolesql, $roleparams) = $DB->get_in_or_equal(['from', 'to', 'cc'], SQL_PARAMS_NAMED, 'role');
             $subjectsql = $DB->sql_like('m.normalizedsubject', ':pattern', false, false);
             $contentsql = $DB->sql_like('m.normalizedcontent', ':pattern2', false, false);
-            $messageusersql =  'SELECT mu.messageid FROM {local_mail_message_users} mu'
+            $messageusersql = 'SELECT mu.messageid FROM {local_mail_message_users} mu'
                 . " JOIN {user} u ON u.id = mu.userid WHERE mu.role $rolesql AND $usersql";
             $sql .= " AND (($subjectsql) OR ($contentsql) OR i.messageid IN ($messageusersql))";
             $params['pattern'] = '%' . $DB->sql_like_escape(self::normalize_text($query['pattern'])) . '%';
@@ -266,7 +266,7 @@ class local_mail_message {
             list($usersql, $userparams) = users_search_sql($query['searchfrom']);
             $messageusersql = 'SELECT mu.messageid FROM {local_mail_message_users} mu'
                 . " JOIN {user} u ON u.id = mu.userid WHERE mu.role = :rolefrom AND $usersql";
-            $sql .=  " AND i.messageid IN ($messageusersql)";
+            $sql .= " AND i.messageid IN ($messageusersql)";
             $params['rolefrom'] = 'from';
             $params = array_merge($params, $userparams);
         }
@@ -275,7 +275,7 @@ class local_mail_message {
             list($usersql, $userparams) = users_search_sql($query['searchto']);
             $messageusersql = 'SELECT mu.messageid FROM {local_mail_message_users} mu'
                 . " JOIN {user} u ON u.id = mu.userid WHERE (mu.role = :roleto OR mu.role = :rolecc) AND $usersql";
-            $sql .=  " AND i.messageid IN ($messageusersql)";
+            $sql .= " AND i.messageid IN ($messageusersql)";
             $params['roleto'] = 'to';
             $params['rolecc'] = 'cc';
             $params = array_merge($params, $userparams);
@@ -316,7 +316,7 @@ class local_mail_message {
         return !empty($query['after']) ? array_reverse($messages) : $messages;
     }
 
-    static public function empty_trash($userid) {
+    public static function empty_trash($userid) {
         global $DB;
 
         $messages = self::fetch_index($userid, 'trash');
@@ -334,7 +334,7 @@ class local_mail_message {
         global $DB;
 
         assert($this->has_user($label->userid()));
-        assert(!$this->draft or $this->role[$label->userid()] == 'from');
+        assert(!$this->draft || $this->role[$label->userid()] == 'from');
         assert(!$this->deleted($label->userid()));
 
         if (!isset($this->labels[$label->id()])) {
@@ -373,7 +373,7 @@ class local_mail_message {
 
         $attachments = $this->attachments;
 
-        if ($includerefs and !empty($this->refs)) {
+        if ($includerefs && !empty($this->refs)) {
             list($sqlid, $params) = $DB->get_in_or_equal($this->refs, SQL_PARAMS_NAMED, 'messageid');
             $attachments += $DB->get_field_select('local_mail_messages', 'SUM(attachments)', "id $sqlid", $params);
         }
@@ -414,7 +414,7 @@ class local_mail_message {
     }
 
     public function editable($userid) {
-        return $this->draft and $this->has_user($userid) and $this->role[$userid] == 'from';
+        return $this->draft && $this->has_user($userid) && $this->role[$userid] == 'from';
     }
 
     public function format() {
@@ -446,7 +446,7 @@ class local_mail_message {
         global $DB;
 
         assert(!$this->draft);
-        assert($this->has_user($userid) and $this->sender()->id == $userid);
+        assert($this->has_user($userid) && $this->sender()->id == $userid);
 
         $transaction = $DB->start_delegated_transaction();
 
@@ -482,7 +482,7 @@ class local_mail_message {
     }
 
     public function has_recipient($userid) {
-        return $this->has_user($userid) and $this->role[$userid] != 'from';
+        return $this->has_user($userid) && $this->role[$userid] != 'from';
     }
 
     public function id() {
@@ -490,11 +490,11 @@ class local_mail_message {
     }
 
     public function labels($userid=false) {
-        assert($userid === false or $this->has_user($userid));
+        assert($userid === false || $this->has_user($userid));
 
         $result = array();
         foreach ($this->labels as $label) {
-            if (!$userid or $label->userid() == $userid) {
+            if (!$userid || $label->userid() == $userid) {
                 $result[] = $label;
             }
         }
@@ -506,7 +506,7 @@ class local_mail_message {
         $result = array();
         foreach ($this->users as $user) {
             $role = $this->role[$user->id];
-            if ($role != 'from' and (!$roles or in_array($role, $roles))) {
+            if ($role != 'from' && (!$roles || in_array($role, $roles))) {
                 $result[] = $user;
             }
         }
@@ -524,9 +524,9 @@ class local_mail_message {
     public function remove_label(local_mail_label $label) {
         global $DB;
         assert($this->has_user($label->userid()));
-        assert(!$this->draft or $this->role[$label->userid()] == 'from');
+        assert(!$this->draft || $this->role[$label->userid()] == 'from');
         assert($this->deleted($label->userid()) == LOCAL_MAIL_MESSAGE_VISIBLE
-            or $this->deleted($label->userid()) == LOCAL_MAIL_MESSAGE_INVISIBLE);
+            || $this->deleted($label->userid()) == LOCAL_MAIL_MESSAGE_INVISIBLE);
 
         if (isset($this->labels[$label->id()])) {
             $transaction = $DB->start_delegated_transaction();
@@ -559,8 +559,8 @@ class local_mail_message {
     public function reply($userid, $all=false, $time=false) {
         global $DB;
 
-        assert(!$this->draft and $this->has_recipient($userid));
-        assert(!$all or in_array($this->role[$userid], array('to', 'cc')));
+        assert(!$this->draft && $this->has_recipient($userid));
+        assert(!$all || in_array($this->role[$userid], array('to', 'cc')));
 
         if (preg_match('/^RE\s*(?:\[(\d+)\])?:\s*(.*)$/', $this->subject, $matches)) {
             $nreply = $matches[1] ? (int) $matches[1] + 1 : 2;
@@ -615,7 +615,7 @@ class local_mail_message {
         $context = context_course::instance($this->course->id);
         $content = file_rewrite_pluginfile_urls($content, 'pluginfile.php', $context->id,
                                                 'local_mail', 'message', $this->id);
-        $content = format_text($this->content, $format, ['filter' => false, 'nocache' => true]);
+        $content = format_text($this->content, $format, (object) ['filter' => false, 'nocache' => true]);
         $record->normalizedcontent = self::normalize_text(html_to_text($content, 0, false));
 
         $transaction = $DB->start_delegated_transaction();
@@ -630,7 +630,7 @@ class local_mail_message {
     public function send($time=false) {
         global $DB;
 
-        assert($this->draft and count($this->recipients()) > 0);
+        assert($this->draft && count($this->recipients()) > 0);
 
         $transaction = $DB->start_delegated_transaction();
 
@@ -677,7 +677,7 @@ class local_mail_message {
         global $DB;
 
         assert($this->has_user($userid));
-        assert(!$this->draft or $this->role[$userid] == 'from');
+        assert(!$this->draft || $this->role[$userid] == 'from');
 
         if ($this->deleted[$userid] == $value) {
             return;
@@ -716,7 +716,7 @@ class local_mail_message {
         global $DB;
 
         assert($this->has_user($userid));
-        assert(!$this->draft or $this->role[$userid] == 'from');
+        assert(!$this->draft || $this->role[$userid] == 'from');
         assert($this->deleted[$userid]);
 
         if ($this->deleted[$userid] == LOCAL_MAIL_MESSAGE_INVISIBLE) {
@@ -739,7 +739,7 @@ class local_mail_message {
         global $DB;
 
         assert($this->has_user($userid));
-        assert(!$this->draft or $this->role[$userid] == 'from');
+        assert(!$this->draft || $this->role[$userid] == 'from');
         assert(!$this->deleted($userid));
 
         if ($this->starred[$userid] == (bool) $value) {
@@ -766,7 +766,7 @@ class local_mail_message {
         global $DB;
 
         assert($this->has_user($userid));
-        assert(!$this->draft or $this->role[$userid] == 'from');
+        assert(!$this->draft || $this->role[$userid] == 'from');
 
         if ($this->unread[$userid] == (bool) $value) {
             return;
@@ -804,7 +804,7 @@ class local_mail_message {
 
         if ($this->has_user($userid)) {
             return ($this->deleted[$userid] != LOCAL_MAIL_MESSAGE_INVISIBLE
-                    and (!$this->draft or $this->role[$userid] == 'from'));
+                    && (!$this->draft || $this->role[$userid] == 'from'));
         }
 
         if ($includerefs) {

@@ -95,7 +95,7 @@ class mail_labels_form extends moodleform {
         $label = get_string('cancel');
         $buttonarray[] = $mform->createElement('submit', 'cancel', $label);
 
-        $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
+        $mform->addGroup($buttonarray, 'buttonar', '', ' ', false);
         $mform->closeHeaderBefore('buttonar');
     }
 }
