@@ -364,3 +364,41 @@ function local_mail_get_user_roleids($userid, $context) {
             return $role->roleid;
         }, $roles);
 }
+
+/**
+ * Returns the script tag for a svelte entry script.
+ *
+ * CSS files are included in the head.
+ * This function must be called before printing the head.
+ *
+ * @param $file Source file name, e.g. "src/view.ts"
+ */
+function local_mail_svelte_script(string $file): string {
+    global $CFG, $PAGE;
+
+    if (!empty($CFG->local_mail_devserver)) {
+        $jsurl = $CFG->local_mail_devserver . '/' . $file;
+    } else {
+        $manifestpath = $CFG->dirroot . '/local/mail/svelte/dist/manifest.json';
+        $manifest = json_decode(file_get_contents($manifestpath), true);
+        if (!$manifest) {
+            throw new coding_exception('local_mail: "svelte/dist/manifest.json" not found');
+        }
+        if (empty($manifest[$file])) {
+            throw new coding_exception('local_mail: invalid svelte script name "' . $file . '"');
+        }
+        $jsurl = $CFG->wwwroot . '/local/mail/dist/' . $manifest[$file]['file'];
+        $chunks = [$file => true];
+        while ($file = key($chunks)) {
+            foreach ($manifest[$file]['imports'] ?? [] as $jsfile) {
+                $chunks[$jsfile] = true;
+            }
+            foreach ($manifest[$file]['css'] ?? [] as $cssfile) {
+                $PAGE->requires->css('/local/mail/dist/' . $cssfile);
+            }
+            next($chunks);
+        }
+    }
+
+    return html_writer::tag('script', '', ['type' => 'module', 'src' => $jsurl]);
+}

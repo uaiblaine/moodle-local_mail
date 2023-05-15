@@ -22,6 +22,33 @@ https://docs.moodle.org/401/en/Installing_plugins
 
 ## Developement
 
+### Svelte
+
+The client side components are written using [Svelte](https://svelte.dev).
+
+To use the Svelte developement server you need to:
+
+1. Set this setting in `config.php`:
+   ```
+   $CFG->local_mail_devserver = 'http://localhost:5173';
+   ```
+
+2. Start the developement server with:
+   ```
+   cd local/mail/svelte
+   npm install
+   npm run dev
+   ```
+
+To build the code for production:
+```
+cd local/mail/svelte
+npm install
+npm run build
+```
+
+The production code is stored in `local/mail/dist`.
+
 ### Unit tests
 
 See: https://moodledev.io/general/development/tools/phpunit
