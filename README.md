@@ -43,6 +43,16 @@ php -dpcov.enabled=1 vendor/bin/phpunit -c local/mail \
     --coverage-html=local/mail/coverage
 ```
 
+## Test data generator
+
+This script generates random fake messages amongst users for testing.
+
+WARNING: The script deletes all existing mail data.
+
+```
+php local/mail/cli/generate.php
+```
+
 ## Copyright
 
 Copyright © 2012,2013 Institut Obert de Catalunya
