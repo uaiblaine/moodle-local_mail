@@ -23,6 +23,7 @@ $functions = array(
         'classpath' => 'local/mail/externallib.php',
         'description' => 'Get the number of unread messages.',
         'type' => 'read',
+        'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE, 'local_mobile'),
     ),
     'local_mail_get_menu' => array(
@@ -31,6 +32,7 @@ $functions = array(
         'classpath' => 'local/mail/externallib.php',
         'description' => 'Get the list of courses and labels and the number of unread messages.',
         'type' => 'read',
+        'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE, 'local_mobile'),
     ),
     'local_mail_get_index' => array(
@@ -39,6 +41,7 @@ $functions = array(
         'classpath' => 'local/mail/externallib.php',
         'description' => 'Get a list of messages from the index.',
         'type' => 'read',
+        'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE, 'local_mobile'),
     ),
     'local_mail_search_index' => array(
@@ -47,6 +50,7 @@ $functions = array(
         'classpath' => 'local/mail/externallib.php',
         'description' => 'Search messages from the index.',
         'type' => 'read',
+        'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE, 'local_mobile'),
     ),
     'local_mail_get_message' => array(
@@ -55,6 +59,7 @@ $functions = array(
         'classpath' => 'local/mail/externallib.php',
         'description' => 'Get the contents of a message.',
         'type' => 'read',
+        'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE, 'local_mobile'),
     ),
     'local_mail_set_unread' => array(
@@ -63,6 +68,7 @@ $functions = array(
         'classpath' => 'local/mail/externallib.php',
         'description' => 'Sets the unread status of a message.',
         'type' => 'write',
+        'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE, 'local_mobile'),
     ),
 );

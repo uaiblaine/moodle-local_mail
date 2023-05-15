@@ -387,7 +387,7 @@ function local_mail_svelte_script(string $file): string {
         if (empty($manifest[$file])) {
             throw new coding_exception('local_mail: invalid svelte script name "' . $file . '"');
         }
-        $jsurl = $CFG->wwwroot . '/local/mail/dist/' . $manifest[$file]['file'];
+        $jsurl = $CFG->wwwroot . '/local/mail/svelte/dist/' . $manifest[$file]['file'];
         $chunks = [$file => true];
         while ($file = key($chunks)) {
             foreach ($manifest[$file]['imports'] ?? [] as $jsfile) {
