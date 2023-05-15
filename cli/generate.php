@@ -229,7 +229,7 @@ function generate_random_reply(file_storage $fs, local_mail_message $message, in
     $reply = $message->reply($user->id, $all, $time);
     $attachments = random_count(0, ATTACHMENTS_EX, ATTACHMENTS_SD);
     $reply->save($reply->subject(), random_content(), FORMAT_HTML, $attachments);
-    add_random_attachments($fs, $message, $attachments);
+    add_random_attachments($fs, $reply, $attachments);
     return $reply;
 }
 
