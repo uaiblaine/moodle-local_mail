@@ -33,7 +33,7 @@ if ($courseid != SITEID) {
 }
 
 // Set up page.
-$url = new moodle_url('/local/mail/index.php', array('t' => $type));
+$url = new moodle_url('/local/mail/view2.php', array('t' => $type));
 if ($type == 'course') {
     $url->param('c', $courseid);
 }
@@ -43,7 +43,6 @@ if ($type == 'label') {
 $PAGE->set_url($url);
 $PAGE->set_context(context_system::instance());
 $PAGE->set_pagelayout('base');
-$PAGE->set_heading(get_string('pluginname', 'local_mail'));
 $PAGE->set_title(get_string('pluginname', 'local_mail'));
 
 $script = local_mail_svelte_script('src/view.ts');

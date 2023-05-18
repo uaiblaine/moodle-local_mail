@@ -1,191 +1,196 @@
 import { require } from './amd';
 
 export type ServiceRequest =
-    | GetUnreadCountRequest
+    | GetInfoRequest
     | GetMenuRequest
     | GetIndexRequest
     | SearchIndexRequest
     | GetMessageRequest
-    | SetUnreadRequest;
+    | SetUnreadRequest
+    | SetStarredRequest;
 
-export type ServiceResponse<T extends ServiceRequest> = T extends GetUnreadCountRequest
-    ? GetUnreadCountResponse
+export interface GetInfoRequest {
+    readonly methodname: 'get_info';
+}
+
+export interface GetMenuRequest {
+    readonly methodname: 'get_menu';
+}
+
+export interface GetIndexRequest {
+    readonly methodname: 'get_index';
+    readonly type: 'inbox' | 'drafts' | 'sent' | 'starred' | 'course' | 'label' | 'trash';
+    readonly itemid: number;
+    readonly offset: number;
+    readonly limit: number;
+}
+
+export interface SearchIndexRequest {
+    readonly methodname: 'search_index';
+    readonly type: 'inbox' | 'drafts' | 'sent' | 'starred' | 'course' | 'label' | 'trash';
+    readonly query: SearchQuery;
+}
+
+export interface SearchQuery {
+    readonly beforeid: number;
+    readonly afterid: number;
+    readonly content: string;
+    readonly sender: string;
+    readonly recipients: string;
+    readonly unread: boolean;
+    readonly attachments: boolean;
+    readonly time: number;
+    readonly limit: number;
+}
+
+export interface GetMessageRequest {
+    readonly methodname: 'get_message';
+    readonly id: number;
+}
+
+export interface SetUnreadRequest {
+    readonly methodname: 'set_unread';
+    readonly id: number;
+    readonly unread: boolean;
+}
+
+export interface SetStarredRequest {
+    readonly methodname: 'set_starred';
+    readonly id: number;
+    readonly starred: boolean;
+}
+
+export type ServiceResponse<T> = T extends GetInfoRequest
+    ? Info
     : T extends GetMenuRequest
-    ? GetMenuResponse
+    ? Menu
     : T extends GetIndexRequest
-    ? GetIndexResponse
+    ? MessageList
     : T extends SearchIndexRequest
-    ? SearchIndexResponse
+    ? MessageList
     : T extends GetMessageRequest
-    ? GetMessageResponse
+    ? Message
     : T extends SetUnreadRequest
-    ? SetUnreadResponse
+    ? void
+    : T extends SetStarredRequest
+    ? void
     : unknown;
 
-export type GetUnreadCountRequest = {
-    methodname: 'get_unread_count';
-};
+export interface Info {
+    readonly userid: number;
+    readonly preferences: Preferences;
+    readonly strings: Readonly<{ [id: string]: string }>;
+}
 
-export type GetUnreadCountResponse = number;
+export interface Menu {
+    readonly unread: number;
+    readonly drafts: number;
+    readonly courses: MenuCourse[];
+    readonly labels: MenuLabel[];
+}
 
-export type GetMenuRequest = {
-    methodname: 'get_menu';
-};
+export interface Preferences {
+    readonly perpage: number;
+    readonly markasread: boolean;
+}
 
-export type GetMenuResponse = {
-    unread: number;
-    drafts: number;
-    courses: MenuCourse[];
-    labels: MenuLabel[];
-};
+export interface MenuCourse extends Course {
+    readonly id: number;
+    readonly shortname: string;
+    readonly fullname: string;
+    readonly unread: number;
+    readonly visible: boolean;
+}
 
-export type MenuCourse = {
-    id: number;
-    shortname: string;
-    fullname: string;
-    unread: number;
-    visible: boolean;
-};
+export interface MenuLabel {
+    readonly id: number;
+    readonly name: string;
+    readonly color: string;
+    readonly unread: number;
+}
 
-export type MenuLabel = {
-    id: number;
-    name: string;
-    color: string;
-    unread: number;
-};
+export interface MessageList {
+    readonly totalcount: number;
+    readonly messages: ReadonlyArray<MessageListItem>;
+}
 
-export type GetIndexRequest = {
-    methodname: 'get_index';
-    type: 'inbox' | 'drafts' | 'sent' | 'starred' | 'course' | 'label' | 'trash';
-    itemid: number;
-    offset: number;
-    limit: number;
-};
+export interface MessageListItem {
+    readonly id: number;
+    readonly subject: string;
+    readonly attachments: number;
+    readonly draft: boolean;
+    readonly time: number;
+    readonly shorttime: string;
+    readonly fulltime: string;
+    readonly unread: boolean;
+    readonly starred: boolean;
+    readonly course: Course;
+    readonly sender: Sender;
+    readonly recipients: Recipient[];
+    readonly labels: MessageLabel[];
+}
 
-export type GetIndexResponse = {
-    totalcount: number;
-    messages: IndexMessage[];
-};
+export interface Course {
+    readonly id: number;
+    readonly shortname: string;
+    readonly fullname: string;
+}
 
-export type IndexMessage = {
-    id: number;
-    subject: string;
-    attachments: number;
-    draft: boolean;
-    time: number;
-    unread: boolean;
-    starred: boolean;
-    course: MessageCourse;
-    sender: Sender;
-    recipients: Recipient[];
-    labels: MessageLabel[];
-};
+export interface Sender {
+    readonly id: number;
+    readonly fullname: string;
+    readonly pictureurl: string;
+}
 
-export type MessageCourse = {
-    id: number;
-    shortname: string;
-};
+export interface Recipient {
+    readonly id: number;
+    readonly fullname: string;
+    readonly pictureurl: string;
+    readonly type: 'to' | 'cc' | 'bcc';
+}
 
-export type Sender = {
-    id: number;
-    fullname: string;
-    pictureurl: string;
-};
+export interface MessageLabel {
+    readonly id: number;
+    readonly name: string;
+    readonly color: string;
+}
 
-export type Recipient = {
-    id: number;
-    fullname: string;
-    pictureurl: string;
-    type: 'to' | 'cc' | 'bcc';
-};
+export interface Message {
+    readonly id: number;
+    readonly subject: string;
+    readonly content: string;
+    readonly format: number;
+    readonly draft: boolean;
+    readonly time: number;
+    readonly shorttime: string;
+    readonly fulltime: string;
+    readonly unread: boolean;
+    readonly starred: boolean;
+    readonly course: Course;
+    readonly sender: Sender;
+    readonly recipients: Recipient[];
+    readonly attachments: Attachment[];
+    readonly references: Reference[];
+    readonly labels: MessageLabel[];
+}
 
-export type MessageLabel = {
-    id: number;
-    name: string;
-    color: string;
-};
+export interface Reference {
+    readonly id: number;
+    readonly subject: string;
+    readonly content: string;
+    readonly format: number;
+    readonly time: number;
+    readonly shorttime: string;
+    readonly fulltime: string;
+    readonly sender: Sender;
+    readonly attachments: Attachment[];
+}
 
-export type SearchIndexRequest = {
-    methodname: 'search_index';
-    type: 'inbox' | 'drafts' | 'sent' | 'starred' | 'course' | 'label' | 'trash';
-    query: SearchQuery;
-};
-
-export type SearchQuery = {
-    beforeid: number;
-    afterid: number;
-    content: string;
-    sender: string;
-    recipients: string;
-    unread: boolean;
-    attachments: boolean;
-    time: number;
-    limit: number;
-};
-
-export type SearchIndexResponse = {
-    totalcount: number;
-    messages: IndexMessage[];
-};
-
-export type GetMessageRequest = {
-    methodname: 'get_message';
-    id: number;
-};
-
-export type GetMessageResponse = Message;
-
-export type Message = {
-    id: number;
-    subject: string;
-    content: string;
-    format: number;
-    draft: boolean;
-    time: number;
-    unread: boolean;
-    starred: boolean;
-    course: MessageCourse;
-    sender: Sender;
-    recipients: Recipient[];
-    attachments: Attachment[];
-    references: Reference[];
-    labels: MessageLabel[];
-};
-
-export type Reference = {
-    id: number;
-    subject: string;
-    content: string;
-    format: number;
-    time: number;
-    sender: Sender;
-    attachments: Attachment[];
-};
-
-export type Attachment = {
-    filename: string;
-    mimetype: string;
-    filesize: number;
-    fileurl: string;
-};
-
-export type SetUnreadRequest = {
-    methodname: 'set_unread';
-    id: number;
-    unread: boolean;
-};
-
-export type SetUnreadResponse = void;
-
-/**
- * Calls a web service method.
- *
- * @param request Request with method name and arguments.
- * @returns A promise to the web service response.
- */
-export async function call<T extends ServiceRequest>(request: T): Promise<ServiceResponse<T>> {
-    let responses = await callMany([request]);
-    return responses[0];
+export interface Attachment {
+    readonly filename: string;
+    readonly mimetype: string;
+    readonly filesize: number;
+    readonly fileurl: string;
 }
 
 /**
@@ -194,21 +199,23 @@ export async function call<T extends ServiceRequest>(request: T): Promise<Servic
  * @param requests List of request with method name and arguments.
  * @returns A promise to the web service responses.
  */
-export async function callMany<T extends ServiceRequest[]>(
+export async function callServices<T extends ServiceRequest[] | []>(
     requests: T,
 ): Promise<{ [P in keyof T]: ServiceResponse<T[P]> }> {
     let ajax = await require('core/ajax');
     try {
-        return (await Promise.all(
+        const responses = await Promise.all(
             ajax.call(
-                requests.map(({ methodname, ...args }) => ({
+                Array.from(requests).map(({ methodname, ...args }) => ({
                     methodname: `local_mail_${methodname}`,
                     args,
                 })),
             ),
-        )) as any;
+        );
+        return responses as { [P in keyof T]: ServiceResponse<T[P]> };
     } catch (error) {
         let notification = await require('core/notification');
         notification.exception(error);
+        throw error;
     }
 }
