@@ -184,14 +184,14 @@ function generate_course_messages(file_storage $fs, int $courseid, int $countper
             $transaction = $DB->start_delegated_transaction();
         }
         if ($i > 0 && random_bool(REPLY_FREQ)) {
-            $message = generate_random_reply($fs, random_item($sentmessages), $time);
+            $message = generate_random_reply($fs, random_item($sentmessages), (int) $time);
         } else if ($i > 0 && random_bool(FORWARD_FREQ / (1 - REPLY_FREQ))) {
-            $message = generate_random_forward(random_item($sentmessages), $userids, $time);
+            $message = generate_random_forward(random_item($sentmessages), $userids, (int) $time);
         } else {
-            $message = generate_random_message($fs, $courseid, $userids, $time);
+            $message = generate_random_message($fs, $courseid, $userids, (int) $time);
         }
         if ($i == 0 || !random_bool(DRAFT_FREQ)) {
-            $message->send($time);
+            $message->send((int) $time);
             $sentmessages[] = $message;
         }
         set_random_unread($message, $starttime, $endtime);
@@ -361,7 +361,7 @@ function set_random_deleted(local_mail_message $message): void {
     if (!$message->draft()) {
         $message->set_deleted($message->sender()->id, random_bool(DELETED_FREQ));
         foreach ($message->recipients() as $user) {
-            $message->set_starred($user->id, random_bool(DELETED_FREQ));
+            $message->set_deleted($user->id, random_bool(DELETED_FREQ));
         }
     }
 }
