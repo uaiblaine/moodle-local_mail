@@ -21,6 +21,43 @@ require_once("$CFG->dirroot/local/mail/locallib.php");
 
 class local_mail_external extends external_api {
 
+    public static function get_info_parameters() {
+        return new external_function_parameters([]);
+    }
+
+    public static function get_info_returns() {
+        foreach (self::string_identifiers() as $id) {
+            $stringkeys[$id] = new external_value(PARAM_RAW, 'Localized content of language string"' . $id . '"');
+        }
+        return new external_single_structure([
+            'userid' => new external_value(PARAM_INT, 'User id'),
+            'preferences' => new external_single_structure([
+                'perpage' => new external_value(PARAM_INT, 'Number of messages to display per page.'),
+                'markasread' => new external_value(PARAM_BOOL, 'Mark new messages as read if a notification is sent.'),
+            ]),
+            'strings' => new external_single_structure($stringkeys),
+        ]);
+    }
+
+    public static function get_info() {
+        global $USER;
+
+        self::validate_context(context_system::instance());
+
+        foreach (self::string_identifiers() as $id) {
+            $strings[$id] = get_string($id, 'local_mail');
+        }
+
+        return [
+            'userid' => $USER->id,
+            'preferences' => [
+                'perpage' => get_user_preferences('local_mail_mailsperpage', 10),
+                'markasread' => (bool) get_user_preferences('local_mail_markasread', 1),
+            ],
+            'strings' => $strings,
+        ];
+    }
+
     public static function get_unread_count_parameters() {
         return new external_function_parameters([]);
     }
@@ -122,11 +159,14 @@ class local_mail_external extends external_api {
                     'attachments' => new external_value(PARAM_INT, 'Number of attachments'),
                     'draft' => new external_value(PARAM_BOOL, 'Draft status'),
                     'time' => new external_value(PARAM_INT, 'Time of the message'),
+                    'shorttime' => new external_value(PARAM_TEXT, 'Formatted short time'),
+                    'fulltime' => new external_value(PARAM_TEXT, 'Formatted full time'),
                     'unread' => new external_value(PARAM_BOOL, 'Unread status'),
                     'starred' => new external_value(PARAM_BOOL, 'Starred status'),
                     'course' => new external_single_structure([
                         'id' => new external_value(PARAM_INT, 'Id of the course'),
                         'shortname' => new external_value(PARAM_TEXT, 'Short name of the course'),
+                        'fullname' => new external_value(PARAM_TEXT, 'Full name of the course'),
                     ]),
                     'sender' => new external_single_structure([
                         'id' => new external_value(PARAM_INT, 'Id of the user'),
@@ -213,11 +253,14 @@ class local_mail_external extends external_api {
                 'attachments' => $message->attachments(true),
                 'draft' => $message->draft(),
                 'time' => $message->time(),
+                'shorttime' => self::format_time($message->time()),
+                'fulltime' => self::format_time($message->time(), true),
                 'unread' => $message->unread($USER->id),
                 'starred' => $message->starred($USER->id),
                 'course' => [
                     'id' => $course->id,
                     'shortname' => $course->shortname,
+                    'fullname' => $course->fullname,
                 ],
                 'sender' => $sender,
                 'recipients' => $recipients,
@@ -265,11 +308,14 @@ class local_mail_external extends external_api {
                     'attachments' => new external_value(PARAM_INT, 'Number of attachments'),
                     'draft' => new external_value(PARAM_BOOL, 'Draft status'),
                     'time' => new external_value(PARAM_INT, 'Time of the message'),
+                    'shorttime' => new external_value(PARAM_TEXT, 'Formatted short time'),
+                    'fulltime' => new external_value(PARAM_TEXT, 'Formatted full time'),
                     'unread' => new external_value(PARAM_BOOL, 'Unread status'),
                     'starred' => new external_value(PARAM_BOOL, 'Starred status'),
                     'course' => new external_single_structure([
                         'id' => new external_value(PARAM_INT, 'Id of the course'),
                         'shortname' => new external_value(PARAM_TEXT, 'Short name of the course'),
+                        'fullname' => new external_value(PARAM_TEXT, 'Full name of the course'),
                     ]),
                     'sender' => new external_single_structure([
                         'id' => new external_value(PARAM_INT, 'Id of the user'),
@@ -385,11 +431,14 @@ class local_mail_external extends external_api {
                 'attachments' => $message->attachments(true),
                 'draft' => $message->draft(),
                 'time' => $message->time(),
+                'shorttime' => self::format_time($message->time()),
+                'fulltime' => self::format_time($message->time(), true),
                 'unread' => $message->unread($USER->id),
                 'starred' => $message->starred($USER->id),
                 'course' => [
                     'id' => $course->id,
                     'shortname' => $course->shortname,
+                    'fullname' => $course->fullname,
                 ],
                 'sender' => $sender,
                 'recipients' => $recipients,
@@ -414,11 +463,14 @@ class local_mail_external extends external_api {
             'format' => new external_format_value('Format of the message content'),
             'draft' => new external_value(PARAM_BOOL, 'Draft status'),
             'time' => new external_value(PARAM_INT, 'Time of the message'),
+            'shorttime' => new external_value(PARAM_TEXT, 'Formatted short time'),
+            'fulltime' => new external_value(PARAM_TEXT, 'Formatted full time'),
             'unread' => new external_value(PARAM_BOOL, 'Unread status'),
             'starred' => new external_value(PARAM_BOOL, 'Starred status'),
             'course' => new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'Id of the course'),
                 'shortname' => new external_value(PARAM_TEXT, 'Short name of the course'),
+                'fullname' => new external_value(PARAM_TEXT, 'Full name of the course'),
             ]),
             'sender' => new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'Id of the user'),
@@ -448,6 +500,8 @@ class local_mail_external extends external_api {
                     'content' => new external_value(PARAM_RAW, 'Content of the message'),
                     'format' => new external_format_value('Format of the message content'),
                     'time' => new external_value(PARAM_INT, 'Time of the message'),
+                    'shorttime' => new external_value(PARAM_TEXT, 'Formatted short time'),
+                    'fulltime' => new external_value(PARAM_TEXT, 'Formatted full time'),
                     'sender' => new external_single_structure([
                         'id' => new external_value(PARAM_INT, 'Id of the user'),
                         'fullname' => new external_value(PARAM_RAW, 'Full name of the user'),
@@ -498,11 +552,14 @@ class local_mail_external extends external_api {
             'format' => $format,
             'draft' => $message->draft(),
             'time' => $message->time(),
+            'shorttime' => self::format_time($message->time()),
+            'fulltime' => self::format_time($message->time(), true),
             'unread' => $message->unread($USER->id),
             'starred' => $message->starred($USER->id),
             'course' => [
                 'id' => $course->id,
                 'shortname' => $course->shortname,
+                'fullname' => $course->fullname,
             ],
             'sender' => [
                 'id' => $message->sender()->id,
@@ -566,6 +623,8 @@ class local_mail_external extends external_api {
                 'content' => $content,
                 'format' => $format,
                 'time' => $reference->time(),
+                'shorttime' => self::format_time($reference->time()),
+                'fulltime' => self::format_time($reference->time(), true),
                 'sender' => [
                     'id' => $reference->sender()->id,
                     'fullname' => fullname($reference->sender()),
@@ -612,6 +671,58 @@ class local_mail_external extends external_api {
         $message->set_unread($USER->id, $params['unread']);
 
         return null;
+    }
+
+    public static function set_starred_parameters() {
+        return new external_function_parameters([
+            'id' => new external_value(PARAM_INT, 'ID of the message'),
+            'starred' => new external_value(PARAM_BOOL, 'New starred status'),
+        ]);
+    }
+
+    public static function set_starred_returns() {
+        return null;
+    }
+
+    public static function set_starred($id, $starred) {
+        global $PAGE, $USER;
+
+        $params = ['id' => $id, 'starred' => $starred];
+        $params = self::validate_parameters(self::set_starred_parameters(), $params);
+
+        $message = local_mail_message::fetch($params['id']);
+
+        if (!$message || !$message->viewable($USER->id)) {
+            throw new moodle_exception('invalidmessage', 'local_mail');
+        }
+
+        $message->set_starred($USER->id, $params['starred']);
+
+        return null;
+    }
+
+    public static function format_time(int $timestamp, $forcefull = false): string {
+        $tz = core_date::get_user_timezone();
+        $date = new DateTime('now', new DateTimeZone($tz));
+        $offset = ($date->getOffset() - dst_offset_on(time(), $tz)) / (3600.0);
+        $time = ($offset < 13) ? $timestamp + $offset : $timestamp;
+        $now = ($offset < 13) ? time() + $offset : time();
+        $daysago = floor($now / 86400) - floor($time / 86400);
+        $yearsago = (int) date('Y', $now) - (int) date('Y', $time);
+
+        if ($forcefull) {
+            return  userdate($time, get_string('strftimedatetime', 'langconfig'));
+        } else if ($daysago == 0) {
+            return userdate($time, get_string('strftimetime'));
+        } else if ($yearsago == 0) {
+            return userdate($time, get_string('strftimedateshortmonthabbr', 'langconfig'));
+        } else {
+            return userdate($time, get_string('strftimedatefullshort', 'langconfig'));
+        }
+    }
+
+    public static function string_identifiers() {
+        return array_keys(\get_string_manager()->load_component_strings('local_mail', 'en'));
     }
 
     private static function user_picture_url($user) {

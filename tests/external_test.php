@@ -58,6 +58,27 @@ class external_test extends \advanced_testcase {
         $generator->enrol_user($this->user3->id, $this->course3->id);
     }
 
+    public function test_get_info() {
+        $this->setUser($this->user3->id);
+
+        set_user_preference('local_mail_mailsperpage', 20);
+        set_user_preference('local_mail_markasread', 1);
+
+        $result = \local_mail_external::get_info();
+
+        \external_api::validate_parameters(\local_mail_external::get_info_returns(), $result);
+
+        $this->assertEquals($this->user3->id, $result['userid']);
+        $preferences = [
+            'perpage' => 20,
+            'markasread' => true,
+        ];
+        $this->assertEquals($preferences, $result['preferences']);
+        foreach (\local_mail_external::string_identifiers() as $id) {
+            $this->assertEquals(get_string($id, 'local_mail'), $result['strings'][$id]);
+        }
+    }
+
     public function test_get_unread_count() {
         $this->setUser($this->user3->id);
 
@@ -162,7 +183,6 @@ class external_test extends \advanced_testcase {
         $this->setUser($this->user3->id);
 
         $label1 = \local_mail_label::create($this->user3->id, 'Label 1', 'red');
-        $label2 = \local_mail_label::create($this->user3->id, 'Label 2', 'blue');
 
         $message1 = \local_mail_message::create($this->user1->id, $this->course1->id);
         $message1->add_recipient('to', $this->user3->id);
@@ -418,11 +438,14 @@ class external_test extends \advanced_testcase {
             'format' => $expectedformat,
             'draft' => false,
             'time' => $message->time(),
+            'shorttime' => \local_mail_external::format_time($message->time()),
+            'fulltime' => \local_mail_external::format_time($message->time(), true),
             'unread' => false,
             'starred' => true,
             'course' => [
                 'id' => $this->course1->id,
                 'shortname' => $this->course1->shortname,
+                'fullname' => $this->course1->fullname,
             ],
             'sender' => [
                 'id' => $this->user1->id,
@@ -493,11 +516,14 @@ class external_test extends \advanced_testcase {
             'format' => $expectedformat,
             'draft' => false,
             'time' => $message->time(),
+            'shorttime' => \local_mail_external::format_time($message->time()),
+            'fulltime' => \local_mail_external::format_time($message->time(), true),
             'unread' => true,
             'starred' => false,
             'course' => [
                 'id' => $this->course1->id,
                 'shortname' => $this->course1->shortname,
+                'fullname' => $this->course1->fullname,
             ],
             'sender' => [
                 'id' => $this->user2->id,
@@ -533,11 +559,14 @@ class external_test extends \advanced_testcase {
             'format' => $expectedformat,
             'draft' => true,
             'time' => $message->time(),
+            'shorttime' => \local_mail_external::format_time($message->time()),
+            'fulltime' => \local_mail_external::format_time($message->time(), true),
             'unread' => false,
             'starred' => false,
             'course' => [
                 'id' => $this->course1->id,
                 'shortname' => $this->course1->shortname,
+                'fullname' => $this->course1->fullname,
             ],
             'sender' => [
                 'id' => $this->user1->id,
@@ -590,11 +619,14 @@ class external_test extends \advanced_testcase {
             'format' => $expectedformat4,
             'draft' => false,
             'time' => $message4->time(),
+            'shorttime' => \local_mail_external::format_time($message4->time()),
+            'fulltime' => \local_mail_external::format_time($message4->time(), true),
             'unread' => true,
             'starred' => false,
             'course' => [
                 'id' => $this->course1->id,
                 'shortname' => $this->course1->shortname,
+                'fullname' => $this->course1->fullname,
             ],
             'sender' => [
                 'id' => $this->user3->id,
@@ -614,6 +646,8 @@ class external_test extends \advanced_testcase {
                 'content' => $expectedcontent3,
                 'format' => $expectedformat3,
                 'time' => $message3->time(),
+                'shorttime' => \local_mail_external::format_time($message3->time()),
+                'fulltime' => \local_mail_external::format_time($message3->time(), true),
                 'sender' => [
                     'id' => $this->user4->id,
                     'fullname' => fullname($this->user4),
@@ -636,6 +670,8 @@ class external_test extends \advanced_testcase {
                 'content' => $expectedcontent2,
                 'format' => $expectedformat2,
                 'time' => $message2->time(),
+                'shorttime' => \local_mail_external::format_time($message2->time()),
+                'fulltime' => \local_mail_external::format_time($message2->time(), true),
                 'sender' => [
                     'id' => $this->user3->id,
                     'fullname' => fullname($this->user3),
@@ -648,6 +684,8 @@ class external_test extends \advanced_testcase {
                 'content' => $expectedcontent1,
                 'format' => $expectedformat1,
                 'time' => $message1->time(),
+                'shorttime' => \local_mail_external::format_time($message1->time()),
+                'fulltime' => \local_mail_external::format_time($message1->time(), true),
                 'sender' => [
                     'id' => $this->user2->id,
                     'fullname' => fullname($this->user2),
@@ -665,22 +703,18 @@ class external_test extends \advanced_testcase {
         $message->add_recipient('to', $this->user1->id);
 
         try {
-            $exception = null;
             \local_mail_external::get_message($message->id());
+            $this->fail();
         } catch (\moodle_exception $exception) {
-            $this->assertTrue(true);
-        } finally {
             $this->assertEquals(new \moodle_exception('invalidmessage', 'local_mail'), $exception);
         }
 
         // Invalid message.
 
         try {
-            $exception = null;
-            \local_mail_external::get_message(-1);
+            \local_mail_external::get_message('-1');
+            $this->fail();
         } catch (\moodle_exception $exception) {
-            $this->assertTrue(true);
-        } finally {
             $this->assertEquals(new \moodle_exception('invalidmessage', 'local_mail'), $exception);
         }
     }
@@ -729,22 +763,88 @@ class external_test extends \advanced_testcase {
         $message->add_recipient('to', $this->user1->id);
 
         try {
-            $exception = null;
             \local_mail_external::set_unread($message->id(), '0');
+            $this->fail();
         } catch (\moodle_exception $exception) {
-            $this->assertTrue(true);
-        } finally {
             $this->assertEquals(new \moodle_exception('invalidmessage', 'local_mail'), $exception);
         }
 
         // Invalid message.
 
         try {
-            $exception = null;
-            \local_mail_external::set_unread(-1, '1');
+            \local_mail_external::set_unread('-1', '1');
+            $this->fail();
         } catch (\moodle_exception $exception) {
-            $this->assertTrue(true);
-        } finally {
+            $this->assertEquals(new \moodle_exception('invalidmessage', 'local_mail'), $exception);
+        }
+    }
+
+    public function test_set_starred() {
+        $this->setUser($this->user1->id);
+
+        // Message from the user.
+
+        $message = \local_mail_message::create($this->user1->id, $this->course1->id);
+        $message->save('Subject 1', 'Content 1', FORMAT_HTML);
+        $message->add_recipient('to', $this->user2->id);
+        $message->send();
+
+        $result = \local_mail_external::set_starred($message->id(), true);
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $result = \local_mail_external::set_starred($message->id(), false);
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertFalse($message->starred($this->user1->id));
+
+        // Message sent to the user.
+
+        $message = \local_mail_message::create($this->user2->id, $this->course1->id);
+        $message->save('Subject 2', 'Content 2', FORMAT_HTML);
+        $message->add_recipient('to', $this->user1->id);
+        $message->send();
+
+        $result = \local_mail_external::set_starred($message->id(), '0');
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertFalse($message->starred($this->user1->id));
+
+        $result = \local_mail_external::set_starred($message->id(), '1');
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        // Draft from the user.
+
+        $message = \local_mail_message::create($this->user1->id, $this->course1->id);
+        $message->save('Subject 1', 'Content 1', FORMAT_HTML);
+        $message->add_recipient('to', $this->user2->id);
+
+        $result = \local_mail_external::set_starred($message->id(), true);
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $result = \local_mail_external::set_starred($message->id(), false);
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertFalse($message->starred($this->user1->id));
+
+        // Draft to the user (no permission).
+
+        $message = \local_mail_message::create($this->user2->id, $this->course1->id);
+        $message->save('Subject 2', 'Content 2', FORMAT_HTML);
+        $message->add_recipient('to', $this->user1->id);
+
+        try {
+            \local_mail_external::set_starred($message->id(), '0');
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('invalidmessage', 'local_mail'), $exception);
+        }
+
+        // Invalid message.
+
+        try {
+            \local_mail_external::set_starred('-1', '1');
+            $this->fail();
+        } catch (\moodle_exception $exception) {
             $this->assertEquals(new \moodle_exception('invalidmessage', 'local_mail'), $exception);
         }
     }
@@ -821,11 +921,14 @@ class external_test extends \advanced_testcase {
                 'attachments' => $message->attachments(true),
                 'draft' => $message->draft(),
                 'time' => $message->time(),
+                'shorttime' => \local_mail_external::format_time($message->time()),
+                'fulltime' => \local_mail_external::format_time($message->time(), true),
                 'unread' => $message->unread($USER->id),
                 'starred' => $message->starred($USER->id),
                 'course' => [
                     'id' => $message->course()->id,
                     'shortname' => $message->course()->shortname,
+                    'fullname' => $message->course()->fullname,
                 ],
                 'sender' => $sender,
                 'recipients' => $recipients,

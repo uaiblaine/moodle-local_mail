@@ -17,6 +17,15 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = array(
+    'local_mail_get_info' => array(
+        'classname' => 'local_mail_external',
+        'methodname' => 'get_info',
+        'classpath' => 'local/mail/externallib.php',
+        'description' => 'Get settings and user preferences.',
+        'type' => 'read',
+        'ajax' => true,
+        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE, 'local_mobile'),
+    ),
     'local_mail_get_unread_count' => array(
         'classname' => 'local_mail_external',
         'methodname' => 'get_unread_count',
@@ -67,6 +76,15 @@ $functions = array(
         'methodname' => 'set_unread',
         'classpath' => 'local/mail/externallib.php',
         'description' => 'Sets the unread status of a message.',
+        'type' => 'write',
+        'ajax' => true,
+        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE, 'local_mobile'),
+    ),
+    'local_mail_set_starred' => array(
+        'classname' => 'local_mail_external',
+        'methodname' => 'set_starred',
+        'classpath' => 'local/mail/externallib.php',
+        'description' => 'Sets the starred status of a message.',
         'type' => 'write',
         'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE, 'local_mobile'),
