@@ -194,7 +194,7 @@ class local_mail_external extends external_api {
     }
 
     public static function get_index($type, $itemid, $offset, $limit) {
-        global $PAGE, $USER;
+        global $USER;
 
         $params = ['type' => $type, 'itemid' => $itemid, 'offset' => $offset, 'limit' => $limit];
         $params = self::validate_parameters(self::get_index_parameters(), $params);
@@ -223,7 +223,7 @@ class local_mail_external extends external_api {
             $sender = [
                 'id' => $sender->id,
                 'fullname' => fullname($sender),
-                'pictureurl' => $userpicture->get_url($PAGE)->out(false),
+                'pictureurl' => self::user_picture_url($sender),
             ];
             $recipients = [];
             foreach (['to', 'cc'] as $type) {
@@ -234,7 +234,7 @@ class local_mail_external extends external_api {
                         'type' => $type,
                         'id' => $user->id,
                         'fullname' => fullname($user),
-                        'pictureurl' => $userpicture->get_url($PAGE)->out(false),
+                        'pictureurl' => self::user_picture_url($user),
                     ];
                 }
             }
@@ -343,7 +343,7 @@ class local_mail_external extends external_api {
     }
 
     public static function search_index($type, $itemid, $query) {
-        global $PAGE, $USER;
+        global $USER;
 
         $params = ['type' => $type, 'itemid' => $itemid, 'query' => $query];
         $params = self::validate_parameters(self::search_index_parameters(), $params);
@@ -401,7 +401,7 @@ class local_mail_external extends external_api {
             $sender = [
                 'id' => $sender->id,
                 'fullname' => fullname($sender),
-                'pictureurl' => $userpicture->get_url($PAGE)->out(false),
+                'pictureurl' => self::user_picture_url($sender),
             ];
             $recipients = [];
             foreach (['to', 'cc'] as $type) {
@@ -412,7 +412,7 @@ class local_mail_external extends external_api {
                         'type' => $type,
                         'id' => $user->id,
                         'fullname' => fullname($user),
-                        'pictureurl' => $userpicture->get_url($PAGE)->out(false),
+                        'pictureurl' => self::user_picture_url($user),
                     ];
                 }
             }
@@ -528,7 +528,7 @@ class local_mail_external extends external_api {
     }
 
     public static function get_message($id) {
-        global $PAGE, $USER;
+        global $USER;
 
         $params = ['id' => $id];
         $params = self::validate_parameters(self::get_message_parameters(), $params);
@@ -647,7 +647,7 @@ class local_mail_external extends external_api {
 
     public static function set_unread_parameters() {
         return new external_function_parameters([
-            'id' => new external_value(PARAM_INT, 'ID of the message'),
+            'messageid' => new external_value(PARAM_INT, 'ID of the message'),
             'unread' => new external_value(PARAM_BOOL, 'New unread status'),
         ]);
     }
@@ -656,13 +656,13 @@ class local_mail_external extends external_api {
         return null;
     }
 
-    public static function set_unread($id, $unread) {
-        global $PAGE, $USER;
+    public static function set_unread($messageid, $unread) {
+        global $USER;
 
-        $params = ['id' => $id, 'unread' => $unread];
+        $params = ['messageid' => $messageid, 'unread' => $unread];
         $params = self::validate_parameters(self::set_unread_parameters(), $params);
 
-        $message = local_mail_message::fetch($params['id']);
+        $message = local_mail_message::fetch($params['messageid']);
 
         if (!$message || !$message->viewable($USER->id)) {
             throw new moodle_exception('invalidmessage', 'local_mail');
@@ -675,7 +675,7 @@ class local_mail_external extends external_api {
 
     public static function set_starred_parameters() {
         return new external_function_parameters([
-            'id' => new external_value(PARAM_INT, 'ID of the message'),
+            'messageid' => new external_value(PARAM_INT, 'ID of the message'),
             'starred' => new external_value(PARAM_BOOL, 'New starred status'),
         ]);
     }
@@ -684,19 +684,207 @@ class local_mail_external extends external_api {
         return null;
     }
 
-    public static function set_starred($id, $starred) {
-        global $PAGE, $USER;
+    public static function set_starred($messageid, $starred) {
+        global $USER;
 
-        $params = ['id' => $id, 'starred' => $starred];
+        $params = ['messageid' => $messageid, 'starred' => $starred];
         $params = self::validate_parameters(self::set_starred_parameters(), $params);
 
-        $message = local_mail_message::fetch($params['id']);
+        $message = local_mail_message::fetch($params['messageid']);
 
         if (!$message || !$message->viewable($USER->id)) {
             throw new moodle_exception('invalidmessage', 'local_mail');
         }
 
         $message->set_starred($USER->id, $params['starred']);
+
+        return null;
+    }
+
+    public static function set_deleted_parameters() {
+        return new external_function_parameters([
+            'messageid' => new external_value(PARAM_INT, 'ID of the message'),
+            'deleted' => new external_value(PARAM_INT,
+                'New deleted status: 0 (not deleted), 1 (moved to trash), 2 (deleted from trash)'),
+        ]);
+    }
+
+    public static function set_deleted_returns() {
+        return null;
+    }
+
+    public static function set_deleted($messageid, $deleted) {
+        global $USER;
+
+        $params = ['messageid' => $messageid, 'deleted' => $deleted];
+        $params = self::validate_parameters(self::set_deleted_parameters(), $params);
+
+        $message = local_mail_message::fetch($params['messageid']);
+
+        if (!$message || !$message->viewable($USER->id)) {
+            throw new moodle_exception('invalidmessage', 'local_mail');
+        }
+
+        $message->set_deleted($USER->id, $params['deleted']);
+
+        return null;
+    }
+
+
+    public static function create_label_parameters() {
+        $colors = implode(', ',  \local_mail_label::valid_colors());
+        return new external_function_parameters([
+            'name' => new external_value(PARAM_TEXT, 'Name of the label.'),
+            'color' => new external_value(PARAM_ALPHA, "Color of the label. Valid values: $colors.", VALUE_DEFAULT, ''),
+        ]);
+    }
+
+    public static function create_label_returns() {
+        return new external_value(PARAM_INT, 'ID of the label');
+    }
+
+    public static function create_label($name, $color = '') {
+        global $USER;
+
+        $params = ['name' => $name, 'color' => $color];
+        $params = self::validate_parameters(self::create_label_parameters(), $params);
+
+        $normalizedname = \local_mail_label::nromalized_name($params['name']);
+        if (strlen($normalizedname) == 0) {
+            throw new moodle_exception('erroremptylabelname', 'local_mail');
+        }
+
+        $labels = \local_mail_label::fetch_user($USER->id);
+        foreach ($labels as $label) {
+            if ($label->name() == $normalizedname) {
+                throw new moodle_exception('errorrepeatedlabelname', 'local_mail');
+            }
+        }
+
+        if ($params['color'] && !in_array($params['color'], \local_mail_label::valid_colors())) {
+            throw new moodle_exception('errorinvalidcolor', 'local_mail');
+        }
+
+        $label = \local_mail_label::create($USER->id, $normalizedname, $params['color']);
+
+        return $label->id();
+    }
+
+    public static function update_label_parameters() {
+        $colors = implode(', ',  \local_mail_label::valid_colors());
+        return new external_function_parameters([
+            'labelid' => new external_value(PARAM_INT, 'ID of the label'),
+            'name' => new external_value(PARAM_TEXT, 'Name of the label.'),
+            'color' => new external_value(PARAM_ALPHA, "Color of the label. Valid values: $colors.", VALUE_DEFAULT, ''),
+        ]);
+    }
+
+    public static function update_label_returns() {
+        return null;
+    }
+
+    public static function update_label($labelid, $name, $color = '') {
+        global $USER;
+
+        $params = ['labelid' => $labelid, 'name' => $name, 'color' => $color];
+        $params = self::validate_parameters(self::update_label_parameters(), $params);
+
+        $label = \local_mail_label::fetch($params['labelid']);
+        if (!$label || $label->userid() != $USER->id) {
+            throw new moodle_exception('invalidlabel', 'local_mail');
+        }
+
+        $normalizedname = \local_mail_label::nromalized_name($params['name']);
+        if (strlen($normalizedname) == 0) {
+            throw new moodle_exception('erroremptylabelname', 'local_mail');
+        }
+
+        $userlabels = \local_mail_label::fetch_user($USER->id);
+        foreach ($userlabels as $userlabel) {
+            if ($userlabel->id() != $params['labelid'] && $userlabel->name() == $normalizedname) {
+                throw new moodle_exception('errorrepeatedlabelname', 'local_mail');
+            }
+        }
+
+        if ($params['color'] && !in_array($params['color'], \local_mail_label::valid_colors())) {
+            throw new moodle_exception('errorinvalidcolor', 'local_mail');
+        }
+
+        $label->save($normalizedname, $params['color']);
+
+        return null;
+    }
+
+    public static function delete_label_parameters() {
+        return new external_function_parameters([
+            'labelid' => new external_value(PARAM_INT, 'ID of the label'),
+        ]);
+    }
+
+    public static function delete_label_returns() {
+        return null;
+    }
+
+    public static function delete_label($labelid) {
+        global $USER;
+
+        $params = ['labelid' => $labelid];
+        $params = self::validate_parameters(self::delete_label_parameters(), $params);
+
+        $label = \local_mail_label::fetch($params['labelid']);
+        if (!$label || $label->userid() != $USER->id) {
+            throw new moodle_exception('invalidlabel', 'local_mail');
+        }
+
+        $label->delete();
+
+        return null;
+    }
+
+    public static function set_labels_parameters() {
+        return new external_function_parameters([
+            'messageid' => new external_value(PARAM_INT, 'ID of the message'),
+            'labelids' => new external_multiple_structure(
+                new external_value(PARAM_INT,
+                    'ID of a label'),
+                )
+            ]);
+    }
+
+    public static function set_labels_returns() {
+        return null;
+    }
+
+    public static function set_labels($messageid, $labelids) {
+        global $USER;
+
+        $params = ['messageid' => $messageid, 'labelids' => $labelids];
+        $params = self::validate_parameters(self::set_labels_parameters(), $params);
+
+        $message = local_mail_message::fetch($params['messageid']);
+
+        if (!$message || !$message->viewable($USER->id)) {
+            throw new moodle_exception('invalidmessage', 'local_mail');
+        }
+
+        $userlabels = [];
+        foreach (local_mail_label::fetch_user($USER->id) as $label) {
+            $userlabels[$label->id()] = $label;
+        }
+
+        foreach ($params['labelids'] as $labelid) {
+            if (!isset($userlabels[$labelid])) {
+                throw new moodle_exception('invalidlabel', 'local_mail');
+            }
+        }
+
+        foreach ($userlabels as $label) {
+            if (in_array($label->id(), $params['labelids'])) {
+                $message->add_label($label);
+            } else {
+                $message->remove_label($label);
+            }
+        }
 
         return null;
     }

@@ -855,6 +855,379 @@ class external_test extends \advanced_testcase {
         }
     }
 
+    public function test_set_deleted() {
+        $this->setUser($this->user1->id);
+
+        // Message from the user.
+
+        $message = \local_mail_message::create($this->user1->id, $this->course1->id);
+        $message->save('Subject 1', 'Content 1', FORMAT_HTML);
+        $message->add_recipient('to', $this->user2->id);
+        $message->send();
+
+        $result = \local_mail_external::set_deleted($message->id(), '1');
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertEquals(\local_mail_message::DELETED, $message->deleted($this->user1->id));
+
+        $result = \local_mail_external::set_deleted($message->id(), '0');
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertEquals(\local_mail_message::NOT_DELETED, $message->deleted($this->user1->id));
+
+        $result = \local_mail_external::set_deleted($message->id(), '2');
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertEquals(\local_mail_message::PERMANENTLY_DELETED, $message->deleted($this->user1->id));
+
+        try {
+            \local_mail_external::set_deleted($message->id(), '0');
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('invalidmessage', 'local_mail'), $exception);
+        }
+
+        // Message sent to the user.
+
+        $message = \local_mail_message::create($this->user2->id, $this->course1->id);
+        $message->save('Subject 2', 'Content 2', FORMAT_HTML);
+        $message->add_recipient('to', $this->user1->id);
+        $message->send();
+
+        $result = \local_mail_external::set_deleted($message->id(), '1');
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertEquals(\local_mail_message::DELETED, $message->deleted($this->user1->id));
+
+        $result = \local_mail_external::set_deleted($message->id(), '0');
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertEquals(\local_mail_message::NOT_DELETED, $message->deleted($this->user1->id));
+
+        $result = \local_mail_external::set_deleted($message->id(), '2');
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertEquals(\local_mail_message::PERMANENTLY_DELETED, $message->deleted($this->user1->id));
+
+        try {
+            \local_mail_external::set_deleted($message->id(), '0');
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('invalidmessage', 'local_mail'), $exception);
+        }
+
+        // Draft from the user.
+
+        $message = \local_mail_message::create($this->user1->id, $this->course1->id);
+        $message->save('Subject 1', 'Content 1', FORMAT_HTML);
+        $message->add_recipient('to', $this->user2->id);
+
+        $result = \local_mail_external::set_deleted($message->id(), '1');
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertEquals(\local_mail_message::DELETED, $message->deleted($this->user1->id));
+
+        $result = \local_mail_external::set_deleted($message->id(), '0');
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertEquals(\local_mail_message::NOT_DELETED, $message->deleted($this->user1->id));
+
+        $result = \local_mail_external::set_deleted($message->id(), '2');
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertFalse($message);
+
+        // Draft to the user (no permission).
+
+        $message = \local_mail_message::create($this->user2->id, $this->course1->id);
+        $message->save('Subject 2', 'Content 2', FORMAT_HTML);
+        $message->add_recipient('to', $this->user1->id);
+
+        try {
+            \local_mail_external::set_deleted($message->id(), '1');
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('invalidmessage', 'local_mail'), $exception);
+        }
+
+        // Invalid message.
+
+        try {
+            \local_mail_external::set_deleted('-1', '1');
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('invalidmessage', 'local_mail'), $exception);
+        }
+    }
+
+    public function test_create_label() {
+        $this->setUser($this->user1->id);
+
+        $result = \local_mail_external::create_label('Label 1', 'blue');
+
+        \external_api::validate_parameters(\local_mail_external::create_label_returns(), $result);
+        $label = \local_mail_label::fetch($result);
+        $this->assertNotFalse($label);
+        $this->assertEquals($this->user1->id, $label->userid());
+        $this->assertEquals('Label 1', $label->name());
+        $this->assertEquals('blue', $label->color());
+
+        // Empty color.
+
+        $result = \local_mail_external::create_label('Label 2');
+
+        \external_api::validate_parameters(\local_mail_external::create_label_returns(), $result);
+        $label = \local_mail_label::fetch($result);
+        $this->assertNotFalse($label);
+        $this->assertEquals($this->user1->id, $label->userid());
+        $this->assertEquals('Label 2', $label->name());
+        $this->assertEquals('', $label->color());
+
+        // Empty name.
+
+        try {
+            \local_mail_external::create_label('', 'blue');
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('erroremptylabelname', 'local_mail'), $exception);
+        }
+
+        // Duplicated name.
+
+        try {
+            \local_mail_external::create_label('Label 1', 'blue');
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('errorrepeatedlabelname', 'local_mail'), $exception);
+        }
+
+        // Invalid color.
+
+        try {
+            \local_mail_external::create_label('Label 3', 'invalid');
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('errorinvalidcolor', 'local_mail'), $exception);
+        }
+    }
+
+    public function test_update_label() {
+        $this->setUser($this->user1->id);
+        $label1 = \local_mail_label::create($this->user1->id, 'Label 1', 'blue');
+        $label2 = \local_mail_label::create($this->user1->id, 'Label 2', 'red');
+        $label3 = \local_mail_label::create($this->user2->id, 'Label 3', 'black');
+
+        $result = \local_mail_external::update_label($label1->id(), 'Updated 1', 'green');
+
+        $this->assertNull($result);
+        $label1 = \local_mail_label::fetch($label1->id());
+        $this->assertEquals($this->user1->id, $label1->userid());
+        $this->assertEquals('Updated 1', $label1->name());
+        $this->assertEquals('green', $label1->color());
+
+        // Unchaged name.
+
+        $result = \local_mail_external::update_label($label1->id(), 'Updated 1', 'yellow');
+
+        $this->assertNull($result);
+        $label1 = \local_mail_label::fetch($label1->id());
+        $this->assertEquals($this->user1->id, $label1->userid());
+        $this->assertEquals('Updated 1', $label1->name());
+        $this->assertEquals('yellow', $label1->color());
+
+        // Empty color.
+
+        $result = \local_mail_external::update_label($label1->id(), 'Label 1');
+
+        $this->assertNull($result);
+        $label1 = \local_mail_label::fetch($label1->id());
+        $this->assertEquals($this->user1->id, $label1->userid());
+        $this->assertEquals('Label 1', $label1->name());
+        $this->assertEquals('', $label1->color());
+
+        // Invalid label.
+
+        try {
+            \local_mail_external::update_label('-1', 'Label 1', 'blue');
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('invalidlabel', 'local_mail'), $exception);
+        }
+
+        // Label of another user.
+
+        try {
+            \local_mail_external::update_label($label3->id(), 'Label 3', 'black');
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('invalidlabel', 'local_mail'), $exception);
+        }
+
+        // Empty name.
+
+        try {
+            \local_mail_external::update_label($label1->id(), '', 'blue');
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('erroremptylabelname', 'local_mail'), $exception);
+        }
+
+        // Duplicated name.
+
+        try {
+            \local_mail_external::update_label($label1->id(), 'Label 2', 'blue');
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('errorrepeatedlabelname', 'local_mail'), $exception);
+        }
+
+        // Invalid color.
+
+        try {
+            \local_mail_external::update_label($label1->id(), 'Label 1', 'invalid');
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('errorinvalidcolor', 'local_mail'), $exception);
+        }
+    }
+
+
+    public function test_delete_label() {
+        $this->setUser($this->user1->id);
+        $label1 = \local_mail_label::create($this->user1->id, 'Label 1', 'blue');
+        $label2 = \local_mail_label::create($this->user2->id, 'Label 2', 'red');
+
+        $result = \local_mail_external::delete_label($label1->id());
+
+        $this->assertNull($result);
+        $label1 = \local_mail_label::fetch($label1->id());
+        $this->assertFalse($label1);
+
+        // Invalid label.
+
+        try {
+            \local_mail_external::delete_label('-1');
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('invalidlabel', 'local_mail'), $exception);
+        }
+
+        // Label of another user.
+
+        try {
+            \local_mail_external::delete_label($label2->id());
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('invalidlabel', 'local_mail'), $exception);
+        }
+    }
+
+    public function test_set_labels() {
+        $this->setUser($this->user1->id);
+        $label1 = \local_mail_label::create($this->user1->id, 'Label 1');
+        $label2 = \local_mail_label::create($this->user1->id, 'Label 2');
+        $label3 = \local_mail_label::create($this->user1->id, 'Label 3');
+        $label4 = \local_mail_label::create($this->user2->id, 'Label 4');
+
+        // Message from the user.
+
+        $message = \local_mail_message::create($this->user1->id, $this->course1->id);
+        $message->save('Subject 1', 'Content 1', FORMAT_HTML);
+        $message->add_recipient('to', $this->user2->id);
+        $message->send();
+
+        $result = \local_mail_external::set_labels($message->id(), [$label1->id(), $label2->id()]);
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertEquals([$label1, $label2], $message->labels($this->user1->id));
+
+        $result = \local_mail_external::set_labels($message->id(), [$label2->id(), $label3->id()]);
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertEquals([$label2, $label3], $message->labels($this->user1->id));
+
+        // Message sent to the user.
+
+        $message = \local_mail_message::create($this->user2->id, $this->course1->id);
+        $message->save('Subject 2', 'Content 2', FORMAT_HTML);
+        $message->add_recipient('to', $this->user1->id);
+        $message->send();
+
+        $result = \local_mail_external::set_labels($message->id(), [$label1->id(), $label2->id()]);
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertEquals([$label1, $label2], $message->labels($this->user1->id));
+
+        $result = \local_mail_external::set_labels($message->id(), [$label2->id(), $label3->id()]);
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertEquals([$label2, $label3], $message->labels($this->user1->id));
+
+        // Draft from the user.
+
+        $message = \local_mail_message::create($this->user1->id, $this->course1->id);
+        $message->save('Subject 1', 'Content 1', FORMAT_HTML);
+        $message->add_recipient('to', $this->user2->id);
+
+        $result = \local_mail_external::set_labels($message->id(), [$label1->id(), $label2->id()]);
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertEquals([$label1, $label2], $message->labels($this->user1->id));
+
+        $result = \local_mail_external::set_labels($message->id(), [$label2->id(), $label3->id()]);
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertEquals([$label2, $label3], $message->labels($this->user1->id));
+
+        // Draft to the user (no permission).
+
+        $message = \local_mail_message::create($this->user2->id, $this->course1->id);
+        $message->save('Subject 2', 'Content 2', FORMAT_HTML);
+        $message->add_recipient('to', $this->user1->id);
+
+        try {
+            $result = \local_mail_external::set_labels($message->id(), [$label1->id(), $label2->id()]);
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('invalidmessage', 'local_mail'), $exception);
+        }
+
+        // Label of another user.
+
+        $message = \local_mail_message::create($this->user2->id, $this->course1->id);
+        $message->save('Subject 2', 'Content 2', FORMAT_HTML);
+        $message->add_recipient('to', $this->user1->id);
+        $message->send();
+        try {
+            \local_mail_external::set_labels($message->id(), [$label4->id()]);
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('invalidlabel', 'local_mail'), $exception);
+        }
+
+        // Invalid label.
+
+        $message = \local_mail_message::create($this->user2->id, $this->course1->id);
+        $message->save('Subject 2', 'Content 2', FORMAT_HTML);
+        $message->add_recipient('to', $this->user1->id);
+        $message->send();
+        try {
+            \local_mail_external::set_labels($message->id(), ['-1']);
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('invalidlabel', 'local_mail'), $exception);
+        }
+
+        // Invalid message.
+
+        try {
+            \local_mail_external::set_labels('-1', ['1']);
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \moodle_exception('invalidmessage', 'local_mail'), $exception);
+        }
+    }
+
     private function attachment_url($message, $filename) {
         $context = \context_course::instance($message->course()->id);
         $url = \moodle_url::make_webservice_pluginfile_url($context->id, 'local_mail', 'message', $message->id(), '/', $filename);

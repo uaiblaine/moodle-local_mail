@@ -121,4 +121,14 @@ class label_test extends testcase {
         $this->assertEquals('green', $label->color());
         $this->assert_label($label);
     }
+
+    public function test_normalized_name() {
+        $this->assertEquals('', \local_mail_label::nromalized_name(''));
+        $this->assertEquals('word', \local_mail_label::nromalized_name('word'));
+        $this->assertEquals('multiple words', \local_mail_label::nromalized_name('multiple words'));
+        $this->assertEquals('collapse space', \local_mail_label::nromalized_name('collapse     space'));
+        $this->assertEquals('replace line breaks', \local_mail_label::nromalized_name("replace\nline\rbreaks"));
+        $this->assertEquals('replace tab character', \local_mail_label::nromalized_name("replace\ttab\tcharacter"));
+        $this->assertEquals('trim text', \local_mail_label::nromalized_name('  trim text  '));
+    }
 }

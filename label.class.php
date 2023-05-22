@@ -32,12 +32,12 @@ class local_mail_label {
         global $DB;
 
         assert($userid > 0);
-        assert(strlen($name) > 0);
+        assert(strlen(self::nromalized_name($name)) > 0);
         assert(!$color || in_array($color, self::valid_colors()));
 
         $record = new stdClass;
         $record->userid = $userid;
-        $record->name = $name;
+        $record->name = self::nromalized_name($name);
         $record->color = $color;
 
         $record->id = $DB->insert_record('local_mail_labels', $record);
@@ -67,6 +67,8 @@ class local_mail_label {
             $result[] = self::from_record($record);
         }
 
+        core_collator::asort_objects_by_method($result, 'name', core_collator::SORT_NATURAL);
+
         return $result;
     }
 
@@ -74,9 +76,13 @@ class local_mail_label {
         $label = new self;
         $label->id = (int) $record->id;
         $label->userid = (int) $record->userid;
-        $label->name = $record->name;
+        $label->name = self::nromalized_name($record->name);
         $label->color = $record->color;
         return $label;
+    }
+
+    public static function nromalized_name($name) {
+        return preg_replace('/\s+/u', ' ', trim($name));
     }
 
     public static function valid_colors() {
@@ -115,11 +121,11 @@ class local_mail_label {
         global $DB;
 
         assert(!$color || in_array($color, self::valid_colors()));
-        assert(strlen($name) > 0);
+        assert(strlen(self::nromalized_name($name)) > 0);
 
         $record = new stdClass;
         $record->id = $this->id;
-        $record->name = $this->name = $name;
+        $record->name = $this->name = self::nromalized_name($name);
         $record->color = $this->color = $color;
 
         $DB->update_record('local_mail_labels', $record);
