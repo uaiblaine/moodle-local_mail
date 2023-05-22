@@ -287,7 +287,7 @@ class external_test extends \advanced_testcase {
         $message9->save('Subject 9', 'Content 9', FORMAT_HTML, 0);
         $message9->add_recipient('to', $this->user3->id);
         $message9->send(1470000007);
-        $message9->set_deleted($this->user3->id, true);
+        $message9->set_deleted($this->user3->id, \local_mail_message::DELETED);
 
         $message10 = \local_mail_message::create($this->user3->id, $this->course2->id);
         $message10->save('Subject 10', 'Content 10', FORMAT_HTML, 0);
@@ -729,12 +729,12 @@ class external_test extends \advanced_testcase {
         $message->add_recipient('to', $this->user2->id);
         $message->send();
 
-        $result = \local_mail_external::set_unread($message->id(), true);
+        $result = \local_mail_external::set_unread($message->id(), '1');
         $this->assertNull($result);
         $message = \local_mail_message::fetch($message->id());
         $this->assertTrue($message->unread($this->user1->id));
 
-        $result = \local_mail_external::set_unread($message->id(), false);
+        $result = \local_mail_external::set_unread($message->id(), '0');
         $this->assertNull($result);
         $message = \local_mail_message::fetch($message->id());
         $this->assertFalse($message->unread($this->user1->id));
@@ -789,10 +789,12 @@ class external_test extends \advanced_testcase {
         $message->add_recipient('to', $this->user2->id);
         $message->send();
 
-        $result = \local_mail_external::set_starred($message->id(), true);
+        $result = \local_mail_external::set_starred($message->id(), '1');
         $this->assertNull($result);
         $message = \local_mail_message::fetch($message->id());
-        $result = \local_mail_external::set_starred($message->id(), false);
+        $this->assertTrue($message->starred($this->user1->id));
+
+        $result = \local_mail_external::set_starred($message->id(), '0');
         $this->assertNull($result);
         $message = \local_mail_message::fetch($message->id());
         $this->assertFalse($message->starred($this->user1->id));
@@ -804,24 +806,28 @@ class external_test extends \advanced_testcase {
         $message->add_recipient('to', $this->user1->id);
         $message->send();
 
+        $result = \local_mail_external::set_starred($message->id(), '1');
+        $this->assertNull($result);
+        $message = \local_mail_message::fetch($message->id());
+        $this->assertTrue($message->starred($this->user1->id));
+
         $result = \local_mail_external::set_starred($message->id(), '0');
         $this->assertNull($result);
         $message = \local_mail_message::fetch($message->id());
         $this->assertFalse($message->starred($this->user1->id));
 
-        $result = \local_mail_external::set_starred($message->id(), '1');
-        $this->assertNull($result);
-        $message = \local_mail_message::fetch($message->id());
         // Draft from the user.
 
         $message = \local_mail_message::create($this->user1->id, $this->course1->id);
         $message->save('Subject 1', 'Content 1', FORMAT_HTML);
         $message->add_recipient('to', $this->user2->id);
 
-        $result = \local_mail_external::set_starred($message->id(), true);
+        $result = \local_mail_external::set_starred($message->id(), '1');
         $this->assertNull($result);
         $message = \local_mail_message::fetch($message->id());
-        $result = \local_mail_external::set_starred($message->id(), false);
+        $this->assertTrue($message->starred($this->user1->id));
+
+        $result = \local_mail_external::set_starred($message->id(), '0');
         $this->assertNull($result);
         $message = \local_mail_message::fetch($message->id());
         $this->assertFalse($message->starred($this->user1->id));
@@ -833,7 +839,7 @@ class external_test extends \advanced_testcase {
         $message->add_recipient('to', $this->user1->id);
 
         try {
-            \local_mail_external::set_starred($message->id(), '0');
+            \local_mail_external::set_starred($message->id(), '1');
             $this->fail();
         } catch (\moodle_exception $exception) {
             $this->assertEquals(new \moodle_exception('invalidmessage', 'local_mail'), $exception);

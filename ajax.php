@@ -430,7 +430,7 @@ function local_mail_hide($messages, $itemid, $type, $offset, $mailpagesize, $sea
     $totalcount = local_mail_message::count_index($USER->id, $type, $itemid);
     foreach ($messages as $message) {
         if ($message->viewable($USER->id)) {
-            $message->set_invisible($USER->id);
+            $message->set_deleted($USER->id, local_mail_message::PERMANENTLY_DELETED);
             array_push($ids, $message->id());
             $totalcount -= 1;
         }
@@ -477,7 +477,7 @@ function local_mail_discard($messages, $itemid, $type, $offset, $mailpagesize, $
     $totalcount = local_mail_message::count_index($USER->id, $type, $itemid);
     foreach ($messages as $message) {
         if ($message->viewable($USER->id) && $message->draft()) {
-            $message->discard();
+            $message->set_deleted($USER->id, local_mail_message::PERMANENTLY_DELETED);
             array_push($ids, $message->id());
             $totalcount -= 1;
         }
