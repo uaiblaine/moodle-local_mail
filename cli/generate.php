@@ -172,43 +172,48 @@ function generate_course_messages(file_storage $fs, int $courseid, int $countper
     $count = $countperuser * count($userids);
     $endtime = time();
     $starttime = $endtime - 365 * 86400;
-    $time = $starttime;
     $sentmessages = [];
     $transaction = null;
 
     for ($i = 0; $i < $count; $i++) {
         print_progress("Generating messages for course $courseid", $count);
-
         if ($i % 10 == 0) {
             $transaction?->allow_commit();
             $transaction = $DB->start_delegated_transaction();
         }
+        $time = (int) (($endtime - $starttime) * $i / $count + $starttime);
         if ($i > 0 && random_bool(REPLY_FREQ)) {
-            $message = generate_random_reply($fs, random_item($sentmessages), (int) $time);
+            $message = generate_random_reply($fs, random_item($sentmessages), $time);
         } else if ($i > 0 && random_bool(FORWARD_FREQ / (1 - REPLY_FREQ))) {
-            $message = generate_random_forward(random_item($sentmessages), $userids, (int) $time);
+            $message = generate_random_forward($fs, random_item($sentmessages), $userids, $time);
         } else {
-            $message = generate_random_message($fs, $courseid, $userids, (int) $time);
+            $message = generate_random_message($fs, $courseid, $userids, $time);
         }
         if ($i == 0 || !random_bool(DRAFT_FREQ)) {
-            $message->send((int) $time);
+            $message->send($time);
             $sentmessages[] = $message;
+            // Only reply and forward recent messages.
+            $countperweek = (int) ($count / 52);
+            if (count($sentmessages) > $countperweek * 2) {
+                $sentmessages = array_slice($sentmessages, $countperweek);
+            }
         }
         set_random_unread($message, $starttime, $endtime);
         set_random_starred($message);
         set_random_labels($message);
         set_random_deleted($message);
-        $time += ($endtime - $starttime) / $count;
     }
 
     $transaction?->allow_commit();
 }
 
-function generate_random_forward(local_mail_message $message, array $userids, int $time): local_mail_message {
+function generate_random_forward(file_storage $fs, local_mail_message $message, array $userids, int $time): local_mail_message {
     $users = array_merge($message->recipients('to'), $message->recipients('cc'));
     $user = random_item($users);
     $forward = $message->forward($user->id, $time);
-    $forward->save($forward->subject(), random_content(), FORMAT_HTML);
+    $attachments = random_count(0, ATTACHMENTS_EX, ATTACHMENTS_SD);
+    $forward->save($forward->subject(), random_content(), FORMAT_HTML, $attachments, $time);
+    add_random_attachments($fs, $message, $attachments);
     add_random_recipients($forward, $userids);
     return $forward;
 }
@@ -216,7 +221,7 @@ function generate_random_forward(local_mail_message $message, array $userids, in
 function generate_random_message(file_storage $fs, int $courseid, array $userids, int $time): local_mail_message {
     $message = local_mail_message::create(random_item($userids), $courseid, $time);
     $attachments = random_count(0, ATTACHMENTS_EX, ATTACHMENTS_SD);
-    $message->save(random_sentence(), random_content(), FORMAT_HTML, $attachments);
+    $message->save(random_sentence(), random_content(), FORMAT_HTML, $attachments, $time);
     add_random_attachments($fs, $message, $attachments);
     add_random_recipients($message, $userids);
     return $message;
@@ -228,7 +233,7 @@ function generate_random_reply(file_storage $fs, local_mail_message $message, in
     $user = random_item($users);
     $reply = $message->reply($user->id, $all, $time);
     $attachments = random_count(0, ATTACHMENTS_EX, ATTACHMENTS_SD);
-    $reply->save($reply->subject(), random_content(), FORMAT_HTML, $attachments);
+    $reply->save($reply->subject(), random_content(), FORMAT_HTML, $attachments, $time);
     add_random_attachments($fs, $reply, $attachments);
     return $reply;
 }
