@@ -7,7 +7,14 @@ export type ServiceRequest =
     | SearchIndexRequest
     | GetMessageRequest
     | SetUnreadRequest
-    | SetStarredRequest;
+    | SetStarredRequest
+    | SetDeletedRequest
+    | EmptyTrashRequest
+    | CreateLabelRequest
+    | UpdateLabelRequest
+    | DeleteLabelRequest
+    | SetLabelsRequest
+    ;
 
 export interface GetInfoRequest {
     readonly methodname: 'get_info';
@@ -50,14 +57,54 @@ export interface GetMessageRequest {
 
 export interface SetUnreadRequest {
     readonly methodname: 'set_unread';
-    readonly id: number;
+    readonly messageid: number;
     readonly unread: boolean;
 }
 
 export interface SetStarredRequest {
     readonly methodname: 'set_starred';
-    readonly id: number;
+    readonly messageid: number;
     readonly starred: boolean;
+}
+
+export enum DeletedStatus {
+    NotDeleted = 0,
+    Deleted = 1,
+    DeletedForever = 2,
+}
+
+export interface SetDeletedRequest {
+    readonly methodname: 'set_deleted';
+    readonly messageid: number;
+    readonly deleted: DeletedStatus;
+}
+
+export interface EmptyTrashRequest {
+    readonly methodname: 'empty_trash';
+}
+
+export interface CreateLabelRequest {
+    readonly methodname: 'create_label';
+    readonly name: string;
+    readonly color: string;
+}
+
+export interface UpdateLabelRequest {
+    readonly methodname: 'update_label';
+    readonly labelid: number;
+    readonly name: string;
+    readonly color: string;
+}
+
+export interface DeleteLabelRequest {
+    readonly methodname: 'delete_label';
+    readonly labelid: number;
+}
+
+export interface SetLabelsRequest {
+    readonly methodname: 'set_labels';
+    readonly messageid: number;
+    readonly labelids: ReadonlyArray<number>;
 }
 
 export type ServiceResponse<T> = T extends GetInfoRequest
@@ -74,6 +121,18 @@ export type ServiceResponse<T> = T extends GetInfoRequest
     ? void
     : T extends SetStarredRequest
     ? void
+    : T extends SetDeletedRequest
+    ? void
+    : T extends EmptyTrashRequest
+    ? void
+    : T extends CreateLabelRequest
+    ? number
+    : T extends UpdateLabelRequest
+    ? void
+    : T extends DeleteLabelRequest
+    ? void
+    : T extends SetLabelsRequest
+    ? void
     : unknown;
 
 export interface Info {
@@ -85,8 +144,8 @@ export interface Info {
 export interface Menu {
     readonly unread: number;
     readonly drafts: number;
-    readonly courses: MenuCourse[];
-    readonly labels: MenuLabel[];
+    readonly courses: ReadonlyArray<MenuCourse>;
+    readonly labels: ReadonlyArray<MenuLabel>;
 }
 
 export interface Preferences {
@@ -124,10 +183,11 @@ export interface MessageListItem {
     readonly fulltime: string;
     readonly unread: boolean;
     readonly starred: boolean;
+    readonly deleted: boolean;
     readonly course: Course;
     readonly sender: Sender;
-    readonly recipients: Recipient[];
-    readonly labels: MessageLabel[];
+    readonly recipients: ReadonlyArray<Recipient>;
+    readonly labels: ReadonlyArray<MessageLabel>;
 }
 
 export interface Course {
@@ -166,12 +226,13 @@ export interface Message {
     readonly fulltime: string;
     readonly unread: boolean;
     readonly starred: boolean;
+    readonly deleted: boolean;
     readonly course: Course;
     readonly sender: Sender;
-    readonly recipients: Recipient[];
-    readonly attachments: Attachment[];
-    readonly references: Reference[];
-    readonly labels: MessageLabel[];
+    readonly recipients: ReadonlyArray<Recipient>;
+    readonly attachments: ReadonlyArray<Attachment>;
+    readonly references: ReadonlyArray<Reference>;
+    readonly labels: ReadonlyArray<MessageLabel>;
 }
 
 export interface Reference {
@@ -183,7 +244,7 @@ export interface Reference {
     readonly shorttime: string;
     readonly fulltime: string;
     readonly sender: Sender;
-    readonly attachments: Attachment[];
+    readonly attachments: ReadonlyArray<Attachment>;
 }
 
 export interface Attachment {

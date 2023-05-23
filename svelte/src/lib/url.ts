@@ -43,6 +43,7 @@ export function getViewParams(): ViewParams {
         type: (url.searchParams.get('t') as ViewType) || 'inbox',
         courseid: parseInt(url.searchParams.get('c')) || undefined,
         labelid: parseInt(url.searchParams.get('l')) || undefined,
+        offset: parseInt(url.searchParams.get('offset')) || undefined,
     };
 }
 

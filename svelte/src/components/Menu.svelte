@@ -48,6 +48,7 @@
             {store}
             icon="fa-university"
             text={course.shortname}
+            count={course.unread}
             params={{ type: 'course', courseid: course.id }}
         />
     {/each}

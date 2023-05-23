@@ -1,17 +1,14 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { onMount } from 'svelte';
-
     import List from './List.svelte';
     import Menu from './Menu.svelte';
-    import type { Store } from '../lib/store';
-    import { getViewParams, type ViewType } from '../lib/url';
+    import Toasts from './Toasts.svelte';
     import ToolBar from './ToolBar.svelte';
+    import type { Store } from '../lib/store';
+    import { getViewParams } from '../lib/url';
 
     export let store: Store;
-
-    onMount(() => store.navigate(getViewParams()));
 
     $: title =
         $store.params.type == 'inbox'
@@ -36,7 +33,7 @@
     <title>{title} - {$store.strings.pluginname}</title>
 </svelte:head>
 
-<div class="container-fluid local-mail-container" class:local-mail-loading={$store.loading}>
+<div class="container-fluid local-mail-container py-2" class:local-mail-loading={$store.loading}>
     <ToolBar {store} />
     <div class="row">
         <div class="d-none d-lg-block col-3">
@@ -48,6 +45,8 @@
     </div>
 </div>
 
+<Toasts {store} />
+
 <style>
     :global(#page-local-mail-view2 #page.drawers) {
         padding-left: 0;
@@ -56,6 +55,10 @@
 
     :global(#page-local-mail-view2 #page.drawers .main-inner) {
         margin-top: 0;
+    }
+
+    .local-mail-container {
+        overflow: hidden;
     }
 
     .local-mail-loading :global(*) {
