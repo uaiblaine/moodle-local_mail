@@ -442,6 +442,7 @@ class external_test extends \advanced_testcase {
             'fulltime' => \local_mail_external::format_time($message->time(), true),
             'unread' => false,
             'starred' => true,
+            'deleted' => false,
             'course' => [
                 'id' => $this->course1->id,
                 'shortname' => $this->course1->shortname,
@@ -520,6 +521,7 @@ class external_test extends \advanced_testcase {
             'fulltime' => \local_mail_external::format_time($message->time(), true),
             'unread' => true,
             'starred' => false,
+            'deleted' => false,
             'course' => [
                 'id' => $this->course1->id,
                 'shortname' => $this->course1->shortname,
@@ -563,6 +565,7 @@ class external_test extends \advanced_testcase {
             'fulltime' => \local_mail_external::format_time($message->time(), true),
             'unread' => false,
             'starred' => false,
+            'deleted' => false,
             'course' => [
                 'id' => $this->course1->id,
                 'shortname' => $this->course1->shortname,
@@ -623,6 +626,7 @@ class external_test extends \advanced_testcase {
             'fulltime' => \local_mail_external::format_time($message4->time(), true),
             'unread' => true,
             'starred' => false,
+            'deleted' => false,
             'course' => [
                 'id' => $this->course1->id,
                 'shortname' => $this->course1->shortname,
@@ -878,7 +882,7 @@ class external_test extends \advanced_testcase {
         $result = \local_mail_external::set_deleted($message->id(), '2');
         $this->assertNull($result);
         $message = \local_mail_message::fetch($message->id());
-        $this->assertEquals(\local_mail_message::PERMANENTLY_DELETED, $message->deleted($this->user1->id));
+        $this->assertEquals(\local_mail_message::DELETED_FOREVER, $message->deleted($this->user1->id));
 
         try {
             \local_mail_external::set_deleted($message->id(), '0');
@@ -907,7 +911,7 @@ class external_test extends \advanced_testcase {
         $result = \local_mail_external::set_deleted($message->id(), '2');
         $this->assertNull($result);
         $message = \local_mail_message::fetch($message->id());
-        $this->assertEquals(\local_mail_message::PERMANENTLY_DELETED, $message->deleted($this->user1->id));
+        $this->assertEquals(\local_mail_message::DELETED_FOREVER, $message->deleted($this->user1->id));
 
         try {
             \local_mail_external::set_deleted($message->id(), '0');
@@ -958,6 +962,41 @@ class external_test extends \advanced_testcase {
         } catch (\moodle_exception $exception) {
             $this->assertEquals(new \moodle_exception('invalidmessage', 'local_mail'), $exception);
         }
+    }
+    public function test_empty_trash() {
+        $this->setUser($this->user1->id);
+
+        $message1 = \local_mail_message::create($this->user1->id, $this->course1->id);
+        $message1->save('Subject 1', 'Content 1', FORMAT_HTML);
+        $message1->add_recipient('to', $this->user2->id);
+        $message1->send();
+        $message1->set_deleted($this->user1->id, \local_mail_message::DELETED);
+        $message1->set_deleted($this->user2->id, \local_mail_message::DELETED);
+
+        $message2 = \local_mail_message::create($this->user2->id, $this->course1->id);
+        $message2->save('Subject 2', 'Content 2', FORMAT_HTML);
+        $message2->add_recipient('to', $this->user1->id);
+        $message2->send();
+        $message2->set_deleted($this->user1->id, \local_mail_message::DELETED);
+
+        $message3 = \local_mail_message::create($this->user1->id, $this->course1->id);
+        $message3->save('Subject 3', 'Content 3', FORMAT_HTML);
+        $message3->set_deleted($this->user1->id, \local_mail_message::DELETED);
+
+        $message4 = \local_mail_message::create($this->user1->id, $this->course1->id);
+        $message4->save('Subject 4', 'Content 4', FORMAT_HTML);
+        $message4->add_recipient('to', $this->user2->id);
+        $message4->send();
+
+        $result = \local_mail_external::empty_trash();
+        $this->assertNull($result);
+
+        $messages = \local_mail_message::fetch_index($this->user1->id, 'trash');
+        $this->assertEquals([], $messages);
+        $messages = \local_mail_message::fetch_index($this->user1->id, 'sent');
+        $this->assertEquals([\local_mail_message::fetch($message4->id())], $messages);
+        $messages = \local_mail_message::fetch_index($this->user2->id, 'trash');
+        $this->assertEquals([\local_mail_message::fetch($message1->id())], $messages);
     }
 
     public function test_create_label() {
@@ -1304,6 +1343,7 @@ class external_test extends \advanced_testcase {
                 'fulltime' => \local_mail_external::format_time($message->time(), true),
                 'unread' => $message->unread($USER->id),
                 'starred' => $message->starred($USER->id),
+                'deleted' => $message->deleted($USER->id),
                 'course' => [
                     'id' => $message->course()->id,
                     'shortname' => $message->course()->shortname,

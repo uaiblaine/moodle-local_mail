@@ -163,6 +163,7 @@ class local_mail_external extends external_api {
                     'fulltime' => new external_value(PARAM_TEXT, 'Formatted full time'),
                     'unread' => new external_value(PARAM_BOOL, 'Unread status'),
                     'starred' => new external_value(PARAM_BOOL, 'Starred status'),
+                    'deleted' => new external_value(PARAM_BOOL, 'Deleted status'),
                     'course' => new external_single_structure([
                         'id' => new external_value(PARAM_INT, 'Id of the course'),
                         'shortname' => new external_value(PARAM_TEXT, 'Short name of the course'),
@@ -199,9 +200,10 @@ class local_mail_external extends external_api {
         $params = ['type' => $type, 'itemid' => $itemid, 'offset' => $offset, 'limit' => $limit];
         $params = self::validate_parameters(self::get_index_parameters(), $params);
 
+        self::validate_context(context_system::instance());
+
         $courseid = ($params['type'] == 'course' ? $params['itemid'] : SITEID);
         $context = context_course::instance($courseid);
-        self::validate_context($context);
 
         if ($params['type'] == 'course') {
             require_capability('local/mail:usemail', $context);
@@ -257,6 +259,7 @@ class local_mail_external extends external_api {
                 'fulltime' => self::format_time($message->time(), true),
                 'unread' => $message->unread($USER->id),
                 'starred' => $message->starred($USER->id),
+                'deleted' => (bool) $message->deleted($USER->id),
                 'course' => [
                     'id' => $course->id,
                     'shortname' => $course->shortname,
@@ -312,6 +315,7 @@ class local_mail_external extends external_api {
                     'fulltime' => new external_value(PARAM_TEXT, 'Formatted full time'),
                     'unread' => new external_value(PARAM_BOOL, 'Unread status'),
                     'starred' => new external_value(PARAM_BOOL, 'Starred status'),
+                    'deleted' => new external_value(PARAM_BOOL, 'Deleted status'),
                     'course' => new external_single_structure([
                         'id' => new external_value(PARAM_INT, 'Id of the course'),
                         'shortname' => new external_value(PARAM_TEXT, 'Short name of the course'),
@@ -348,9 +352,10 @@ class local_mail_external extends external_api {
         $params = ['type' => $type, 'itemid' => $itemid, 'query' => $query];
         $params = self::validate_parameters(self::search_index_parameters(), $params);
 
+        self::validate_context(context_system::instance());
+
         $courseid = ($params['type'] == 'course' ? $params['itemid'] : SITEID);
         $context = context_course::instance($courseid);
-        self::validate_context($context);
 
         if ($params['type'] == 'course') {
             require_capability('local/mail:usemail', $context);
@@ -435,6 +440,7 @@ class local_mail_external extends external_api {
                 'fulltime' => self::format_time($message->time(), true),
                 'unread' => $message->unread($USER->id),
                 'starred' => $message->starred($USER->id),
+                'deleted' => (bool) $message->deleted($USER->id),
                 'course' => [
                     'id' => $course->id,
                     'shortname' => $course->shortname,
@@ -467,6 +473,7 @@ class local_mail_external extends external_api {
             'fulltime' => new external_value(PARAM_TEXT, 'Formatted full time'),
             'unread' => new external_value(PARAM_BOOL, 'Unread status'),
             'starred' => new external_value(PARAM_BOOL, 'Starred status'),
+            'deleted' => new external_value(PARAM_BOOL, 'Deleted status'),
             'course' => new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'Id of the course'),
                 'shortname' => new external_value(PARAM_TEXT, 'Short name of the course'),
@@ -533,6 +540,8 @@ class local_mail_external extends external_api {
         $params = ['id' => $id];
         $params = self::validate_parameters(self::get_message_parameters(), $params);
 
+        self::validate_context(context_system::instance());
+
         $message = local_mail_message::fetch($id);
 
         if (!$message || !$message->viewable($USER->id)) {
@@ -556,6 +565,7 @@ class local_mail_external extends external_api {
             'fulltime' => self::format_time($message->time(), true),
             'unread' => $message->unread($USER->id),
             'starred' => $message->starred($USER->id),
+            'deleted' => (bool) $message->deleted($USER->id),
             'course' => [
                 'id' => $course->id,
                 'shortname' => $course->shortname,
@@ -662,6 +672,8 @@ class local_mail_external extends external_api {
         $params = ['messageid' => $messageid, 'unread' => $unread];
         $params = self::validate_parameters(self::set_unread_parameters(), $params);
 
+        self::validate_context(context_system::instance());
+
         $message = local_mail_message::fetch($params['messageid']);
 
         if (!$message || !$message->viewable($USER->id)) {
@@ -690,6 +702,8 @@ class local_mail_external extends external_api {
         $params = ['messageid' => $messageid, 'starred' => $starred];
         $params = self::validate_parameters(self::set_starred_parameters(), $params);
 
+        self::validate_context(context_system::instance());
+
         $message = local_mail_message::fetch($params['messageid']);
 
         if (!$message || !$message->viewable($USER->id)) {
@@ -705,7 +719,7 @@ class local_mail_external extends external_api {
         return new external_function_parameters([
             'messageid' => new external_value(PARAM_INT, 'ID of the message'),
             'deleted' => new external_value(PARAM_INT,
-                'New deleted status: 0 (not deleted), 1 (moved to trash), 2 (deleted from trash)'),
+                'New deleted status: 0 (not deleted), 1 (deleted), 2 (deleted forever)'),
         ]);
     }
 
@@ -719,6 +733,8 @@ class local_mail_external extends external_api {
         $params = ['messageid' => $messageid, 'deleted' => $deleted];
         $params = self::validate_parameters(self::set_deleted_parameters(), $params);
 
+        self::validate_context(context_system::instance());
+
         $message = local_mail_message::fetch($params['messageid']);
 
         if (!$message || !$message->viewable($USER->id)) {
@@ -730,6 +746,23 @@ class local_mail_external extends external_api {
         return null;
     }
 
+    public static function empty_trash_parameters() {
+        return new external_function_parameters([]);
+    }
+
+    public static function empty_trash_returns() {
+        return null;
+    }
+
+    public static function empty_trash() {
+        global $USER;
+
+        self::validate_context(context_system::instance());
+
+        \local_mail_message::empty_trash($USER->id);
+
+        return null;
+    }
 
     public static function create_label_parameters() {
         $colors = implode(', ',  \local_mail_label::valid_colors());
@@ -748,6 +781,8 @@ class local_mail_external extends external_api {
 
         $params = ['name' => $name, 'color' => $color];
         $params = self::validate_parameters(self::create_label_parameters(), $params);
+
+        self::validate_context(context_system::instance());
 
         $normalizedname = \local_mail_label::nromalized_name($params['name']);
         if (strlen($normalizedname) == 0) {
@@ -788,6 +823,8 @@ class local_mail_external extends external_api {
 
         $params = ['labelid' => $labelid, 'name' => $name, 'color' => $color];
         $params = self::validate_parameters(self::update_label_parameters(), $params);
+
+        self::validate_context(context_system::instance());
 
         $label = \local_mail_label::fetch($params['labelid']);
         if (!$label || $label->userid() != $USER->id) {
@@ -831,6 +868,8 @@ class local_mail_external extends external_api {
         $params = ['labelid' => $labelid];
         $params = self::validate_parameters(self::delete_label_parameters(), $params);
 
+        self::validate_context(context_system::instance());
+
         $label = \local_mail_label::fetch($params['labelid']);
         if (!$label || $label->userid() != $USER->id) {
             throw new moodle_exception('invalidlabel', 'local_mail');
@@ -860,6 +899,8 @@ class local_mail_external extends external_api {
 
         $params = ['messageid' => $messageid, 'labelids' => $labelids];
         $params = self::validate_parameters(self::set_labels_parameters(), $params);
+
+        self::validate_context(context_system::instance());
 
         $message = local_mail_message::fetch($params['messageid']);
 

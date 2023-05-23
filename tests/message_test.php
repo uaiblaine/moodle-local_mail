@@ -218,7 +218,7 @@ class message_test extends testcase {
 
         $this->assertEquals(1, $result);
 
-        $message1->set_deleted(202, \local_mail_message::PERMANENTLY_DELETED);
+        $message1->set_deleted(202, \local_mail_message::DELETED_FOREVER);
 
         $result = \local_mail_message::count_index(202, 'trash');
 
@@ -732,9 +732,9 @@ class message_test extends testcase {
         $this->assert_not_index(202, 'trash', 0, $message->id());
         $this->assert_message($message);
 
-        $message->set_deleted(201, \local_mail_message::PERMANENTLY_DELETED);
+        $message->set_deleted(201, \local_mail_message::DELETED_FOREVER);
 
-        $this->assertEquals(\local_mail_message::PERMANENTLY_DELETED, $message->deleted(201));
+        $this->assertEquals(\local_mail_message::DELETED_FOREVER, $message->deleted(201));
         $this->assertEquals(\local_mail_message::NOT_DELETED, $message->deleted(202));
         $this->assertEquals([], $message->labels(201));
         $this->assertEquals([$label2], $message->labels(202));
@@ -794,9 +794,9 @@ class message_test extends testcase {
         $this->assert_not_index(201, 'trash', 0, $message->id());
         $this->assert_message($message);
 
-        $message->set_deleted(201, \local_mail_message::PERMANENTLY_DELETED);
+        $message->set_deleted(201, \local_mail_message::DELETED_FOREVER);
 
-        $this->assertEquals(\local_mail_message::PERMANENTLY_DELETED, $message->deleted(201));
+        $this->assertEquals(\local_mail_message::DELETED_FOREVER, $message->deleted(201));
         $this->assertEquals([], $message->labels(201));
         $this->assert_not_records('messages', array('id' => $message->id()));
         $this->assert_not_records('message_users', array('messageid' => $message->id()));

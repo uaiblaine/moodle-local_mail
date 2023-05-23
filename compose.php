@@ -87,7 +87,7 @@ if ($data = $mform->get_data()) {
 
     // Discard message.
     if (!empty($data->discard)) {
-        $message->set_deleted($USER->id, local_mail_message::PERMANENTLY_DELETED);
+        $message->set_deleted($USER->id, local_mail_message::DELETED_FOREVER);
         $params = array('t' => 'course', 'c' => $message->course()->id);
         $url = new moodle_url('/local/mail/view.php', $params);
         redirect($url);

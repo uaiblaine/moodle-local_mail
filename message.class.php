@@ -30,7 +30,7 @@ class local_mail_message {
 
     const NOT_DELETED = 0;
     const DELETED = 1;
-    const PERMANENTLY_DELETED = 2;
+    const DELETED_FOREVER = 2;
 
     private static $indextypes = array(
         'inbox', 'drafts', 'sent', 'starred', 'course', 'label', 'trash'
@@ -172,29 +172,10 @@ class local_mail_message {
             return $messages;
         }
 
-        $sql = 'SELECT courseid'
-            . ' FROM {local_mail_messages}'
-            . ' WHERE id  IN (' . implode(',', $ids) . ')'
-            . ' GROUP BY courseid';
-
-        if ($courses = $DB->get_records_sql_menu($sql)) {
-            foreach (array_keys($courses) as $courseid) {
-                $context = context_course::instance($courseid);
-                if (!has_capability('local/mail:usemail', $context)) {
-                    unset($courses[$courseid]);
-                }
-            }
-        }
-
-        if (!$courses) {
-            return $messages;
-        }
-
         $sql = 'SELECT m.id, m.courseid, m.subject, m.content, m.format, m.attachments, '
             . ' m.draft, m.time, c.shortname, c.fullname, c.groupmode'
             . ' FROM {local_mail_messages} m'
             . ' JOIN {course} c ON c.id = m.courseid'
-            . ' AND m.courseid IN (' . implode(',', array_keys($courses)) . ')'
             . ' WHERE m.id  IN (' . implode(',', $ids) . ')';
         $records = $DB->get_records_sql($sql);
 
@@ -321,7 +302,7 @@ class local_mail_message {
 
         $messages = self::fetch_index($userid, 'trash');
         foreach ($messages as $message) {
-            $message->set_deleted($userid, self::PERMANENTLY_DELETED);
+            $message->set_deleted($userid, self::DELETED_FOREVER);
         }
     }
 
@@ -655,10 +636,10 @@ class local_mail_message {
     public function set_deleted($userid, $value) {
         global $DB;
 
-        assert(in_array($value, [self::NOT_DELETED, self::DELETED, self::PERMANENTLY_DELETED]));
+        assert(in_array($value, [self::NOT_DELETED, self::DELETED, self::DELETED_FOREVER]));
         assert($this->has_user($userid));
         assert(!$this->draft || $this->role[$userid] == 'from');
-        assert($this->deleted[$userid] != self::PERMANENTLY_DELETED);
+        assert($this->deleted[$userid] != self::DELETED_FOREVER);
 
         if ($this->deleted[$userid] == $value) {
             return;
@@ -686,7 +667,7 @@ class local_mail_message {
         } else if ($value == self::DELETED) {
             $this->delete_index($userid);
             $this->create_index($userid, 'trash');
-        } else if ($value == self::PERMANENTLY_DELETED) {
+        } else if ($value == self::DELETED_FOREVER) {
             if ($this->draft) {
                 $DB->delete_records('local_mail_messages', array('id' => $this->id));
                 $DB->delete_records('local_mail_message_refs', array('messageid' => $this->id));
@@ -708,7 +689,7 @@ class local_mail_message {
         $transaction->allow_commit();
 
         $this->deleted[$userid] = $value;
-        if ($value == self::PERMANENTLY_DELETED) {
+        if ($value == self::DELETED_FOREVER) {
             foreach ($this->labels($userid) as $label) {
                 unset($this->labels[$label->id()]);
             }
@@ -783,7 +764,7 @@ class local_mail_message {
         global $DB;
 
         if ($this->has_user($userid)) {
-            return ($this->deleted[$userid] != self::PERMANENTLY_DELETED
+            return ($this->deleted[$userid] != self::DELETED_FOREVER
                     && (!$this->draft || $this->role[$userid] == 'from'));
         }
 

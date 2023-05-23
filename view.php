@@ -351,7 +351,7 @@ if ($removelbl) {
         require_sesskey();
         if ($confirmmsg) {
             if ($message->viewable($USER->id) && $message->deleted($USER->id)) {
-                $message->set_deleted($USER->id, local_mail_message::PERMANENTLY_DELETED);
+                $message->set_deleted($USER->id, local_mail_message::DELETED_FOREVER);
             }
             redirect($url);
         } else {
@@ -566,7 +566,7 @@ if ($removelbl) {
             foreach ($messages as $message) {
                 if (in_array($message->id(), $msgs)) {
                     if ($message->viewable($USER->id) && $message->deleted($USER->id)) {
-                        $message->set_deleted($USER->id, local_mail_message::PERMANENTLY_DELETED);
+                        $message->set_deleted($USER->id, local_mail_message::DELETED_FOREVER);
                     }
                     $totalcount -= 1;
                 }
@@ -614,7 +614,7 @@ if ($removelbl) {
         foreach ($messages as $message) {
             if (in_array($message->id(), $msgs)) {
                 if ($message->viewable($USER->id) && $message->draft()) {
-                    $message->set_deleted($USER->id, local_mail_message::PERMANENTLY_DELETED);
+                    $message->set_deleted($USER->id, local_mail_message::DELETED_FOREVER);
                 }
                 $totalcount -= 1;
             }

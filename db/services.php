@@ -98,6 +98,15 @@ $functions = array(
         'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE, 'local_mobile'),
     ),
+    'local_mail_empty_trash' => array(
+        'classname' => 'local_mail_external',
+        'methodname' => 'empty_trash',
+        'classpath' => 'local/mail/externallib.php',
+        'description' => 'Empties the trash.',
+        'type' => 'write',
+        'ajax' => true,
+        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE, 'local_mobile'),
+    ),
     'local_mail_create_label' => array(
         'classname' => 'local_mail_external',
         'methodname' => 'create_label',
