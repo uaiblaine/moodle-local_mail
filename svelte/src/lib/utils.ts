@@ -1,4 +1,14 @@
 /**
+ * Removes leading and trailing spaces and replaces repeates space characters with a single space.
+ *
+ * @param name The name of the label.
+ * @returns The normalized name.
+ */
+export function normalizeLabelName(name: string): string {
+    return name.trim().replaceAll(/\s+/gu, ' ');
+}
+
+/**
  * Replaces {$a} parameters of a language string.
  *
  * @param string Language string.

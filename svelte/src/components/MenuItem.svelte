@@ -11,6 +11,7 @@
     export let params: ViewParams;
     export let count = 0;
     export let disabled = false;
+    export let color: string | undefined = undefined;
 
     $: active =
         params.type == $store.params.type &&
@@ -29,11 +30,17 @@
     href={viewUrl(paramsWithOffset)}
     on:click|preventDefault={() => store.navigate(paramsWithOffset)}
 >
-    <i class="icon fa {icon} fa-fw" aria-hidden="true" />
-    <span class="flex-fill" use:truncate={text}>
+    <i
+        class="fa {icon} fa-fw"
+        aria-hidden="true"
+        style={color ? `color: var(--local-mail-color-${color}` : ''}
+    />
+    <span class="flex-fill px-2" use:truncate={text}>
         {text}
     </span>
     {#if count > 0}
-        <span class="local-mail-menu-item-count badge">{count}</span>
+        <span class="local-mail-menu-item-count badge">
+            {count}
+        </span>
     {/if}
 </a>

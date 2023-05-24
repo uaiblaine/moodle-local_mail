@@ -17,7 +17,7 @@
     {#each $store.toasts as toast (toast)}
         <div
             animate:flip
-            in:fade={{ delay: 200 }}
+            in:fly={{ y: 50, delay: 200 }}
             out:fly={{ y: 50, duration: 400 }}
             class="toast mt-2 mb-0"
             role="alert"
@@ -29,7 +29,7 @@
                 <div class="px-1 mr-auto">{toast.text}</div>
                 {#if toast.undo}
                     <button
-                        class="btn text-white font-weight-bold px-2 py-0 ml-3"
+                        class="local-mail-toast-undo btn font-weight-bold px-2 py-0 ml-3"
                         on:click={() => store.undo(toast)}
                     >
                         {$store.strings.undo}
@@ -61,5 +61,9 @@
         pointer-events: auto;
         flex-basis: 0;
         max-width: 400px;
+    }
+
+    .local-mail-toast-undo {
+        color: var(--activitycontent);
     }
 </style>

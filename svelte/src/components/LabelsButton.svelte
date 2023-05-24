@@ -2,6 +2,7 @@
 
 <script lang="ts">
     import type { Store } from '../lib/store';
+    import LabelModal from './LabelModal.svelte';
 
     export let store: Store;
 
@@ -9,14 +10,16 @@
 
     $: selectedLabels = new Map(
         $store.menu.labels.map((label) => {
-            const messages = Array.from($store.selectedMessages.values()).filter((message) =>
-                message.labels.some((messageLabel) => messageLabel.id == label.id),
+            const messages = $store.messageList.messages.filter(
+                (message) =>
+                    $store.selectedIds.has(message.id) &&
+                    message.labels.some((messageLabel) => messageLabel.id == label.id),
             );
             return [
                 label.id,
                 messages.length == 0
                     ? 'false'
-                    : messages.length < $store.selectedMessages.size
+                    : messages.length < $store.selectedIds.size
                     ? 'mixed'
                     : 'true',
             ];
@@ -24,10 +27,11 @@
     );
 
     $: applyEnabled = Array.from(selectedLabels.entries()).some(([labelid, selected]) =>
-        Array.from($store.selectedMessages.values()).some(
+        $store.messageList.messages.some(
             (message) =>
-                (selected == 'true' && message.labels.every((label) => label.id != labelid)) ||
-                (selected == 'false' && message.labels.some((label) => label.id == labelid)),
+                $store.selectedIds.has(message.id) &&
+                ((selected == 'true' && message.labels.every((label) => label.id != labelid)) ||
+                    (selected == 'false' && message.labels.some((label) => label.id == labelid))),
         ),
     );
 
@@ -41,7 +45,7 @@
         }
     };
 
-    $: toggleLabel = (labelid: number) => {
+    const toggleLabel = (labelid: number) => {
         selectedLabels = new Map(
             Array.from(selectedLabels.entries()).map(([id, selected]) => [
                 id,
@@ -50,9 +54,9 @@
         );
     };
 
-    $: applyLabels = () => {
+    const applyLabels = () => {
         store.setLabels(
-            Array.from($store.selectedMessages.keys()),
+            Array.from($store.selectedIds.values()),
             Array.from(selectedLabels.keys()).filter((id) => selectedLabels.get(id) == 'true'),
             Array.from(selectedLabels.keys()).filter((id) => selectedLabels.get(id) == 'false'),
         );
@@ -63,8 +67,8 @@
     <button
         type="button"
         class="local-mail-action-label-button btn btn-secondary dropdown-toggle"
-        class:disabled={!$store.selectedMessages.size}
-        disabled={!$store.selectedMessages.size}
+        class:disabled={!$store.selectedIds.size}
+        disabled={!$store.selectedIds.size}
         data-toggle="dropdown"
         aria-expanded="false"
         title={$store.strings.labels}
@@ -83,15 +87,26 @@
             </button>
         {/each}
         <div class="dropdown-divider" />
-        <button
-            type="button"
-            class="dropdown-item local-mail-action-label-button-item"
-            disabled={!applyEnabled}
-            on:click={() => applyLabels()}
-        >
-            {$store.strings.applychanges}
-        </button>
+        {#if applyEnabled}
+            <button
+                type="button"
+                class="dropdown-item local-mail-action-label-button-item"
+                on:click={() => applyLabels()}
+            >
+                {$store.strings.applychanges}
+            </button>
+        {:else}
+            <button
+                type="button"
+                class="dropdown-item local-mail-action-label-button-item"
+                data-toggle="modal"
+                data-target="#local-mail-label-modal-new"
+            >
+                {$store.strings.newlabel}
+            </button>
+        {/if}
     </div>
+    <LabelModal {store} />
 </div>
 
 <style>

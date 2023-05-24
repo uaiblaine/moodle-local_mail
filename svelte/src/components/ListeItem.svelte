@@ -15,14 +15,14 @@
                 ? message.recipients.map((user) => user.fullname)
                 : [$store.strings.norecipient]
             : [message.sender.fullname];
-    $: checkClass = $store.selectedMessages.has(message.id) ? 'fa-check-square-o' : 'fa-square-o';
+    $: checkClass = $store.selectedIds.has(message.id) ? 'fa-check-square-o' : 'fa-square-o';
     $: starClass = message.starred ? 'fa-star text-warning' : 'fa-star-o';
 </script>
 
 <button
     class="btn px-2 ml-1"
     role="checkbox"
-    aria-checked={Boolean($store.selectedMessages.has(message.id))}
+    aria-checked={Boolean($store.selectedIds.has(message.id))}
     title={$store.strings.select}
     on:click|preventDefault|stopPropagation={() => store.toggleSelected(message.id)}
 >
@@ -51,11 +51,11 @@
 </span>
 {#each message.labels as label}
     {#if $store.params.type != 'label' || $store.params.labelid != label.id}
-        <Pill text={label.name} color={label.color} />
+        <Pill text={label.name} color={label.color} dimmed={!message.unread} />
     {/if}
 {/each}
 {#if $store.params.type != 'course' || $store.params.courseid != message.course.id}
-    <Pill text={message.course.shortname} />
+    <Pill text={message.course.shortname} dimmed={!message.unread} />
 {/if}
 <span
     class="local-mail-list-item-time text-truncate d-shrink-0 text-right my-2 mr-3"

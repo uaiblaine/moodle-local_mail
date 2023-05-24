@@ -9,7 +9,7 @@
     export let confirmCallback: () => any;
 </script>
 
-<div class="modal fade" {id} tabindex="-1" aria-labelledby="{id}-title" aria-hidden={true}>
+<div class="modal fade" {id} tabindex="-1" aria-labelledby="{id}-title" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">

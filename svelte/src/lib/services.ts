@@ -2,6 +2,7 @@ import { require } from './amd';
 
 export type ServiceRequest =
     | GetInfoRequest
+    | SetPreferencesRequest
     | GetMenuRequest
     | GetIndexRequest
     | SearchIndexRequest
@@ -13,11 +14,15 @@ export type ServiceRequest =
     | CreateLabelRequest
     | UpdateLabelRequest
     | DeleteLabelRequest
-    | SetLabelsRequest
-    ;
+    | SetLabelsRequest;
 
 export interface GetInfoRequest {
     readonly methodname: 'get_info';
+}
+
+export interface SetPreferencesRequest {
+    readonly methodname: 'set_preferences';
+    readonly preferences: Partial<Preferences>;
 }
 
 export interface GetMenuRequest {
@@ -109,6 +114,8 @@ export interface SetLabelsRequest {
 
 export type ServiceResponse<T> = T extends GetInfoRequest
     ? Info
+    : T extends SetPreferencesRequest
+    ? void
     : T extends GetMenuRequest
     ? Menu
     : T extends GetIndexRequest

@@ -40,6 +40,8 @@
             {store}
             icon="fa-tag"
             text={label.name}
+            count={label.unread}
+            color={label.color}
             params={{ type: 'label', labelid: label.id }}
         />
     {/each}

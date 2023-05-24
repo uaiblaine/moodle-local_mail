@@ -1,0 +1,28 @@
+
+:root {
+    --local-mail-color-blue: #007bff;
+    --local-mail-color-indigo: #6610f2;
+    --local-mail-color-purple: #6f42c1;
+    --local-mail-color-pink: #e83e8c;
+    --local-mail-color-red: #dc3545;
+    --local-mail-color-orange: #fd7e14;
+    --local-mail-color-yellow: #ffc107;
+    --local-mail-color-green: #28a745;
+    --local-mail-color-teal: #20c997;
+    --local-mail-color-cyan: #17a2b8;
+    --local-mail-color-gray: #6c757d;
+    --local-mail-color-black: #343a40;
+
+    --local-mail-color-blue-fg: white;
+    --local-mail-color-indigo-fg: white;
+    --local-mail-color-purple-fg: white;
+    --local-mail-color-pink-fg: white;
+    --local-mail-color-red-fg: white;
+    --local-mail-color-orange-fg: white;
+    --local-mail-color-yellow-fg: black;
+    --local-mail-color-green-fg: white;
+    --local-mail-color-teal-fg: white;
+    --local-mail-color-cyan-fg: white;
+    --local-mail-color-gray-fg: white;
+    --local-mail-color-black-fg: white;
+}

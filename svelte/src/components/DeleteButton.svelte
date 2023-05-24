@@ -10,11 +10,11 @@
 <button
     type="button"
     class="local-mail-action-delete btn btn-secondary"
-    class:disabled={!$store.selectedMessages.size}
-    disabled={!$store.selectedMessages.size}
+    class:disabled={!$store.selectedIds.size}
+    disabled={!$store.selectedIds.size}
     title={$store.strings.delete}
     on:click={() =>
-        store.setDeleted(Array.from($store.selectedMessages.keys()), DeletedStatus.Deleted, true)}
+        store.setDeleted(Array.from($store.selectedIds.values()), DeletedStatus.Deleted, true)}
 >
     <i class="fa fa-fw fa-trash" />
 </button>
