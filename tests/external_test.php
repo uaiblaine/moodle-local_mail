@@ -60,14 +60,12 @@ class external_test extends \advanced_testcase {
 
     public function test_get_info() {
         $this->setUser($this->user3->id);
-
         set_user_preference('local_mail_mailsperpage', 20);
         set_user_preference('local_mail_markasread', 1);
 
         $result = \local_mail_external::get_info();
 
         \external_api::validate_parameters(\local_mail_external::get_info_returns(), $result);
-
         $this->assertEquals($this->user3->id, $result['userid']);
         $preferences = [
             'perpage' => 20,
@@ -76,6 +74,81 @@ class external_test extends \advanced_testcase {
         $this->assertEquals($preferences, $result['preferences']);
         foreach (\local_mail_external::string_identifiers() as $id) {
             $this->assertEquals(get_string($id, 'local_mail'), $result['strings'][$id]);
+        }
+
+        // Default preferences.
+
+        unset_user_preference('local_mail_mailsperpage');
+        unset_user_preference('local_mail_markasread');
+
+        $result = \local_mail_external::get_info();
+
+        \external_api::validate_parameters(\local_mail_external::get_info_returns(), $result);
+        $preferences = [
+            'perpage' => 10,
+            'markasread' => false,
+        ];
+        $this->assertEquals($preferences, $result['preferences']);
+
+        // Invalid perpage preference.
+
+        set_user_preference('local_mail_mailsperpage', 4);
+
+        $result = \local_mail_external::get_info();
+
+        \external_api::validate_parameters(\local_mail_external::get_info_returns(), $result);
+        $preferences = [
+            'perpage' => 10,
+            'markasread' => false,
+        ];
+        $this->assertEquals($preferences, $result['preferences']);
+
+        set_user_preference('local_mail_mailsperpage', 101);
+
+        $result = \local_mail_external::get_info();
+
+        \external_api::validate_parameters(\local_mail_external::get_info_returns(), $result);
+        $preferences = [
+            'perpage' => 100,
+            'markasread' => false,
+        ];
+        $this->assertEquals($preferences, $result['preferences']);
+
+    }
+
+    public function test_set_preferences() {
+        $this->setUser($this->user3->id);
+        set_user_preference('local_mail_mailsperpage', 10);
+        set_user_preference('local_mail_markasread', 0);
+
+        $result = \local_mail_external::set_preferences(['perpage' => '20', 'markasread' => true]);
+
+        $this->assertNull($result);
+        $this->assertEquals('20', get_user_preferences('local_mail_mailsperpage'));
+        $this->assertEquals('1', get_user_preferences('local_mail_markasread'));
+
+        // Optional preferences.
+
+        $result = \local_mail_external::set_preferences(['perpage' => '50']);
+
+        $this->assertNull($result);
+        $this->assertEquals('50', get_user_preferences('local_mail_mailsperpage'));
+        $this->assertEquals('1', get_user_preferences('local_mail_markasread'));
+
+        // Invalid perpage.
+
+        try {
+            \local_mail_external::set_preferences(['perpage' => '4']);
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \invalid_parameter_exception('"perpage" must be between 5 and 100'), $exception);
+        }
+
+        try {
+            \local_mail_external::set_preferences(['perpage' => '101']);
+            $this->fail();
+        } catch (\moodle_exception $exception) {
+            $this->assertEquals(new \invalid_parameter_exception('"perpage" must be between 5 and 100'), $exception);
         }
     }
 

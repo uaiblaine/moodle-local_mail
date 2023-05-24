@@ -26,6 +26,15 @@ $functions = array(
         'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE, 'local_mobile'),
     ),
+    'local_mail_set_preferences' => array(
+        'classname' => 'local_mail_external',
+        'methodname' => 'set_preferences',
+        'classpath' => 'local/mail/externallib.php',
+        'description' => 'Sets the user preferences.',
+        'type' => 'write',
+        'ajax' => true,
+        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE, 'local_mobile'),
+    ),
     'local_mail_get_unread_count' => array(
         'classname' => 'local_mail_external',
         'methodname' => 'get_unread_count',

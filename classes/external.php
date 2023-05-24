@@ -32,7 +32,7 @@ class local_mail_external extends external_api {
         return new external_single_structure([
             'userid' => new external_value(PARAM_INT, 'User id'),
             'preferences' => new external_single_structure([
-                'perpage' => new external_value(PARAM_INT, 'Number of messages to display per page.'),
+                'perpage' => new external_value(PARAM_INT, 'Number of messages to display per page (5-100).'),
                 'markasread' => new external_value(PARAM_BOOL, 'Mark new messages as read if a notification is sent.'),
             ]),
             'strings' => new external_single_structure($stringkeys),
@@ -51,11 +51,49 @@ class local_mail_external extends external_api {
         return [
             'userid' => $USER->id,
             'preferences' => [
-                'perpage' => get_user_preferences('local_mail_mailsperpage', 10),
-                'markasread' => (bool) get_user_preferences('local_mail_markasread', 1),
+                'perpage' => max(5, min(100, (int) get_user_preferences('local_mail_mailsperpage', 10))),
+                'markasread' => (bool) get_user_preferences('local_mail_markasread', 0),
             ],
             'strings' => $strings,
         ];
+    }
+
+    public static function set_preferences_parameters() {
+        return new external_function_parameters([
+            'preferences' => new external_single_structure([
+                'perpage' => new external_value(PARAM_INT, 'Number of messages to display per page (5-100).', VALUE_OPTIONAL),
+                'markasread' => new external_value(PARAM_BOOL, 'Mark new messages as read if a notification is sent.', VALUE_OPTIONAL),
+            ]),
+        ]);
+    }
+
+    public static function set_preferences_returns() {
+        return null;
+    }
+
+    public static function set_preferences($preferences) {
+        global $USER;
+
+        $params = ['preferences' => $preferences];
+        $params = self::validate_parameters(self::set_preferences_parameters(), $params);
+
+        if (isset($params['preferences']['perpage'])) {
+            if ($params['preferences']['perpage'] < 5 || $params['preferences']['perpage'] > 100) {
+                throw new invalid_parameter_exception('"perpage" must be between 5 and 100');
+            }
+        }
+
+        self::validate_context(context_system::instance());
+
+        if (isset($params['preferences']['perpage'])) {
+            set_user_preference('local_mail_mailsperpage', $params['preferences']['perpage']);
+        }
+
+        if (isset($params['preferences']['markasread'])) {
+            set_user_preference('local_mail_markasread', $params['preferences']['markasread']);
+        }
+
+        return null;
     }
 
     public static function get_unread_count_parameters() {
