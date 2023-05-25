@@ -20,7 +20,7 @@
             id="local-mail-perpage-select"
             class="custom-select"
             bind:value={selected}
-            on:change={() => store.setPreferences({ perpage: selected })}
+            on:change={() => store.setPerPage(selected)}
         >
             {#each values as value}
                 <option {value}>{value}</option>

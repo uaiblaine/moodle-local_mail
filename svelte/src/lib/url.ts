@@ -1,12 +1,4 @@
-export type ViewType = 'inbox' | 'sent' | 'drafts' | 'starred' | 'course' | 'label' | 'trash';
-
-export interface ViewParams {
-    readonly type: ViewType;
-    readonly courseid?: number;
-    readonly labelid?: number;
-    readonly messageid?: number;
-    readonly offset?: number;
-}
+import type { ViewParams, ViewType } from "./store";
 
 export function composeUrl(messageid: number): string {
     return baseUrl() + 'compose.php?m=' + messageid;
@@ -31,26 +23,26 @@ export function viewUrl(params: ViewParams): string {
     if (params.messageid) {
         url += '&m=' + params.messageid;
     }
-    if (params.offset) {
-        url += '&offset=' + params.offset;
-    }
     return url;
 }
 
-export function getViewParams(): ViewParams {
+export function getViewParamsFromUrl(): ViewParams {
     const url = new URL(window.location.href);
     return {
         type: (url.searchParams.get('t') as ViewType) || 'inbox',
         courseid: parseInt(url.searchParams.get('c')) || undefined,
         labelid: parseInt(url.searchParams.get('l')) || undefined,
-        offset: parseInt(url.searchParams.get('offset')) || undefined,
     };
 }
 
-export function setViewParams(params: ViewParams) {
+export function setUrlFromViewParams(params: ViewParams, replace: boolean) {
     const url = new URL(viewUrl(params));
     if (url.search != window.location.search) {
-        window.history.pushState({}, '', url.toString());
+        if (replace) {
+            window.history.replaceState(undefined, '', url.toString());
+        } else {
+            window.history.pushState(undefined, '', url.toString());
+        }
     }
 }
 

@@ -2,30 +2,22 @@
 
 <script lang="ts">
     import type { Store } from '../lib/store';
-    import { viewUrl } from '../lib/url';
     import { replaceStringParams } from '../lib/utils';
 
     export let store: Store;
 
-    $: offset = $store.params.offset || 0;
-    $: nextOffset = offset + $store.preferences.perpage;
-    $: prevOffset = Math.max(0, offset - $store.preferences.perpage);
-    $: nextParams = { ...$store.params, offset: nextOffset };
-    $: prevParams = { ...$store.params, offset: prevOffset };
-    $: nextDisabled = nextOffset >= $store.messageList.totalcount;
-    $: prevDisabled = prevOffset == offset;
     $: pagingText =
-        $store.messageList.messages.length == 0
+        $store.list.messages.length == 0
             ? ''
-            : $store.messageList.messages.length == 1
+            : $store.list.messages.length == 1
             ? replaceStringParams($store.strings.pagingsingle, {
-                  index: offset + 1,
-                  total: offset + $store.messageList.messages.length,
+                  index: $store.list.firstoffset + 1,
+                  total: $store.list.totalcount,
               })
             : replaceStringParams($store.strings.pagingmultiple, {
-                  first: offset + 1,
-                  last: offset + $store.messageList.messages.length,
-                  total: $store.messageList.totalcount,
+                  first: $store.list.firstoffset + 1,
+                  last: $store.list.lastoffset + 1,
+                  total: $store.list.totalcount,
               });
 </script>
 
@@ -34,23 +26,20 @@
 </div>
 
 <div class="btn-group d-shrink-0" role="group">
-    <a
+    <button
         class="btn btn-secondary"
-        class:disabled={prevDisabled}
-        aria-disabled={prevDisabled}
+        disabled={!$store.prevParams}
         title={$store.strings.previouspage}
-        href={viewUrl(prevParams)}
-        on:click|preventDefault={() => store.navigate(prevParams)}
-        ><i class="icon fa fa-w fa-chevron-left mx-0" aria-label={$store.strings.previouspage} /></a
+        on:click|preventDefault={() => store.navigate($store.prevParams)}
     >
-    <a
+        <i class="icon fa fa-w fa-chevron-left mx-0" aria-label={$store.strings.previouspage} />
+    </button>
+    <button
         class="btn btn-secondary"
-        class:disabled={nextDisabled}
-        aria-disabled={nextDisabled}
+        disabled={!$store.nextParams}
         title={$store.strings.nextpage}
-        href={viewUrl(nextParams)}
-        on:click|preventDefault={() => store.navigate(nextParams)}
+        on:click|preventDefault={() => store.navigate($store.nextParams)}
     >
-        <i class="icon fa fa-w fa-chevron-right mx-0" aria-label={$store.strings.nextpage} /></a
-    >
+        <i class="icon fa fa-w fa-chevron-right mx-0" aria-label={$store.strings.nextpage} />
+    </button>
 </div>

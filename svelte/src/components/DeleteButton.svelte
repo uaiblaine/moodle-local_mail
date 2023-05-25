@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { DeletedStatus, type MessageListItem } from '../lib/services';
+    import { DeletedStatus } from '../lib/services';
     import type { Store } from '../lib/store';
 
     export let store: Store;

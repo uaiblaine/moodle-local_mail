@@ -10,6 +10,7 @@
     import RestoreButton from './RestoreButton.svelte';
     import SelectAllBUtton from './SelectAllButton.svelte';
     import type { Store } from '../lib/store';
+    import SearchButton from './SearchButton.svelte';
 
     export let store: Store;
 </script>
@@ -30,6 +31,7 @@
             {/if}
             <MoreActionsButton {store} />
         </div>
+        <SearchButton {store} />
         <PagingButtons {store} />
     </div>
 </div>

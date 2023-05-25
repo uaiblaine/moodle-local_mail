@@ -24,7 +24,7 @@
     role="checkbox"
     aria-checked={Boolean($store.selectedIds.has(message.id))}
     title={$store.strings.select}
-    on:click|preventDefault|stopPropagation={() => store.toggleSelected(message.id)}
+    on:click|preventDefault={() => store.toggleSelected(message.id)}
 >
     <i class="fa align-middle {checkClass}" />
 </button>
@@ -34,7 +34,7 @@
     aria-checked={message.starred}
     disabled={message.deleted}
     title={message.starred ? $store.strings.markasunstarred : $store.strings.markasstarred}
-    on:click|preventDefault|stopPropagation={() => store.setStarred([message.id], !message.starred)}
+    on:click|preventDefault={() => store.setStarred([message.id], !message.starred)}
 >
     <i class="fa {starClass}" />
 </button>
@@ -51,11 +51,11 @@
 </span>
 {#each message.labels as label}
     {#if $store.params.type != 'label' || $store.params.labelid != label.id}
-        <Pill text={label.name} color={label.color} dimmed={!message.unread} />
+        <Pill text={label.name} color={label.color} />
     {/if}
 {/each}
 {#if $store.params.type != 'course' || $store.params.courseid != message.course.id}
-    <Pill text={message.course.shortname} dimmed={!message.unread} />
+    <Pill text={message.course.shortname} />
 {/if}
 <span
     class="local-mail-list-item-time text-truncate d-shrink-0 text-right my-2 mr-3"

@@ -10,19 +10,23 @@
 
     export let store: Store;
 
-    $: key =
-        $store.params.type +
-        '-' +
-        ($store.params.courseid || 0) +
-        '-' +
-        ($store.params.labelid || 0) +
-        '-' +
-        ($store.params.offset || 0);
+    $: key = [
+        $store.params.type,
+        $store.params.courseid || 0,
+        $store.params.labelid || 0,
+        $store.params.beforeid || 0,
+    ].join(':');
+
+    $: recentParams = {
+        type: $store.params.type,
+        courseid: $store.params.courseid,
+        labelid: $store.params.labelid,
+    };
 </script>
 
 {#key key}
     <div class="list-group">
-        {#each $store.messageList.messages as message (message.id)}
+        {#each $store.list.messages as message (message.id)}
             <a
                 animate:flip={{ delay: 200, duration: 400 }}
                 in:fade|local={{ delay: 400 }}
@@ -38,17 +42,34 @@
                 on:click={(event) => {
                     if (!message.draft) {
                         event.preventDefault();
-                        store.navigate($store.params);
+                        // TODO: View message
                     }
                 }}
             >
                 <ListItem {store} {message} />
             </a>
         {/each}
-        {#if $store.messageList.totalcount == 0}
-            <div in:fade|local={{ delay: 400 }} class="list-group-item">
-                {$store.strings.nomessages}
+        {#if !$store.list.messages.length && !$store.list.nextid}
+            <div in:fade|local={{ delay: 400 }} class="alert alert-info">
+                <div>
+                    {$store.strings.nomessagestoview}
+                </div>
+                {#if $store.list.totalcount > 0}
+                    <a
+                        class="btn btn-info text-white mt-3"
+                        href={viewUrl(recentParams)}
+                        on:click|preventDefault={() => store.navigate(recentParams)}
+                    >
+                        {$store.strings.showrecentmessages}
+                    </a>
+                {/if}
             </div>
         {/if}
     </div>
 {/key}
+
+<style>
+    .local-mail-list-item {
+        color: var(--dark) !important;
+    }
+</style>

@@ -13,22 +13,22 @@
             ? $store.menu.labels.find((label) => label.id == $store.params.labelid)
             : null;
 
-    $: someRead = $store.messageList.messages.some(
+    $: someRead = $store.list.messages.some(
         (message) => $store.selectedIds.has(message.id) && !message.unread,
     );
-    $: someUnread = $store.messageList.messages.some(
+    $: someUnread = $store.list.messages.some(
         (message) => $store.selectedIds.has(message.id) && message.unread,
     );
-    $: someStarred = $store.messageList.messages.some(
+    $: someStarred = $store.list.messages.some(
         (message) => $store.selectedIds.has(message.id) && message.starred,
     );
-    $: someUnstarred = $store.messageList.messages.some(
+    $: someUnstarred = $store.list.messages.some(
         (message) => $store.selectedIds.has(message.id) && !message.starred,
     );
 
     $: disabled =
         $store.params.type == 'trash'
-            ? !$store.messageList.totalcount
+            ? !$store.list.totalcount
             : !label && !someRead && !someUnread && !someStarred && !someUnstarred;
 
     const setUnread = (unread: boolean) => {
@@ -111,10 +111,7 @@
         <ConfirmationModal
             id="local-mail-action-empty-trash-modal"
             title={$store.strings.emptytrash}
-            body={replaceStringParams(
-                $store.strings.messagesdeleteconfirm,
-                $store.messageList.totalcount,
-            )}
+            body={replaceStringParams($store.strings.messagesdeleteconfirm, $store.list.totalcount)}
             cancelText={$store.strings.cancel}
             confirmText={$store.strings.emptytrash}
             confirmCallback={() => store.emptyTrash()}

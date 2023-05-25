@@ -10,7 +10,7 @@
 
     $: selectedLabels = new Map(
         $store.menu.labels.map((label) => {
-            const messages = $store.messageList.messages.filter(
+            const messages = $store.list.messages.filter(
                 (message) =>
                     $store.selectedIds.has(message.id) &&
                     message.labels.some((messageLabel) => messageLabel.id == label.id),
@@ -27,7 +27,7 @@
     );
 
     $: applyEnabled = Array.from(selectedLabels.entries()).some(([labelid, selected]) =>
-        $store.messageList.messages.some(
+        $store.list.messages.some(
             (message) =>
                 $store.selectedIds.has(message.id) &&
                 ((selected == 'true' && message.labels.every((label) => label.id != labelid)) ||

@@ -7,7 +7,7 @@
     import Toasts from './Toasts.svelte';
     import ToolBar from './ToolBar.svelte';
     import type { Store } from '../lib/store';
-    import { getViewParams } from '../lib/url';
+    import { getViewParamsFromUrl } from '../lib/url';
 
     export let store: Store;
 
@@ -29,7 +29,7 @@
             : '';
 </script>
 
-<svelte:window on:popstate={() => store.navigate(getViewParams())} />
+<svelte:window on:popstate={() => store.navigate(getViewParamsFromUrl())} />
 <svelte:head>
     <title>{title} - {$store.strings.pluginname}</title>
 </svelte:head>

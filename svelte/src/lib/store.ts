@@ -5,9 +5,11 @@ import {
     type CreateLabelRequest,
     type DeleteLabelRequest,
     type EmptyTrashRequest,
+    type GetMenuRequest,
     type Menu,
     type MessageList,
     type Preferences,
+    type SearchIndexRequest,
     type ServiceRequest,
     type SetDeletedRequest,
     type SetLabelsRequest,
@@ -16,9 +18,29 @@ import {
     type SetUnreadRequest,
     type UpdateLabelRequest,
 } from './services';
-import { getViewParams, setViewParams } from './url';
-import type { ViewParams } from './url';
+import { getViewParamsFromUrl, setUrlFromViewParams } from './url';
 import { replaceStringParams, sleep } from './utils';
+
+export type ViewType = 'inbox' | 'sent' | 'drafts' | 'starred' | 'course' | 'label' | 'trash';
+
+export interface SearchParams {
+    readonly content: string;
+    readonly sender?: string;
+    readonly recipients?: string;
+    readonly unread?: boolean;
+    readonly attachments?: boolean;
+    readonly time?: number;
+}
+
+export interface ViewParams {
+    readonly type: ViewType;
+    readonly courseid?: number;
+    readonly labelid?: number;
+    readonly messageid?: number;
+    readonly beforeid?: number;
+    readonly afterid?: number;
+    readonly search?: SearchParams;
+}
 
 export interface Toast {
     readonly text: string;
@@ -26,12 +48,21 @@ export interface Toast {
 }
 
 export interface State {
+    /* General information fetched only once. */
     readonly userid: number;
     readonly preferences: Preferences;
     readonly strings: Readonly<{ [id: string]: string }>;
+
+    /* Parameters of the current view. */
     readonly params: ViewParams;
+
+    /* Data fetched using web services for the current view.  */
     readonly menu: Menu;
-    readonly messageList: MessageList;
+    readonly list: MessageList;
+
+    /* Transient interface state. */
+    readonly nextParams?: ViewParams;
+    readonly prevParams?: ViewParams;
     readonly selectedIds: ReadonlySet<number>;
     readonly toasts: ReadonlyArray<Toast>;
     readonly loading: boolean;
@@ -43,15 +74,34 @@ export async function createStore() {
     let currentActionId = 0;
 
     const { subscribe, update } = writable<State>({
+        /* Info */
         userid: 0,
         preferences: { perpage: 10, markasread: false },
         strings: {},
-        params: {} as ViewParams,
-        menu: { unread: 0, drafts: 0, labels: [], courses: [] },
-        messageList: { totalcount: 0, messages: [] },
+
+        /* Params */
+        params: { type: 'inbox' },
+
+        /* Data */
+        menu: {
+            unread: 0,
+            drafts: 0,
+            labels: [],
+            courses: [],
+        },
+        list: {
+            totalcount: 0,
+            messages: [],
+            firstoffset: 0,
+            lastoffset: 0,
+            previousid: 0,
+            nextid: 0,
+        },
+
+        /* Transient */
+        loading: true,
         selectedIds: new Set(),
         toasts: [],
-        loading: true,
     });
 
     const store = {
@@ -61,67 +111,105 @@ export async function createStore() {
             return get(this);
         },
 
-        async init() {
-            const [info] = await callServices([{ methodname: 'get_info' }]);
-
-            update((state) => ({ ...state, ...info }));
-
-            await store.callServicesAndRefresh([], getViewParams());
-        },
-
         async callServicesAndRefresh(
             requests: ServiceRequest[],
-            params: ViewParams,
+            params?: ViewParams,
+            redirect = false,
         ): Promise<any[]> {
             const actionId = ++currentActionId;
 
+            params = params || store.get().params;
+            const perpage = store.get().preferences.perpage;
+
             update((state) => ({ ...state, loading: true }));
 
-            const responses = await callServices([
-                ...requests,
-                {
-                    methodname: 'get_menu',
-                },
-                {
-                    methodname: 'get_index',
-                    type: params.type,
-                    itemid:
-                        params.type == 'course'
-                            ? params.courseid
-                            : params.type == 'label'
-                            ? params.labelid
-                            : 0,
-                    offset: params.offset || 0,
-                    limit: store.get().preferences.perpage,
-                },
-            ]);
+            const menuRequest: GetMenuRequest = { methodname: 'get_menu' };
 
-            const list = responses.pop() as MessageList;
+            const itemid =
+                params.type == 'course'
+                    ? params.courseid
+                    : params.type == 'label'
+                    ? params.labelid
+                    : 0;
+            const listRequest: SearchIndexRequest = {
+                methodname: 'search_index',
+                type: params.type,
+                itemid,
+                query: {
+                    beforeid: params.beforeid,
+                    afterid: params.afterid,
+                    limit: perpage,
+                    ...params.search
+                },
+            };
+
+            const responses = await callServices([...requests, menuRequest, listRequest]);
+
+            let list = responses.pop() as MessageList;
             const menu = responses.pop() as Menu;
+
+            // In some corner cases, when navigating backwards, less messages than than perpage may be fetched.
+            // Fetch additional messages to fill the page.
+            if (list.messages.length < perpage && list.nextid) {
+                const listRequest2: SearchIndexRequest = {
+                    ...listRequest,
+                    query: {
+                        ...listRequest.query,
+                        beforeid: list.messages[list.messages.length - 1].id,
+                        afterid: undefined,
+                        limit: perpage - list.messages.length,
+                    },
+                };
+                const [list2] = await callServices([listRequest2]);
+                list = {
+                    totalcount: list2.totalcount,
+                    messages: list.messages.concat(list2.messages),
+                    firstoffset: list.firstoffset,
+                    lastoffset: list2.lastoffset,
+                    previousid: list.previousid,
+                    nextid: list2.nextid,
+                };
+            }
 
             if (
                 (params.type == 'course' && !menu.courses.find((c) => c.id == params.courseid)) ||
                 (params.type == 'label' && !menu.labels.find((l) => l.id == params.labelid))
             ) {
-                await store.navigate({ type: 'inbox' });
-            } else if (list.messages.length == 0 && params.offset > 0) {
-                const perPage = store.get().preferences.perpage;
-                const lastPage = Math.max(0, Math.floor((list.totalcount - 1) / perPage));
-                await store.navigate({ ...params, offset: lastPage * perPage });
+                await store.navigate({ type: 'inbox' }, true);
             } else if (actionId === currentActionId) {
-                update((state) => ({
-                    ...state,
-                    params,
-                    menu,
-                    messageList: list,
-                    selectedIds: new Set(
-                        list.messages
-                            .filter((message) => state.selectedIds.has(message.id))
-                            .map((message) => message.id),
-                    ),
-                    loading: false,
-                }));
-                setViewParams(params);
+                update(
+                    (state): State => ({
+                        ...state,
+                        params: {
+                            ...params,
+                            beforeid: list.previousid,
+                            afterid: undefined,
+                        },
+                        menu,
+                        list,
+                        nextParams: list.nextid
+                            ? {
+                                  ...params,
+                                  beforeid: list.messages[list.messages.length - 1].id,
+                                  afterid: undefined,
+                              }
+                            : undefined,
+                        prevParams: list.previousid
+                            ? {
+                                  ...params,
+                                  beforeid: undefined,
+                                  afterid: list.messages[0]?.id,
+                              }
+                            : undefined,
+                        selectedIds: new Set(
+                            list.messages
+                                .filter((message) => state.selectedIds.has(message.id))
+                                .map((message) => message.id),
+                        ),
+                        loading: false,
+                    }),
+                );
+                setUrlFromViewParams(params, redirect);
             }
 
             return responses;
@@ -134,7 +222,7 @@ export async function createStore() {
                 color,
             };
 
-            const responses = await store.callServicesAndRefresh([request], getViewParams());
+            const responses = await store.callServicesAndRefresh([request]);
 
             return responses.pop();
         },
@@ -148,17 +236,10 @@ export async function createStore() {
         },
 
         async emptyTrash() {
-            update((state) => ({
-                ...state,
-                messageList: {
-                    ...state.messageList,
-                    messages: state.messageList.messages.filter((message) => !message.deleted),
-                },
-            }));
             const request: EmptyTrashRequest = {
                 methodname: 'empty_trash',
             };
-            await store.callServicesAndRefresh([request], getViewParams());
+            await store.callServicesAndRefresh([request]);
         },
 
         hideToast(toast: Toast) {
@@ -168,15 +249,23 @@ export async function createStore() {
             }));
         },
 
-        async navigate(params: ViewParams = getViewParams()) {
-            await store.callServicesAndRefresh([], params);
+        async init() {
+            const [info] = await callServices([{ methodname: 'get_info' }]);
+
+            update((state) => ({ ...state, ...info }));
+
+            await store.callServicesAndRefresh([], getViewParamsFromUrl());
+        },
+
+        async navigate(params: ViewParams, redirect = false) {
+            await store.callServicesAndRefresh([], params, redirect);
         },
 
         selectAll(type: SelectAllType) {
             update((state) => ({
                 ...state,
                 selectedIds: new Set(
-                    state.messageList.messages
+                    state.list.messages
                         .filter(
                             (message) =>
                                 type == 'all' ||
@@ -191,30 +280,6 @@ export async function createStore() {
         },
 
         async setDeleted(ids: ReadonlyArray<number>, deleted: DeletedStatus, allowUndo: boolean) {
-            update((state) => ({
-                ...state,
-                messageList: {
-                    ...state.messageList,
-                    messages: state.messageList.messages
-                        .filter((message) => {
-                            if (ids.includes(message.id)) {
-                                return state.params.type == 'trash'
-                                    ? deleted != DeletedStatus.DeletedForever
-                                    : deleted == DeletedStatus.NotDeleted;
-                            } else {
-                                return true;
-                            }
-                        })
-                        .map((message) => {
-                            if (ids.includes(message.id)) {
-                                return { ...message, deleted: Boolean(deleted) };
-                            } else {
-                                return message;
-                            }
-                        }),
-                },
-            }));
-
             const requests = ids.map(
                 (id): SetDeletedRequest => ({
                     methodname: 'set_deleted',
@@ -223,7 +288,7 @@ export async function createStore() {
                 }),
             );
 
-            await store.callServicesAndRefresh(requests, getViewParams());
+            await store.callServicesAndRefresh(requests);
 
             if (deleted != DeletedStatus.DeletedForever) {
                 const text = replaceStringParams(
@@ -246,60 +311,54 @@ export async function createStore() {
 
             update((state) => ({
                 ...state,
-                messageList: {
-                    ...state.messageList,
-                    messages: state.messageList.messages.map((message) => {
-                        if (messageids.includes(message.id)) {
-                            const labels = state.menu.labels.filter((label) => {
-                                if (added.includes(label.id)) {
-                                    return true;
-                                } else if (removed.includes(label.id)) {
-                                    return false;
-                                } else {
-                                    return message.labels.findIndex((l) => l.id == label.id) >= 0;
-                                }
-                            });
-                            requests.push({
-                                methodname: 'set_labels',
-                                messageid: message.id,
-                                labelids: labels.map((label) => label.id),
-                            });
-                            return { ...message, labels };
-                        } else {
-                            return message;
-                        }
-                    }),
-                },
+                messages: state.list.messages.map((message) => {
+                    if (messageids.includes(message.id)) {
+                        const labels = state.menu.labels.filter((label) => {
+                            if (added.includes(label.id)) {
+                                return true;
+                            } else if (removed.includes(label.id)) {
+                                return false;
+                            } else {
+                                return message.labels.findIndex((l) => l.id == label.id) >= 0;
+                            }
+                        });
+                        requests.push({
+                            methodname: 'set_labels',
+                            messageid: message.id,
+                            labelids: labels.map((label) => label.id),
+                        });
+                        return { ...message, labels };
+                    } else {
+                        return message;
+                    }
+                }),
             }));
 
-            await store.callServicesAndRefresh(requests, getViewParams());
+            await store.callServicesAndRefresh(requests);
         },
 
-        async setPreferences(preferences: Partial<Preferences>) {
+        async setPerPage(perpage: number) {
             update((state) => ({
                 ...state,
-                preferences: { ...state.preferences, ...preferences },
+                preferences: { ...state.preferences, perpage },
             }));
             const request: SetPreferencesRequest = {
                 methodname: 'set_preferences',
-                preferences,
+                preferences: { perpage },
             };
-            await store.callServicesAndRefresh([request], getViewParams());
+            await store.callServicesAndRefresh([request]);
         },
 
         async setStarred(messageids: ReadonlyArray<number>, starred: boolean) {
             update((state) => ({
                 ...state,
-                messageList: {
-                    ...state.messageList,
-                    messages: state.messageList.messages.map((message) => {
-                        if (messageids.includes(message.id)) {
-                            return { ...message, starred };
-                        } else {
-                            return message;
-                        }
-                    }),
-                },
+                messages: state.list.messages.map((message) => {
+                    if (messageids.includes(message.id)) {
+                        return { ...message, starred };
+                    } else {
+                        return message;
+                    }
+                }),
             }));
             const requests = messageids.map(
                 (messageid): SetStarredRequest => ({
@@ -309,22 +368,19 @@ export async function createStore() {
                 }),
             );
 
-            await store.callServicesAndRefresh(requests, getViewParams());
+            await store.callServicesAndRefresh(requests);
         },
 
         async setUnread(messageids: ReadonlyArray<number>, unread: boolean) {
             update((state) => ({
                 ...state,
-                messageList: {
-                    ...state.messageList,
-                    messages: state.messageList.messages.map((message) => {
-                        if (messageids.includes(message.id)) {
-                            return { ...message, unread };
-                        } else {
-                            return message;
-                        }
-                    }),
-                },
+                messages: state.list.messages.map((message) => {
+                    if (messageids.includes(message.id)) {
+                        return { ...message, unread };
+                    } else {
+                        return message;
+                    }
+                }),
             }));
             const requests = messageids.map(
                 (messageid): SetUnreadRequest => ({
@@ -333,7 +389,7 @@ export async function createStore() {
                     unread,
                 }),
             );
-            await store.callServicesAndRefresh(requests, getViewParams());
+            await store.callServicesAndRefresh(requests);
         },
 
         async showToast(toast: Toast) {
@@ -348,7 +404,7 @@ export async function createStore() {
             update((state) => ({
                 ...state,
                 selectedIds: new Set(
-                    state.messageList.messages
+                    state.list.messages
                         .filter(
                             (message) =>
                                 (message.id != id && state.selectedIds.has(message.id)) ||
@@ -374,7 +430,7 @@ export async function createStore() {
                 color,
             };
 
-            store.callServicesAndRefresh([request], getViewParams());
+            store.callServicesAndRefresh([request]);
         },
     };
 

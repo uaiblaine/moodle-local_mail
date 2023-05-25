@@ -40,19 +40,20 @@ export interface GetIndexRequest {
 export interface SearchIndexRequest {
     readonly methodname: 'search_index';
     readonly type: 'inbox' | 'drafts' | 'sent' | 'starred' | 'course' | 'label' | 'trash';
+    readonly itemid: number;
     readonly query: SearchQuery;
 }
 
 export interface SearchQuery {
-    readonly beforeid: number;
-    readonly afterid: number;
-    readonly content: string;
-    readonly sender: string;
-    readonly recipients: string;
-    readonly unread: boolean;
-    readonly attachments: boolean;
-    readonly time: number;
-    readonly limit: number;
+    readonly beforeid?: number;
+    readonly afterid?: number;
+    readonly content?: string;
+    readonly sender?: string;
+    readonly recipients?: string;
+    readonly unread?: boolean;
+    readonly attachments?: boolean;
+    readonly time?: number;
+    readonly limit?: number;
 }
 
 export interface GetMessageRequest {
@@ -178,6 +179,10 @@ export interface MenuLabel {
 export interface MessageList {
     readonly totalcount: number;
     readonly messages: ReadonlyArray<MessageListItem>;
+    readonly firstoffset: number;
+    readonly lastoffset: number;
+    readonly previousid: number;
+    readonly nextid: number;
 }
 
 export interface MessageListItem {

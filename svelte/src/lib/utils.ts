@@ -19,6 +19,7 @@ export function replaceStringParams(
     string: string,
     params: string | number | Record<string, string | number>,
 ): string {
+    string = string || ''
     if (typeof params == 'string' || typeof params == 'number') {
         string = string.replace('{$a}', params.toString());
     } else {
@@ -40,3 +41,21 @@ export async function sleep(miliseconds: number): Promise<void> {
         setTimeout(resolve, miliseconds);
     });
 }
+
+/**
+ * List of supported colors for labels.
+ */
+export const colors: ReadonlyArray<string> = [
+    'blue',
+    'indigo',
+    'purple',
+    'pink',
+    'red',
+    'orange',
+    'yellow',
+    'green',
+    'teal',
+    'cyan',
+    'gray',
+    'black',
+];
