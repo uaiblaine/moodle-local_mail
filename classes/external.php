@@ -61,8 +61,10 @@ class local_mail_external extends external_api {
     public static function set_preferences_parameters() {
         return new external_function_parameters([
             'preferences' => new external_single_structure([
-                'perpage' => new external_value(PARAM_INT, 'Number of messages to display per page (5-100).', VALUE_OPTIONAL),
-                'markasread' => new external_value(PARAM_BOOL, 'Mark new messages as read if a notification is sent.', VALUE_OPTIONAL),
+                'perpage' => new external_value(
+                    PARAM_INT, 'Number of messages to display per page (5-100).', VALUE_OPTIONAL),
+                'markasread' => new external_value(
+                    PARAM_BOOL, 'Mark new messages as read if a notification is sent.', VALUE_OPTIONAL),
             ]),
         ]);
     }
@@ -229,6 +231,10 @@ class local_mail_external extends external_api {
                     ),
                 ])
             ),
+            'firstoffset' => new external_value(PARAM_INT, 'Offset of the first returned message.'),
+            'lastoffset' => new external_value(PARAM_INT, 'Offset of the last returned message.'),
+            'previousid' => new external_value(PARAM_INT, 'ID of the previous (newer) message.'),
+            'nextid' => new external_value(PARAM_INT, 'ID of the next (older) message.'),
         ]);
     }
 
@@ -247,13 +253,40 @@ class local_mail_external extends external_api {
             require_capability('local/mail:usemail', $context);
         }
 
+        // Include the previous and next messages in the index, so we can get their.
+        $offset = $params['offset'];
+        $limit = $params['limit'];
+        if ($params['offset'] > 0 && $params['limit'] > 0) {
+            $offset -= 1;
+            $limit += 2;
+        } else if ($params['offset'] > 0) {
+            $offset -= 1;
+        } else if ($params['limit'] > 0) {
+            $limit += 1;
+        }
+
         $totalcount = local_mail_message::count_index($USER->id, $params['type'], $params['itemid']);
-        $messages = local_mail_message::fetch_index($USER->id, $params['type'], $params['itemid'],
-                                                    $params['offset'], $params['limit']);
+        $messages = local_mail_message::fetch_index($USER->id, $params['type'], $params['itemid'], $offset, $limit);
+
+        // Extract previous and next messages.
+        $previousid = 0;
+        $nextid = 0;
+        if ($params['offset'] > 0 && count($messages) > 0) {
+            $previousid = $messages[0]->id();
+            array_splice($messages, 0, 1);
+        }
+        if ($params['limit'] > 0 && count($messages) > 0) {
+            $nextid = $messages[count($messages) - 1]->id();
+            array_splice($messages, count($messages) - 1, 1);
+        }
 
         $result = [
             'totalcount' => $totalcount,
             'messages' => [],
+            'firstoffset' => count($messages) > 0 ? $params['offset'] : 0,
+            'lastoffset' => count($messages) > 0 ? $params['offset'] + count($messages) - 1 : 0,
+            'previousid' => $previousid,
+            'nextid' => $nextid,
         ];
 
         foreach ($messages as $message) {
@@ -381,6 +414,10 @@ class local_mail_external extends external_api {
                     ),
                 ])
             ),
+            'firstoffset' => new external_value(PARAM_INT, 'Offset of the first returned message.'),
+            'lastoffset' => new external_value(PARAM_INT, 'Offset of the last returned message.'),
+            'previousid' => new external_value(PARAM_INT, 'ID of the previous (newer) message.'),
+            'nextid' => new external_value(PARAM_INT, 'ID of the next (older) message.'),
         ]);
     }
 
@@ -428,6 +465,10 @@ class local_mail_external extends external_api {
         }
         if (!empty($params['query']['limit'])) {
             $query['limit'] = (int) $params['query']['limit'];
+            // Include the next (if searching forwards) or previous (if searching backwards) message.
+            if ($query['limit'] > 0) {
+                $query['limit']++;
+            }
         }
 
         $messages = local_mail_message::search_index($USER->id, $params['type'], (int) $params['itemid'], $query);
@@ -435,7 +476,35 @@ class local_mail_external extends external_api {
         $result = [
             'totalcount' => $totalcount,
             'messages' => [],
+            'firstoffset' => 0,
+            'lastoffset' => 0,
+            'previousid' => !empty($query['before']) ? $query['before'] : 0,
+            'nextid' => !empty($query['after']) ? $query['after'] : 0,
         ];
+
+        // Extract the next (if searching forwards) or previous (if searching backwards) message.
+        if (!empty($query['limit']) && count($messages) == $query['limit']) {
+            if (!empty($query['after'])) {
+                // Searching backwards.
+                $result['previousid'] = $messages[0]->id();
+                array_splice($messages, 0, 1);
+            } else {
+                // Searching forwards.
+                $result['nextid'] = $messages[count($messages) - 1]->id();
+                array_splice($messages, count($messages) - 1);
+            }
+        }
+
+        // Find offset of first and last message.
+        if (count($messages) > 0) {
+            $result['firstoffset'] = $messages[0]->find_offset($USER->id, $params['type'], (int) $params['itemid']);
+            if (count($messages) == 1) {
+                $result['lastoffset'] = $result['firstoffset'];
+            } else {
+                $lastmessage = $messages[count($messages) - 1];
+                $result['lastoffset'] = $lastmessage->find_offset($USER->id, $params['type'], (int) $params['itemid']);
+            }
+        }
 
         foreach ($messages as $message) {
             $sender = $message->sender();

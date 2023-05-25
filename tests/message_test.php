@@ -457,6 +457,44 @@ class message_test extends testcase {
         $this->assert_index(202, 'label', $label->id(), 1234567890, $result->id(), false);
     }
 
+    public function test_find_offset() {
+        $label = \local_mail_label::create(202, 'Label');
+        $message1 = \local_mail_message::create(201, 101);
+        $message1->save('subject1', 'content1', 301);
+        $message1->add_recipient('to', 202);
+        $message1->send(12345567890);
+        $message1->add_label($label);
+        $message2 = \local_mail_message::create(201, 101);
+        $message2->save('subject2', 'content2', 302);
+        $message2->add_recipient('to', 202);
+        $message2->send(12345567891);
+        $message2->add_label($label);
+        $message3 = \local_mail_message::create(201, 101);
+        $message3->save('subject3', 'content3', 302);
+        $message3->add_recipient('to', 202);
+        $message3->send(12345567891);
+        $message4 = \local_mail_message::create(201, 102);
+        $message4->save('subject4', 'content4', 302);
+        $message4->add_recipient('to', 202);
+        $message4->send(12345567891);
+        $message4->add_label($label);
+
+        $this->assertEquals(3, $message1->find_offset(202, 'inbox'));
+        $this->assertEquals(2, $message2->find_offset(202, 'inbox'));
+        $this->assertEquals(1, $message3->find_offset(202, 'inbox'));
+        $this->assertEquals(0, $message4->find_offset(202, 'inbox'));
+
+        $this->assertEquals(2, $message1->find_offset(202, 'label', $label->id()));
+        $this->assertEquals(1, $message2->find_offset(202, 'label', $label->id()));
+        $this->assertEquals(1, $message3->find_offset(202, 'label', $label->id()));
+        $this->assertEquals(0, $message4->find_offset(202, 'label', $label->id()));
+
+        $this->assertEquals(2, $message1->find_offset(202, 'course', 101));
+        $this->assertEquals(1, $message2->find_offset(202, 'course', 101));
+        $this->assertEquals(0, $message3->find_offset(202, 'course', 101));
+        $this->assertEquals(0, $message4->find_offset(202, 'course', 101));
+    }
+
     public function test_remove_label() {
         $label1 = \local_mail_label::create(201, 'label1');
         $label2 = \local_mail_label::create(202, 'label2');
@@ -636,23 +674,24 @@ class message_test extends testcase {
         $this->assertEquals(array($message3, $message2), $result);
 
         // Attach.
-
         $query = array('attach' => true);
         $result = \local_mail_message::search_index(202, 'course', 101, $query);
         $this->assertEquals(array($message5), $result);
 
         // From.
-
         $query = array('searchfrom' => fullname($this->user2));
         $result = \local_mail_message::search_index(202, 'course', 101, $query);
         $this->assertEquals(array($message5), $result);
 
         // To.
-
         $query = array('searchto' => fullname($this->user1));
         $result = \local_mail_message::search_index(202, 'course', 101, $query);
         $this->assertEquals(array($message5), $result);
 
+        // From and to.
+        $query = array('searchfrom' => fullname($this->user2), 'searchto' => fullname($this->user1));
+        $result = \local_mail_message::search_index(202, 'course', 101, $query);
+        $this->assertEquals(array($message5), $result);
     }
 
     public function test_send() {

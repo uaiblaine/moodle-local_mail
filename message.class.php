@@ -68,7 +68,7 @@ class local_mail_message {
         $result->courses = array();
         $result->labels = array();
 
-        $sql = 'SELECT MIN(id), type, item, unread, COUNT(*) AS count'
+        $sql = 'SELECT id, type, item, unread, COUNT(*) AS count'
             . ' FROM {local_mail_index}'
             . ' WHERE userid = :userid'
             . ' GROUP BY type, item, unread'
@@ -213,7 +213,7 @@ class local_mail_message {
     }
 
     public static function search_index($userid, $type, $item, array $query) {
-        global $DB;
+        global $CFG, $DB;
 
         assert(in_array($type, self::$indextypes));
         assert(empty($query['before']) || empty($query['after']));
@@ -244,22 +244,30 @@ class local_mail_message {
         }
 
         if ($query['searchfrom'] !== '') {
-            list($usersql, $userparams) = users_search_sql($query['searchfrom']);
-            $messageusersql = 'SELECT mu.messageid FROM {local_mail_message_users} mu'
-                . " JOIN {user} u ON u.id = mu.userid WHERE mu.role = :rolefrom AND $usersql";
-            $sql .= " AND i.messageid IN ($messageusersql)";
+            $fullnamefield = $DB->sql_fullname('u.firstname', 'u.lastname');
+            $usersql = "SELECT mu.messageid FROM {local_mail_message_users} mu"
+                . " JOIN {user} u ON u.id = mu.userid"
+                . " WHERE u.id <> :guestidfrom AND u.deleted = 0 AND u.confirmed = 1"
+                . " AND mu.role = :rolefrom "
+                . " AND " . $DB->sql_like($fullnamefield, ':patternfrom', false, false);
             $params['rolefrom'] = 'from';
-            $params = array_merge($params, $userparams);
+            $params['patternfrom'] = '%' . $DB->sql_like_escape(self::normalize_text($query['searchfrom'])) . '%';
+            $params['guestidfrom'] = $CFG->siteguest;
+            $sql .= " AND i.messageid IN ($usersql)";
         }
 
         if ($query['searchto'] !== '') {
-            list($usersql, $userparams) = users_search_sql($query['searchto']);
-            $messageusersql = 'SELECT mu.messageid FROM {local_mail_message_users} mu'
-                . " JOIN {user} u ON u.id = mu.userid WHERE (mu.role = :roleto OR mu.role = :rolecc) AND $usersql";
-            $sql .= " AND i.messageid IN ($messageusersql)";
+            $fullnamefield = $DB->sql_fullname('u.firstname', 'u.lastname');
+            $usersql = "SELECT mu.messageid FROM {local_mail_message_users} mu"
+                . " JOIN {user} u ON u.id = mu.userid"
+                . " WHERE u.id <> :guestidto AND u.deleted = 0 AND u.confirmed = 1"
+                . " AND (mu.role = :roleto OR mu.role = :rolecc) "
+                . " AND " . $DB->sql_like($fullnamefield, ":patternto", false, false);
             $params['roleto'] = 'to';
             $params['rolecc'] = 'cc';
-            $params = array_merge($params, $userparams);
+            $params['patternto'] = '%' . $DB->sql_like_escape(self::normalize_text($query['searchto'])) . '%';
+            $params['guestidto'] = $CFG->siteguest;
+            $sql .= " AND i.messageid IN ($usersql)";
         }
 
         if (!empty($query['attach'])) {
@@ -376,6 +384,27 @@ class local_mail_message {
 
     public function editable($userid) {
         return $this->draft && $this->has_user($userid) && $this->role[$userid] == 'from';
+    }
+
+    public function find_offset($userid, $type, $item=0) {
+        global $DB;
+
+        $select = 'userid = :userid'
+            . ' AND type = :type'
+            . ' AND item = :item'
+            . ' AND time >= :time1'
+            . ' AND (time > :time2 OR messageid > :id)';
+
+        $params = [
+            'userid' => $userid,
+            'type' => $type,
+            'item' => $item,
+            'time1' => $this->time,
+            'time2' => $this->time,
+            'id' => $this->id
+        ];
+
+        return $DB->count_records_select('local_mail_index', $select, $params);
     }
 
     public function format() {
