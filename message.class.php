@@ -480,41 +480,6 @@ class local_mail_message {
         return $message;
     }
 
-    public function replysend($userid, $all=false, $time=false) {
-        global $DB;
-
-        assert(!$this->draft);
-        assert($this->has_user($userid) && $this->sender()->id == $userid);
-
-        $transaction = $DB->start_delegated_transaction();
-
-        $message = self::create($userid, $this->course->id, $time);
-        $message->save($this->subject, '', -1, 0, $time);
-        $message->set_references($this);
-
-        foreach ($this->recipients('to') as $user) {
-            if ($user->id != $userid) {
-                $message->add_recipient('to', $user->id);
-            }
-        }
-
-        if ($all) {
-            foreach ($this->recipients('cc') as $user) {
-                if ($user->id != $userid) {
-                    $message->add_recipient('cc', $user->id);
-                }
-            }
-        }
-
-        foreach ($this->labels($userid) as $label) {
-            $message->add_label($label);
-        }
-
-        $transaction->allow_commit();
-
-        return $message;
-    }
-
     public function has_label(local_mail_label $label) {
         return isset($this->labels[$label->id()]);
     }
@@ -596,14 +561,18 @@ class local_mail_message {
     public function reply($userid, $all=false, $time=false) {
         global $DB;
 
-        assert(!$this->draft && $this->has_recipient($userid));
+        assert(!$this->draft && $this->has_user($userid));
         assert(!$all || in_array($this->role[$userid], array('to', 'cc')));
 
-        if (preg_match('/^RE\s*(?:\[(\d+)\])?:\s*(.*)$/', $this->subject, $matches)) {
-            $nreply = $matches[1] ? (int) $matches[1] + 1 : 2;
-            $subject = "RE [$nreply]: {$matches[2]}";
+        if ($userid != $this->sender()->id) {
+            if (preg_match('/^RE\s*(?:\[(\d+)\])?:\s*(.*)$/', $this->subject, $matches)) {
+                $nreply = $matches[1] ? (int) $matches[1] + 1 : 2;
+                $subject = "RE [$nreply]: {$matches[2]}";
+            } else {
+                $subject = 'RE: ' . $this->subject;
+            }
         } else {
-            $subject = 'RE: ' . $this->subject;
+            $subject = $this->subject;
         }
 
         $transaction = $DB->start_delegated_transaction();
@@ -611,13 +580,28 @@ class local_mail_message {
         $message = self::create($userid, $this->course->id, $time);
         $message->save($subject, '', -1, 0, $time);
         $sender = $this->sender();
-        $message->add_recipient('to', $sender->id);
         $message->set_references($this);
 
-        if ($all) {
-            foreach ($this->recipients('to', 'cc') as $user) {
+        if ($userid == $this->sender()->id) {
+            foreach ($this->recipients('to') as $user) {
                 if ($user->id != $userid) {
-                    $message->add_recipient('cc', $user->id);
+                    $message->add_recipient('to', $user->id);
+                }
+            }
+            if ($all) {
+                foreach ($this->recipients('cc') as $user) {
+                    if ($user->id != $userid) {
+                        $message->add_recipient('cc', $user->id);
+                    }
+                }
+            }
+        } else {
+            $message->add_recipient('to', $sender->id);
+            if ($all) {
+                foreach ($this->recipients('to', 'cc') as $user) {
+                    if ($user->id != $userid) {
+                        $message->add_recipient('cc', $user->id);
+                    }
                 }
             }
         }

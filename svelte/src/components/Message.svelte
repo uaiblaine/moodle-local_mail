@@ -18,7 +18,11 @@
     $: starClass = message.starred ? 'fa-star text-warning' : 'fa-star-o';
 
     $: canReplyAll =
-        [message.sender].concat(message.recipients).filter((u) => u.id != $store.userid).length > 1;
+        message.sender.id == $store.userid
+            ? message.recipients.filter((u) => u.type == 'cc').length > 0
+            : message.recipients.filter(
+                  (u) => ['to', 'cc'].includes(u.type) && u.id != $store.userid,
+              ).length > 0;
 </script>
 
 <div class="card local-mail-message">
