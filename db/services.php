@@ -80,6 +80,15 @@ $functions = array(
         'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE, 'local_mobile'),
     ),
+    'local_mail_find_offset' => array(
+        'classname' => 'local_mail_external',
+        'methodname' => 'find_offset',
+        'classpath' => 'local/mail/externallib.php',
+        'description' => 'Find the offset of a message in the index.',
+        'type' => 'read',
+        'ajax' => true,
+        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE, 'local_mobile'),
+    ),
     'local_mail_set_unread' => array(
         'classname' => 'local_mail_external',
         'methodname' => 'set_unread',

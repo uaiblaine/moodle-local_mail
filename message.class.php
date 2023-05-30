@@ -283,7 +283,23 @@ class local_mail_message {
             $sql .= ' AND i.unread = 1';
         }
 
-        if (!empty($query['before'])) {
+        if (!empty($query['startid'])) {
+            $time = $DB->get_field('local_mail_messages', 'time', ['id' => $query['startid']]);
+            if (!$time) {
+                // Message not in the index.
+                return [];
+            }
+            if (!empty($query['backwards'])) {
+                $sql .= " AND i.time >= :starttime AND (i.time > :starttime2 OR i.messageid >= :startid)";
+                $order = 'ASC';
+            } else {
+                $sql .= " AND i.time <= :starttime AND (i.time < :starttime2 OR i.messageid <= :startid)";
+            }
+            $params['startid'] = $query['startid'];
+            $params['starttime'] = $params['starttime2'] = $time;
+        } else if (!empty($query['backwards'])) {
+            $order = 'ASC';
+        } else if (!empty($query['before'])) {
             $from = self::fetch($query['before']);
             $sql .= ' AND i.time <= :beforetime AND (i.time < :beforetime2 OR i.messageid < :beforeid)';
             $params['beforetime'] = $from->time();
@@ -302,7 +318,7 @@ class local_mail_message {
         $limitnum = !empty($query['limit']) ? $query['limit'] : 0;
         $records = $DB->get_records_sql($sql, $params, 0, $limitnum);
         $messages = self::fetch_many(array_keys($records));
-        return !empty($query['after']) ? array_reverse($messages) : $messages;
+        return $order == 'ASC' ? array_reverse($messages) : $messages;
     }
 
     public static function empty_trash($userid) {

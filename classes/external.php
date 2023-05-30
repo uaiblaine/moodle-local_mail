@@ -32,8 +32,8 @@ class local_mail_external extends external_api {
         return new external_single_structure([
             'userid' => new external_value(PARAM_INT, 'User id'),
             'preferences' => new external_single_structure([
-                'perpage' => new external_value(PARAM_INT, 'Number of messages to display per page (5-100).'),
-                'markasread' => new external_value(PARAM_BOOL, 'Mark new messages as read if a notification is sent.'),
+                'perpage' => new external_value(PARAM_INT, 'Number of messages to display per page (5-100)'),
+                'markasread' => new external_value(PARAM_BOOL, 'Mark new messages as read if a notification is sent'),
             ]),
             'strings' => new external_single_structure($stringkeys),
         ]);
@@ -62,9 +62,9 @@ class local_mail_external extends external_api {
         return new external_function_parameters([
             'preferences' => new external_single_structure([
                 'perpage' => new external_value(
-                    PARAM_INT, 'Number of messages to display per page (5-100).', VALUE_OPTIONAL),
+                    PARAM_INT, 'Number of messages to display per page (5-100)', VALUE_OPTIONAL),
                 'markasread' => new external_value(
-                    PARAM_BOOL, 'Mark new messages as read if a notification is sent.', VALUE_OPTIONAL),
+                    PARAM_BOOL, 'Mark new messages as read if a notification is sent', VALUE_OPTIONAL),
             ]),
         ]);
     }
@@ -196,7 +196,7 @@ class local_mail_external extends external_api {
                 new external_single_structure([
                     'id' => new external_value(PARAM_INT, 'Id of the message'),
                     'subject' => new external_value(PARAM_TEXT, 'Subject of the message'),
-                    'attachments' => new external_value(PARAM_INT, 'Number of attachments'),
+                    'numattachments' => new external_value(PARAM_INT, 'Number of attachments'),
                     'draft' => new external_value(PARAM_BOOL, 'Draft status'),
                     'time' => new external_value(PARAM_INT, 'Time of the message'),
                     'shorttime' => new external_value(PARAM_TEXT, 'Formatted short time'),
@@ -212,14 +212,16 @@ class local_mail_external extends external_api {
                     'sender' => new external_single_structure([
                         'id' => new external_value(PARAM_INT, 'Id of the user'),
                         'fullname' => new external_value(PARAM_RAW, 'Full name of the user'),
-                        'pictureurl' => new external_value(PARAM_URL, 'User image profile URL'),
+                        'pictureurl' => new external_value(PARAM_URL, 'User image URL'),
+                        'profileurl' => new external_value(PARAM_URL, 'User profile URL'),
                     ]),
                     'recipients' => new external_multiple_structure(
                         new external_single_structure([
                             'type' => new external_value(PARAM_ALPHA, 'Role of the user: "to", "cc" or "bcc"'),
                             'id' => new external_value(PARAM_INT, 'Id of the user'),
                             'fullname' => new external_value(PARAM_RAW, 'Full name of the user'),
-                            'pictureurl' => new external_value(PARAM_URL, 'User image profile URL'),
+                            'pictureurl' => new external_value(PARAM_URL, 'User image URL'),
+                            'profileurl' => new external_value(PARAM_URL, 'User profile URL'),
                         ])
                     ),
                     'labels' => new external_multiple_structure(
@@ -231,10 +233,6 @@ class local_mail_external extends external_api {
                     ),
                 ])
             ),
-            'firstoffset' => new external_value(PARAM_INT, 'Offset of the first returned message.'),
-            'lastoffset' => new external_value(PARAM_INT, 'Offset of the last returned message.'),
-            'previousid' => new external_value(PARAM_INT, 'ID of the previous (newer) message.'),
-            'nextid' => new external_value(PARAM_INT, 'ID of the next (older) message.'),
         ]);
     }
 
@@ -245,13 +243,6 @@ class local_mail_external extends external_api {
         $params = self::validate_parameters(self::get_index_parameters(), $params);
 
         self::validate_context(context_system::instance());
-
-        $courseid = ($params['type'] == 'course' ? $params['itemid'] : SITEID);
-        $context = context_course::instance($courseid);
-
-        if ($params['type'] == 'course') {
-            require_capability('local/mail:usemail', $context);
-        }
 
         // Include the previous and next messages in the index, so we can get their.
         $offset = $params['offset'];
@@ -266,27 +257,12 @@ class local_mail_external extends external_api {
         }
 
         $totalcount = local_mail_message::count_index($USER->id, $params['type'], $params['itemid']);
-        $messages = local_mail_message::fetch_index($USER->id, $params['type'], $params['itemid'], $offset, $limit);
-
-        // Extract previous and next messages.
-        $previousid = 0;
-        $nextid = 0;
-        if ($params['offset'] > 0 && count($messages) > 0) {
-            $previousid = $messages[0]->id();
-            array_splice($messages, 0, 1);
-        }
-        if ($params['limit'] > 0 && count($messages) > 0) {
-            $nextid = $messages[count($messages) - 1]->id();
-            array_splice($messages, count($messages) - 1, 1);
-        }
+        $messages = local_mail_message::fetch_index($USER->id, $params['type'], $params['itemid'],
+                                                    $params['offset'], $params['limit']);
 
         $result = [
             'totalcount' => $totalcount,
             'messages' => [],
-            'firstoffset' => count($messages) > 0 ? $params['offset'] : 0,
-            'lastoffset' => count($messages) > 0 ? $params['offset'] + count($messages) - 1 : 0,
-            'previousid' => $previousid,
-            'nextid' => $nextid,
         ];
 
         foreach ($messages as $message) {
@@ -297,6 +273,7 @@ class local_mail_external extends external_api {
                 'id' => $sender->id,
                 'fullname' => fullname($sender),
                 'pictureurl' => self::user_picture_url($sender),
+                'profileurl' => self::user_profile_url($sender),
             ];
             $recipients = [];
             foreach (['to', 'cc'] as $type) {
@@ -308,6 +285,7 @@ class local_mail_external extends external_api {
                         'id' => $user->id,
                         'fullname' => fullname($user),
                         'pictureurl' => self::user_picture_url($user),
+                        'profileurl' => self::user_profile_url($user),
                     ];
                 }
             }
@@ -323,7 +301,7 @@ class local_mail_external extends external_api {
             $result['messages'][] = [
                 'id' => $message->id(),
                 'subject' => $message->subject(),
-                'attachments' => $message->attachments(true),
+                'numattachments' => $message->attachments(true),
                 'draft' => $message->draft(),
                 'time' => $message->time(),
                 'shorttime' => self::format_time($message->time()),
@@ -350,24 +328,24 @@ class local_mail_external extends external_api {
             'type' => new external_value(PARAM_ALPHA, 'Type of index: inbox, starred, drafts, sent, trash, course or label'),
             'itemid' => new external_value(PARAM_INT, 'ID of the course or label of the index'),
             'query' => new external_single_structure([
-                'beforeid' => new external_value(
-                    PARAM_INT, 'ID of the message where to start searching older messages', VALUE_OPTIONAL),
-                'afterid' => new external_value(
-                    PARAM_INT, 'ID of the message where to start searching newer messages', VALUE_OPTIONAL),
+                'startid' => new external_value(
+                    PARAM_INT, 'ID of the message where to start searching', VALUE_DEFAULT, 0),
+                'backwards' => new external_value(
+                    PARAM_BOOL, 'Search from older to newer instead of from newer to older', VALUE_DEFAULT, false),
                 'content' => new external_value(
-                    PARAM_TEXT, 'Text to search then contents of the message', VALUE_OPTIONAL),
+                    PARAM_TEXT, 'Text to search then contents of the message', VALUE_DEFAULT, ''),
                 'sender' => new external_value(
-                    PARAM_TEXT, 'Text to search the name of the sender', VALUE_OPTIONAL),
+                    PARAM_TEXT, 'Text to search the name of the sender', VALUE_DEFAULT, ''),
                 'recipients' => new external_value(
-                    PARAM_TEXT, 'Text to search the names of the recipients', VALUE_OPTIONAL),
+                    PARAM_TEXT, 'Text to search the names of the recipients', VALUE_DEFAULT, ''),
                 'unread' => new external_value(
-                    PARAM_BOOL, 'Search only unread messsages', VALUE_OPTIONAL),
+                    PARAM_BOOL, 'Search only unread messsages', VALUE_DEFAULT, false),
                 'attachments' => new external_value(
-                    PARAM_BOOL, 'Search only messages with attachments', VALUE_OPTIONAL),
+                    PARAM_BOOL, 'Search only messages with attachments', VALUE_DEFAULT, false),
                 'time' => new external_value(
-                    PARAM_INT, 'Search only messages older than this timestamp', VALUE_OPTIONAL),
+                    PARAM_INT, 'Search only messages older than this timestamp', VALUE_DEFAULT, 0),
                 'limit' => new external_value(
-                    PARAM_INT, 'Maximum number of messages to return', VALUE_OPTIONAL),
+                    PARAM_INT, 'Maximum number of messages to return', VALUE_DEFAULT, 0),
             ]),
         ]);
     }
@@ -379,7 +357,7 @@ class local_mail_external extends external_api {
                 new external_single_structure([
                     'id' => new external_value(PARAM_INT, 'Id of the message'),
                     'subject' => new external_value(PARAM_TEXT, 'Subject of the message'),
-                    'attachments' => new external_value(PARAM_INT, 'Number of attachments'),
+                    'numattachments' => new external_value(PARAM_INT, 'Number of attachments'),
                     'draft' => new external_value(PARAM_BOOL, 'Draft status'),
                     'time' => new external_value(PARAM_INT, 'Time of the message'),
                     'shorttime' => new external_value(PARAM_TEXT, 'Formatted short time'),
@@ -395,14 +373,16 @@ class local_mail_external extends external_api {
                     'sender' => new external_single_structure([
                         'id' => new external_value(PARAM_INT, 'Id of the user'),
                         'fullname' => new external_value(PARAM_RAW, 'Full name of the user'),
-                        'pictureurl' => new external_value(PARAM_URL, 'User image profile URL'),
+                        'pictureurl' => new external_value(PARAM_URL, 'User image URL'),
+                        'profileurl' => new external_value(PARAM_URL, 'User profile URL'),
                     ]),
                     'recipients' => new external_multiple_structure(
                         new external_single_structure([
                             'type' => new external_value(PARAM_ALPHA, 'Role of the user: "to", "cc" or "bcc"'),
                             'id' => new external_value(PARAM_INT, 'Id of the user'),
                             'fullname' => new external_value(PARAM_RAW, 'Full name of the user'),
-                            'pictureurl' => new external_value(PARAM_URL, 'User image profile URL'),
+                            'pictureurl' => new external_value(PARAM_URL, 'User image URL'),
+                            'profileurl' => new external_value(PARAM_URL, 'User profile URL'),
                         ])
                     ),
                     'labels' => new external_multiple_structure(
@@ -414,10 +394,10 @@ class local_mail_external extends external_api {
                     ),
                 ])
             ),
-            'firstoffset' => new external_value(PARAM_INT, 'Offset of the first returned message.'),
-            'lastoffset' => new external_value(PARAM_INT, 'Offset of the last returned message.'),
-            'previousid' => new external_value(PARAM_INT, 'ID of the previous (newer) message.'),
-            'nextid' => new external_value(PARAM_INT, 'ID of the next (older) message.'),
+            'firstoffset' => new external_value(PARAM_INT, 'Offset of the first returned message'),
+            'lastoffset' => new external_value(PARAM_INT, 'Offset of the last returned message'),
+            'previousid' => new external_value(PARAM_INT, 'ID of the previous (newer) message'),
+            'nextid' => new external_value(PARAM_INT, 'ID of the next (older) message'),
         ]);
     }
 
@@ -429,46 +409,23 @@ class local_mail_external extends external_api {
 
         self::validate_context(context_system::instance());
 
-        $courseid = ($params['type'] == 'course' ? $params['itemid'] : SITEID);
-        $context = context_course::instance($courseid);
-
-        if ($params['type'] == 'course') {
-            require_capability('local/mail:usemail', $context);
-        }
-
         $totalcount = local_mail_message::count_index($USER->id, $params['type'], (int) $params['itemid']);
 
-        $query = [];
-        if (!empty($params['query']['beforeid'])) {
-            $query['before'] = (int) $params['query']['beforeid'];
-        }
-        if (!empty($params['query']['afterid']) && empty($params['query']['beforeid'])) {
-            $query['after'] = (int) $params['query']['afterid'];
-        }
-        if (!empty($params['query']['content'])) {
-            $query['pattern'] = $params['query']['content'];
-        }
-        if (!empty($params['query']['sender'])) {
-            $query['searchfrom'] = $params['query']['sender'];
-        }
-        if (!empty($params['query']['recipients'])) {
-            $query['searchto'] = $params['query']['recipients'];
-        }
-        if (!empty($params['query']['unread'])) {
-            $query['unread'] = true;
-        }
-        if (!empty($params['query']['attachments'])) {
-            $query['attach'] = true;
-        }
-        if (!empty($params['query']['time'])) {
-            $query['time'] = $params['query']['time'];
-        }
-        if (!empty($params['query']['limit'])) {
-            $query['limit'] = (int) $params['query']['limit'];
-            // Include the next (if searching forwards) or previous (if searching backwards) message.
-            if ($query['limit'] > 0) {
-                $query['limit']++;
-            }
+        $query = [
+            'startid' => $params['query']['startid'],
+            'backwards' => $params['query']['backwards'],
+            'pattern' => $params['query']['content'],
+            'searchfrom' => $params['query']['sender'],
+            'searchto' => $params['query']['recipients'],
+            'unread' => $params['query']['unread'],
+            'attach' => $params['query']['attachments'],
+            'time' => $params['query']['time'],
+            'limit' => $params['query']['limit'],
+        ];
+
+        // Include the next (if searching forwards) or previous (if searching backwards) message.
+        if ($query['limit'] > 0) {
+            $query['limit']++;
         }
 
         $messages = local_mail_message::search_index($USER->id, $params['type'], (int) $params['itemid'], $query);
@@ -478,20 +435,33 @@ class local_mail_external extends external_api {
             'messages' => [],
             'firstoffset' => 0,
             'lastoffset' => 0,
-            'previousid' => !empty($query['before']) ? $query['before'] : 0,
-            'nextid' => !empty($query['after']) ? $query['after'] : 0,
+            'previousid' => 0,
+            'nextid' => 0,
         ];
 
         // Extract the next (if searching forwards) or previous (if searching backwards) message.
-        if (!empty($query['limit']) && count($messages) == $query['limit']) {
-            if (!empty($query['after'])) {
-                // Searching backwards.
+        if ($query['limit'] > 0 && count($messages) == $query['limit']) {
+            if ($query['backwards']) {
                 $result['previousid'] = $messages[0]->id();
                 array_splice($messages, 0, 1);
             } else {
-                // Searching forwards.
                 $result['nextid'] = $messages[count($messages) - 1]->id();
                 array_splice($messages, count($messages) - 1);
+            }
+        }
+
+        // Find the previous (if searching forwards) or next (if searching backwards) message.
+        if ($query['startid'] && count($messages) > 0) {
+            $query['backwards'] = !$query['backwards'];
+            $query['startid'] = $query['backwards'] ? $messages[0]->id() : $messages[count($messages) - 1]->id();
+            $query['limit'] = 2;
+            $othermessages = local_mail_message::search_index($USER->id, $params['type'], (int) $params['itemid'], $query);
+            if (count($othermessages) == 2) {
+                if ($query['backwards']) {
+                    $result['previousid'] = $othermessages[0]->id();
+                } else {
+                    $result['nextid'] = $othermessages[1]->id();
+                }
             }
         }
 
@@ -514,6 +484,7 @@ class local_mail_external extends external_api {
                 'id' => $sender->id,
                 'fullname' => fullname($sender),
                 'pictureurl' => self::user_picture_url($sender),
+                'profileurl' => self::user_profile_url($sender),
             ];
             $recipients = [];
             foreach (['to', 'cc'] as $type) {
@@ -525,6 +496,7 @@ class local_mail_external extends external_api {
                         'id' => $user->id,
                         'fullname' => fullname($user),
                         'pictureurl' => self::user_picture_url($user),
+                        'profileurl' => self::user_profile_url($user),
                     ];
                 }
             }
@@ -540,7 +512,7 @@ class local_mail_external extends external_api {
             $result['messages'][] = [
                 'id' => $message->id(),
                 'subject' => $message->subject(),
-                'attachments' => $message->attachments(true),
+                'numattachments' => $message->attachments(true),
                 'draft' => $message->draft(),
                 'time' => $message->time(),
                 'shorttime' => self::format_time($message->time()),
@@ -564,7 +536,7 @@ class local_mail_external extends external_api {
 
     public static function get_message_parameters() {
         return new external_function_parameters([
-            'id' => new external_value(PARAM_INT, 'ID of the message'),
+            'messageid' => new external_value(PARAM_INT, 'ID of the message'),
         ]);
     }
 
@@ -574,6 +546,7 @@ class local_mail_external extends external_api {
             'subject' => new external_value(PARAM_TEXT, 'Subject of the message'),
             'content' => new external_value(PARAM_RAW, 'Content of the message'),
             'format' => new external_format_value('Format of the message content'),
+            'numattachments' => new external_value(PARAM_INT, 'Number of attachments'),
             'draft' => new external_value(PARAM_BOOL, 'Draft status'),
             'time' => new external_value(PARAM_INT, 'Time of the message'),
             'shorttime' => new external_value(PARAM_TEXT, 'Formatted short time'),
@@ -589,22 +562,27 @@ class local_mail_external extends external_api {
             'sender' => new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'Id of the user'),
                 'fullname' => new external_value(PARAM_RAW, 'Full name of the user'),
-                'pictureurl' => new external_value(PARAM_URL, 'User image profile URL'),
+                'pictureurl' => new external_value(PARAM_URL, 'User image URL'),
+                'profileurl' => new external_value(PARAM_URL, 'User profile URL'),
             ]),
             'recipients' => new external_multiple_structure(
                 new external_single_structure([
                     'type' => new external_value(PARAM_ALPHA, 'Role of the user: "to", "cc" or "bcc"'),
                     'id' => new external_value(PARAM_INT, 'Id of the user'),
                     'fullname' => new external_value(PARAM_RAW, 'Full name of the user'),
-                    'pictureurl' => new external_value(PARAM_URL, 'User image profile URL'),
+                    'pictureurl' => new external_value(PARAM_URL, 'User image URL'),
+                    'profileurl' => new external_value(PARAM_URL, 'User profile URL'),
+
                 ])
             ),
             'attachments' => new external_multiple_structure(
                 new external_single_structure([
+                    'filepath' => new external_value(PARAM_PATH, 'File directory'),
                     'filename' => new external_value(PARAM_FILE, 'File name'),
                     'mimetype' => new external_value(PARAM_RAW, 'Mime type'),
                     'filesize' => new external_value(PARAM_INT, 'File size'),
                     'fileurl'  => new external_value(PARAM_URL, 'Download URL'),
+                    'iconurl'  => new external_value(PARAM_URL, 'Icon URL'),
                 ])
             ),
             'references' => new external_multiple_structure(
@@ -619,14 +597,17 @@ class local_mail_external extends external_api {
                     'sender' => new external_single_structure([
                         'id' => new external_value(PARAM_INT, 'Id of the user'),
                         'fullname' => new external_value(PARAM_RAW, 'Full name of the user'),
-                        'pictureurl' => new external_value(PARAM_URL, 'User image profile URL'),
+                        'pictureurl' => new external_value(PARAM_URL, 'User image URL'),
+                        'profileurl' => new external_value(PARAM_URL, 'User profile URL'),
                     ]),
                     'attachments' => new external_multiple_structure(
                         new external_single_structure([
+                            'filepath' => new external_value(PARAM_PATH, 'File directory'),
                             'filename' => new external_value(PARAM_FILE, 'File name'),
                             'mimetype' => new external_value(PARAM_RAW, 'Mime type'),
                             'filesize' => new external_value(PARAM_INT, 'File size'),
                             'fileurl'  => new external_value(PARAM_URL, 'Download URL'),
+                            'iconurl'  => new external_value(PARAM_URL, 'Icon URL'),
                         ])
                     ),
                 ])
@@ -641,15 +622,15 @@ class local_mail_external extends external_api {
         ]);
     }
 
-    public static function get_message($id) {
+    public static function get_message($messageid) {
         global $USER;
 
-        $params = ['id' => $id];
+        $params = ['messageid' => $messageid];
         $params = self::validate_parameters(self::get_message_parameters(), $params);
 
         self::validate_context(context_system::instance());
 
-        $message = local_mail_message::fetch($id);
+        $message = local_mail_message::fetch($params['messageid']);
 
         if (!$message || !$message->viewable($USER->id)) {
             throw new moodle_exception('invalidmessage', 'local_mail');
@@ -666,6 +647,7 @@ class local_mail_external extends external_api {
             'subject' => $message->subject(),
             'content' => $content,
             'format' => $format,
+            'numattachments' => $message->attachments(true),
             'draft' => $message->draft(),
             'time' => $message->time(),
             'shorttime' => self::format_time($message->time()),
@@ -682,6 +664,7 @@ class local_mail_external extends external_api {
                 'id' => $message->sender()->id,
                 'fullname' => fullname($message->sender()),
                 'pictureurl' => self::user_picture_url($message->sender()),
+                'profileurl' => self::user_profile_url($message->sender()),
             ],
             'recipients' => [],
             'attachments' => [],
@@ -692,13 +675,13 @@ class local_mail_external extends external_api {
         $fs = get_file_storage();
         $files = $fs->get_area_files($context->id, 'local_mail', 'message', $message->id(), 'filename', false);
         foreach ($files as $file) {
-            $url = moodle_url::make_webservice_pluginfile_url($context->id, 'local_mail', 'message', $message->id(),
-                                                              $file->get_filepath(), $file->get_filename());
             $result['attachments'][] = [
+                'filepath' => $file->get_filepath(),
                 'filename' => $file->get_filename(),
                 'filesize' => (int) $file->get_filesize(),
                 'mimetype' => $file->get_mimetype(),
-                'fileurl' => $url->out(false),
+                'fileurl' => self::file_url($file),
+                'iconurl' => self::file_icon_url($file),
             ];
         }
 
@@ -712,6 +695,7 @@ class local_mail_external extends external_api {
                     'id' => $user->id,
                     'fullname' => fullname($user),
                     'pictureurl' => self::user_picture_url($user),
+                    'profileurl' => self::user_profile_url($user),
                 ];
             }
         }
@@ -724,13 +708,13 @@ class local_mail_external extends external_api {
             $files = $fs->get_area_files($context->id, 'local_mail', 'message', $reference->id(), 'filename', false);
 
             foreach ($files as $file) {
-                $url = moodle_url::make_webservice_pluginfile_url($context->id, 'local_mail', 'message', $reference->id(),
-                                                                  $file->get_filepath(), $file->get_filename());
                 $attachments[] = [
+                    'filepath' => $file->get_filepath(),
                     'filename' => $file->get_filename(),
                     'filesize' => (int) $file->get_filesize(),
                     'mimetype' => $file->get_mimetype(),
-                    'fileurl' => $url->out(false),
+                    'fileurl' => self::file_url($file),
+                    'iconurl' => self::file_icon_url($file),
                 ];
             }
 
@@ -746,6 +730,7 @@ class local_mail_external extends external_api {
                     'id' => $reference->sender()->id,
                     'fullname' => fullname($reference->sender()),
                     'pictureurl' => self::user_picture_url($reference->sender()),
+                    'profileurl' => self::user_profile_url($reference->sender()),
                 ],
                 'attachments' => $attachments,
             ];
@@ -760,6 +745,36 @@ class local_mail_external extends external_api {
         }
 
         return $result;
+    }
+
+
+    public static function find_offset_parameters() {
+        return new external_function_parameters([
+            'type' => new external_value(PARAM_ALPHA, 'Type of index: inbox, starred, drafts, sent, trash, course or label'),
+            'itemid' => new external_value(PARAM_INT, 'ID of the course or label of the index'),
+            'messageid' => new external_value(PARAM_INT, 'ID of the message'),
+        ]);
+    }
+
+    public static function find_offset_returns() {
+        return new external_value(PARAM_INT, 'Offset of the message in the index');
+    }
+
+    public static function find_offset($type, $itemid, $messageid) {
+        global $USER;
+
+        $params = ['type' => $type, 'itemid' => $itemid, 'messageid' => $messageid];
+        $params = self::validate_parameters(self::find_offset_parameters(), $params);
+
+        self::validate_context(context_system::instance());
+
+        $message = local_mail_message::fetch($params['messageid']);
+
+        if (!$message || !$message->viewable($USER->id)) {
+            throw new moodle_exception('invalidmessage', 'local_mail');
+        }
+
+        return $message->find_offset($USER->id, $params['type'], $params['itemid']);
     }
 
     public static function set_unread_parameters() {
@@ -874,8 +889,8 @@ class local_mail_external extends external_api {
     public static function create_label_parameters() {
         $colors = implode(', ',  \local_mail_label::valid_colors());
         return new external_function_parameters([
-            'name' => new external_value(PARAM_TEXT, 'Name of the label.'),
-            'color' => new external_value(PARAM_ALPHA, "Color of the label. Valid values: $colors.", VALUE_DEFAULT, ''),
+            'name' => new external_value(PARAM_TEXT, 'Name of the label'),
+            'color' => new external_value(PARAM_ALPHA, "Color of the label. Valid values: $colors", VALUE_DEFAULT, ''),
         ]);
     }
 
@@ -916,8 +931,8 @@ class local_mail_external extends external_api {
         $colors = implode(', ',  \local_mail_label::valid_colors());
         return new external_function_parameters([
             'labelid' => new external_value(PARAM_INT, 'ID of the label'),
-            'name' => new external_value(PARAM_TEXT, 'Name of the label.'),
-            'color' => new external_value(PARAM_ALPHA, "Color of the label. Valid values: $colors.", VALUE_DEFAULT, ''),
+            'name' => new external_value(PARAM_TEXT, 'Name of the label'),
+            'color' => new external_value(PARAM_ALPHA, "Color of the label: $colors", VALUE_DEFAULT, ''),
         ]);
     }
 
@@ -1061,10 +1076,25 @@ class local_mail_external extends external_api {
         return array_keys(\get_string_manager()->load_component_strings('local_mail', 'en'));
     }
 
+    private static function file_icon_url(\stored_file $file) {
+        global $OUTPUT;
+        return $OUTPUT->image_url(file_file_icon($file, 24))->out(false);
+    }
+
+    private static function file_url(\stored_file $file) {
+        $fileurl = \moodle_url::make_pluginfile_url(
+            $file->get_contextid(), $file->get_component(), $file->get_filearea(),
+            $file->get_itemid(), $file->get_filepath(), $file->get_filename());
+        return $fileurl->out(false);
+    }
     private static function user_picture_url($user) {
         global $PAGE;
         $userpicture = new user_picture($user);
-        $userpicture->size = 1;
         return $userpicture->get_url($PAGE)->out(false);
+    }
+
+    private static function user_profile_url($user) {
+        $url = new \moodle_url('/user/profile.php', ['id' => $user->id]);
+        return $url->out(false);
     }
 }
