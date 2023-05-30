@@ -366,15 +366,16 @@ function local_mail_get_user_roleids($userid, $context) {
 }
 
 /**
- * Returns the script tag for a svelte entry script.
+ * Returns the script tags needed for a svelte entry script.
  *
  * CSS files are included in the head.
- * This function must be called before printing the head.
  *
  * @param $file Source file name, e.g. "src/view.ts"
  */
 function local_mail_svelte_script(string $file): string {
     global $CFG, $PAGE;
+
+    $html = '';
 
     if (!empty($CFG->local_mail_devserver)) {
         $jsurl = $CFG->local_mail_devserver . '/' . $file;
@@ -388,17 +389,33 @@ function local_mail_svelte_script(string $file): string {
             throw new coding_exception('local_mail: invalid svelte script name "' . $file . '"');
         }
         $jsurl = $CFG->wwwroot . '/local/mail/svelte/dist/' . $manifest[$file]['file'];
-        $chunks = [$file => true];
-        while ($file = key($chunks)) {
+        $chunks = [$file];
+        $cssurls = [];
+        while ($file = array_pop($chunks)) {
             foreach ($manifest[$file]['imports'] ?? [] as $jsfile) {
-                $chunks[$jsfile] = true;
+                $chunks[] = $jsfile;
             }
             foreach ($manifest[$file]['css'] ?? [] as $cssfile) {
-                $PAGE->requires->css('/local/mail/dist/' . $cssfile);
+                $cssurls[] = new moodle_url('/local/mail/svelte/dist/' . $cssfile);
             }
-            next($chunks);
+        }
+        foreach ($cssurls as $cssurl) {
+            if ($PAGE->requires->is_head_done()) {
+                // Head already written, add CSS using javascript.
+                $html .= html_writer::script('(function() {
+                    var doc = document.getElementsByTagName("head")[0];
+                    var link = document.createElement("link");
+                    link.rel = "stylesheet";
+                    link.href = "' . $cssurl->out(false) . '";
+                    doc.appendChild(link);
+                })();');
+            } else {
+                $PAGE->requires->css($cssurl);
+            }
         }
     }
 
-    return html_writer::tag('script', '', ['type' => 'module', 'src' => $jsurl]);
+     $html .= html_writer::tag('script', '', ['type' => 'module', 'src' => $jsurl]);
+
+     return $html;
 }

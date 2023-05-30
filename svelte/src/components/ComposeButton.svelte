@@ -1,17 +1,14 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { Store } from '../lib/store';
+    import type { Strings } from '../lib/services';
     import { createUrl } from '../lib/url';
 
-    export let store: Store;
+    export let strings: Strings;
+    export let courseid: number | undefined = undefined;
 </script>
 
-<a
-    class="btn btn-primary px-3 text-truncate"
-    role="button"
-    href={createUrl($store.params.courseid)}
->
+<a class="btn btn-primary px-3 text-truncate" role="button" href={createUrl(courseid)}>
     <i class="icon fa fa-fw fa-edit mr-1" />
-    {$store.strings.compose}
+    {strings.compose}
 </a>

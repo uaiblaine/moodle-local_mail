@@ -117,12 +117,44 @@ function local_mail_pluginfile($course, $cm, $context, $filearea, $args,
  * @return string The HTML
  */
 function local_mail_render_navbar_output(\renderer_base $renderer) {
-    $context = local_mail_render_navbar_context();
-    if (!$context) {
-        return '';
-    }
+    global $PAGE, $USER;
 
-    return $renderer->render_from_template('local_mail/navbar_popover', $context);
+    $menu = local_mail_message::get_menu($USER->id);
+
+    // Fallback link to avoid layout changes during page load.
+    $url = new moodle_url('/local/mail/view.php', ['t' => 'inbox']);
+    $title = get_string('pluginname', 'local_mail');
+    $icon = html_writer::tag('i', '', ['class' => 'fa fa-envelope-o']);
+    $class = 'btn h-100 position-relative d-flex align-items-center px-2 py-0';
+    $attributes = ['href' => $url, 'class' => $class, 'title' => $title];
+    $count = html_writer::div($menu['unread'] ?: '', 'count-container');
+    $link = html_writer::tag('a', $icon . $count, $attributes);
+
+    $container = html_writer::div($link, '', ['id' => 'local-mail-navbar']);
+
+    $viewurl = new moodle_url('/local/mail/view2.php');
+    if ($PAGE->url->compare($viewurl, URL_MATCH_BASE)) {
+        // Menu is handled from the view page.
+        return $container;
+    } else {
+        // Other page in the site, we use an Svelte interface which does not use web services.
+        $data = [
+            'strings' => [
+                'togglemailmenu' => get_string('togglemailmenu', 'local_mail'),
+                'compose' => get_string('compose', 'local_mail'),
+                'preferences' => get_string('preferences', 'local_mail'),
+                'inbox' => get_string('inbox', 'local_mail'),
+                'starredmail' => get_string('starredmail', 'local_mail'),
+                'sentmail' => get_string('sentmail', 'local_mail'),
+                'drafts' => get_string('drafts', 'local_mail'),
+                'trash' => get_string('trash', 'local_mail'),
+            ],
+            'menu' => $menu,
+        ];
+        $datascript = html_writer::script('window.local_mail_navbar_data = '. json_encode($data));
+        $sveltescript = local_mail_svelte_script('src/navbar.ts');
+        return  $container . $datascript . $sveltescript;
+    }
 }
 
 /**

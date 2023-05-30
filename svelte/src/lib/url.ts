@@ -16,6 +16,10 @@ export function forwardeUrl(messageid: number): string {
     return baseUrl() + 'view2.php?forward=1&sesskey=' + sesskey() + '&m=' + messageid;
 }
 
+export function preferencesUrl(): string {
+    return baseUrl() + 'preferences.php';
+}
+
 export function replyUrl(messageid: number): string {
     return baseUrl() + 'view2.php?reply=1&sesskey=' + sesskey() + '&m=' + messageid;
 }

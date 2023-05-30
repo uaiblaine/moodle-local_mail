@@ -1,57 +1,74 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { Store } from '../lib/store';
+    import type { Menu, Strings } from '../lib/services';
+    import type { ViewParams } from '../lib/store';
     import MenuItem from './MenuItem.svelte';
 
-    export let store: Store;
+    export let menu: Menu;
+    export let strings: Strings;
+    export let params: ViewParams | undefined = undefined;
+    export let onClick: ((params: ViewParams) => void) | undefined = undefined;
+    export let flush = false;
 </script>
 
-<div class="list-group">
+<div class="list-group" class:list-group-flush={flush}>
     <MenuItem
-        {store}
         icon="fa-inbox"
-        text={$store.strings.inbox}
-        count={$store.menu.unread}
+        text={strings.inbox}
+        count={menu.unread}
         params={{ type: 'inbox' }}
+        active={params?.type == 'inbox'}
+        {onClick}
     />
     <MenuItem
-        {store}
         icon="fa-star"
-        text={$store.strings.starredmail}
+        text={strings.starredmail}
         params={{ type: 'starred' }}
+        active={params?.type == 'starred'}
+        {onClick}
     />
     <MenuItem
-        {store}
         icon="fa-paper-plane"
-        text={$store.strings.sentmail}
+        text={strings.sentmail}
         params={{ type: 'sent' }}
+        active={params?.type == 'sent'}
+        {onClick}
     />
     <MenuItem
-        {store}
         icon="fa-file"
-        text={$store.strings.drafts}
-        count={$store.menu.drafts}
+        text={strings.drafts}
+        count={menu.drafts}
         params={{ type: 'drafts' }}
+        active={params?.type == 'drafts'}
+        {onClick}
     />
-    <MenuItem {store} icon="fa-trash" text={$store.strings.trash} params={{ type: 'trash' }} />
-    {#each $store.menu.labels as label (label.id)}
+    <MenuItem
+        icon="fa-trash"
+        text={strings.trash}
+        params={{ type: 'trash' }}
+        active={params?.type == 'trash'}
+        {onClick}
+    />
+    {#each menu.labels as label (label.id)}
         <MenuItem
-            {store}
             icon="fa-tag"
             text={label.name}
             count={label.unread}
             color={label.color}
             params={{ type: 'label', labelid: label.id }}
+            active={params?.type == 'label' && params?.labelid == label.id}
+            {onClick}
         />
     {/each}
-    {#each $store.menu.courses as course (course.id)}
+    {#each menu.courses as course (course.id)}
         <MenuItem
-            {store}
             icon="fa-university"
             text={course.shortname}
             count={course.unread}
             params={{ type: 'course', courseid: course.id }}
+            active={params?.type == 'course' && params?.courseid == course.id}
+            {onClick}
         />
     {/each}
 </div>

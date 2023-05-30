@@ -149,35 +149,7 @@ class local_mail_external extends external_api {
 
         self::validate_context(context_system::instance());
 
-        $count = local_mail_message::count_menu($USER->id);
-        $result = [
-            'unread' => isset($count->inbox) ? $count->inbox : 0,
-            'drafts' => isset($count->drafts) ? $count->drafts : 0,
-            'courses' => [],
-            'labels' => [],
-        ];
-
-        foreach (local_mail_get_my_courses() as $course) {
-            $result['courses'][] = [
-                'id' => $course->id,
-                'shortname' => $course->shortname,
-                'fullname' => $course->fullname,
-                'unread' => isset($count->courses[$course->id]) ? $count->courses[$course->id] : 0,
-                'visible' => !empty($course->visible),
-            ];
-        }
-
-        foreach (local_mail_label::fetch_user($USER->id) as $label) {
-            $id = $label->id();
-            $result['labels'][] = [
-                'id' => $id,
-                'name' => $label->name(),
-                'color' => $label->color(),
-                'unread' => isset($count->labels[$id]) ? $count->labels[$id] : 0,
-            ];
-        }
-
-        return $result;
+        return local_mail_message::get_menu($USER->id);
     }
 
     public static function get_index_parameters() {

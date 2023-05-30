@@ -19,6 +19,7 @@ import {
     type SetUnreadRequest,
     type UpdateLabelRequest,
     type ServiceError,
+    type Strings,
     type Info,
 } from './services';
 import { getViewParamsFromUrl, setUrlFromViewParams } from './url';
@@ -43,7 +44,7 @@ export interface State {
     /* General information fetched only once. */
     readonly userid: number;
     readonly preferences: Preferences;
-    readonly strings: Readonly<{ [id: string]: string }>;
+    readonly strings: Strings;
 
     /* Parameters of the current view. */
     readonly params: ViewParams;

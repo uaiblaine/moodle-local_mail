@@ -212,6 +212,38 @@ class local_mail_message {
         return $messages;
     }
 
+    public static function get_menu($userid) {
+        $count = self::count_menu($userid);
+        $result = [
+            'unread' => isset($count->inbox) ? $count->inbox : 0,
+            'drafts' => isset($count->drafts) ? $count->drafts : 0,
+            'courses' => [],
+            'labels' => [],
+        ];
+
+        foreach (local_mail_get_my_courses() as $course) {
+            $result['courses'][] = [
+                'id' => $course->id,
+                'shortname' => $course->shortname,
+                'fullname' => $course->fullname,
+                'unread' => isset($count->courses[$course->id]) ? $count->courses[$course->id] : 0,
+                'visible' => !empty($course->visible),
+            ];
+        }
+
+        foreach (local_mail_label::fetch_user($userid) as $label) {
+            $id = $label->id();
+            $result['labels'][] = [
+                'id' => $id,
+                'name' => $label->name(),
+                'color' => $label->color(),
+                'unread' => isset($count->labels[$id]) ? $count->labels[$id] : 0,
+            ];
+        }
+
+        return $result;
+    }
+
     public static function search_index($userid, $type, $item, array $query) {
         global $CFG, $DB;
 

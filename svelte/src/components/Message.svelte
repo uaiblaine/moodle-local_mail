@@ -21,7 +21,7 @@
         [message.sender].concat(message.recipients).filter((u) => u.id != $store.userid).length > 1;
 </script>
 
-<div class="card">
+<div class="card local-mail-message">
     <div class="card-body">
         <h3 class="card-title mb-2 font-weight-normal">
             {message.subject}
@@ -96,7 +96,7 @@
             </div>
         </div>
         <hr />
-        <div>
+        <div class="local-mail-message-content">
             {@html message.content}
         </div>
         {#if message.attachments.length > 0}
@@ -135,6 +135,10 @@
 {/if}
 
 <style>
+    .local-mail-message-content {
+        max-width: 60rem;
+    }
+
     .local-mail-message-users {
         line-height: 1.5;
     }

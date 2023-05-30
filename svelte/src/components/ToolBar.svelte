@@ -18,7 +18,7 @@
 
 <div class="row mb-3 btn-toolbar" role="toolbar">
     <div class="col-auto col-lg-3 pr-0">
-        <ComposeButton {store} />
+        <ComposeButton strings={$store.strings} courseid={$store.params.courseid} />
     </div>
     <div class="col col-lg-9 d-flex">
         {#if $store.message}

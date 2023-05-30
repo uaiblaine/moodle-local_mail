@@ -75,6 +75,6 @@ $script = local_mail_svelte_script('src/view.ts');
 
 // Print content.
 echo $OUTPUT->header();
-echo html_writer::div('', '', ['id' => 'local_mail_view']);
+echo html_writer::div('', '', ['id' => 'local-mail-view']);
 echo $script;
 echo $OUTPUT->footer();

@@ -12,8 +12,8 @@
         <h5 class="card-title font-weight-normal">
             {reference.subject}
         </h5>
-        <div class="local-mail-message-info d-flex align-items-center">
-            <div class="local-mail-message-sender-picture mr-3">
+        <div class="d-flex align-items-center">
+            <div class="mr-3">
                 <img
                     aria-hidden="true"
                     alt={reference.sender.fullname}
@@ -23,17 +23,17 @@
                     class="rounded-circle"
                 />
             </div>
-            <div class="local-mail-message-users">
+            <div class="local-mail-message-reference-users">
                 <a href={reference.sender.profileurl}>
                     {reference.sender.fullname}
                 </a>
             </div>
-            <div class="local-mail-message-time ml-auto">
+            <div class="ml-auto">
                 {reference.fulltime}
             </div>
         </div>
         <hr />
-        <div>
+        <div class="local-mail-message-reference-content">
             {@html reference.content}
         </div>
         {#if reference.attachments.length > 0}
@@ -44,7 +44,11 @@
 </div>
 
 <style>
-    .local-mail-message-users {
+    .local-mail-message-reference-users {
         line-height: 1.5;
+    }
+
+    .local-mail-message-reference-content {
+        max-width: 60rem;
     }
 </style>

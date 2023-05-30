@@ -43,7 +43,12 @@
     <ToolBar {store} />
     <div class="row">
         <div class="d-none d-lg-block col-3">
-            <Menu {store} />
+            <Menu
+                strings={$store.strings}
+                menu={$store.menu}
+                params={$store.params}
+                onClick={(params) => store.navigate(params)}
+            />
         </div>
         <div class="col col-lg-9">
             {#if $store.message}
@@ -67,10 +72,6 @@
 
     :global(#page-local-mail-view2 #page.drawers .main-inner) {
         margin-top: 0;
-    }
-
-    .local-mail-container {
-        max-width: 80rem;
     }
 
     .local-mail-loading :global(*) {

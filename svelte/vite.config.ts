@@ -7,7 +7,7 @@ export default defineConfig({
     build: {
         manifest: true,
         rollupOptions: {
-            input: [resolve(__dirname, 'src/view.ts')],
+            input: [resolve(__dirname, 'src/view.ts'), resolve(__dirname, 'src/navbar.ts')],
             output: {
                 entryFileNames: `[name]-[hash].js`,
                 chunkFileNames: `[name]-[hash].js`,

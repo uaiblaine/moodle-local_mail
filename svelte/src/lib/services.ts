@@ -155,8 +155,10 @@ export type ServiceResponse<T> = T extends GetInfoRequest
 export interface Info {
     readonly userid: number;
     readonly preferences: Preferences;
-    readonly strings: Readonly<{ [id: string]: string }>;
+    readonly strings: Strings;
 }
+
+export type Strings = Record<string, string>;
 
 export interface Menu {
     readonly unread: number;
