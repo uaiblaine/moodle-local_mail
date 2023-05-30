@@ -13,7 +13,7 @@ export function createUrl(courseid?: number): string {
 }
 
 export function forwardeUrl(messageid: number): string {
-    return baseUrl() + 'view2.php?forward=1&sesskey=' + sesskey() + '&m=' + messageid;
+    return baseUrl() + 'view.php?forward=1&sesskey=' + sesskey() + '&m=' + messageid;
 }
 
 export function preferencesUrl(): string {
@@ -21,15 +21,15 @@ export function preferencesUrl(): string {
 }
 
 export function replyUrl(messageid: number): string {
-    return baseUrl() + 'view2.php?reply=1&sesskey=' + sesskey() + '&m=' + messageid;
+    return baseUrl() + 'view.php?reply=1&sesskey=' + sesskey() + '&m=' + messageid;
 }
 
 export function replyAllUrl(messageid: number): string {
-    return baseUrl() + 'view2.php?replyall=1&sesskey=' + sesskey() + '&m=' + messageid;
+    return baseUrl() + 'view.php?replyall=1&sesskey=' + sesskey() + '&m=' + messageid;
 }
 
 export function viewUrl(params: ViewParams): string {
-    let url = baseUrl() + 'view2.php?t=' + params.type;
+    let url = baseUrl() + 'view.php?t=' + params.type;
     if (params.courseid) {
         url += '&c=' + params.courseid;
     }

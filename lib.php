@@ -132,7 +132,7 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
 
     $container = html_writer::div($link, '', ['id' => 'local-mail-navbar']);
 
-    $viewurl = new moodle_url('/local/mail/view2.php');
+    $viewurl = new moodle_url('/local/mail/view.php');
     if ($PAGE->url->compare($viewurl, URL_MATCH_BASE)) {
         // Menu is handled from the view page.
         return $container;
@@ -155,117 +155,6 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
         $sveltescript = local_mail_svelte_script('src/navbar.ts');
         return  $container . $datascript . $sveltescript;
     }
-}
-
-/**
- * Context of the navigation bar popover template.
- *
- * @return array|null
- */
-function local_mail_render_navbar_context() {
-    global $CFG, $COURSE, $PAGE, $USER;
-
-    if (!isloggedin() || isguestuser() || user_not_fully_set_up($USER) ||
-            get_user_preferences('auth_forcepasswordchange') ||
-            ($CFG->sitepolicy && !$USER->policyagreed && !is_siteadmin())) {
-        return null;
-    }
-
-    $composeurl = new moodle_url('/local/mail/compose.php');
-    if ($PAGE->url->compare($composeurl, URL_MATCH_BASE)) {
-        $composeurl->param('m', $PAGE->url->param('m'));
-    } else {
-        $composeurl = new moodle_url('/local/mail/create.php');
-        if ($COURSE->id != SITEID) {
-            $composeurl->param('c', $COURSE->id);
-            $composeurl->param('sesskey', sesskey());
-        }
-    }
-
-    $preferencesurl = new moodle_url('/local/mail/preferences.php');
-    $viewurl = new moodle_url('/local/mail/view.php');
-
-    $activetype = null;
-    $activecourseid = null;
-    $activelabelid = null;
-    if ($PAGE->url->compare($viewurl, URL_MATCH_BASE)) {
-        $activetype = $PAGE->url->param('t');
-        if ($activetype == 'course') {
-            $activecourseid = $PAGE->url->param('c');
-        } else if ($activetype == 'label') {
-            $activelabelid = $PAGE->url->param('l');
-        }
-    }
-
-    $count = local_mail_message::count_menu($USER->id);
-
-    $context = [
-        'activetype' => $activetype,
-        'activecourseid' => $activecourseid,
-        'activelabelid' => $activelabelid,
-        'composeurl' => $composeurl->out(),
-        'preferencesurl' => $preferencesurl->out(),
-        'viewurl' => $viewurl->out(),
-        'count' => isset($count->inbox) ? $count->inbox : 0,
-        'items' => [
-            [
-                'url' => (string) new moodle_url($viewurl, ['t' => 'inbox']),
-                'icon' => 'inbox',
-                'text' => get_string('inbox', 'local_mail'),
-                'unread' => isset($count->inbox) ? $count->inbox : 0,
-                'active' => ($activetype == 'inbox'),
-            ],
-            [
-                'url' => (string) new moodle_url($viewurl, ['t' => 'starred']),
-                'icon' => 'starred',
-                'text' => get_string('starred', 'local_mail'),
-                'active' => ($activetype == 'starred'),
-            ],
-            [
-                'url' => (string) new moodle_url($viewurl, ['t' => 'drafts']),
-                'icon' => 'drafts',
-                'text' => get_string('drafts', 'local_mail'),
-                'drafts' => isset($count->drafts) ? $count->drafts : 0,
-                'active' => ($activetype == 'drafts'),
-            ],
-            [
-                'url' => (string) new moodle_url($viewurl, ['t' => 'sent']),
-                'icon' => 'sent',
-                'text' => get_string('sentmail', 'local_mail'),
-                'active' => ($activetype == 'sent'),
-            ],
-            [
-                'url' => (string) new moodle_url($viewurl, ['t' => 'trash']),
-                'icon' => 'trash',
-                'text' => get_string('trash', 'local_mail'),
-                'active' => ($activetype == 'trash'),
-            ]
-        ],
-    ];
-
-    foreach (local_mail_label::fetch_user($USER->id) as $label) {
-        $context['items'][] = [
-            'url' => (string) new moodle_url($viewurl, ['t' => 'label', 'l' => $label->id()]),
-            'icon' => 'label',
-            'text' => $label->name(),
-            'unread' => isset($count->labels[$label->id()]) ? $count->labels[$label->id()] : 0,
-            'active' => ($activelabelid == $label->id()),
-        ];
-    }
-
-    foreach (local_mail_get_my_courses() as $course) {
-        $context['items'][] = [
-            'url' => (string) new moodle_url($viewurl, ['t' => 'course', 'c' => $course->id]),
-            'icon' => 'course',
-            'text' => $course->shortname,
-            'title' => $course->fullname,
-            'unread' => isset($count->courses[$course->id]) ? $count->courses[$course->id] : 0,
-            'dimmed' => !$course->visible,
-            'active' => ($activecourseid == $course->id),
-        ];
-    }
-
-    return $context;
 }
 
 /**

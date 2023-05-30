@@ -39,7 +39,10 @@
 </svelte:head>
 
 <div class="container-fluid local-mail-container" class:local-mail-loading={$store.loading}>
-    <h2 class="h2 mb-4">{heading}</h2>
+    <h1 class="h2 my-4">
+        {$store.strings.pluginname} <i class="fa fa-angle-right mx-1" aria-hidden="true" />
+        {heading}
+    </h1>
     <ToolBar {store} />
     <div class="row">
         <div class="d-none d-lg-block col-3">
@@ -65,12 +68,20 @@
 <ErrorModal {store} />
 
 <style>
-    :global(#page-local-mail-view2 #page.drawers) {
+    :global(#page-local-mail-view #topofscroll) {
+        padding-top: 0;
+    }
+
+    :global(#page-local-mail-view #page-header) {
+        display: none;
+    }
+
+    :global(#page-local-mail-view #page.drawers) {
         padding-left: 0;
         padding-right: 0;
     }
 
-    :global(#page-local-mail-view2 #page.drawers .main-inner) {
+    :global(#page-local-mail-view #page.drawers .main-inner) {
         margin-top: 0;
     }
 
