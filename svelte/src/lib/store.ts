@@ -145,6 +145,11 @@ export async function createStore() {
 
             if (params.messageid) {
                 requests.push({
+                    methodname: 'set_unread',
+                    messageid: params.messageid,
+                    unread: false,
+                });
+                requests.push({
                     methodname: 'get_message',
                     messageid: params.messageid,
                 });
@@ -169,6 +174,7 @@ export async function createStore() {
             if (params.messageid) {
                 messageOffset = responses.pop() as number;
                 message = responses.pop() as Message;
+                responses.pop(); // set_unread response.
             }
             let list = responses.pop() as SearchList;
             const menu = responses.pop() as Menu;
@@ -525,6 +531,8 @@ export async function createStore() {
         },
 
         async setUnread(messageids: ReadonlyArray<number>, unread: boolean) {
+            const params: ViewParams = {...store.get().params, messageid: undefined};
+
             update((state) => ({
                 ...state,
                 messages: state.list.messages.map((message) => {
@@ -542,7 +550,7 @@ export async function createStore() {
                     unread,
                 }),
             );
-            await store.callServicesAndRefresh(requests);
+            await store.callServicesAndRefresh(requests, params);
         },
 
         async showToast(toast: Toast) {
