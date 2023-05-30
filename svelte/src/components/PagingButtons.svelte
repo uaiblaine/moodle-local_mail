@@ -6,19 +6,18 @@
 
     export let store: Store;
 
-    $: pagingText =
-        $store.list.messages.length == 0
-            ? ''
-            : $store.list.messages.length == 1
-            ? replaceStringParams($store.strings.pagingsingle, {
-                  index: $store.list.firstoffset + 1,
-                  total: $store.list.totalcount,
-              })
-            : replaceStringParams($store.strings.pagingmultiple, {
-                  first: $store.list.firstoffset + 1,
-                  last: $store.list.lastoffset + 1,
-                  total: $store.list.totalcount,
-              });
+    $: pagingText = $store.message
+        ? replaceStringParams($store.strings.pagingsingle, {
+              index: ($store.messageOffset || 0) + 1,
+              total: $store.list.totalcount,
+          })
+        : $store.list.messages.length == 0
+        ? ''
+        : replaceStringParams($store.strings.pagingmultiple, {
+              first: $store.list.firstoffset + 1,
+              last: $store.list.lastoffset + 1,
+              total: $store.list.totalcount,
+          });
 </script>
 
 <div class="text-truncate align-self-center ml-auto mr-3">

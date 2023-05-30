@@ -12,6 +12,18 @@ export function createUrl(courseid?: number): string {
     return url;
 }
 
+export function forwardeUrl(messageid: number): string {
+    return baseUrl() + 'view2.php?forward=1&sesskey=' + sesskey() + '&m=' + messageid;
+}
+
+export function replyUrl(messageid: number): string {
+    return baseUrl() + 'view2.php?reply=1&sesskey=' + sesskey() + '&m=' + messageid;
+}
+
+export function replyAllUrl(messageid: number): string {
+    return baseUrl() + 'view2.php?replyall=1&sesskey=' + sesskey() + '&m=' + messageid;
+}
+
 export function viewUrl(params: ViewParams): string {
     let url = baseUrl() + 'view2.php?t=' + params.type;
     if (params.courseid) {
@@ -30,8 +42,9 @@ export function getViewParamsFromUrl(): ViewParams {
     const url = new URL(window.location.href);
     return {
         type: (url.searchParams.get('t') as ViewType) || 'inbox',
-        courseid: parseInt(url.searchParams.get('c')) || undefined,
-        labelid: parseInt(url.searchParams.get('l')) || undefined,
+        courseid: parseInt(url.searchParams.get('c') || '') || undefined,
+        labelid: parseInt(url.searchParams.get('l') || '') || undefined,
+        messageid: parseInt(url.searchParams.get('m') || '') || undefined,
     };
 }
 
@@ -47,9 +60,9 @@ export function setUrlFromViewParams(params: ViewParams, replace: boolean) {
 }
 
 function baseUrl() {
-    return window['M'].cfg.wwwroot + '/local/mail/';
+    return window.M.cfg.wwwroot + '/local/mail/';
 }
 
 function sesskey() {
-    return window['M'].cfg.sesskey;
+    return window.M.cfg.sesskey;
 }

@@ -10,8 +10,9 @@
 </script>
 
 <span
-    class="local-mail-pill local-mail-color-{color} badge d-shrink-0 mr-2"
-    style="background-color: var(--local-mail-color-{color}); color: var(--local-mail-color-{color}-fg)"
+    class="local-mail-pill badge d-shrink-0 mr-2"
+    style={`color: var(--local-mail-color-${color}-fg, var(--local-mail-color-gray-fg));` +
+        `background-color: var(--local-mail-color-${color}-bg, var(--local-mail-color-gray-bg))`}
 >
     {text}
 </span>
@@ -19,8 +20,8 @@
 <style>
     .local-mail-pill {
         font-size: inherit;
-        font-weight: bold;
-        color: var(--local-mail-color-gray-text);
-        background: var(--local-mail-color-blue);
+        font-weight: inherit;
+        color: var(--local-mail-color-gray-fg);
+        background-color: var(--local-mail-color-gray-bg);
     }
 </style>

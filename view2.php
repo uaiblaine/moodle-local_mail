@@ -19,10 +19,36 @@ require_once('locallib.php');
 
 global $PAGE;
 
-$type = required_param('t', PARAM_ALPHA);
+$type = optional_param('t', 'inbox', PARAM_ALPHA);
 $messageid = optional_param('m', 0, PARAM_INT);
 $courseid = optional_param('c', SITEID, PARAM_INT);
 $labelid = optional_param('l', 0, PARAM_INT);
+
+$reply = optional_param('reply', false, PARAM_BOOL);
+$replyall = optional_param('replyall', false, PARAM_BOOL);
+$forward = optional_param('forward', false, PARAM_BOOL);
+
+if ($reply || $replyall || $forward) {
+    $messageid = required_param('m', PARAM_INT);
+
+    $message = local_mail_message::fetch($messageid);
+    if (!$message || !$message->viewable($USER->id)) {
+        throw new \moodle_exception('invalidmessage', 'local_mail');
+    }
+
+    require_login($message->course()->id, false);
+    require_sesskey();
+    require_capability('local/mail:usemail', $PAGE->context);
+
+    if ($forward) {
+        $newmessage = $message->forward($USER->id);
+    } else {
+        $newmessage = $message->reply($USER->id, $replyall);
+    }
+
+    $url = new moodle_url('/local/mail/compose.php', array('m' => $newmessage->id()));
+    redirect($url);
+}
 
 require_login(null, false);
 

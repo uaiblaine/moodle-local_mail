@@ -76,7 +76,7 @@
         <i class="fa fa-fw fa-tag" />
     </button>
     <div class="dropdown-menu">
-        {#each $store.menu.labels as label}
+        {#each $store.menu.labels as label (label.id)}
             <button
                 type="button"
                 class="dropdown-item local-mail-action-label-button-item"

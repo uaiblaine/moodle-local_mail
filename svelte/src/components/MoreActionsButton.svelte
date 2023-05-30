@@ -9,7 +9,7 @@
     export let store: Store;
 
     $: label =
-        $store.params.type == 'label'
+        $store.params.type == 'label' && $store.message == null
             ? $store.menu.labels.find((label) => label.id == $store.params.labelid)
             : null;
 
@@ -124,7 +124,7 @@
             body={replaceStringParams($store.strings.labeldeleteconfirm, label.name)}
             cancelText={$store.strings.cancel}
             confirmText={$store.strings.deletelabel}
-            confirmCallback={() => store.deleteLabel($store.params.labelid)}
+            confirmCallback={() => store.deleteLabel($store.params.labelid || 0)}
         />
     {/if}
 </div>

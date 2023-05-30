@@ -1,8 +1,10 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+    import ErrorModal from './ErrorModal.svelte';
     import List from './List.svelte';
     import Menu from './Menu.svelte';
+    import Message from './Message.svelte';
     import PerPageSelect from './PerPageSelect.svelte';
     import Toasts from './Toasts.svelte';
     import ToolBar from './ToolBar.svelte';
@@ -11,7 +13,7 @@
 
     export let store: Store;
 
-    $: title =
+    $: heading =
         $store.params.type == 'inbox'
             ? $store.strings.inbox
             : $store.params.type == 'starred'
@@ -27,6 +29,8 @@
             : $store.params.type == 'course'
             ? $store.menu.courses.find((c) => c.id == $store.params.courseid)?.shortname || ''
             : '';
+
+    $: title = $store.message ? $store.message.subject : heading;
 </script>
 
 <svelte:window on:popstate={() => store.navigate(getViewParamsFromUrl())} />
@@ -35,19 +39,25 @@
 </svelte:head>
 
 <div class="container-fluid local-mail-container" class:local-mail-loading={$store.loading}>
+    <h2 class="h2 mb-4">{heading}</h2>
     <ToolBar {store} />
     <div class="row">
         <div class="d-none d-lg-block col-3">
             <Menu {store} />
         </div>
         <div class="col col-lg-9">
-            <List {store} />
-            <PerPageSelect {store} />
+            {#if $store.message}
+                <Message {store} message={$store.message} />
+            {:else}
+                <List {store} />
+                <PerPageSelect {store} />
+            {/if}
         </div>
     </div>
 </div>
 
 <Toasts {store} />
+<ErrorModal {store} />
 
 <style>
     :global(#page-local-mail-view2 #page.drawers) {
@@ -57,6 +67,10 @@
 
     :global(#page-local-mail-view2 #page.drawers .main-inner) {
         margin-top: 0;
+    }
+
+    .local-mail-container {
+        max-width: 80rem;
     }
 
     .local-mail-loading :global(*) {

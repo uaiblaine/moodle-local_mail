@@ -6,7 +6,13 @@
 
     export let store: Store;
 
-    $: enabled = !!$store.params.search;
+    $: enabled =
+        !!$store.params.query?.content ||
+        !!$store.params.query?.sender ||
+        !!$store.params.query?.recipients ||
+        !!$store.params.query?.unread ||
+        !!$store.params.query?.attachments ||
+        !!$store.params.query?.time;
 </script>
 
 <button
@@ -17,7 +23,7 @@
     class:disabled={!$store.list.totalcount}
     disabled={!$store.list.totalcount}
     title={$store.strings.search}
-    aria-pressed={!!enabled}
+    aria-pressed={enabled}
     data-toggle="modal"
     data-target="#local-mail-search-modal"
 >

@@ -77,7 +77,7 @@ class local_mail_label {
         $label->id = (int) $record->id;
         $label->userid = (int) $record->userid;
         $label->name = self::nromalized_name($record->name);
-        $label->color = preg_replace('/(light|dark)/', '', $record->color) ?: '';
+        $label->color = preg_replace('/(light|dark)/', '', $record->color);
         return $label;
     }
 
@@ -86,8 +86,8 @@ class local_mail_label {
     }
 
     public static function valid_colors() {
-        return ['blue', 'indigo', 'purple', 'pink', 'red', 'orange',
-                'yellow', 'green', 'teal', 'cyan', 'gray', 'black'];
+        return ['gray', 'blue', 'indigo', 'purple', 'pink', 'red',
+                'orange', 'yellow', 'green', 'teal', 'cyan'];
     }
 
     public function color() {

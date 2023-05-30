@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+    import BackButton from './BackButton.svelte';
     import ComposeButton from './ComposeButton.svelte';
     import DeleteButton from './DeleteButton.svelte';
     import DeleteForeverButton from './DeleteForeverButton.svelte';
@@ -8,9 +9,9 @@
     import MoreActionsButton from './MoreActionsButton.svelte';
     import PagingButtons from './PagingButtons.svelte';
     import RestoreButton from './RestoreButton.svelte';
+    import SearchButton from './SearchButton.svelte';
     import SelectAllBUtton from './SelectAllButton.svelte';
     import type { Store } from '../lib/store';
-    import SearchButton from './SearchButton.svelte';
 
     export let store: Store;
 </script>
@@ -20,7 +21,11 @@
         <ComposeButton {store} />
     </div>
     <div class="col col-lg-9 d-flex">
-        <SelectAllBUtton {store} />
+        {#if $store.message}
+            <BackButton {store} />
+        {:else}
+            <SelectAllBUtton {store} />
+        {/if}
         <div class="btn-group mr-3" role="group">
             {#if $store.params.type == 'trash'}
                 <RestoreButton {store} />

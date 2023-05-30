@@ -5,11 +5,12 @@ import {
     type CreateLabelRequest,
     type DeleteLabelRequest,
     type EmptyTrashRequest,
-    type GetMenuRequest,
     type Menu,
-    type MessageList,
+    type Message,
     type Preferences,
     type SearchIndexRequest,
+    type SearchList,
+    type SearchQuery,
     type ServiceRequest,
     type SetDeletedRequest,
     type SetLabelsRequest,
@@ -17,29 +18,20 @@ import {
     type SetStarredRequest,
     type SetUnreadRequest,
     type UpdateLabelRequest,
+    type ServiceError,
+    type Info,
 } from './services';
 import { getViewParamsFromUrl, setUrlFromViewParams } from './url';
 import { replaceStringParams, sleep } from './utils';
 
 export type ViewType = 'inbox' | 'sent' | 'drafts' | 'starred' | 'course' | 'label' | 'trash';
 
-export interface SearchParams {
-    readonly content: string;
-    readonly sender?: string;
-    readonly recipients?: string;
-    readonly unread?: boolean;
-    readonly attachments?: boolean;
-    readonly time?: number;
-}
-
 export interface ViewParams {
     readonly type: ViewType;
     readonly courseid?: number;
     readonly labelid?: number;
     readonly messageid?: number;
-    readonly beforeid?: number;
-    readonly afterid?: number;
-    readonly search?: SearchParams;
+    readonly query?: SearchQuery;
 }
 
 export interface Toast {
@@ -58,14 +50,18 @@ export interface State {
 
     /* Data fetched using web services for the current view.  */
     readonly menu: Menu;
-    readonly list: MessageList;
+    readonly list: SearchList;
+    readonly message?: Message;
+    readonly messageOffset?: number;
 
     /* Transient interface state. */
+    readonly loading: boolean;
+    readonly error?: ServiceError;
     readonly nextParams?: ViewParams;
     readonly prevParams?: ViewParams;
     readonly selectedIds: ReadonlySet<number>;
     readonly toasts: ReadonlyArray<Toast>;
-    readonly loading: boolean;
+    readonly listKey: number;
 }
 
 export type SelectAllType = 'all' | 'none' | 'read' | 'unread' | 'starred' | 'unstarred';
@@ -102,6 +98,7 @@ export async function createStore() {
         loading: true,
         selectedIds: new Set(),
         toasts: [],
+        listKey: 0,
     });
 
     const store = {
@@ -113,54 +110,98 @@ export async function createStore() {
 
         async callServicesAndRefresh(
             requests: ServiceRequest[],
-            params?: ViewParams,
+            newParams?: ViewParams,
             redirect = false,
         ): Promise<any[]> {
             const actionId = ++currentActionId;
 
-            params = params || store.get().params;
+            let params = newParams || store.get().params;
             const perpage = store.get().preferences.perpage;
 
             update((state) => ({ ...state, loading: true }));
 
-            const menuRequest: GetMenuRequest = { methodname: 'get_menu' };
+            requests.push({
+                methodname: 'get_menu',
+            });
 
-            const itemid =
+            const itemid: number =
                 params.type == 'course'
-                    ? params.courseid
+                    ? params.courseid || 0
                     : params.type == 'label'
-                    ? params.labelid
+                    ? params.labelid || 0
                     : 0;
-            const listRequest: SearchIndexRequest = {
+
+            requests.push({
                 methodname: 'search_index',
                 type: params.type,
                 itemid,
                 query: {
-                    beforeid: params.beforeid,
-                    afterid: params.afterid,
+                    ...params.query,
+                    startid: params.query?.startid || params.messageid,
                     limit: perpage,
-                    ...params.search
                 },
-            };
+            });
 
-            const responses = await callServices([...requests, menuRequest, listRequest]);
+            if (params.messageid) {
+                requests.push({
+                    methodname: 'get_message',
+                    messageid: params.messageid,
+                });
+                requests.push({
+                    methodname: 'find_offset',
+                    type: params.type,
+                    itemid,
+                    messageid: params.messageid,
+                });
+            }
 
-            let list = responses.pop() as MessageList;
+            let responses: any[];
+            try {
+                responses = await callServices(requests);
+            } catch (error) {
+                store.setError(error as ServiceError);
+                return [];
+            }
+
+            let messageOffset: number | undefined;
+            let message: Message | undefined;
+            if (params.messageid) {
+                messageOffset = responses.pop() as number;
+                message = responses.pop() as Message;
+            }
+            let list = responses.pop() as SearchList;
             const menu = responses.pop() as Menu;
 
-            // In some corner cases, when navigating backwards, less messages than than perpage may be fetched.
+            // Check if the course or label exists.
+            if (
+                (params.type == 'course' && !menu.courses.find((c) => c.id == params.courseid)) ||
+                (params.type == 'label' && !menu.labels.find((l) => l.id == params.labelid))
+            ) {
+                await store.navigate({ type: 'inbox' }, true);
+                return responses;
+            }
+
+            // In some corner cases, when navigating to the previous page, less messages than than perpage may be fetched.
             // Fetch additional messages to fill the page.
             if (list.messages.length < perpage && list.nextid) {
-                const listRequest2: SearchIndexRequest = {
-                    ...listRequest,
+                const request: SearchIndexRequest = {
+                    methodname: 'search_index',
+                    type: params.type,
+                    itemid,
                     query: {
-                        ...listRequest.query,
-                        beforeid: list.messages[list.messages.length - 1].id,
-                        afterid: undefined,
+                        ...params.query,
+                        startid: list.nextid,
+                        backwards: false,
                         limit: perpage - list.messages.length,
                     },
                 };
-                const [list2] = await callServices([listRequest2]);
+                let list2: SearchList;
+                try {
+                    [list2] = await callServices([request]);
+                } catch (error) {
+                    store.setError(error as ServiceError);
+                    return [];
+                }
                 list = {
                     totalcount: list2.totalcount,
                     messages: list.messages.concat(list2.messages),
@@ -171,51 +212,142 @@ export async function createStore() {
                 };
             }
 
-            if (
-                (params.type == 'course' && !menu.courses.find((c) => c.id == params.courseid)) ||
-                (params.type == 'label' && !menu.labels.find((l) => l.id == params.labelid))
-            ) {
-                await store.navigate({ type: 'inbox' }, true);
-            } else if (actionId === currentActionId) {
-                update(
-                    (state): State => ({
-                        ...state,
-                        params: {
-                            ...params,
-                            beforeid: list.previousid,
-                            afterid: undefined,
-                        },
-                        menu,
-                        list,
-                        nextParams: list.nextid
-                            ? {
-                                  ...params,
-                                  beforeid: list.messages[list.messages.length - 1].id,
-                                  afterid: undefined,
-                              }
-                            : undefined,
-                        prevParams: list.previousid
-                            ? {
-                                  ...params,
-                                  beforeid: undefined,
-                                  afterid: list.messages[0]?.id,
-                              }
-                            : undefined,
-                        selectedIds: new Set(
-                            list.messages
-                                .filter((message) => state.selectedIds.has(message.id))
-                                .map((message) => message.id),
-                        ),
-                        loading: false,
-                    }),
-                );
-                setUrlFromViewParams(params, redirect);
+            // Check if the user has done some other action during the web service calls.
+            if (actionId != currentActionId) {
+                return responses;
             }
+
+            // Normalize current params.
+            params = {
+                ...params,
+                query: {
+                    ...params.query,
+                    startid: list.messages.length > 0 ? list.messages[0].id : undefined,
+                    backwards: false,
+                },
+            };
+
+            // Calculate next/previous params.
+            let nextParams: ViewParams | undefined;
+            let prevParams: ViewParams | undefined;
+            if (message) {
+                // Displaying a single message.
+                let index = list.messages.findIndex((m) => m.id == message?.id);
+                let nextId: number;
+                let prevId: number;
+                if (index >= 0) {
+                    // Message is on the list.
+                    if (index == 0) {
+                        nextId = list.messages[index + 1].id;
+                        prevId = list.previousid;
+                    } else if (index < list.messages.length - 1) {
+                        nextId = list.messages[index + 1].id;
+                        prevId = list.messages[index - 1].id;
+                    } else {
+                        nextId = list.nextid;
+                        prevId = list.messages[index - 1].id;
+                    }
+                } else {
+                    // Message not on the list, find closes.
+                    index = list.messages.findIndex(
+                        (m) =>
+                            m.time <= message!.time &&
+                            (m.time < message!.time || m.id < message!.id),
+                    );
+                    if (index == 0) {
+                        nextId = list.messages[index].id;
+                        prevId = list.previousid;
+                    } else if (index < list.messages.length) {
+                        nextId = list.messages[index].id;
+                        prevId = list.messages[index - 1].id;
+                    } else {
+                        nextId = list.nextid;
+                        prevId = list.messages[index - 1].id;
+                    }
+                }
+                if (nextId) {
+                    if (nextId == list.nextid) {
+                        nextParams = {
+                            ...params,
+                            messageid: nextId,
+                            query: { ...params.query, startid: nextId, backwards: false },
+                        };
+                    } else {
+                        nextParams = {
+                            ...params,
+                            messageid: nextId,
+                        };
+                    }
+                }
+                if (prevId) {
+                    if (prevId == list.previousid) {
+                        prevParams = {
+                            ...params,
+                            messageid: prevId,
+                            query: { ...params.query, startid: prevId, backwards: true },
+                        };
+                    } else {
+                        prevParams = {
+                            ...params,
+                            messageid: prevId,
+                        };
+                    }
+                }
+            } else {
+                // Displaying a list of messages.
+                if (list.nextid) {
+                    nextParams = {
+                        ...params,
+                        query: {
+                            ...params.query,
+                            startid: list.nextid,
+                            backwards: false,
+                        },
+                    };
+                }
+                if (list.previousid) {
+                    prevParams = {
+                        ...params,
+                        query: {
+                            ...params.query,
+                            startid: list.previousid,
+                            backwards: true,
+                        },
+                    };
+                }
+            }
+
+            // Update state.
+            update(
+                (state): State => ({
+                    ...state,
+                    params,
+                    menu,
+                    list,
+                    message,
+                    messageOffset,
+                    nextParams,
+                    prevParams,
+                    selectedIds: new Set(
+                        list.messages
+                            .filter((m) => {
+                                if (params.messageid) {
+                                    return m.id == params.messageid;
+                                } else {
+                                    return state.selectedIds.has(m.id);
+                                }
+                            })
+                            .map((m) => m.id),
+                    ),
+                    loading: false,
+                }),
+            );
+            setUrlFromViewParams(params, redirect);
 
             return responses;
         },
 
-        async createLabel(name: string, color: string): Promise<number> {
+        async createLabel(name: string, color: string): Promise<number | undefined> {
             const request: CreateLabelRequest = {
                 methodname: 'create_label',
                 name,
@@ -250,15 +382,22 @@ export async function createStore() {
         },
 
         async init() {
-            const [info] = await callServices([{ methodname: 'get_info' }]);
-
-            update((state) => ({ ...state, ...info }));
-
+            let info: Info;
+            try {
+                [info] = await callServices([{ methodname: 'get_info' }]);
+            } catch (error) {
+                store.setError(error as ServiceError);
+                return;
+            }
             await store.callServicesAndRefresh([], getViewParamsFromUrl());
+            update((state) => ({ ...state, ...info }));
         },
 
-        async navigate(params: ViewParams, redirect = false) {
+        async navigate(params?: ViewParams, redirect = false) {
             await store.callServicesAndRefresh([], params, redirect);
+
+            // Prevent list animations.
+            update((state) => ({ ...state, listKey: state.listKey + 1 }));
         },
 
         selectAll(type: SelectAllType) {
@@ -288,7 +427,9 @@ export async function createStore() {
                 }),
             );
 
-            await store.callServicesAndRefresh(requests);
+            // Redirect if deleting message in single view.
+            let params: ViewParams = { ...store.get().params, messageid: undefined };
+            await store.callServicesAndRefresh(requests, params, true);
 
             if (deleted != DeletedStatus.DeletedForever) {
                 const text = replaceStringParams(
@@ -304,6 +445,14 @@ export async function createStore() {
                 };
                 store.showToast({ text, undo: allowUndo ? undo : undefined });
             }
+        },
+
+        async setError(error?: ServiceError) {
+            update((state) => ({
+                ...state,
+                loading: state.loading && !error,
+                error,
+            }));
         },
 
         async setLabels(messageids: number[], added: number[], removed: number[]) {
@@ -347,6 +496,9 @@ export async function createStore() {
                 preferences: { perpage },
             };
             await store.callServicesAndRefresh([request]);
+
+            // Prevent list animations.
+            update((state) => ({ ...state, listKey: state.listKey + 1 }));
         },
 
         async setStarred(messageids: ReadonlyArray<number>, starred: boolean) {
@@ -430,7 +582,7 @@ export async function createStore() {
                 color,
             };
 
-            store.callServicesAndRefresh([request]);
+            await store.callServicesAndRefresh([request]);
         },
     };
 

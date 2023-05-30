@@ -33,26 +33,37 @@
         );
     };
 
-    $: content = $store.params.search?.content || '';
-    $: sender = $store.params.search?.sender || '';
-    $: recipients = $store.params.search?.recipients || '';
-    $: unread = $store.params.search?.unread || false;
-    $: attachments = $store.params.search?.attachments || false;
-    $: date = dateFromTimestamp($store.params.search?.time || 0);
+    $: content = $store.params.query?.content || '';
+    $: sender = $store.params.query?.sender || '';
+    $: recipients = $store.params.query?.recipients || '';
+    $: unread = $store.params.query?.unread || false;
+    $: attachments = $store.params.query?.attachments || false;
+    $: date = dateFromTimestamp($store.params.query?.time || 0);
 
     $: advancedOpen = Boolean(
-        $store.params.search?.sender ||
-            $store.params.search?.recipients ||
-            $store.params.search?.unread ||
-            $store.params.search?.attachments ||
-            $store.params.search?.time,
+        $store.params.query?.sender ||
+            $store.params.query?.recipients ||
+            $store.params.query?.unread ||
+            $store.params.query?.attachments ||
+            $store.params.query?.time,
     );
 
     $: submitDisabled = !content && !sender && !recipients && !unread && !attachments && !date;
 
     const cancel = () => {
         window.jQuery('#local-mail-search-modal').modal('hide');
-        store.navigate({ ...$store.params, search: undefined });
+        store.navigate({
+            ...$store.params,
+            query: {
+                ...$store.params.query,
+                content: undefined,
+                sender: undefined,
+                recipients: undefined,
+                unread: undefined,
+                attachments: undefined,
+                time: undefined,
+            },
+        });
     };
 
     const submit = () => {
@@ -62,9 +73,9 @@
         window.jQuery('#local-mail-search-modal').modal('hide');
         store.navigate({
             ...$store.params,
-            beforeid: undefined,
-            afterid: undefined,
-            search: {
+            messageid: undefined,
+            query: {
+                startid: undefined,
                 content,
                 sender,
                 recipients,

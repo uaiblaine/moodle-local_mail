@@ -28,11 +28,16 @@
     role="tab"
     href={viewUrl(params)}
     on:click|preventDefault={() => store.navigate(params)}
+    style={color != null && !active
+        ? `color: var(--local-mail-color-${color}-fg, var(--local-mail-color-gray-fg));`
+        : ''}
 >
     <i
         class="fa {icon} fa-fw"
         aria-hidden="true"
-        style={color ? `color: var(--local-mail-color-${color}` : ''}
+        style={color != null && !active
+            ? `color: var(--local-mail-color-${color}-bg, var(--local-mail-color-gray-bg));`
+            : ''}
     />
     <span class="flex-fill px-2" use:truncate={text}>
         {text}

@@ -7,6 +7,7 @@ export type ServiceRequest =
     | GetIndexRequest
     | SearchIndexRequest
     | GetMessageRequest
+    | FindOffsetRequest
     | SetUnreadRequest
     | SetStarredRequest
     | SetDeletedRequest
@@ -45,8 +46,8 @@ export interface SearchIndexRequest {
 }
 
 export interface SearchQuery {
-    readonly beforeid?: number;
-    readonly afterid?: number;
+    readonly startid?: number;
+    readonly backwards?: boolean;
     readonly content?: string;
     readonly sender?: string;
     readonly recipients?: string;
@@ -55,10 +56,16 @@ export interface SearchQuery {
     readonly time?: number;
     readonly limit?: number;
 }
-
 export interface GetMessageRequest {
     readonly methodname: 'get_message';
-    readonly id: number;
+    readonly messageid: number;
+}
+
+export interface FindOffsetRequest {
+    readonly methodname: 'find_offset';
+    readonly type: string;
+    readonly itemid: number;
+    readonly messageid: number;
 }
 
 export interface SetUnreadRequest {
@@ -120,11 +127,13 @@ export type ServiceResponse<T> = T extends GetInfoRequest
     : T extends GetMenuRequest
     ? Menu
     : T extends GetIndexRequest
-    ? MessageList
+    ? IndexList
     : T extends SearchIndexRequest
-    ? MessageList
+    ? SearchList
     : T extends GetMessageRequest
     ? Message
+    : T extends FindOffsetRequest
+    ? number
     : T extends SetUnreadRequest
     ? void
     : T extends SetStarredRequest
@@ -176,19 +185,15 @@ export interface MenuLabel {
     readonly unread: number;
 }
 
-export interface MessageList {
+export interface IndexList {
     readonly totalcount: number;
-    readonly messages: ReadonlyArray<MessageListItem>;
-    readonly firstoffset: number;
-    readonly lastoffset: number;
-    readonly previousid: number;
-    readonly nextid: number;
+    readonly messages: ReadonlyArray<MessageSummary>;
 }
 
-export interface MessageListItem {
+export interface MessageSummary {
     readonly id: number;
     readonly subject: string;
-    readonly attachments: number;
+    readonly numattachments: number;
     readonly draft: boolean;
     readonly time: number;
     readonly shorttime: string;
@@ -212,13 +217,15 @@ export interface Sender {
     readonly id: number;
     readonly fullname: string;
     readonly pictureurl: string;
+    readonly profileurl: string;
 }
 
 export interface Recipient {
+    readonly type: 'to' | 'cc' | 'bcc';
     readonly id: number;
     readonly fullname: string;
     readonly pictureurl: string;
-    readonly type: 'to' | 'cc' | 'bcc';
+    readonly profileurl: string;
 }
 
 export interface MessageLabel {
@@ -227,24 +234,18 @@ export interface MessageLabel {
     readonly color: string;
 }
 
-export interface Message {
-    readonly id: number;
-    readonly subject: string;
+export interface SearchList extends IndexList {
+    readonly firstoffset: number;
+    readonly lastoffset: number;
+    readonly previousid: number;
+    readonly nextid: number;
+}
+
+export interface Message extends MessageSummary {
     readonly content: string;
     readonly format: number;
-    readonly draft: boolean;
-    readonly time: number;
-    readonly shorttime: string;
-    readonly fulltime: string;
-    readonly unread: boolean;
-    readonly starred: boolean;
-    readonly deleted: boolean;
-    readonly course: Course;
-    readonly sender: Sender;
-    readonly recipients: ReadonlyArray<Recipient>;
     readonly attachments: ReadonlyArray<Attachment>;
     readonly references: ReadonlyArray<Reference>;
-    readonly labels: ReadonlyArray<MessageLabel>;
 }
 
 export interface Reference {
@@ -260,10 +261,19 @@ export interface Reference {
 }
 
 export interface Attachment {
+    readonly filepath: string;
     readonly filename: string;
     readonly mimetype: string;
     readonly filesize: number;
     readonly fileurl: string;
+    readonly iconurl: string;
+}
+
+export interface ServiceError {
+    readonly errorcode: string;
+    readonly message: string;
+    readonly debuginfo?: string;
+    readonly backtrace?: string;
 }
 
 /**
@@ -276,19 +286,13 @@ export async function callServices<T extends ServiceRequest[] | []>(
     requests: T,
 ): Promise<{ [P in keyof T]: ServiceResponse<T[P]> }> {
     let ajax = await require('core/ajax');
-    try {
-        const responses = await Promise.all(
-            ajax.call(
-                Array.from(requests).map(({ methodname, ...args }) => ({
-                    methodname: `local_mail_${methodname}`,
-                    args,
-                })),
-            ),
-        );
-        return responses as { [P in keyof T]: ServiceResponse<T[P]> };
-    } catch (error) {
-        let notification = await require('core/notification');
-        notification.exception(error);
-        throw error;
-    }
+    const responses = await Promise.all(
+        ajax.call(
+            Array.from(requests).map(({ methodname, ...args }) => ({
+                methodname: `local_mail_${methodname}`,
+                args,
+            })),
+        ),
+    );
+    return responses as { [P in keyof T]: ServiceResponse<T[P]> };
 }

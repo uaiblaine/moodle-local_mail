@@ -35,7 +35,7 @@
         params={{ type: 'drafts' }}
     />
     <MenuItem {store} icon="fa-trash" text={$store.strings.trash} params={{ type: 'trash' }} />
-    {#each $store.menu.labels as label}
+    {#each $store.menu.labels as label (label.id)}
         <MenuItem
             {store}
             icon="fa-tag"
@@ -45,7 +45,7 @@
             params={{ type: 'label', labelid: label.id }}
         />
     {/each}
-    {#each $store.menu.courses as course}
+    {#each $store.menu.courses as course (course.id)}
         <MenuItem
             {store}
             icon="fa-university"

@@ -3,4 +3,6 @@
 
 declare interface Window {
     jQuery: any;
+    M: any;
+    require: any;
 }

@@ -31,7 +31,9 @@
             store.updateLabel(label.id, name, selectedColor);
         } else {
             const id = await store.createLabel(name, selectedColor);
-            store.setLabels(Array.from($store.selectedIds.values()), [id], []);
+            if (id) {
+                store.setLabels(Array.from($store.selectedIds.values()), [id], []);
+            }
         }
     };
 </script>
@@ -92,15 +94,16 @@
                             {$store.strings.labelcolor}
                         </label>
                         <div role="radiogroup" class="local-mail-label-modal-color" id="{id}-color">
-                            {#each colors as color}
+                            {#each colors as color (color)}
                                 <button
                                     role="radio"
                                     aria-checked={color == selectedColor}
                                     tabindex="0"
                                     title={$store.strings[`color${color}`]}
                                     class="local-mail-label-modal-color-option btn"
-                                    style="background-color: var(--local-mail-color-{color}); color: var(--local-mail-color-{color}-fg)"
-                                    on:click={() => {
+                                    style={`color: var(--local-mail-color-${color}-fg, var(--local-mail-color-gray-fg));` +
+                                        `background-color: var(--local-mail-color-${color}-bg, var(--local-mail-color-gray-bg))`}
+                                    on:click|preventDefault={() => {
                                         selectedColor = color;
                                     }}
                                 >
@@ -108,6 +111,8 @@
                                         <i
                                             class="fa fa-check local-mail-label-modal-color-option-check"
                                         />
+                                    {:else}
+                                        <span aria-hidden="true">a</span>
                                     {/if}
                                 </button>
                             {/each}
@@ -141,12 +146,13 @@
     .local-mail-label-modal-color-option {
         width: 2rem;
         height: 2rem;
-        margin-right: 0.4rem;
-        margin-bottom: 0.4rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
         display: flex;
         justify-content: center;
         align-items: center;
-        cursor: pointer;
+        color: var(--local-mail-color-gray-fg);
+        background-color: var(--local-mail-color-gray-bg);
     }
 
     .local-mail-label-modal-color-option:last-child {

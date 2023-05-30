@@ -4,10 +4,10 @@ import { createStore } from './lib/store';
 import './global.css';
 
 async function init() {
-    new View({
-        target: document.getElementById('local_mail_view'),
-        props: { store: await createStore() },
-    });
+    const target = document.getElementById('local_mail_view');
+    if (target) {
+        new View({ target, props: { store: await createStore() } });
+    }
 }
 
 init();

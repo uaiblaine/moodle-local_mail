@@ -1,4 +1,4 @@
-let modules = {};
+let modules: Record<string, any> = {};
 
 /**
  * Loads an AMD modules with require().
@@ -9,8 +9,7 @@ let modules = {};
 export async function require(name: string): Promise<any> {
     if (modules[name] == null) {
         modules[name] = await new Promise((resolve) => {
-            const require = window['require' + '']; // Hack to avoid type error.
-            require([name], resolve);
+            window.require([name], resolve);
         });
     }
     return modules[name];
