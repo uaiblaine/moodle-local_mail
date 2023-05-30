@@ -72,6 +72,16 @@ function main() {
     }
     cli_writeln('');
 
+    $adminid = 0;
+    $adminname = trim(cli_input("Name of a user that will receive all mail as BCC [none]", ''));
+    if ($adminname) {
+        $adminid = $DB->get_field('user', 'id', ['username' => $adminname, 'deleted' => 0, 'confirmed' => 1]);
+        if (!$adminid) {
+            cli_error('User not found.');
+        }
+    }
+    cli_writeln('');
+
     $confirm = cli_input('ALL EXISTING MAIL DATA WILL BE DELETED! Type "OK" to continue.');
     if ($confirm != 'OK') {
         cli_error('Canceled.');
@@ -91,7 +101,7 @@ function main() {
     delete_messages($fs, $courseids);
     generate_user_labels($userids);
     foreach ($courseids as $courseid) {
-        generate_course_messages($fs, $courseid, $countperuser);
+        generate_course_messages($fs, $courseid, $adminid, $countperuser);
     }
 
     $seconds = (int) (time() - $starttime);
@@ -160,7 +170,7 @@ function add_random_recipients(local_mail_message $message, array $userids): voi
     }
 }
 
-function generate_course_messages(file_storage $fs, int $courseid, int $countperuser): void {
+function generate_course_messages(file_storage $fs, int $courseid, int $adminid, int $countperuser): void {
     global $DB;
 
     $context = context_course::instance($courseid);
@@ -187,9 +197,12 @@ function generate_course_messages(file_storage $fs, int $courseid, int $countper
         } else if ($i > 0 && random_bool(FORWARD_FREQ / (1 - REPLY_FREQ))) {
             $message = generate_random_forward($fs, random_item($sentmessages), $userids, $time);
         } else {
-            $message = generate_random_message($fs, $courseid, $userids, $time);
+            $message = generate_random_message($fs, $courseid, $userids, $adminid);
         }
         if ($i == 0 || !random_bool(DRAFT_FREQ)) {
+            if ($adminid > 0 && $message->sender()->id != $adminid && !$message->has_recipient($adminid)) {
+                $message->add_recipient('bcc', $adminid);
+            }
             $message->send($time);
             $sentmessages[] = $message;
             // Only reply and forward recent messages.
