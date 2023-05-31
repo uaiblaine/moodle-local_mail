@@ -117,7 +117,11 @@ function local_mail_pluginfile($course, $cm, $context, $filearea, $args,
  * @return string The HTML
  */
 function local_mail_render_navbar_output(\renderer_base $renderer) {
-    global $PAGE, $USER;
+    global $CFG, $PAGE, $USER;
+
+    if (!isloggedin() || isguestuser() || \core_user::awaiting_action()) {
+        return '';
+    }
 
     $menu = local_mail_message::get_menu($USER->id);
 
@@ -127,7 +131,7 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
     $icon = html_writer::tag('i', '', ['class' => 'fa fa-envelope-o']);
     $class = 'btn h-100 position-relative d-flex align-items-center px-2 py-0';
     $attributes = ['href' => $url, 'class' => $class, 'title' => $title];
-    $count = html_writer::div($menu['unread'] ?: '', 'count-container');
+    $count = $menu['unread'] ? html_writer::div($menu['unread'] ?: '', 'count-container') : '';
     $link = html_writer::tag('a', $icon . $count, $attributes);
 
     $container = html_writer::div($link, '', ['id' => 'local-mail-navbar']);
