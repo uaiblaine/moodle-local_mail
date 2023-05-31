@@ -47,6 +47,7 @@
     <div class="row">
         <div class="d-none d-lg-block col-3">
             <Menu
+                settings={$store.settings}
                 strings={$store.strings}
                 menu={$store.menu}
                 params={$store.params}

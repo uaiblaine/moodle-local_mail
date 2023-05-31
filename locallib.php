@@ -197,6 +197,41 @@ function local_mail_js_labels() {
     return $js;
 }
 
+
+function local_mail_get_menu() {
+    global $USER;
+
+    $count = local_mail_message::count_menu($USER->id);
+    $result = [
+        'unread' => isset($count->inbox) ? $count->inbox : 0,
+        'drafts' => isset($count->drafts) ? $count->drafts : 0,
+        'courses' => [],
+        'labels' => [],
+    ];
+
+    foreach (local_mail_get_my_courses() as $course) {
+        $result['courses'][] = [
+            'id' => $course->id,
+            'shortname' => $course->shortname,
+            'fullname' => $course->fullname,
+            'unread' => isset($count->courses[$course->id]) ? $count->courses[$course->id] : 0,
+            'visible' => !empty($course->visible),
+        ];
+    }
+
+    foreach (local_mail_label::fetch_user($USER->id) as $label) {
+        $id = $label->id();
+        $result['labels'][] = [
+            'id' => $id,
+            'name' => $label->name(),
+            'color' => $label->color(),
+            'unread' => isset($count->labels[$id]) ? $count->labels[$id] : 0,
+        ];
+    }
+
+    return $result;
+}
+
 function local_mail_get_my_courses() {
     static $courses = null;
 
@@ -213,6 +248,32 @@ function local_mail_get_my_courses() {
 
     return $courses;
 }
+
+function local_mail_get_preferences() {
+    return [
+        'perpage' => max(5, min(100, (int) get_user_preferences('local_mail_mailsperpage', 10))),
+        'markasread' => (bool) get_user_preferences('local_mail_markasread', 0),
+    ];
+}
+
+function local_mail_get_settings() {
+    $globaltrays = get_config('local_mail', 'globaltrays');
+    if ($globaltrays === false) {
+        $globaltrays = ['starred', 'sent', 'drafts', 'trash'];
+    } else if ($globaltrays == '') {
+        $globaltrays = [];
+    } else {
+        $globaltrays = explode(',', $globaltrays);
+    }
+    return [
+        'globaltrays' => $globaltrays,
+        'coursetrays' => get_config('local_mail', 'coursetrays') ?: 'all',
+        'coursetraysname' => get_config('local_mail', 'coursetraysname') ?: 'shortname',
+        'coursebadges' => get_config('local_mail', 'coursebadges') ?: 'shortname',
+        'coursebadgeslength' => (int) get_config('local_mail', 'coursebadgeslength'),
+    ];
+}
+
 
 function local_mail_valid_recipient($recipient) {
     global $COURSE, $USER;

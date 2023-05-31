@@ -31,6 +31,19 @@ class local_mail_external extends external_api {
         }
         return new external_single_structure([
             'userid' => new external_value(PARAM_INT, 'User id'),
+            'settings' => new external_single_structure([
+                'globaltrays' => new external_multiple_structure(
+                    new external_value(PARAM_ALPHA, 'Type of tray: "starred", "sent", "drafts" or "trash"'),
+                    'Global trays to display'),
+                'coursetrays' => new external_value(PARAM_ALPHA,
+                     'Course trays to display: "none", "unread", or "all"'),
+                'coursetraysname' => new external_value(PARAM_ALPHA,
+                     'Name of course trays to display: "shortname" or "fullname"'),
+                'coursebadges' => new external_value(PARAM_ALPHA,
+                    'Type of course badges: "none", "shortname", or "fullname"'),
+                'coursebadgeslength' => new external_value(PARAM_INT,
+                    'Trunate course badges to this length'),
+            ]),
             'preferences' => new external_single_structure([
                 'perpage' => new external_value(PARAM_INT, 'Number of messages to display per page (5-100)'),
                 'markasread' => new external_value(PARAM_BOOL, 'Mark new messages as read if a notification is sent'),
@@ -50,10 +63,8 @@ class local_mail_external extends external_api {
 
         return [
             'userid' => $USER->id,
-            'preferences' => [
-                'perpage' => max(5, min(100, (int) get_user_preferences('local_mail_mailsperpage', 10))),
-                'markasread' => (bool) get_user_preferences('local_mail_markasread', 0),
-            ],
+            'settings' => local_mail_get_settings(),
+            'preferences' => local_mail_get_preferences(),
             'strings' => $strings,
         ];
     }
@@ -149,7 +160,7 @@ class local_mail_external extends external_api {
 
         self::validate_context(context_system::instance());
 
-        return local_mail_message::get_menu($USER->id);
+        return local_mail_get_menu();
     }
 
     public static function get_index_parameters() {

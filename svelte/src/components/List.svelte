@@ -4,7 +4,8 @@
     import { flip } from 'svelte/animate';
     import { fade } from 'svelte/transition';
 
-    import Pill from './Pill.svelte';
+    import CourseBadge from './CourseBadge.svelte';
+    import LabelBadge from './LabelBadge.svelte';
     import { truncate } from '../actions/truncate';
     import type { Store } from '../lib/store';
     import type { MessageSummary } from '../lib/services';
@@ -106,11 +107,11 @@
                 </span>
                 {#each message.labels as label (label.id)}
                     {#if $store.params.type != 'label' || $store.params.labelid != label.id}
-                        <Pill text={label.name} color={label.color} />
+                        <LabelBadge {label} />
                     {/if}
                 {/each}
                 {#if $store.params.type != 'course' || $store.params.courseid != message.course.id}
-                    <Pill text={message.course.shortname} />
+                    <CourseBadge course={message.course} settings={$store.settings} />
                 {/if}
                 <span
                     class="local-mail-list-item-attachments d-shrink-0 my-2 mr-2"

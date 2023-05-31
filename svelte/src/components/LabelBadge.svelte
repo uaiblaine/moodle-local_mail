@@ -1,24 +1,24 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+    import type { MessageLabel } from '../lib/services';
     import { colors } from '../lib/utils';
 
-    export let text: string;
-    export let color = 'gray';
+    export let label: MessageLabel;
 
-    $: color = colors.includes(color) ? color : 'gray';
+    $: color = colors.includes(label.color) ? label.color : 'gray';
 </script>
 
 <span
-    class="local-mail-pill badge d-shrink-0 mr-2"
+    class="local-mail-label-badge badge d-shrink-0 mr-2"
     style={`color: var(--local-mail-color-${color}-fg, var(--local-mail-color-gray-fg));` +
         `background-color: var(--local-mail-color-${color}-bg, var(--local-mail-color-gray-bg))`}
 >
-    {text}
+    {label.name}
 </span>
 
 <style>
-    .local-mail-pill {
+    .local-mail-label-badge {
         font-size: inherit;
         font-weight: inherit;
         color: var(--local-mail-color-gray-fg);

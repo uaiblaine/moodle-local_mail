@@ -123,7 +123,7 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
         return '';
     }
 
-    $menu = local_mail_message::get_menu($USER->id);
+    $menu = local_mail_get_menu();
 
     // Fallback link to avoid layout changes during page load.
     $url = new moodle_url('/local/mail/view.php', ['t' => 'inbox']);
@@ -143,6 +143,7 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
     } else {
         // Other page in the site, we use an Svelte interface which does not use web services.
         $data = [
+            'settings' => local_mail_get_settings(),
             'strings' => [
                 'togglemailmenu' => get_string('togglemailmenu', 'local_mail'),
                 'compose' => get_string('compose', 'local_mail'),

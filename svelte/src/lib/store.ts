@@ -16,6 +16,7 @@ import {
     type SetLabelsRequest,
     type SetPreferencesRequest,
     type SetStarredRequest,
+    type Settings,
     type SetUnreadRequest,
     type UpdateLabelRequest,
     type ServiceError,
@@ -43,6 +44,7 @@ export interface Toast {
 export interface State {
     /* General information fetched only once. */
     readonly userid: number;
+    readonly settings: Settings;
     readonly preferences: Preferences;
     readonly strings: Strings;
 
@@ -73,7 +75,17 @@ export async function createStore() {
     const { subscribe, update } = writable<State>({
         /* Info */
         userid: 0,
-        preferences: { perpage: 10, markasread: false },
+        settings: {
+            globaltrays: [],
+            coursetrays: 'none',
+            coursetraysname: 'shortname',
+            coursebadges: 'none',
+            coursebadgeslength: 0,
+        },
+        preferences: {
+            perpage: 10,
+            markasread: false,
+        },
         strings: {},
 
         /* Params */
@@ -531,7 +543,7 @@ export async function createStore() {
         },
 
         async setUnread(messageids: ReadonlyArray<number>, unread: boolean) {
-            const params: ViewParams = {...store.get().params, messageid: undefined};
+            const params: ViewParams = { ...store.get().params, messageid: undefined };
 
             update((state) => ({
                 ...state,

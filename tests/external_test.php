@@ -60,13 +60,25 @@ class external_test extends \advanced_testcase {
 
     public function test_get_info() {
         $this->setUser($this->user3->id);
+        set_config('globaltrays', 'drafts,trash', 'local_mail');
+        set_config('coursetrays', 'unread', 'local_mail');
+        set_config('coursetraysname', 'fullname', 'local_mail');
+        set_config('coursebadges', 'none', 'local_mail');
+        set_config('coursebadgeslength', '20', 'local_mail');
         set_user_preference('local_mail_mailsperpage', 20);
         set_user_preference('local_mail_markasread', 1);
-
         $result = \local_mail_external::get_info();
 
         \external_api::validate_parameters(\local_mail_external::get_info_returns(), $result);
         $this->assertEquals($this->user3->id, $result['userid']);
+        $settings = [
+            'globaltrays' => ['drafts', 'trash'],
+            'coursetrays' => 'unread',
+            'coursetraysname' => 'fullname',
+            'coursebadges' => 'none',
+            'coursebadgeslength' => 20,
+        ];
+        $this->assertEquals($settings, $result['settings']);
         $preferences = [
             'perpage' => 20,
             'markasread' => true,
@@ -76,8 +88,13 @@ class external_test extends \advanced_testcase {
             $this->assertEquals(get_string($id, 'local_mail'), $result['strings'][$id]);
         }
 
-        // Default preferences.
+        // Default settings and preferences.
 
+        unset_config('globaltrays', 'local_mail');
+        unset_config('coursetrays', 'local_mail');
+        unset_config('coursetraysname', 'local_mail');
+        unset_config('coursebadges', 'local_mail');
+        unset_config('coursebadgeslength', 'local_mail');
         unset_user_preference('local_mail_mailsperpage');
         unset_user_preference('local_mail_markasread');
 
@@ -89,6 +106,14 @@ class external_test extends \advanced_testcase {
             'markasread' => false,
         ];
         $this->assertEquals($preferences, $result['preferences']);
+        $settings = [
+            'globaltrays' => ['starred', 'sent', 'drafts', 'trash'],
+            'coursetrays' => 'all',
+            'coursetraysname' => 'shortname',
+            'coursebadges' => 'shortname',
+            'coursebadgeslength' => 0,
+        ];
+        $this->assertEquals($settings, $result['settings']);
 
         // Invalid perpage preference.
 

@@ -154,22 +154,31 @@ export type ServiceResponse<T> = T extends GetInfoRequest
 
 export interface Info {
     readonly userid: number;
+    readonly settings: Settings;
     readonly preferences: Preferences;
     readonly strings: Strings;
 }
 
+export interface Settings {
+    globaltrays: ReadonlyArray<string>;
+    coursetrays: 'none' | 'unread' | 'all';
+    coursetraysname: 'shortname' | 'fullname';
+    coursebadges: 'none' | 'shortname' | 'fullname';
+    coursebadgeslength: number;
+}
+
 export type Strings = Record<string, string>;
+
+export interface Preferences {
+    readonly perpage: number;
+    readonly markasread: boolean;
+}
 
 export interface Menu {
     readonly unread: number;
     readonly drafts: number;
     readonly courses: ReadonlyArray<MenuCourse>;
     readonly labels: ReadonlyArray<MenuLabel>;
-}
-
-export interface Preferences {
-    readonly perpage: number;
-    readonly markasread: boolean;
 }
 
 export interface MenuCourse extends Course {

@@ -22,15 +22,20 @@ async function init() {
         const navbar = new Navbar({
             target: navbarTarget,
             props: {
-                menu: store.get().menu,
+                settings: store.get().settings,
                 strings: store.get().strings,
+                menu: store.get().menu,
                 onClick: (params: ViewParams) => store.navigate(params),
             },
         });
 
         // Update properties when store data changes.
         store.subscribe((state) => {
-            navbar.$set({ menu: state.menu, strings: state.strings });
+            navbar.$set({
+                settings: state.settings,
+                strings: state.strings,
+                menu: state.menu,
+            });
         });
     }
 }

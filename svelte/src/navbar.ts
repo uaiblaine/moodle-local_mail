@@ -11,7 +11,14 @@ async function init() {
         // Get needed data from script tag, to avoid doing web service requests.
         const data = (window as any).local_mail_navbar_data || {};
 
-        new Navbar({ target, props: { menu: data.menu, strings: data.strings } });
+        new Navbar({
+            target,
+            props: {
+                settings: data.settings,
+                strings: data.strings,
+                menu: data.menu,
+            },
+        });
     }
 }
 

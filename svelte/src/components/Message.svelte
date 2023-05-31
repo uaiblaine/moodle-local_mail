@@ -1,7 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import Pill from './Pill.svelte';
+    import CourseBadge from './CourseBadge.svelte';
+    import LabelBadge from './LabelBadge.svelte';
     import { type Store } from '../lib/store';
     import type { Message } from '../lib/services';
     import MessageAttachments from './MessageAttachments.svelte';
@@ -32,9 +33,9 @@
         </h3>
         <div class="d-flex align-items-center mb-2">
             <div class="local-mail-message-labels">
-                <Pill text={message.course.shortname} />
+                <CourseBadge course={message.course} settings={$store.settings} />
                 {#each message.labels as label (label.id)}
-                    <Pill text={label.name} color={label.color} />
+                    <LabelBadge {label} />
                 {/each}
             </div>
             <div class="ml-auto d-flex justify-content-end">
