@@ -48,8 +48,6 @@ if ($hassiteconfig) {
     $paramtype = PARAM_INT;
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
 
-    $CFG->maxbytes = null;
-
     // Attachment size.
     $name = 'local_mail/maxbytes';
     $visiblename = get_string('configmaxattachmentsize', 'local_mail');
@@ -96,7 +94,7 @@ if ($hassiteconfig) {
     $name = 'local_mail/coursetraysname';
     $visiblename = get_string('configcoursetraysname', 'local_mail');
     $description = get_string('configcoursetraysnamedesc', 'local_mail');
-    $defaultsetting = 'shortname';
+    $defaultsetting = 'fullname';
     $choices = [
         'shortname' => get_string('shortname'),
         'fullname' => get_string('fullname'),
@@ -110,7 +108,7 @@ if ($hassiteconfig) {
     $name = 'local_mail/coursebadges';
     $visiblename = get_string('configcoursebadges', 'local_mail');
     $description = get_string('configcoursebadgesdesc', 'local_mail');
-    $defaultsetting = 'shortname';
+    $defaultsetting = 'fullname';
     $choices = [
         'none' => get_string('none'),
         'shortname' => get_string('shortname'),
@@ -122,8 +120,8 @@ if ($hassiteconfig) {
     $name = 'local_mail/coursebadgeslength';
     $visiblename = get_string('configcoursebadgeslength', 'local_mail');
     $description = get_string('configcoursebadgeslengthdesc', 'local_mail');
-    $defaultsetting = '0';
-    $paramtype = PARAM_INT;
+    $defaultsetting = '20ch';
+    $paramtype = '/^([1-9][0-9]*(cap|ch|em|ex|ic|lh|rem|rlh))?$/';
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
 
     $ADMIN->add('localplugins', $settings);

@@ -100,7 +100,7 @@
                     </span>
                 {/if}
                 <span
-                    use:truncate={message.subject}
+                    use:truncate={message.subject || $store.strings.nosubject}
                     class="local-mail-list-message-subject d-grow-1 my-2 mr-2"
                 >
                     {message.subject || $store.strings.nosubject}

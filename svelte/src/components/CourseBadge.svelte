@@ -1,24 +1,21 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+    import { truncate } from '../actions/truncate';
     import type { Course, Settings } from '../lib/services';
 
     export let course: Course;
     export let settings: Settings;
 
     $: text = settings.coursebadges == 'shortname' ? course.shortname : course.fullname;
-    $: truncatedText =
-        settings.coursebadgeslength > 0 && text.length > settings.coursebadgeslength
-            ? text.slice(0, settings.coursebadgeslength) + '…'
-            : text;
+    $: length = settings.coursebadgeslength || '20ch';
 </script>
 
 {#if settings.coursebadges != 'none'}
-    <span
-        class="local-mail-course-badge badge d-shrink-0 mr-2"
-        title={text != truncatedText ? text : undefined}
-    >
-        {truncatedText}
+    <span class="mr-2 d-flex">
+        <span class="local-mail-course-badge badge" use:truncate={text} style="max-width: {length}">
+            {text}
+        </span>
     </span>
 {/if}
 

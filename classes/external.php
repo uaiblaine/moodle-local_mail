@@ -41,8 +41,8 @@ class local_mail_external extends external_api {
                      'Name of course trays to display: "shortname" or "fullname"'),
                 'coursebadges' => new external_value(PARAM_ALPHA,
                     'Type of course badges: "none", "shortname", or "fullname"'),
-                'coursebadgeslength' => new external_value(PARAM_INT,
-                    'Trunate course badges to this length'),
+                'coursebadgeslength' => new external_value(PARAM_ALPHANUM,
+                    'Trunate course badges to this length in CSS units'),
             ]),
             'preferences' => new external_single_structure([
                 'perpage' => new external_value(PARAM_INT, 'Number of messages to display per page (5-100)'),

@@ -164,7 +164,7 @@ export interface Settings {
     coursetrays: 'none' | 'unread' | 'all';
     coursetraysname: 'shortname' | 'fullname';
     coursebadges: 'none' | 'shortname' | 'fullname';
-    coursebadgeslength: number;
+    coursebadgeslength: string;
 }
 
 export type Strings = Record<string, string>;

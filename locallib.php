@@ -265,12 +265,13 @@ function local_mail_get_settings() {
     } else {
         $globaltrays = explode(',', $globaltrays);
     }
+
     return [
         'globaltrays' => $globaltrays,
         'coursetrays' => get_config('local_mail', 'coursetrays') ?: 'all',
-        'coursetraysname' => get_config('local_mail', 'coursetraysname') ?: 'shortname',
-        'coursebadges' => get_config('local_mail', 'coursebadges') ?: 'shortname',
-        'coursebadgeslength' => (int) get_config('local_mail', 'coursebadgeslength'),
+        'coursetraysname' => get_config('local_mail', 'coursetraysname') ?: 'fullname',
+        'coursebadges' => get_config('local_mail', 'coursebadges') ?: 'fullname',
+        'coursebadgeslength' => get_config('local_mail', 'coursebadgeslength') ?: '20ch',
     ];
 }
 

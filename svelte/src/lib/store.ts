@@ -81,7 +81,7 @@ export async function createStore() {
             coursetrays: 'none',
             coursetraysname: 'shortname',
             coursebadges: 'none',
-            coursebadgeslength: 0,
+            coursebadgeslength: '',
         },
         preferences: {
             perpage: 10,

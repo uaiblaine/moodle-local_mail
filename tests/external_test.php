@@ -62,9 +62,9 @@ class external_test extends \advanced_testcase {
         $this->setUser($this->user3->id);
         set_config('globaltrays', 'drafts,trash', 'local_mail');
         set_config('coursetrays', 'unread', 'local_mail');
-        set_config('coursetraysname', 'fullname', 'local_mail');
+        set_config('coursetraysname', 'shortname', 'local_mail');
         set_config('coursebadges', 'none', 'local_mail');
-        set_config('coursebadgeslength', '20', 'local_mail');
+        set_config('coursebadgeslength', '10em', 'local_mail');
         set_user_preference('local_mail_mailsperpage', 20);
         set_user_preference('local_mail_markasread', 1);
         $result = \local_mail_external::get_info();
@@ -74,9 +74,9 @@ class external_test extends \advanced_testcase {
         $settings = [
             'globaltrays' => ['drafts', 'trash'],
             'coursetrays' => 'unread',
-            'coursetraysname' => 'fullname',
+            'coursetraysname' => 'shortname',
             'coursebadges' => 'none',
-            'coursebadgeslength' => 20,
+            'coursebadgeslength' => '10em',
         ];
         $this->assertEquals($settings, $result['settings']);
         $preferences = [
@@ -109,9 +109,9 @@ class external_test extends \advanced_testcase {
         $settings = [
             'globaltrays' => ['starred', 'sent', 'drafts', 'trash'],
             'coursetrays' => 'all',
-            'coursetraysname' => 'shortname',
-            'coursebadges' => 'shortname',
-            'coursebadgeslength' => 0,
+            'coursetraysname' => 'fullname',
+            'coursebadges' => 'fullname',
+            'coursebadgeslength' => '20ch',
         ];
         $this->assertEquals($settings, $result['settings']);
 
