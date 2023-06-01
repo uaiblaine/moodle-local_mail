@@ -408,8 +408,8 @@ export async function createStore() {
                 store.setError(error as ServiceError);
                 return;
             }
-            await store.callServicesAndRefresh([], getViewParamsFromUrl());
             update((state) => ({ ...state, ...info }));
+            await store.callServicesAndRefresh([], getViewParamsFromUrl());
         },
 
         async navigate(params?: ViewParams, redirect = false) {
