@@ -32,7 +32,7 @@
         } else {
             const id = await store.createLabel(name, selectedColor);
             if (id) {
-                store.setLabels(Array.from($store.selectedIds.values()), [id], []);
+                store.setLabels(Array.from($store.targetMessageIds.values()), [id], []);
             }
         }
     };

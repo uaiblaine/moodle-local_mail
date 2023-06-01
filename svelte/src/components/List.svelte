@@ -29,14 +29,14 @@
     };
 
     const checkClass = (message: MessageSummary): string => {
-        return $store.selectedIds.has(message.id) ? 'fa-check-square-o' : 'fa-square-o';
+        return $store.selectedMessageIds.has(message.id) ? 'fa-check-square-o' : 'fa-square-o';
     };
 
     const starClass = (message: MessageSummary): string => {
         return message.starred ? 'fa-star text-warning' : 'fa-star-o';
     };
 
-    const clickHander = (message: MessageSummary) => {
+    const clickHandler = (message: MessageSummary) => {
         return (event: MouseEvent) => {
             // Check if the event target or its parent is a button,
             // which would mean that the select or star button is being clicked.
@@ -57,20 +57,20 @@
                 animate:flip={{ delay: 400, duration: 400 }}
                 in:fade|local={{ delay: 400 }}
                 out:fade|local={{ duration: 400 }}
-                class="local-mail-list-item list-group-item list-group-item-action d-flex align-items-center p-0"
+                class="local-mail-list-message list-group-item list-group-item-action d-flex align-items-center p-0"
                 href={message.draft
                     ? composeUrl(message.id)
                     : viewUrl({ ...$store.params, messageid: message.id })}
-                class:list-group-item-primary={$store.selectedIds.has(message.id)}
+                class:list-group-item-primary={$store.selectedMessageIds.has(message.id)}
                 class:list-group-item-secondary={!message.unread &&
-                    !$store.selectedIds.has(message.id)}
+                    !$store.selectedMessageIds.has(message.id)}
                 class:font-weight-bold={message.unread}
-                on:click={clickHander(message)}
+                on:click={clickHandler(message)}
             >
                 <button
                     class="btn px-2 ml-1"
                     role="checkbox"
-                    aria-checked={Boolean($store.selectedIds.has(message.id))}
+                    aria-checked={Boolean($store.selectedMessageIds.has(message.id))}
                     title={$store.strings.select}
                     on:click={() => store.toggleSelected(message.id)}
                 >
@@ -90,18 +90,18 @@
                 </button>
                 <span
                     use:truncate={users(message).join('\n')}
-                    class="local-mail-list-item-users my-2 mr-2"
+                    class="local-mail-list-message-users my-2 mr-2"
                 >
                     {users(message).join(', ')}
                 </span>
                 {#if message.draft}
-                    <span class="local-mail-list-item-draft my-2 mr-2 text-danger">
+                    <span class="local-mail-list-message-draft my-2 mr-2 text-danger">
                         {$store.strings.draft}
                     </span>
                 {/if}
                 <span
                     use:truncate={message.subject}
-                    class="local-mail-list-item-subject d-grow-1 my-2 mr-2"
+                    class="local-mail-list-message-subject d-grow-1 my-2 mr-2"
                 >
                     {message.subject || $store.strings.nosubject}
                 </span>
@@ -114,7 +114,7 @@
                     <CourseBadge course={message.course} settings={$store.settings} />
                 {/if}
                 <span
-                    class="local-mail-list-item-attachments d-shrink-0 my-2 mr-2"
+                    class="local-mail-list-message-attachments d-shrink-0 my-2 mr-2"
                     title={message.numattachments
                         ? replaceStringParams($store.strings.attachnumber, message.numattachments)
                         : ''}
@@ -123,7 +123,7 @@
                     <i class="fa fa-fw {message.numattachments ? 'fa-paperclip' : ''}" />
                 </span>
                 <span
-                    class="local-mail-list-item-time text-truncate d-shrink-1 text-right my-2 mr-3"
+                    class="local-mail-list-message-time text-truncate d-shrink-1 text-right my-2 mr-3"
                     title={message.fulltime}
                 >
                     {message.shorttime}
@@ -150,16 +150,16 @@
 {/key}
 
 <style>
-    .local-mail-list-item {
+    .local-mail-list-message {
         color: var(--dark) !important;
     }
-    .local-mail-list-item-users {
+    .local-mail-list-message-users {
         min-width: 20%;
     }
-    .local-mail-list-item-subject {
+    .local-mail-list-message-subject {
         width: 100%;
     }
-    .local-mail-list-item-time {
+    .local-mail-list-message-time {
         min-width: 5rem;
     }
 </style>

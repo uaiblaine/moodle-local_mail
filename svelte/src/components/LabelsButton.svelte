@@ -12,14 +12,14 @@
         $store.menu.labels.map((label) => {
             const messages = $store.list.messages.filter(
                 (message) =>
-                    $store.selectedIds.has(message.id) &&
+                    $store.targetMessageIds.has(message.id) &&
                     message.labels.some((messageLabel) => messageLabel.id == label.id),
             );
             return [
                 label.id,
                 messages.length == 0
                     ? 'false'
-                    : messages.length < $store.selectedIds.size
+                    : messages.length < $store.targetMessageIds.size
                     ? 'mixed'
                     : 'true',
             ];
@@ -29,7 +29,7 @@
     $: applyEnabled = Array.from(selectedLabels.entries()).some(([labelid, selected]) =>
         $store.list.messages.some(
             (message) =>
-                $store.selectedIds.has(message.id) &&
+                $store.targetMessageIds.has(message.id) &&
                 ((selected == 'true' && message.labels.every((label) => label.id != labelid)) ||
                     (selected == 'false' && message.labels.some((label) => label.id == labelid))),
         ),
@@ -56,7 +56,7 @@
 
     const applyLabels = () => {
         store.setLabels(
-            Array.from($store.selectedIds.values()),
+            Array.from($store.targetMessageIds.values()),
             Array.from(selectedLabels.keys()).filter((id) => selectedLabels.get(id) == 'true'),
             Array.from(selectedLabels.keys()).filter((id) => selectedLabels.get(id) == 'false'),
         );
@@ -67,8 +67,8 @@
     <button
         type="button"
         class="local-mail-action-label-button btn btn-secondary dropdown-toggle"
-        class:disabled={!$store.selectedIds.size}
-        disabled={!$store.selectedIds.size}
+        class:disabled={!$store.targetMessageIds.size}
+        disabled={!$store.targetMessageIds.size}
         data-toggle="dropdown"
         aria-expanded="false"
         title={$store.strings.labels}

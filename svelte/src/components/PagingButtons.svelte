@@ -27,17 +27,17 @@
 <div class="btn-group d-shrink-0" role="group">
     <button
         class="btn btn-secondary"
-        disabled={!$store.prevParams}
+        disabled={!$store.prevPageParams}
         title={$store.strings.previouspage}
-        on:click|preventDefault={() => store.navigate($store.prevParams)}
+        on:click|preventDefault={() => store.navigate($store.prevPageParams)}
     >
         <i class="icon fa fa-w fa-chevron-left mx-0" aria-label={$store.strings.previouspage} />
     </button>
     <button
         class="btn btn-secondary"
-        disabled={!$store.nextParams}
+        disabled={!$store.nextPageParams}
         title={$store.strings.nextpage}
-        on:click|preventDefault={() => store.navigate($store.nextParams)}
+        on:click|preventDefault={() => store.navigate($store.nextPageParams)}
     >
         <i class="icon fa fa-w fa-chevron-right mx-0" aria-label={$store.strings.nextpage} />
     </button>

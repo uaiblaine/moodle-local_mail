@@ -60,9 +60,10 @@ export interface State {
     /* Transient interface state. */
     readonly loading: boolean;
     readonly error?: ServiceError;
-    readonly nextParams?: ViewParams;
-    readonly prevParams?: ViewParams;
-    readonly selectedIds: ReadonlySet<number>;
+    readonly nextPageParams?: ViewParams;
+    readonly prevPageParams?: ViewParams;
+    readonly selectedMessageIds: ReadonlySet<number>;
+    readonly targetMessageIds: ReadonlySet<number>;
     readonly toasts: ReadonlyArray<Toast>;
     readonly listKey: number;
 }
@@ -109,7 +110,8 @@ export async function createStore() {
 
         /* Transient */
         loading: true,
-        selectedIds: new Set(),
+        selectedMessageIds: new Set(),
+        targetMessageIds: new Set(),
         toasts: [],
         listKey: 0,
     });
@@ -247,8 +249,8 @@ export async function createStore() {
             };
 
             // Calculate next/previous params.
-            let nextParams: ViewParams | undefined;
-            let prevParams: ViewParams | undefined;
+            let nextPageParams: ViewParams | undefined;
+            let prevPageParams: ViewParams | undefined;
             if (message) {
                 // Displaying a single message.
                 let index = list.messages.findIndex((m) => m.id == message?.id);
@@ -286,13 +288,13 @@ export async function createStore() {
                 }
                 if (nextId) {
                     if (nextId == list.nextid) {
-                        nextParams = {
+                        nextPageParams = {
                             ...params,
                             messageid: nextId,
                             query: { ...params.query, startid: nextId, backwards: false },
                         };
                     } else {
-                        nextParams = {
+                        nextPageParams = {
                             ...params,
                             messageid: nextId,
                         };
@@ -300,13 +302,13 @@ export async function createStore() {
                 }
                 if (prevId) {
                     if (prevId == list.previousid) {
-                        prevParams = {
+                        prevPageParams = {
                             ...params,
                             messageid: prevId,
                             query: { ...params.query, startid: prevId, backwards: true },
                         };
                     } else {
-                        prevParams = {
+                        prevPageParams = {
                             ...params,
                             messageid: prevId,
                         };
@@ -315,7 +317,7 @@ export async function createStore() {
             } else {
                 // Displaying a list of messages.
                 if (list.nextid) {
-                    nextParams = {
+                    nextPageParams = {
                         ...params,
                         query: {
                             ...params.query,
@@ -325,7 +327,7 @@ export async function createStore() {
                     };
                 }
                 if (list.previousid) {
-                    prevParams = {
+                    prevPageParams = {
                         ...params,
                         query: {
                             ...params.query,
@@ -337,30 +339,28 @@ export async function createStore() {
             }
 
             // Update state.
-            update(
-                (state): State => ({
+            update((state): State => {
+                const selectedMessageIds = new Set(
+                    list.messages
+                        .filter((m) => state.selectedMessageIds.has(m.id))
+                        .map((m) => m.id),
+                );
+                return {
                     ...state,
                     params,
                     menu,
                     list,
                     message,
                     messageOffset,
-                    nextParams,
-                    prevParams,
-                    selectedIds: new Set(
-                        list.messages
-                            .filter((m) => {
-                                if (params.messageid) {
-                                    return m.id == params.messageid;
-                                } else {
-                                    return state.selectedIds.has(m.id);
-                                }
-                            })
-                            .map((m) => m.id),
-                    ),
+                    nextPageParams,
+                    prevPageParams,
+                    selectedMessageIds,
+                    targetMessageIds: params.messageid
+                        ? new Set([params.messageid])
+                        : selectedMessageIds,
                     loading: false,
-                }),
-            );
+                };
+            });
             setUrlFromViewParams(params, redirect);
 
             return responses;
@@ -420,9 +420,8 @@ export async function createStore() {
         },
 
         selectAll(type: SelectAllType) {
-            update((state) => ({
-                ...state,
-                selectedIds: new Set(
+            update((state) => {
+                const selectedMessageIds = new Set(
                     state.list.messages
                         .filter(
                             (message) =>
@@ -433,8 +432,15 @@ export async function createStore() {
                                 (type == 'unstarred' && !message.starred),
                         )
                         .map((message) => message.id),
-                ),
-            }));
+                );
+                return {
+                    ...state,
+                    selectedMessageIds,
+                    targetMessageIds: state.params.messageid
+                        ? new Set([state.params.messageid])
+                        : selectedMessageIds,
+                };
+            });
         },
 
         async setDeleted(ids: ReadonlyArray<number>, deleted: DeletedStatus, allowUndo: boolean) {
@@ -574,18 +580,24 @@ export async function createStore() {
         },
 
         toggleSelected(id: number) {
-            update((state) => ({
-                ...state,
-                selectedIds: new Set(
+            update((state) => {
+                const selectedMessageIds = new Set(
                     state.list.messages
                         .filter(
                             (message) =>
-                                (message.id != id && state.selectedIds.has(message.id)) ||
-                                (message.id == id && !state.selectedIds.has(message.id)),
+                                (message.id != id && state.selectedMessageIds.has(message.id)) ||
+                                (message.id == id && !state.selectedMessageIds.has(message.id)),
                         )
                         .map((message) => message.id),
-                ),
-            }));
+                );
+                return {
+                    ...state,
+                    selectedMessageIds,
+                    targetMessageIds: state.params.messageid
+                        ? new Set([state.params.messageid])
+                        : selectedMessageIds,
+                };
+            });
         },
 
         async undo(toast: Toast) {

@@ -14,16 +14,16 @@
             : null;
 
     $: someRead = $store.list.messages.some(
-        (message) => $store.selectedIds.has(message.id) && !message.unread,
+        (message) => $store.targetMessageIds.has(message.id) && !message.unread,
     );
     $: someUnread = $store.list.messages.some(
-        (message) => $store.selectedIds.has(message.id) && message.unread,
+        (message) => $store.targetMessageIds.has(message.id) && message.unread,
     );
     $: someStarred = $store.list.messages.some(
-        (message) => $store.selectedIds.has(message.id) && message.starred,
+        (message) => $store.targetMessageIds.has(message.id) && message.starred,
     );
     $: someUnstarred = $store.list.messages.some(
-        (message) => $store.selectedIds.has(message.id) && !message.starred,
+        (message) => $store.targetMessageIds.has(message.id) && !message.starred,
     );
 
     $: disabled =
@@ -32,11 +32,11 @@
             : !label && !someRead && !someUnread && !someStarred && !someUnstarred;
 
     const setUnread = (unread: boolean) => {
-        store.setUnread(Array.from($store.selectedIds.values()), unread);
+        store.setUnread(Array.from($store.targetMessageIds.values()), unread);
     };
 
     const setStarred = (starred: boolean) => {
-        store.setStarred(Array.from($store.selectedIds.values()), starred);
+        store.setStarred(Array.from($store.targetMessageIds.values()), starred);
     };
 </script>
 

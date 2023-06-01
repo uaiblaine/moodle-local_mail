@@ -6,9 +6,9 @@
     export let store: Store;
 
     $: iconClass =
-        $store.selectedIds.size == $store.list.messages.length
+        $store.selectedMessageIds.size == $store.list.messages.length
             ? 'fa-check-square-o'
-            : $store.selectedIds.size > 0
+            : $store.selectedMessageIds.size > 0
             ? 'fa-minus-square-o'
             : 'fa-square-o';
 </script>
