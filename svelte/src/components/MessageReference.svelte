@@ -8,27 +8,29 @@
 </script>
 
 <div class="card mb-4">
-    <div class="card-body">
-        <h5 class="card-title font-weight-normal">
+    <div class="card-body p-3 px-xl-4">
+        <h5 class="h5 card-title mb-3">
             {reference.subject}
         </h5>
-        <div class="d-flex align-items-center">
-            <div class="mr-3">
-                <img
-                    aria-hidden="true"
-                    alt={reference.sender.fullname}
-                    src={reference.sender.pictureurl}
-                    width="35"
-                    height="35"
-                    class="rounded-circle"
-                />
+        <div class="d-sm-flex mb-n1">
+            <div class="d-flex mb-3 mb-sm-0">
+                <div class="mr-3">
+                    <img
+                        aria-hidden="true"
+                        alt={reference.sender.fullname}
+                        src={reference.sender.pictureurl}
+                        width="35"
+                        height="35"
+                        class="rounded-circle"
+                    />
+                </div>
+                <div class="mt-1">
+                    <a href={reference.sender.profileurl}>
+                        {reference.sender.fullname}
+                    </a>
+                </div>
             </div>
-            <div class="local-mail-message-reference-users">
-                <a href={reference.sender.profileurl}>
-                    {reference.sender.fullname}
-                </a>
-            </div>
-            <div class="ml-auto">
+            <div class="mt-1 ml-auto">
                 {reference.fulltime}
             </div>
         </div>
@@ -44,10 +46,6 @@
 </div>
 
 <style>
-    .local-mail-message-reference-users {
-        line-height: 1.5;
-    }
-
     .local-mail-message-reference-content {
         max-width: 60rem;
     }

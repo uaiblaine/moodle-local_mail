@@ -129,10 +129,9 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
     $url = new moodle_url('/local/mail/view.php', ['t' => 'inbox']);
     $title = get_string('pluginname', 'local_mail');
     $icon = html_writer::tag('i', '', ['class' => 'fa fa-envelope-o']);
-    $class = 'btn h-100 position-relative d-flex align-items-center px-2 py-0';
+    $class = 'btn h-100 d-flex align-items-center px-2 py-0';
     $attributes = ['href' => $url, 'class' => $class, 'title' => $title];
-    $count = $menu['unread'] ? html_writer::div($menu['unread'] ?: '', 'count-container') : '';
-    $link = html_writer::tag('a', $icon . $count, $attributes);
+    $link = html_writer::tag('a', $icon, $attributes);
 
     $container = html_writer::div($link, '', ['id' => 'local-mail-navbar']);
 

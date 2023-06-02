@@ -36,6 +36,13 @@ export interface ViewParams {
     readonly query?: SearchQuery;
 }
 
+export enum ViewSize {
+    SM = 576,
+    MD = 768,
+    LG = 992,
+    XL = 1200,
+}
+
 export interface Toast {
     readonly text: string;
     readonly undo?: () => void;
@@ -66,6 +73,7 @@ export interface State {
     readonly targetMessageIds: ReadonlySet<number>;
     readonly toasts: ReadonlyArray<Toast>;
     readonly listKey: number;
+    readonly viewSize: number;
 }
 
 export type SelectAllType = 'all' | 'none' | 'read' | 'unread' | 'starred' | 'unstarred';
@@ -114,6 +122,7 @@ export async function createStore() {
         targetMessageIds: new Set(),
         toasts: [],
         listKey: 0,
+        viewSize: 0,
     });
 
     const store = {
@@ -258,33 +267,20 @@ export async function createStore() {
                 let prevId: number;
                 if (index >= 0) {
                     // Message is on the list.
-                    if (index == 0) {
-                        nextId = list.messages[index + 1].id;
-                        prevId = list.previousid;
-                    } else if (index < list.messages.length - 1) {
-                        nextId = list.messages[index + 1].id;
-                        prevId = list.messages[index - 1].id;
-                    } else {
-                        nextId = list.nextid;
-                        prevId = list.messages[index - 1].id;
-                    }
+                    nextId =
+                        index < list.messages.length - 1
+                            ? list.messages[index + 1].id
+                            : list.nextid;
+                    prevId = index > 0 ? list.messages[index - 1].id : list.previousid;
                 } else {
-                    // Message not on the list, find closes.
+                    // Message not on the list, find closest message.
                     index = list.messages.findIndex(
                         (m) =>
                             m.time <= message!.time &&
                             (m.time < message!.time || m.id < message!.id),
                     );
-                    if (index == 0) {
-                        nextId = list.messages[index].id;
-                        prevId = list.previousid;
-                    } else if (index < list.messages.length) {
-                        nextId = list.messages[index].id;
-                        prevId = list.messages[index - 1].id;
-                    } else {
-                        nextId = list.nextid;
-                        prevId = list.messages[index - 1].id;
-                    }
+                    nextId = index < list.messages.length ? list.messages[index].id : list.nextid;
+                    prevId = index > 0 ? list.messages[index].id : list.previousid;
                 }
                 if (nextId) {
                     if (nextId == list.nextid) {
@@ -419,6 +415,12 @@ export async function createStore() {
             update((state) => ({ ...state, listKey: state.listKey + 1 }));
         },
 
+        async search(query?: SearchQuery) {
+            update((state) => ({ ...state, params: { ...state.params, query } }));
+
+            await store.navigate();
+        },
+
         selectAll(type: SelectAllType) {
             update((state) => {
                 const selectedMessageIds = new Set(
@@ -509,6 +511,14 @@ export async function createStore() {
             }));
 
             await store.callServicesAndRefresh(requests);
+        },
+
+        setViewportSize(width: number) {
+            update((state) => ({
+                ...state,
+                viewSize: width,
+                listKey: state.listKey + 1, // Prevent list animations.
+            }));
         },
 
         async setPerPage(perpage: number) {

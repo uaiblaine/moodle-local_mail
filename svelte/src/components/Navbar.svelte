@@ -14,6 +14,8 @@
     export let params: ViewParams | undefined = undefined;
     export let onClick: ((params: ViewParams) => void) | undefined = undefined;
 
+    let viewportWidth: number;
+
     $: displayMenu = settings.globaltrays.length > 0 || menu.labels.length > 0;
 
     $: handleClick = (event: Event) => {
@@ -26,7 +28,9 @@
     };
 </script>
 
-<div class="dropdown h-100">
+<svelte:window bind:innerWidth={viewportWidth} />
+
+<div class="dropdown h-100" class:position-static={viewportWidth < 768}>
     <a
         data-toggle={displayMenu ? 'dropdown' : undefined}
         aria-expanded="false"
@@ -36,7 +40,9 @@
         on:click={handleClick}
     >
         <i class="fa fa-envelope-o" aria-label={strings.plugginname} />
-        <div class="count-container">{menu.unread}</div>
+        {#if menu.unread > 0}
+            <div class="local-mail-navbar-count count-container">{menu.unread}</div>
+        {/if}
     </a>
     <div class="local-mail-navbar-dropdown dropdown-menu dropdown-menu-right p-0">
         <div class="d-flex justify-content-between pl-3 pr-2 py-2">
@@ -49,4 +55,12 @@
 </div>
 
 <style>
+    .local-mail-navbar-count {
+        top: 50%;
+        transform: translateY(-16px);
+    }
+    .local-mail-navbar-dropdown {
+        width: 100vw;
+        max-width: 20rem;
+    }
 </style>

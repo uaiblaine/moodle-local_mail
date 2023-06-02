@@ -12,10 +12,12 @@
 </script>
 
 {#if settings.coursebadges != 'none'}
-    <span class="mr-2 d-flex">
-        <span class="local-mail-course-badge badge" use:truncate={text} style="max-width: {length}">
-            {text}
-        </span>
+    <span
+        class="local-mail-course-badge badge px-2 mr-2 mb-2"
+        use:truncate={text}
+        style="max-width: {length}"
+    >
+        {text}
     </span>
 {/if}
 

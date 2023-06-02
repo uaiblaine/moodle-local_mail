@@ -10,7 +10,7 @@
 </script>
 
 <span
-    class="local-mail-label-badge badge d-shrink-0 mr-2"
+    class="local-mail-label-badge badge flex-shrink-0 px-2 mr-2 mb-2"
     style={`color: var(--local-mail-color-${color}-fg, var(--local-mail-color-gray-fg));` +
         `background-color: var(--local-mail-color-${color}-bg, var(--local-mail-color-gray-bg))`}
 >

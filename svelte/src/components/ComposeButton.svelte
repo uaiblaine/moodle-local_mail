@@ -8,7 +8,7 @@
     export let courseid: number | undefined = undefined;
 </script>
 
-<a class="btn btn-primary px-3 text-truncate" role="button" href={createUrl(courseid)}>
+<a class="btn btn-primary text-truncate px-3" role="button" href={createUrl(courseid)}>
     <i class="icon fa fa-fw fa-edit mr-1" />
     {strings.compose}
 </a>

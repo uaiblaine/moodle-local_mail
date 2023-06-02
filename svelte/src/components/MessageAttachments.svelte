@@ -7,9 +7,9 @@
     export let message: Reference;
 </script>
 
-<div class="local-mail-message-attachments d-flex flex-wrap mt-3">
+<div class="d-sm-flex flex-sm-wrap mr-n5 mt-3 mb-n3">
     {#each message.attachments as file}
-        <div>
+        <div class="mr-5 mb-3">
             <img
                 aria-hidden="true"
                 alt={file.filename}
@@ -18,7 +18,7 @@
                 height="24"
                 class="mr-2"
             />
-            <a href={file.fileurl} class="mr-3">
+            <a href={file.fileurl} class="mr-2">
                 {(file.filepath + file.filename).replace(/^\//, '')}
             </a>
             <span class="text-muted">

@@ -4,37 +4,19 @@
     import { flip } from 'svelte/animate';
     import { fade } from 'svelte/transition';
 
-    import CourseBadge from './CourseBadge.svelte';
-    import LabelBadge from './LabelBadge.svelte';
-    import { truncate } from '../actions/truncate';
-    import type { Store } from '../lib/store';
+    import { ViewSize, type Store } from '../lib/store';
     import type { MessageSummary } from '../lib/services';
     import { composeUrl, viewUrl } from '../lib/url';
-    import { replaceStringParams } from '../lib/utils';
+    import ListMessageCheckbox from './ListMessageCheckbox.svelte';
+    import ListMessageStar from './ListMessageStar.svelte';
+    import ListMessageUsers from './ListMessageUsers.svelte';
+    import ListMessageSubject from './ListMessageSubject.svelte';
+    import ListMessageLabels from './ListMessageLabels.svelte';
+    import ListMessageAttachments from './ListMessageAttachments.svelte';
+    import ListMessageTime from './ListMessageTime.svelte';
+    import ListEmptyAlert from './ListAlert.svelte';
 
     export let store: Store;
-
-    $: recentParams = {
-        type: $store.params.type,
-        courseid: $store.params.courseid,
-        labelid: $store.params.labelid,
-    };
-
-    const users = (message: MessageSummary): string[] => {
-        return $store.params.type == 'sent' || $store.params.type == 'drafts'
-            ? message.recipients.length > 0
-                ? message.recipients.map((user) => user.fullname)
-                : [$store.strings.norecipient]
-            : [message.sender.fullname];
-    };
-
-    const checkClass = (message: MessageSummary): string => {
-        return $store.selectedMessageIds.has(message.id) ? 'fa-check-square-o' : 'fa-square-o';
-    };
-
-    const starClass = (message: MessageSummary): string => {
-        return message.starred ? 'fa-star text-warning' : 'fa-star-o';
-    };
 
     const clickHandler = (message: MessageSummary) => {
         return (event: MouseEvent) => {
@@ -57,7 +39,7 @@
                 animate:flip={{ delay: 400, duration: 400 }}
                 in:fade|local={{ delay: 400 }}
                 out:fade|local={{ duration: 400 }}
-                class="local-mail-list-message list-group-item list-group-item-action d-flex align-items-center p-0"
+                class="local-mail-list-message list-group-item list-group-item-action p-0"
                 href={message.draft
                     ? composeUrl(message.id)
                     : viewUrl({ ...$store.params, messageid: message.id })}
@@ -67,99 +49,47 @@
                 class:font-weight-bold={message.unread}
                 on:click={clickHandler(message)}
             >
-                <button
-                    class="btn px-2 ml-1"
-                    role="checkbox"
-                    aria-checked={Boolean($store.selectedMessageIds.has(message.id))}
-                    title={$store.strings.select}
-                    on:click={() => store.toggleSelected(message.id)}
-                >
-                    <i class="fa align-middle {checkClass(message)}" />
-                </button>
-                <button
-                    class="btn px-2 mr-2"
-                    role="checkbox"
-                    aria-checked={message.starred}
-                    disabled={message.deleted}
-                    title={message.deleted
-                        ? $store.strings[message.starred ? 'starred' : 'unstarred']
-                        : $store.strings[message.starred ? 'markasunstarred' : 'markasstarred']}
-                    on:click={() => store.setStarred([message.id], !message.starred)}
-                >
-                    <i class="fa {starClass(message)}" />
-                </button>
-                <span
-                    use:truncate={users(message).join('\n')}
-                    class="local-mail-list-message-users my-2 mr-2"
-                >
-                    {users(message).join(', ')}
-                </span>
-                {#if message.draft}
-                    <span class="local-mail-list-message-draft my-2 mr-2 text-danger">
-                        {$store.strings.draft}
-                    </span>
+                {#if $store.viewSize >= ViewSize.MD}
+                    <div class="d-flex align-items-center pl-1">
+                        <ListMessageCheckbox {store} {message} />
+                        <ListMessageStar {store} {message} />
+                        <ListMessageUsers {store} {message} />
+                        <ListMessageSubject {store} {message} />
+                        <div class="d-flex mt-2">
+                            <ListMessageLabels {store} {message} />
+                        </div>
+                        <ListMessageAttachments {store} {message} />
+                        <ListMessageTime {store} {message} />
+                    </div>
+                {:else}
+                    <div class="d-flex align-items-start pt-1 pb-2 pl-1">
+                        <ListMessageCheckbox {store} {message} />
+                        <div class="flex-shrink-1 w-100 ml-1" style="min-width: 0">
+                            <div class="d-flex mt-2">
+                                <ListMessageUsers {store} {message} />
+                                <ListMessageAttachments {store} {message} />
+                                <ListMessageTime {store} {message} />
+                            </div>
+                            <div class="d-flex">
+                                <div class="d-flex w-100 d-shrink-1 my-2" style="min-width: 0">
+                                    <ListMessageSubject {store} {message} />
+                                </div>
+                                <ListMessageStar {store} {message} />
+                            </div>
+                            <div class="d-flex flex-wrap ml-n2 mr-2">
+                                <ListMessageLabels {store} {message} />
+                            </div>
+                        </div>
+                    </div>
                 {/if}
-                <span
-                    use:truncate={message.subject || $store.strings.nosubject}
-                    class="local-mail-list-message-subject d-grow-1 my-2 mr-2"
-                >
-                    {message.subject || $store.strings.nosubject}
-                </span>
-                {#each message.labels as label (label.id)}
-                    {#if $store.params.type != 'label' || $store.params.labelid != label.id}
-                        <LabelBadge {label} />
-                    {/if}
-                {/each}
-                {#if $store.params.type != 'course' || $store.params.courseid != message.course.id}
-                    <CourseBadge course={message.course} settings={$store.settings} />
-                {/if}
-                <span
-                    class="local-mail-list-message-attachments d-shrink-0 my-2 mr-2"
-                    title={message.numattachments
-                        ? replaceStringParams($store.strings.attachnumber, message.numattachments)
-                        : ''}
-                    aria-hidden={message.numattachments == 0}
-                >
-                    <i class="fa fa-fw {message.numattachments ? 'fa-paperclip' : ''}" />
-                </span>
-                <span
-                    class="local-mail-list-message-time text-truncate d-shrink-1 text-right my-2 mr-3"
-                    title={message.fulltime}
-                >
-                    {message.shorttime}
-                </span>
             </a>
         {/each}
-        {#if !$store.list.messages.length && !$store.list.nextid}
-            <div in:fade|local={{ delay: 400 }} class="alert alert-info">
-                <div>
-                    {$store.strings.nomessagestoview}
-                </div>
-                {#if $store.list.totalcount > 0}
-                    <a
-                        class="btn btn-info text-white mt-3"
-                        href={viewUrl(recentParams)}
-                        on:click|preventDefault={() => store.navigate(recentParams)}
-                    >
-                        {$store.strings.showrecentmessages}
-                    </a>
-                {/if}
-            </div>
-        {/if}
+        <ListEmptyAlert {store} />
     </div>
 {/key}
 
 <style>
     .local-mail-list-message {
         color: var(--dark) !important;
-    }
-    .local-mail-list-message-users {
-        min-width: 20%;
-    }
-    .local-mail-list-message-subject {
-        width: 100%;
-    }
-    .local-mail-list-message-time {
-        min-width: 5rem;
     }
 </style>

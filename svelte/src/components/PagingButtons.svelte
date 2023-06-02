@@ -5,6 +5,7 @@
     import { replaceStringParams } from '../lib/utils';
 
     export let store: Store;
+    export let fixed = false;
 
     $: pagingText = $store.message
         ? replaceStringParams($store.strings.pagingsingle, {
@@ -20,25 +21,44 @@
           });
 </script>
 
-<div class="text-truncate align-self-center ml-auto mr-3">
-    {pagingText}
-</div>
+{#if !fixed}
+    <div class="text-truncate align-self-center mx-3">
+        {pagingText}
+    </div>
+{/if}
 
-<div class="btn-group d-shrink-0" role="group">
+<div
+    class="local-mail-paging-buttons btn-group d-flex flex-shrink-1"
+    class:btn-group={!fixed}
+    role="group"
+>
     <button
         class="btn btn-secondary"
+        class:btn-secondary={!fixed}
         disabled={!$store.prevPageParams}
         title={$store.strings.previouspage}
         on:click|preventDefault={() => store.navigate($store.prevPageParams)}
     >
-        <i class="icon fa fa-w fa-chevron-left mx-0" aria-label={$store.strings.previouspage} />
+        <i class="fa fa-w fa-chevron-left" aria-label={$store.strings.previouspage} />
     </button>
+    {#if fixed}
+        <div class="text-truncate align-self-center mx-2">
+            {pagingText}
+        </div>
+    {/if}
     <button
-        class="btn btn-secondary"
+        class="btn"
+        class:btn-secondary={!fixed}
         disabled={!$store.nextPageParams}
         title={$store.strings.nextpage}
         on:click|preventDefault={() => store.navigate($store.nextPageParams)}
     >
-        <i class="icon fa fa-w fa-chevron-right mx-0" aria-label={$store.strings.nextpage} />
+        <i class="fa fa-w fa-chevron-right" aria-label={$store.strings.nextpage} />
     </button>
 </div>
+
+<style>
+    .local-mail-paging-buttons {
+        min-width: 0;
+    }
+</style>
