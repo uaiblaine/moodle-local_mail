@@ -7,16 +7,17 @@ import './global.css';
 async function init() {
     const viewTarget = document.getElementById('local-mail-view');
     const navbarTarget = document.getElementById('local-mail-navbar');
-    const store = await createStore();
+
+    // Get initial data from script tag.
+    const data = (window as any).local_mail_view_data || {};
+
+    const store = await createStore(data);
     if (viewTarget) {
         new View({ target: viewTarget, props: { store } });
     }
     if (navbarTarget) {
         // Remove fallback link created in local_mail_render_navbar_output.
         navbarTarget.innerHTML = '';
-
-        // Get needed data from script tag, to avoid doing web service requests.
-        const data = (window as any).local_mail_navbar_data || {};
 
         // Instantiate Navbar component with current store data.
         const navbar = new Navbar({

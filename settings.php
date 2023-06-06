@@ -120,8 +120,8 @@ if ($hassiteconfig) {
     $name = 'local_mail/coursebadgeslength';
     $visiblename = get_string('configcoursebadgeslength', 'local_mail');
     $description = get_string('configcoursebadgeslengthdesc', 'local_mail');
-    $defaultsetting = '20ch';
-    $paramtype = '/^([1-9][0-9]*(cap|ch|em|ex|ic|lh|rem|rlh))?$/';
+    $defaultsetting = 20;
+    $paramtype = PARAM_INT;
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
 
     $ADMIN->add('localplugins', $settings);

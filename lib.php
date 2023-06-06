@@ -27,7 +27,7 @@ require_once($CFG->dirroot . '/local/mail/locallib.php');
 
 
 function local_mail_extend_navigation($root) {
-    global $CFG, $COURSE, $PAGE, $SESSION, $SITE, $USER;
+    global $COURSE, $PAGE;
 
     if (!get_config('local_mail', 'version')) {
         return;
@@ -117,7 +117,7 @@ function local_mail_pluginfile($course, $cm, $context, $filearea, $args,
  * @return string The HTML
  */
 function local_mail_render_navbar_output(\renderer_base $renderer) {
-    global $CFG, $PAGE, $USER;
+    global $PAGE, $USER;
 
     if (!isloggedin() || isguestuser() || \core_user::awaiting_action()) {
         return '';
@@ -128,19 +128,24 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
     // Fallback link to avoid layout changes during page load.
     $url = new moodle_url('/local/mail/view.php', ['t' => 'inbox']);
     $title = get_string('pluginname', 'local_mail');
-    $icon = html_writer::tag('i', '', ['class' => 'fa fa-envelope-o']);
     $class = 'btn h-100 d-flex align-items-center px-2 py-0';
-    $attributes = ['href' => $url, 'class' => $class, 'title' => $title];
-    $link = html_writer::tag('a', $icon, $attributes);
-
-    $container = html_writer::div($link, '', ['id' => 'local-mail-navbar']);
-
+    
     $viewurl = new moodle_url('/local/mail/view.php');
     if ($PAGE->url->compare($viewurl, URL_MATCH_BASE)) {
         // Menu is handled from the view page.
+        $icon = html_writer::tag('i', '', ['class' => 'fa fa-fw fa-spinner fa-pulse', 'style' => "font-size: 16px"]);
+        $spinner = html_writer::tag('div', $icon, ['class' => $class]);
+        $container = html_writer::div($spinner, '', ['id' => 'local-mail-navbar']);
         return $container;
+
     } else {
-        // Other page in the site, we use an Svelte interface which does not use web services.
+        // Other page in the site-
+        $icon = html_writer::tag('i', '', ['class' => 'fa fa-fw fa-envelope-o', 'style' => "font-size: 16px"]);
+        $attributes = ['href' => $url, 'class' => $class, 'title' => $title];
+        $link = html_writer::tag('a', $icon, $attributes);    
+        $container = html_writer::div($link, '', ['id' => 'local-mail-navbar']);
+    
+        // Pass all data via a script tag to avoid web service requests.
         $data = [
             'settings' => local_mail_get_settings(),
             'strings' => [

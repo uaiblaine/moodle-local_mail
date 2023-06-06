@@ -5,12 +5,14 @@ import {
     type CreateLabelRequest,
     type DeleteLabelRequest,
     type EmptyTrashRequest,
+    type Info,
     type Menu,
     type Message,
     type Preferences,
     type SearchIndexRequest,
     type SearchList,
     type SearchQuery,
+    type ServiceError,
     type ServiceRequest,
     type SetDeletedRequest,
     type SetLabelsRequest,
@@ -18,10 +20,8 @@ import {
     type SetStarredRequest,
     type Settings,
     type SetUnreadRequest,
-    type UpdateLabelRequest,
-    type ServiceError,
     type Strings,
-    type Info,
+    type UpdateLabelRequest,
 } from './services';
 import { getViewParamsFromUrl, setUrlFromViewParams } from './url';
 import { replaceStringParams, sleep } from './utils';
@@ -72,30 +72,21 @@ export interface State {
     readonly selectedMessageIds: ReadonlySet<number>;
     readonly targetMessageIds: ReadonlySet<number>;
     readonly toasts: ReadonlyArray<Toast>;
-    readonly listKey: number;
     readonly viewSize: number;
+    readonly navigationId: number;
 }
 
 export type SelectAllType = 'all' | 'none' | 'read' | 'unread' | 'starred' | 'unstarred';
 
-export async function createStore() {
+export async function createStore(info: Info) {
     let currentActionId = 0;
 
     const { subscribe, update } = writable<State>({
         /* Info */
-        userid: 0,
-        settings: {
-            globaltrays: [],
-            coursetrays: 'none',
-            coursetraysname: 'shortname',
-            coursebadges: 'none',
-            coursebadgeslength: '',
-        },
-        preferences: {
-            perpage: 10,
-            markasread: false,
-        },
-        strings: {},
+        userid: info.userid,
+        settings: info.settings,
+        preferences: info.preferences,
+        strings: info.strings,
 
         /* Params */
         params: { type: 'inbox' },
@@ -121,7 +112,7 @@ export async function createStore() {
         selectedMessageIds: new Set(),
         targetMessageIds: new Set(),
         toasts: [],
-        listKey: 0,
+        navigationId: 0,
         viewSize: 0,
     });
 
@@ -397,26 +388,24 @@ export async function createStore() {
         },
 
         async init() {
-            let info: Info;
-            try {
-                [info] = await callServices([{ methodname: 'get_info' }]);
-            } catch (error) {
-                store.setError(error as ServiceError);
-                return;
-            }
-            update((state) => ({ ...state, ...info }));
             await store.callServicesAndRefresh([], getViewParamsFromUrl());
         },
 
         async navigate(params?: ViewParams, redirect = false) {
             await store.callServicesAndRefresh([], params, redirect);
 
-            // Prevent list animations.
-            update((state) => ({ ...state, listKey: state.listKey + 1 }));
+            // Scroll to top and prevent animations.
+            update((state) => ({
+                ...state,
+                navigationId: state.navigationId + 1,
+            }));
         },
 
         async search(query?: SearchQuery) {
-            update((state) => ({ ...state, params: { ...state.params, query } }));
+            update((state) => ({
+                ...state,
+                params: { ...state.params, query },
+            }));
 
             await store.navigate();
         },
@@ -517,7 +506,7 @@ export async function createStore() {
             update((state) => ({
                 ...state,
                 viewSize: width,
-                listKey: state.listKey + 1, // Prevent list animations.
+                navigationId: state.navigationId + 1, // Prevent list animations.
             }));
         },
 
@@ -532,8 +521,11 @@ export async function createStore() {
             };
             await store.callServicesAndRefresh([request]);
 
-            // Prevent list animations.
-            update((state) => ({ ...state, listKey: state.listKey + 1 }));
+            // Scroll to top and prevent animations.
+            update((state) => ({
+                ...state,
+                navigationId: state.navigationId + 1,
+            }));
         },
 
         async setStarred(messageids: ReadonlyArray<number>, starred: boolean) {

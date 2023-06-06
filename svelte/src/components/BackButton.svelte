@@ -12,7 +12,7 @@
     title={$store.strings.back}
     on:click={() => store.navigate({ ...$store.params, messageid: undefined })}
 >
-    <i class="fa fa fa-fw fa-arrow-left align-middle" style="margin-bottom: 4px" />
+    <i class="fa fa fa-fw fa-arrow-left" />
 </button>
 
 <style>

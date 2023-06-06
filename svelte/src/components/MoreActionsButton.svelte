@@ -7,7 +7,8 @@
     import LabelModal from './LabelModal.svelte';
 
     export let store: Store;
-    export let fixed = false;
+    export let transparent = false;
+    export let dropup = false;
 
     $: label =
         $store.params.type == 'label' && $store.message == null
@@ -41,11 +42,11 @@
     };
 </script>
 
-<div class="btn-group" class:dropup={fixed}>
+<div class="btn-group" class:dropup>
     <button
         type="button"
         class="local-mail-action-more-button btn dropdown-toggle"
-        class:btn-secondary={!fixed}
+        class:btn-secondary={!transparent}
         class:disabled
         {disabled}
         data-toggle="dropdown"

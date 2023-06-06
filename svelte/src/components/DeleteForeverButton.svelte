@@ -7,13 +7,13 @@
     import { replaceStringParams } from '../lib/utils';
 
     export let store: Store;
-    export let fixed = false;
+    export let transparent = false;
 </script>
 
 <button
     type="button"
     class="local-mail-action-delete-forever btn flex-grow-0"
-    class:btn-secondary={!fixed}
+    class:btn-secondary={!transparent}
     class:disabled={!$store.targetMessageIds.size}
     disabled={!$store.targetMessageIds.size}
     title={$store.strings.deleteforever}

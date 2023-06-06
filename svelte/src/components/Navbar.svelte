@@ -30,7 +30,7 @@
 
 <svelte:window bind:innerWidth={viewportWidth} />
 
-<div class="dropdown h-100" class:position-static={viewportWidth < 768}>
+<div class="local-mail-navbar dropdown h-100" class:position-static={viewportWidth < 768}>
     <a
         data-toggle={displayMenu ? 'dropdown' : undefined}
         aria-expanded="false"
@@ -39,7 +39,7 @@
         href={viewUrl({ type: 'inbox' })}
         on:click={handleClick}
     >
-        <i class="fa fa-envelope-o" aria-label={strings.plugginname} />
+        <i class="fa fa-fw fa-envelope-o" aria-label={strings.plugginname} />
         {#if menu.unread > 0}
             <div class="local-mail-navbar-count count-container">{menu.unread}</div>
         {/if}
@@ -55,6 +55,9 @@
 </div>
 
 <style>
+    .local-mail-navbar :global(.fa) {
+        font-size: 16px;
+    }
     .local-mail-navbar-count {
         top: 50%;
         transform: translateY(-16px);

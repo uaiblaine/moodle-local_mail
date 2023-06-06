@@ -9,7 +9,7 @@
 </script>
 
 <span
-    class="local-mail-list-message-time d-shrink-0 text-nowrap text-right mr-3"
+    class="local-mail-list-message-time d-shrink-0 text-nowrap text-right"
     class:local-mail-list-message-time-md={$store.viewSize >= ViewSize.MD}
     title={message.fulltime}
 >

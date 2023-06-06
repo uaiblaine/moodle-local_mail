@@ -64,7 +64,7 @@ class external_test extends \advanced_testcase {
         set_config('coursetrays', 'unread', 'local_mail');
         set_config('coursetraysname', 'shortname', 'local_mail');
         set_config('coursebadges', 'none', 'local_mail');
-        set_config('coursebadgeslength', '10em', 'local_mail');
+        set_config('coursebadgeslength', 10, 'local_mail');
         set_user_preference('local_mail_mailsperpage', 20);
         set_user_preference('local_mail_markasread', 1);
         $result = \local_mail_external::get_info();
@@ -76,7 +76,7 @@ class external_test extends \advanced_testcase {
             'coursetrays' => 'unread',
             'coursetraysname' => 'shortname',
             'coursebadges' => 'none',
-            'coursebadgeslength' => '10em',
+            'coursebadgeslength' => 10,
         ];
         $this->assertEquals($settings, $result['settings']);
         $preferences = [
@@ -111,7 +111,7 @@ class external_test extends \advanced_testcase {
             'coursetrays' => 'all',
             'coursetraysname' => 'fullname',
             'coursebadges' => 'fullname',
-            'coursebadgeslength' => '20ch',
+            'coursebadgeslength' => 20,
         ];
         $this->assertEquals($settings, $result['settings']);
 

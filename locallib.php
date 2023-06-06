@@ -271,7 +271,7 @@ function local_mail_get_settings() {
         'coursetrays' => get_config('local_mail', 'coursetrays') ?: 'all',
         'coursetraysname' => get_config('local_mail', 'coursetraysname') ?: 'fullname',
         'coursebadges' => get_config('local_mail', 'coursebadges') ?: 'fullname',
-        'coursebadgeslength' => get_config('local_mail', 'coursebadgeslength') ?: '20ch',
+        'coursebadgeslength' => get_config('local_mail', 'coursebadgeslength') ?: 20,
     ];
 }
 

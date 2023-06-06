@@ -5,7 +5,8 @@
     import LabelModal from './LabelModal.svelte';
 
     export let store: Store;
-    export let fixed = false;
+    export let transparent = false;
+    export let dropup = false;
 
     let selectedLabels: ReadonlyMap<number, 'false' | 'mixed' | 'true'> = new Map();
 
@@ -64,11 +65,11 @@
     };
 </script>
 
-<div class="btn-group" class:dropup={fixed} role="group">
+<div class="btn-group" class:dropup role="group">
     <button
         type="button"
         class="local-mail-action-label-button btn dropdown-toggle"
-        class:btn-secondary={!fixed}
+        class:btn-secondary={!transparent}
         class:disabled={!$store.targetMessageIds.size}
         disabled={!$store.targetMessageIds.size}
         data-toggle="dropdown"

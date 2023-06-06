@@ -55,7 +55,7 @@ $string['compose'] = 'Compose';
 $string['configcoursebadges'] = 'Course badges';
 $string['configcoursebadgesdesc'] = 'Sets the type of course name displayed in messages.';
 $string['configcoursebadgeslength'] = 'Length of course badges';
-$string['configcoursebadgeslengthdesc'] = 'Truncate course badges displayed in messages to this length, using <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/CSS/length#relative_length_units_based_on_font">CSS relative length units based on font</a>.';
+$string['configcoursebadgeslengthdesc'] = 'Truncate course badges displayed in messages to this number of characters (aproximately).';
 $string['configcoursetrays'] = 'Course trays';
 $string['configcoursetraysdesc'] = 'Sets whichs course trays are displayed in menus.';
 $string['configcoursetraysname'] = 'Name of course trays';

@@ -71,10 +71,24 @@ $PAGE->set_context(context_system::instance());
 $PAGE->set_pagelayout('base');
 $PAGE->set_title(get_string('pluginname', 'local_mail'));
 
-$script = local_mail_svelte_script('src/view.ts');
+
+// Initial data passed via a script tag.
+$data = [
+    'userid' => $USER->id,
+    'settings' => local_mail_get_settings(),
+    'preferences' => local_mail_get_preferences(),
+    'strings' => [],
+];
+foreach (\local_mail_external::string_identifiers() as $id) {
+    $data['strings'][$id] = get_string($id, 'local_mail');
+}
+$datascript = html_writer::script('window.local_mail_view_data = '. json_encode($data));
+
+$sveltescript = local_mail_svelte_script('src/view.ts');
 
 // Print content.
 echo $OUTPUT->header();
 echo html_writer::div('', '', ['id' => 'local-mail-view']);
-echo $script;
+echo $datascript;
+echo $sveltescript;
 echo $OUTPUT->footer();

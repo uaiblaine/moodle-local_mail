@@ -68,18 +68,14 @@
     };
 
     const submit = () => {
-        store.navigate({
-            ...$store.params,
-            messageid: undefined,
-            query: {
-                startid: undefined,
-                content,
-                sender,
-                recipients,
-                unread,
-                attachments,
-                time: timestampFromDate(date),
-            },
+        store.search({
+            startid: undefined,
+            content,
+            sender,
+            recipients,
+            unread,
+            attachments,
+            time: timestampFromDate(date),
         });
         window.jQuery(dropdownNode).dropdown('hide');
     };

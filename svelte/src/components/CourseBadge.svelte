@@ -8,14 +8,14 @@
     export let settings: Settings;
 
     $: text = settings.coursebadges == 'shortname' ? course.shortname : course.fullname;
-    $: length = settings.coursebadgeslength || '20ch';
+    $: length = settings.coursebadgeslength || 20 + 1;
 </script>
 
 {#if settings.coursebadges != 'none'}
     <span
         class="local-mail-course-badge badge px-2 mr-2 mb-2"
         use:truncate={text}
-        style="max-width: {length}"
+        style="min-width: 3rem; max-width: calc({length}ch + 1rem)"
     >
         {text}
     </span>

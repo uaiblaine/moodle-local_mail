@@ -5,7 +5,8 @@
     import { replaceStringParams } from '../lib/utils';
 
     export let store: Store;
-    export let fixed = false;
+    export let transparent = false;
+    export let compact = false;
 
     $: pagingText = $store.message
         ? replaceStringParams($store.strings.pagingsingle, {
@@ -21,7 +22,7 @@
           });
 </script>
 
-{#if !fixed}
+{#if !compact}
     <div class="text-truncate align-self-center mx-3">
         {pagingText}
     </div>
@@ -29,26 +30,26 @@
 
 <div
     class="local-mail-paging-buttons btn-group d-flex flex-shrink-1"
-    class:btn-group={!fixed}
+    class:btn-group={!compact}
     role="group"
 >
     <button
         class="btn btn-secondary"
-        class:btn-secondary={!fixed}
+        class:btn-secondary={!transparent}
         disabled={!$store.prevPageParams}
         title={$store.strings.previouspage}
         on:click|preventDefault={() => store.navigate($store.prevPageParams)}
     >
         <i class="fa fa-w fa-chevron-left" aria-label={$store.strings.previouspage} />
     </button>
-    {#if fixed}
+    {#if compact}
         <div class="text-truncate align-self-center mx-2">
             {pagingText}
         </div>
     {/if}
     <button
         class="btn"
-        class:btn-secondary={!fixed}
+        class:btn-secondary={!transparent}
         disabled={!$store.nextPageParams}
         title={$store.strings.nextpage}
         on:click|preventDefault={() => store.navigate($store.nextPageParams)}

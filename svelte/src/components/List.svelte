@@ -32,7 +32,7 @@
     };
 </script>
 
-{#key $store.listKey}
+{#key $store.navigationId}
     <div class="list-group">
         {#each $store.list.messages as message (message.id)}
             <a
@@ -50,28 +50,45 @@
                 on:click={clickHandler(message)}
             >
                 {#if $store.viewSize >= ViewSize.MD}
-                    <div class="d-flex align-items-center pl-1">
+                    <div class="d-flex align-items-center pl-1 pr-3">
                         <ListMessageCheckbox {store} {message} />
                         <ListMessageStar {store} {message} />
-                        <ListMessageUsers {store} {message} />
-                        <ListMessageSubject {store} {message} />
-                        <div class="d-flex mt-2">
-                            <ListMessageLabels {store} {message} />
+                        <div
+                            class="d-flex w-100 flex-grow-1 align-items-center"
+                            style="min-width: 0"
+                        >
+                            <div class="flex-grow-1 mx-2" style="width: 25%; min-width: 0">
+                                <ListMessageUsers {store} {message} />
+                            </div>
+                            <div
+                                class="flex-grow-1 d-flex my-2 mx-2"
+                                style="width: 75%; min-width: 0"
+                            >
+                                <ListMessageSubject {store} {message} />
+                                <div
+                                    class="d-flex text-truncate flex-shrink-0 justify-content-end mb-n2 ml-auto"
+                                    style="max-width: 80%"
+                                >
+                                    <ListMessageLabels {store} {message} />
+                                </div>
+                            </div>
                         </div>
                         <ListMessageAttachments {store} {message} />
                         <ListMessageTime {store} {message} />
                     </div>
                 {:else}
-                    <div class="d-flex align-items-start pt-1 pb-2 pl-1">
+                    <div class="d-flex align-items-start pt-1 pb-2 pl-1 pr-2">
                         <ListMessageCheckbox {store} {message} />
                         <div class="flex-shrink-1 w-100 ml-1" style="min-width: 0">
                             <div class="d-flex mt-2">
                                 <ListMessageUsers {store} {message} />
                                 <ListMessageAttachments {store} {message} />
-                                <ListMessageTime {store} {message} />
+                                <div class="ml-auto mr-2">
+                                    <ListMessageTime {store} {message} />
+                                </div>
                             </div>
                             <div class="d-flex">
-                                <div class="d-flex w-100 d-shrink-1 my-2" style="min-width: 0">
+                                <div class="d-flex w-100 d-shrink-1 my-2 mr-2" style="min-width: 0">
                                     <ListMessageSubject {store} {message} />
                                 </div>
                                 <ListMessageStar {store} {message} />

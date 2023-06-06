@@ -16,17 +16,9 @@
             : [message.sender.fullname];
 </script>
 
-<span
+<div
     use:truncate={users.join('\n')}
-    class="w-100 flex-shrink-1 mr-2"
     class:local-mail-list-messaege-users-md={$store.viewSize >= ViewSize.MD}
 >
     {users.join(', ')}
-</span>
-
-<style>
-    .local-mail-list-messaege-users-md {
-        min-width: 20%;
-        max-width: 20%;
-    }
-</style>
+</div>

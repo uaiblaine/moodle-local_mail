@@ -5,13 +5,13 @@
     import type { Store } from '../lib/store';
 
     export let store: Store;
-    export let fixed = false;
+    export let transparent = false;
 </script>
 
 <button
     type="button"
     class="local-mail-action-delete btn"
-    class:btn-secondary={!fixed}
+    class:btn-secondary={!transparent}
     class:disabled={!$store.targetMessageIds.size}
     disabled={!$store.targetMessageIds.size}
     title={$store.strings.restore}

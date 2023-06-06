@@ -1,23 +1,25 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { onMount } from 'svelte';
+    import { onMount, afterUpdate } from 'svelte';
 
-    import BackButton from './BackButton.svelte';
-    import SelectAllButton from './SelectAllButton.svelte';
     import ComposeButton from './ComposeButton.svelte';
     import ErrorModal from './ErrorModal.svelte';
+    import BottomToolBar from './BottomToolBar.svelte';
     import List from './List.svelte';
     import Menu from './Menu.svelte';
     import Message from './Message.svelte';
     import PerPageSelect from './PerPageSelect.svelte';
     import SearchInput from './SearchInput.svelte';
     import Toasts from './Toasts.svelte';
-    import ToolBar from './ToolBar.svelte';
+    import TopToolBar from './TopToolBar.svelte';
     import { ViewSize, type Store } from '../lib/store';
     import { getViewParamsFromUrl } from '../lib/url';
 
     export let store: Store;
+
+    let viewNode: HTMLElement;
+    let prevNavigationId = 0;
 
     $: heading =
         $store.params.type == 'inbox'
@@ -41,6 +43,13 @@
     onMount(() => {
         store.setViewportSize(window.innerWidth);
     });
+
+    afterUpdate(() => {
+        if (prevNavigationId != $store.navigationId) {
+            prevNavigationId = $store.navigationId;
+            viewNode.scrollIntoView();
+        }
+    });
 </script>
 
 <svelte:window
@@ -51,10 +60,14 @@
     <title>{title} - {$store.strings.pluginname}</title>
 </svelte:head>
 
-<div class="container-fluid my-4" class:local-mail-loading={$store.loading}>
+<div
+    class="local-mail-view container-fluid py-4"
+    class:local-mail-loading={$store.loading}
+    bind:this={viewNode}
+>
     <!-- Heading / search / compose button -->
     <div class="row align-items-center">
-        <h1 class="h2 col-12 col-lg-3 text-truncate mb-4">
+        <h1 class="h2 local-mail-view-side-column text-truncate mb-4">
             {$store.strings.pluginname}
             {#if $store.viewSize < ViewSize.LG}
                 <i class="fa fa-angle-right mx-1" aria-hidden="true" />
@@ -62,39 +75,34 @@
             {/if}
         </h1>
 
-        <div class="col col-lg-6 mb-4">
-            <SearchInput {store} />
-        </div>
-        {#if $store.viewSize < ViewSize.LG}
-            <div class="col-12 col-sm-auto mb-4">
-                <ComposeButton strings={$store.strings} courseid={$store.params.courseid} />
+        <div class="local-mail-view-main-column d-flex mb-4">
+            <div class="local-mail-view-search flex-shrink-1">
+                <SearchInput {store} />
             </div>
-        {/if}
+            {#if $store.viewSize < ViewSize.LG}
+                <div class="flex-shrink-1 text-truncate d-flex">
+                    <ComposeButton strings={$store.strings} courseid={$store.params.courseid} />
+                </div>
+            {/if}
+        </div>
     </div>
 
     <!-- Toolbar -->
     <div class="row mb-3">
         {#if $store.viewSize >= ViewSize.LG}
-            <div class="col-3">
+            <div class="local-mail-view-side-column">
                 <ComposeButton strings={$store.strings} courseid={$store.params.courseid} />
             </div>
         {/if}
-        <div class="col col-lg-9 d-flex">
-            {#if $store.message}
-                <BackButton {store} />
-            {:else}
-                <SelectAllButton {store} />
-            {/if}
-            {#if $store.viewSize >= ViewSize.MD}
-                <ToolBar {store} />
-            {/if}
+        <div class="local-mail-view-main-column d-flex">
+            <TopToolBar {store} />
         </div>
     </div>
 
     <!-- List / Messaege -->
-    <div class="row">
+    <div class="row mb-3">
         {#if $store.viewSize >= ViewSize.LG}
-            <div class="d-none d-lg-block col-3">
+            <div class="local-mail-view-side-column">
                 <Menu
                     settings={$store.settings}
                     strings={$store.strings}
@@ -104,7 +112,7 @@
                 />
             </div>
         {/if}
-        <div class="col col-lg-9">
+        <div class="local-mail-view-main-column">
             {#if $store.message}
                 <Message {store} message={$store.message} />
             {:else}
@@ -113,14 +121,14 @@
             {/if}
         </div>
     </div>
+
+    {#if $store.viewSize < ViewSize.MD}
+        <BottomToolBar {store} />
+    {/if}
+
+    <Toasts {store} />
+    <ErrorModal {store} />
 </div>
-
-{#if $store.viewSize < ViewSize.MD}
-    <ToolBar {store} fixed={true} />
-{/if}
-
-<Toasts {store} />
-<ErrorModal {store} />
 
 <style>
     :global(#page-local-mail-view #topofscroll) {
@@ -150,7 +158,48 @@
         margin: 0 2rem 2rem auto;
     }
 
+    .local-mail-view {
+        max-width: 100rem;
+    }
+
+    .local-mail-view :global(.fa) {
+        font-size: 16px;
+    }
+
+    .local-mail-view-main-column {
+        padding-right: 15px;
+        padding-left: 15px;
+        flex-basis: 100%;
+        min-width: 0;
+        column-gap: 1rem;
+    }
+
+    .local-mail-view-side-column {
+        padding-right: 15px;
+        padding-left: 15px;
+        flex-basis: 100%;
+        min-width: 0;
+    }
+
+    .local-mail-view-search {
+        flex-grow: 1;
+        max-width: 30rem;
+        margin-right: auto;
+    }
+
     .local-mail-loading :global(*) {
         cursor: wait;
+    }
+
+    @media (min-width: 992px) {
+        .local-mail-view-main-column {
+            flex-basis: 75%;
+            flex-shrink: 1;
+        }
+        .local-mail-view-side-column {
+            flex-basis: 25%;
+            flex-shrink: 1;
+            max-width: 18rem;
+        }
     }
 </style>

@@ -11,7 +11,7 @@
 </script>
 
 <button
-    class="btn px-2 mr-2"
+    class="btn px-2"
     role="checkbox"
     aria-checked={message.starred}
     disabled={message.deleted}
