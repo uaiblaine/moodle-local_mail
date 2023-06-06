@@ -1,0 +1,35 @@
+{
+  "_global-ce70547b.js": {
+    "css": [
+      "global-61108d6f.css"
+    ],
+    "file": "global-ce70547b.js"
+  },
+  "global.css": {
+    "file": "global-61108d6f.css",
+    "src": "global.css"
+  },
+  "src/navbar.ts": {
+    "file": "navbar-015f930b.js",
+    "imports": [
+      "_global-ce70547b.js"
+    ],
+    "isEntry": true,
+    "src": "src/navbar.ts"
+  },
+  "src/view.css": {
+    "file": "view-ce06bb0a.css",
+    "src": "src/view.css"
+  },
+  "src/view.ts": {
+    "css": [
+      "view-ce06bb0a.css"
+    ],
+    "file": "view-7ef489f5.js",
+    "imports": [
+      "_global-ce70547b.js"
+    ],
+    "isEntry": true,
+    "src": "src/view.ts"
+  }
+}
