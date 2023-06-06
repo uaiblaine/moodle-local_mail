@@ -84,9 +84,7 @@ class external_test extends \advanced_testcase {
             'markasread' => true,
         ];
         $this->assertEquals($preferences, $result['preferences']);
-        foreach (\local_mail_external::string_identifiers() as $id) {
-            $this->assertEquals(get_string($id, 'local_mail'), $result['strings'][$id]);
-        }
+        $this->assertEquals(local_mail_get_strings(), $result['strings']);
 
         // Default settings and preferences.
 

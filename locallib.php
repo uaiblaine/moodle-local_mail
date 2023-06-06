@@ -275,6 +275,36 @@ function local_mail_get_settings() {
     ];
 }
 
+function local_mail_get_strings($lang = null) {
+    global $CFG;
+
+    $lang ??= current_language();
+
+    // Ignore language packages from AMOS for Catalan and Spanish.
+    if ($lang == 'ca' || $lang == 'es') {
+        $string = [];
+
+        // First load english pack.
+        include("$CFG->dirroot/local/mail/lang/en/local_mail.php");
+
+        // And then corresponding local english if present.
+        if (file_exists("$CFG->langlocalroot/en_local/local_mail.php")) {
+            include("$CFG->langlocalroot/en_local/local_mail.php");
+        }
+
+        // Legacy location - used by contrib only.
+        include("$CFG->dirroot/local/mail/lang/$lang/local_mail.php");
+
+        // Local customisations.
+        if (file_exists("$CFG->langlocalroot/{$lang}_local/local_mail.php")) {
+            include("$CFG->langlocalroot/{$lang}_local/local_mail/file.php");
+        }
+
+        return $string;
+    }
+
+    return get_string_manager()->load_component_strings('local_mail', $lang);
+}
 
 function local_mail_valid_recipient($recipient) {
     global $COURSE, $USER;

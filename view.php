@@ -77,11 +77,9 @@ $data = [
     'userid' => $USER->id,
     'settings' => local_mail_get_settings(),
     'preferences' => local_mail_get_preferences(),
-    'strings' => [],
+    'strings' => local_mail_get_strings(),
 ];
-foreach (\local_mail_external::string_identifiers() as $id) {
-    $data['strings'][$id] = get_string($id, 'local_mail');
-}
+
 $datascript = html_writer::script('window.local_mail_view_data = '. json_encode($data));
 
 $sveltescript = local_mail_svelte_script('src/view.ts');

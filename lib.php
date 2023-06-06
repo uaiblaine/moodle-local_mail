@@ -146,17 +146,18 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
         $container = html_writer::div($link, '', ['id' => 'local-mail-navbar']);
     
         // Pass all data via a script tag to avoid web service requests.
+        $strings = local_mail_get_strings();
         $data = [
             'settings' => local_mail_get_settings(),
             'strings' => [
-                'togglemailmenu' => get_string('togglemailmenu', 'local_mail'),
-                'compose' => get_string('compose', 'local_mail'),
-                'preferences' => get_string('preferences', 'local_mail'),
-                'inbox' => get_string('inbox', 'local_mail'),
-                'starredmail' => get_string('starredmail', 'local_mail'),
-                'sentmail' => get_string('sentmail', 'local_mail'),
-                'drafts' => get_string('drafts', 'local_mail'),
-                'trash' => get_string('trash', 'local_mail'),
+                'togglemailmenu' => $strings['togglemailmenu'],
+                'compose' => $strings['compose'],
+                'preferences' => $strings['preferences'],
+                'inbox' => $strings['inbox'],
+                'starredmail' => $strings['starredmail'],
+                'sentmail' => $strings['sentmail'],
+                'drafts' => $strings['drafts'],
+                'trash' => $strings['trash'],
             ],
             'menu' => $menu,
         ];

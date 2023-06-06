@@ -26,7 +26,7 @@ class local_mail_external extends external_api {
     }
 
     public static function get_info_returns() {
-        foreach (self::string_identifiers() as $id) {
+        foreach (array_keys(local_mail_get_strings('en')) as $id) {
             $stringkeys[$id] = new external_value(PARAM_RAW, 'Localized content of language string"' . $id . '"');
         }
         return new external_single_structure([
@@ -57,15 +57,11 @@ class local_mail_external extends external_api {
 
         self::validate_context(context_system::instance());
 
-        foreach (self::string_identifiers() as $id) {
-            $strings[$id] = get_string($id, 'local_mail');
-        }
-
         return [
             'userid' => $USER->id,
             'settings' => local_mail_get_settings(),
             'preferences' => local_mail_get_preferences(),
-            'strings' => $strings,
+            'strings' => local_mail_get_strings(),
         ];
     }
 
@@ -1053,10 +1049,6 @@ class local_mail_external extends external_api {
         } else {
             return userdate($time, get_string('strftimedatefullshort', 'langconfig'));
         }
-    }
-
-    public static function string_identifiers() {
-        return array_keys(\get_string_manager()->load_component_strings('local_mail', 'en'));
     }
 
     private static function file_icon_url(\stored_file $file) {
