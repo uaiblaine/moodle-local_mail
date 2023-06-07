@@ -32,6 +32,17 @@ class local_mail_message {
     const DELETED = 1;
     const DELETED_FOREVER = 2;
 
+    private const ROLE_FROM = 1;
+    private const ROLE_TO = 2;
+    private const ROLE_CC = 3;
+    private const ROLE_BCC = 4;
+    private const ROLES = [
+        'from' => self::ROLE_FROM,
+        'to' => self::ROLE_TO,
+        'cc' => self::ROLE_CC,
+        'bcc' => self::ROLE_BCC,
+    ];
+
     private static $indextypes = array(
         'inbox', 'drafts', 'sent', 'starred', 'course', 'label', 'trash'
     );
@@ -119,7 +130,7 @@ class local_mail_message {
         $record = new stdClass;
         $record->messageid = $message->id;
         $record->userid = $userid;
-        $record->role = $message->role[$userid] = 'from';
+        $record->role = $message->role[$userid] = self::ROLE_FROM;
         $record->unread = $message->unread[$userid] = false;
         $record->starred = $message->starred[$userid] = false;
         $record->deleted = $message->deleted[$userid] = self::NOT_DELETED;
@@ -231,7 +242,8 @@ class local_mail_message {
 
         if ($query['pattern'] !== '') {
             list($usersql, $userparams) = users_search_sql($query['pattern']);
-            list($rolesql, $roleparams) = $DB->get_in_or_equal(['from', 'to', 'cc'], SQL_PARAMS_NAMED, 'role');
+            $roleitems = [self::ROLE_FROM, self::ROLE_TO, self::ROLE_CC];
+            list($rolesql, $roleparams) = $DB->get_in_or_equal($roleitems, SQL_PARAMS_NAMED, 'role');
             $subjectsql = $DB->sql_like('m.normalizedsubject', ':pattern', false, false);
             $contentsql = $DB->sql_like('m.normalizedcontent', ':pattern2', false, false);
             $messageusersql = 'SELECT mu.messageid FROM {local_mail_message_users} mu'
@@ -249,7 +261,7 @@ class local_mail_message {
                 . " WHERE u.id <> :guestidfrom AND u.deleted = 0 AND u.confirmed = 1"
                 . " AND mu.role = :rolefrom "
                 . " AND " . $DB->sql_like($fullnamefield, ':patternfrom', false, false);
-            $params['rolefrom'] = 'from';
+            $params['rolefrom'] = self::ROLE_FROM;
             $params['patternfrom'] = '%' . $DB->sql_like_escape(self::normalize_text($query['searchfrom'])) . '%';
             $params['guestidfrom'] = $CFG->siteguest;
             $sql .= " AND i.messageid IN ($usersql)";
@@ -262,8 +274,8 @@ class local_mail_message {
                 . " WHERE u.id <> :guestidto AND u.deleted = 0 AND u.confirmed = 1"
                 . " AND (mu.role = :roleto OR mu.role = :rolecc) "
                 . " AND " . $DB->sql_like($fullnamefield, ":patternto", false, false);
-            $params['roleto'] = 'to';
-            $params['rolecc'] = 'cc';
+            $params['roleto'] = self::ROLE_TO;
+            $params['rolecc'] = self::ROLE_CC;
             $params['patternto'] = '%' . $DB->sql_like_escape(self::normalize_text($query['searchto'])) . '%';
             $params['guestidto'] = $CFG->siteguest;
             $sql .= " AND i.messageid IN ($usersql)";
@@ -281,7 +293,7 @@ class local_mail_message {
         if (!empty($query['unread'])) {
             $sql .= ' AND i.unread = 1';
         }
-   
+
         if (!empty($query['startid'])) {
             $time = $DB->get_field('local_mail_messages', 'time', ['id' => $query['startid']]);
             if (!$time) {
@@ -295,7 +307,7 @@ class local_mail_message {
             }
             $params['startid'] = $query['startid'];
             $params['starttime'] = $params['starttime2'] = $time;
-        } 
+        }
 
         if (!empty($query['backwards'])) {
             $order = 'ASC';
@@ -321,7 +333,7 @@ class local_mail_message {
         global $DB;
 
         assert($this->has_user($label->userid()));
-        assert(!$this->draft || $this->role[$label->userid()] == 'from');
+        assert(!$this->draft || $this->role[$label->userid()] == self::ROLE_FROM);
         assert(!$this->deleted($label->userid()));
 
         if (!isset($this->labels[$label->id()])) {
@@ -341,14 +353,14 @@ class local_mail_message {
 
         assert($this->draft);
         assert(!$this->has_recipient($userid));
-        assert(in_array($role, array('to', 'cc', 'bcc')));
+        assert(array_key_exists($role, self::ROLES));
 
         $this->users[$userid] = self::fetch_user($userid);
 
         $record = new stdClass;
         $record->messageid = $this->id;
         $record->userid = $userid;
-        $record->role = $this->role[$userid] = $role;
+        $record->role = $this->role[$userid] = self::ROLES[$role];
         $record->unread = $this->unread[$userid] = true;
         $record->starred = $this->starred[$userid] = false;
         $record->deleted = $this->deleted[$userid] = self::NOT_DELETED;
@@ -386,7 +398,7 @@ class local_mail_message {
     }
 
     public function editable($userid) {
-        return $this->draft && $this->has_user($userid) && $this->role[$userid] == 'from';
+        return $this->draft && $this->has_user($userid) && $this->role[$userid] == self::ROLE_FROM;
     }
 
     public function find_offset($userid, $type, $item=0) {
@@ -440,7 +452,7 @@ class local_mail_message {
     }
 
     public function has_recipient($userid) {
-        return $this->has_user($userid) && $this->role[$userid] != 'from';
+        return $this->has_user($userid) && $this->role[$userid] != self::ROLE_FROM;
     }
 
     public function id() {
@@ -460,11 +472,15 @@ class local_mail_message {
     }
 
     public function recipients() {
-        $roles = func_get_args();
+        $roles = [];
+        foreach (func_get_args() as $rolename) {
+            assert(array_key_exists($rolename, self::ROLES));
+            $roles[] = self::ROLES[$rolename];
+        }
         $result = array();
         foreach ($this->users as $user) {
             $role = $this->role[$user->id];
-            if ($role != 'from' && (!$roles || in_array($role, $roles))) {
+            if ($role != self::ROLE_FROM && (!$roles || in_array($role, $roles))) {
                 $result[] = $user;
             }
         }
@@ -482,7 +498,7 @@ class local_mail_message {
     public function remove_label(local_mail_label $label) {
         global $DB;
         assert($this->has_user($label->userid()));
-        assert(!$this->draft || $this->role[$label->userid()] == 'from');
+        assert(!$this->draft || $this->role[$label->userid()] == self::ROLE_FROM);
         assert($this->deleted($label->userid()) == self::NOT_DELETED);
 
         if (isset($this->labels[$label->id()])) {
@@ -517,7 +533,7 @@ class local_mail_message {
         global $DB;
 
         assert(!$this->draft && $this->has_user($userid));
-        assert(!$all || in_array($this->role[$userid], array('to', 'cc')));
+        assert(!$all || in_array($this->role[$userid], [self::ROLE_TO, self::ROLE_CC]));
 
         if ($userid != $this->sender()->id) {
             if (preg_match('/^RE\s*(?:\[(\d+)\])?:\s*(.*)$/', $this->subject, $matches)) {
@@ -645,7 +661,7 @@ class local_mail_message {
     }
 
     public function sender() {
-        $userid = array_search('from', $this->role);
+        $userid = array_search(self::ROLE_FROM, $this->role);
         return $this->users[$userid];
     }
 
@@ -654,7 +670,7 @@ class local_mail_message {
 
         assert(in_array($value, [self::NOT_DELETED, self::DELETED, self::DELETED_FOREVER]));
         assert($this->has_user($userid));
-        assert(!$this->draft || $this->role[$userid] == 'from');
+        assert(!$this->draft || $this->role[$userid] == self::ROLE_FROM);
         assert($this->deleted[$userid] != self::DELETED_FOREVER);
 
         if ($this->deleted[$userid] == $value) {
@@ -668,7 +684,7 @@ class local_mail_message {
 
         if ($value == self::NOT_DELETED) {
             $this->delete_index($userid, 'trash');
-            if ($this->role[$userid] == 'from') {
+            if ($this->role[$userid] == self::ROLE_FROM) {
                 $this->create_index($userid, $this->draft ? 'drafts' : 'sent');
             } else {
                 $this->create_index($userid, 'inbox');
@@ -716,7 +732,7 @@ class local_mail_message {
         global $DB;
 
         assert($this->has_user($userid));
-        assert(!$this->draft || $this->role[$userid] == 'from');
+        assert(!$this->draft || $this->role[$userid] == self::ROLE_FROM);
         assert(!$this->deleted($userid));
 
         if ($this->starred[$userid] == (bool) $value) {
@@ -743,7 +759,7 @@ class local_mail_message {
         global $DB;
 
         assert($this->has_user($userid));
-        assert(!$this->draft || $this->role[$userid] == 'from');
+        assert(!$this->draft || $this->role[$userid] == self::ROLE_FROM);
 
         if ($this->unread[$userid] == (bool) $value) {
             return;
@@ -781,7 +797,7 @@ class local_mail_message {
 
         if ($this->has_user($userid)) {
             return ($this->deleted[$userid] != self::DELETED_FOREVER
-                    && (!$this->draft || $this->role[$userid] == 'from'));
+                    && (!$this->draft || $this->role[$userid] == self::ROLE_FROM));
         }
 
         if ($includerefs) {
@@ -793,7 +809,7 @@ class local_mail_message {
                 . ' AND mu.userid = :userid'
                 . ' AND (m.draft = 0 OR mu.role = :role)';
             $params = array(
-                'role' => 'from',
+                'role' => self::ROLE_FROM,
                 'messageid' => $this->id,
                 'userid' => $userid,
             );

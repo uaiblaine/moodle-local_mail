@@ -239,5 +239,49 @@ function xmldb_local_mail_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2017070404, 'local', 'mail');
     }
 
+    // Version 2.0.
+
+    // Change type of field role on table local_mail_message_users to integer.
+
+    if ($oldversion < 2023060700) {
+        $table = new xmldb_table('local_mail_message_users');
+
+        // Rename field to tmp_role.
+        $field = new xmldb_field('role', XMLDB_TYPE_CHAR, '4', null, XMLDB_NOTNULL, null, null, 'userid');
+        if (!$dbman->field_exists($table, 'tmp_role')) {
+            $dbman->rename_field($table, $field, 'tmp_role');
+        }
+
+        // Add new field with default value 0.
+        $field = new xmldb_field('role', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'userid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Copy data from tmp_role.
+        $DB->set_field('local_mail_message_users', 'role', 1, ['tmp_role' => 'from']);
+        $DB->set_field('local_mail_message_users', 'role', 2, ['tmp_role' => 'to']);
+        $DB->set_field('local_mail_message_users', 'role', 3, ['tmp_role' => 'cc']);
+        $DB->set_field('local_mail_message_users', 'role', 4, ['tmp_role' => 'bcc']);
+
+        // Remove default value from new field.
+        $field = new xmldb_field('role', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null, 'userid');
+        $dbman->change_field_default($table, $field);
+
+        upgrade_plugin_savepoint(true, 2023060700, 'local', 'mail');
+    }
+
+    if ($oldversion < 2023060701) {
+        $table = new xmldb_table('local_mail_message_users');
+
+        // Drop temporary field.
+        $field = new xmldb_field('tmp_role');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2023060701, 'local', 'mail');
+    }
+
     return true;
 }

@@ -65,10 +65,10 @@ class message_test extends testcase {
         }
 
         $roleusers = array(
-            'from' => array($message->sender()),
-            'to' => $message->recipients('to'),
-            'cc' => $message->recipients('cc'),
-            'bcc' => $message->recipients('bcc'),
+            1 => array($message->sender()),
+            2 => $message->recipients('to'),
+            3 => $message->recipients('cc'),
+            4 => $message->recipients('bcc'),
         );
 
         foreach ($roleusers as $role => $users) {
@@ -308,14 +308,14 @@ class message_test extends testcase {
         ));
         $this->load_records('local_mail_message_users', array(
              array('messageid', 'userid', 'role', 'unread', 'starred',  'deleted'),
-             array( 501,         201,     'from',  0,        0,          1 ),
-             array( 501,         202,     'to',    0,        1,          0 ),
-             array( 501,         203,     'cc',    1,        0,          0 ),
-             array( 502,         201,     'from',  0,        0,          0 ),
-             array( 503,         201,     'from',  0,        0,          0 ),
-             array( 503,         202,     'to',    0,        0,          0 ),
-             array( 504,         202,     'from',  0,        0,          0 ),
-             array( 504,         201,     'to',    0,        0,          0 ),
+             array( 501,         201,      1,      0,        0,          1 ),
+             array( 501,         202,      2,      0,        1,          0 ),
+             array( 501,         203,      3,      1,        0,          0 ),
+             array( 502,         201,      1,      0,        0,          0 ),
+             array( 503,         201,      1,      0,        0,          0 ),
+             array( 503,         202,      2,      0,        0,          0 ),
+             array( 504,         202,      1,      0,        0,          0 ),
+             array( 504,         201,      2,      0,        0,          0 ),
         ));
         $this->load_records('local_mail_message_labels', array(
             array('messageid', 'labelid'),
