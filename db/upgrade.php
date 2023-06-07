@@ -327,5 +327,66 @@ function xmldb_local_mail_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2023060702, 'local', 'mail');
     }
 
+    // Add redundant courseid, time, unread and deleted fields to local_mail_message_labels.
+
+    if ($oldversion < 2023060703) {
+        $table = new xmldb_table('local_mail_message_labels');
+
+        // Create field courseid with default value 0.
+        $field = new xmldb_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'messageid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Create field time with default value 0.
+        $field = new xmldb_field('time', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'courseid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Create field unread with default value 0.
+        $field = new xmldb_field('unread', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'labelid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Create field deleted with default value 0.
+        $field = new xmldb_field('deleted', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'unread');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Copy courseid and time from local_mail_messages.
+        $sql = 'UPDATE {local_mail_message_labels} ml'
+            . ' JOIN {local_mail_messages} m ON m.id = ml.messageid'
+            . ' SET ml.courseid = m.courseid, ml.time = m.time';
+        $DB->execute($sql);
+
+        // Copy unread and deleted from local_mail_message_users.
+        $sql = 'UPDATE {local_mail_message_labels} ml'
+            . ' JOIN {local_mail_labels} l ON l.id = ml.labelid'
+            . ' JOIN {local_mail_message_users} mu ON mu.messageid = ml.messageid AND mu.userid = l.userid'
+            . ' SET ml.unread = mu.unread, ml.deleted = mu.deleted';
+        $DB->execute($sql);
+
+        // Remove default value from field courseid.
+        $field = new xmldb_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'messageid');
+        $dbman->change_field_default($table, $field);
+
+        // Remove default value from field time.
+        $field = new xmldb_field('time', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'courseid');
+        $dbman->change_field_default($table, $field);
+
+        // Remove default value from field unread.
+        $field = new xmldb_field('unread', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null, 'labelid');
+        $dbman->change_field_default($table, $field);
+
+        // Remove default value from field deleted.
+        $field = new xmldb_field('deleted', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null, 'unread');
+        $dbman->change_field_default($table, $field);
+
+        upgrade_plugin_savepoint(true, 2023060703, 'local', 'mail');
+    }
+
     return true;
 }

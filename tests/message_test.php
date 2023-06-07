@@ -88,7 +88,14 @@ class message_test extends testcase {
         }
 
         foreach ($message->labels() as $label) {
-            $conditions = array('messageid' => $message->id(), 'labelid' => $label->id());
+            $conditions = [
+                'messageid' => $message->id(),
+                'courseid' => $message->course()->id,
+                'time' => $message->time(),
+                'labelid' => $label->id(),
+                'unread' => (int) $message->unread($label->userid()),
+                'deleted' => $message->deleted($label->userid()),
+            ];
             self::assert_records('message_labels', $conditions);
         }
     }
@@ -311,20 +318,20 @@ class message_test extends testcase {
         ]);
         $this->load_records('local_mail_message_users', [
              ['messageid', 'courseid', 'draft', 'time',     'userid', 'role', 'unread', 'starred',  'deleted'],
-             [ 501,         101,      0,       1234567890, 201,      1,      0,        0,          1       ],
-             [ 501,         101,      0,       1234567890, 202,      2,      0,        1,          0       ],
-             [ 501,         101,      0,       1234567890, 203,      3,      1,        0,          0       ],
-             [ 502,         101,      1,       1234567891, 201,      1,      0,        0,          0       ],
-             [ 503,         101,      0,       1234567892, 201,      1,      0,        0,          0       ],
-             [ 503,         101,      0,       1234567892, 202,      2,      0,        0,          0       ],
-             [ 504,         101,      0,       1234567893, 202,      1,      0,        0,          0       ],
-             [ 504,         101,      0,       1234567893, 201,      2,      0,        0,          0       ],
+             [ 501,         101,        0,       1234567890, 201,      1,      0,        0,          1       ],
+             [ 501,         101,        0,       1234567890, 202,      2,      0,        1,          0       ],
+             [ 501,         101,        0,       1234567890, 203,      3,      1,        0,          0       ],
+             [ 502,         101,        1,       1234567891, 201,      1,      0,        0,          0       ],
+             [ 503,         101,        0,       1234567892, 201,      1,      0,        0,          0       ],
+             [ 503,         101,        0,       1234567892, 202,      2,      0,        0,          0       ],
+             [ 504,         101,        0,       1234567893, 202,      1,      0,        0,          0       ],
+             [ 504,         101,        0,       1234567893, 201,      2,      0,        0,          0       ],
         ]);
         $this->load_records('local_mail_message_labels', [
-            ['messageid', 'labelid'     ],
-            [ 501,         $label1->id()],
-            [ 501,         $label2->id()],
-            [ 502,         $label3->id()],
+            ['messageid', 'courseid', 'time',     'labelid',     'unread', 'deleted'],
+            [ 501,         101,        1234567890, $label1->id(), 0,        1       ],
+            [ 501,         101,        1234567890, $label2->id(), 0,        1       ],
+            [ 502,         101,        1234567891, $label3->id(), 0,        0       ],
         ]);
 
         $result = \local_mail_message::fetch(501);

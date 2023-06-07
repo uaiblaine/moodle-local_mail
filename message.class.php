@@ -345,7 +345,11 @@ class local_mail_message {
             $transaction = $DB->start_delegated_transaction();
             $record = new stdClass;
             $record->messageid = $this->id;
+            $record->courseid = $this->course->id;
+            $record->time = $this->time;
             $record->labelid = $label->id();
+            $record->unread = $this->unread($label->userid());
+            $record->deleted = $this->deleted($label->userid());
             $DB->insert_record('local_mail_message_labels', $record);
             $this->create_index($label->userid(), 'label', $label->id());
             $transaction->allow_commit();
@@ -621,6 +625,7 @@ class local_mail_message {
         $transaction = $DB->start_delegated_transaction();
         $DB->update_record('local_mail_messages', $record);
         $DB->set_field('local_mail_message_users', 'time', $this->time, ['messageid' => $this->id]);
+        $DB->set_field('local_mail_message_labels', 'time', $this->time, ['messageid' => $this->id]);
         $DB->set_field('local_mail_index', 'time', $this->time, ['messageid' => $this->id]);
         $transaction->allow_commit();
     }
@@ -640,6 +645,7 @@ class local_mail_message {
 
         $DB->set_field('local_mail_message_users', 'draft', 0, ['messageid' => $this->id]);
         $DB->set_field('local_mail_message_users', 'time', $this->time, ['messageid' => $this->id]);
+        $DB->set_field('local_mail_message_labels', 'time', $this->time, ['messageid' => $this->id]);
 
         $DB->set_field('local_mail_index', 'time', $this->time, ['messageid' => $this->id]);
         $DB->set_field('local_mail_index', 'type', 'sent', [
@@ -687,6 +693,13 @@ class local_mail_message {
 
         $conditions = array('messageid' => $this->id, 'userid' => $userid);
         $DB->set_field('local_mail_message_users', 'deleted', $value, $conditions);
+
+        foreach ($this->labels as $label) {
+            if ($label->userid() == $userid) {
+                $conditions = ['messageid' => $this->id, 'labelid' => $label->id()];
+                $DB->set_field('local_mail_message_labels', 'deleted', $value, $conditions);
+            }
+        }
 
         if ($value == self::NOT_DELETED) {
             $this->delete_index($userid, 'trash');
@@ -775,6 +788,12 @@ class local_mail_message {
         $conditions = array('messageid' => $this->id, 'userid' => $userid);
         $DB->set_field('local_mail_message_users', 'unread', (bool) $value, $conditions);
         $DB->set_field('local_mail_index', 'unread', (bool) $value, $conditions);
+        foreach ($this->labels as $label) {
+            if ($label->userid() == $userid) {
+                $conditions = ['messageid' => $this->id, 'labelid' => $label->id()];
+                $DB->set_field('local_mail_message_labels', 'unread', (bool) $value, $conditions);
+            }
+        }
         $transaction->allow_commit();
 
         $this->unread[$userid] = (bool) $value;
