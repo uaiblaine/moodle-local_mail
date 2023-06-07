@@ -28,6 +28,10 @@ $reply = optional_param('reply', false, PARAM_BOOL);
 $replyall = optional_param('replyall', false, PARAM_BOOL);
 $forward = optional_param('forward', false, PARAM_BOOL);
 
+if (!local_mail_is_installed()) {
+    throw new moodle_exception('pluginnotinstalled', 'local_mail');
+}
+
 if ($reply || $replyall || $forward) {
     $messageid = required_param('m', PARAM_INT);
 

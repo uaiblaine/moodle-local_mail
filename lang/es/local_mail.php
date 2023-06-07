@@ -140,6 +140,7 @@ $string['pagingmultiple'] = '{$a->first}-{$a->last} de {$a->total}';
 $string['pagingsingle'] = '{$a->index} de {$a->total}';
 $string['perpage'] = 'Mostrar {$a} mensajes';
 $string['pluginname'] = 'Correo';
+$string['pluginnotinstalled'] = 'La extensión Correo no está instalada o actualizada correctamente.';
 $string['preferences'] = 'Preferencias';
 $string['previouspage'] = 'Página anterior';
 $string['read'] = 'Leídos';

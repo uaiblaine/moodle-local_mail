@@ -140,6 +140,7 @@ $string['pagingmultiple'] = '{$a->first}-{$a->last} de {$a->total}';
 $string['pagingsingle'] = '{$a->index} de {$a->total}';
 $string['perpage'] = 'Mostra {$a} missatges';
 $string['pluginname'] = 'Correu';
+$string['pluginnotinstalled'] = 'El connector Correu no està instal·lat o actualitzat correctament.';
 $string['preferences'] = 'Preferències';
 $string['previouspage'] = 'Pàgina anterior';
 $string['read'] = 'Llegits';

@@ -140,6 +140,7 @@ $string['pagingmultiple'] = '{$a->first}-{$a->last} of {$a->total}';
 $string['pagingsingle'] = '{$a->index} of {$a->total}';
 $string['perpage'] = 'Display {$a} messages';
 $string['pluginname'] = 'Mail';
+$string['pluginnotinstalled'] = 'Mail plugin is not correctly installed or upgraded.';
 $string['preferences'] = 'Preferences';
 $string['previouspage'] = 'Previous page';
 $string['read'] = 'Read';

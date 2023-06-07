@@ -32,6 +32,17 @@ define('MAIL_PAGESIZE', 10);
 define('LOCAL_MAIL_MAXFILES', 5);
 define('LOCAL_MAIL_MAXBYTES', 1048576);
 
+function local_mail_is_installed() {
+    global $CFG;
+
+    $plugin = new stdClass;
+    include("$CFG->dirroot/local/mail/version.php");
+
+    $version = get_config('local_mail', 'version');
+
+    return $version == $plugin->version;
+}
+
 function local_mail_attachments($message) {
     $context = context_course::instance($message->course()->id);
     $fs = get_file_storage();

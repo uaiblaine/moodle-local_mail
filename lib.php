@@ -29,7 +29,7 @@ require_once($CFG->dirroot . '/local/mail/locallib.php');
 function local_mail_extend_navigation($root) {
     global $COURSE, $PAGE;
 
-    if (!get_config('local_mail', 'version')) {
+    if (!local_mail_is_installed()) {
         return;
     }
 
@@ -117,9 +117,9 @@ function local_mail_pluginfile($course, $cm, $context, $filearea, $args,
  * @return string The HTML
  */
 function local_mail_render_navbar_output(\renderer_base $renderer) {
-    global $PAGE, $USER;
+    global $PAGE;
 
-    if (!isloggedin() || isguestuser() || \core_user::awaiting_action()) {
+    if (!isloggedin() || isguestuser() || \core_user::awaiting_action() || !local_mail_is_installed()) {
         return '';
     }
 
