@@ -216,7 +216,6 @@ class local_mail_message {
         global $CFG, $DB;
 
         assert(in_array($type, self::$indextypes));
-        assert(empty($query['before']) || empty($query['after']));
 
         $query['pattern'] = isset($query['pattern']) ? trim($query['pattern']) : '';
         $query['searchfrom'] = isset($query['searchfrom']) ? trim($query['searchfrom']) : '';
@@ -282,7 +281,7 @@ class local_mail_message {
         if (!empty($query['unread'])) {
             $sql .= ' AND i.unread = 1';
         }
-
+   
         if (!empty($query['startid'])) {
             $time = $DB->get_field('local_mail_messages', 'time', ['id' => $query['startid']]);
             if (!$time) {
@@ -291,26 +290,14 @@ class local_mail_message {
             }
             if (!empty($query['backwards'])) {
                 $sql .= " AND i.time >= :starttime AND (i.time > :starttime2 OR i.messageid >= :startid)";
-                $order = 'ASC';
             } else {
                 $sql .= " AND i.time <= :starttime AND (i.time < :starttime2 OR i.messageid <= :startid)";
             }
             $params['startid'] = $query['startid'];
             $params['starttime'] = $params['starttime2'] = $time;
-        } else if (!empty($query['backwards'])) {
-            $order = 'ASC';
-        } else if (!empty($query['before'])) {
-            $from = self::fetch($query['before']);
-            $sql .= ' AND i.time <= :beforetime AND (i.time < :beforetime2 OR i.messageid < :beforeid)';
-            $params['beforetime'] = $from->time();
-            $params['beforetime2'] = $from->time();
-            $params['beforeid'] = $from->id();
-        } else if (!empty($query['after'])) {
-            $from = self::fetch($query['after']);
-            $sql .= ' AND i.time >= :aftertime AND (i.time > :aftertime2 OR i.messageid > :afterid)';
-            $params['aftertime'] = $from->time();
-            $params['aftertime2'] = $from->time();
-            $params['afterid'] = $from->id();
+        } 
+
+        if (!empty($query['backwards'])) {
             $order = 'ASC';
         }
 

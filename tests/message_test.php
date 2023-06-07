@@ -663,16 +663,6 @@ class message_test extends testcase {
         $result = \local_mail_message::search_index(201, 'course', 101, $query);
         $this->assertEquals(array($message4, $message3), $result);
 
-        // Before.
-        $query = array('before' => $message2->id());
-        $result = \local_mail_message::search_index(201, 'course', 101, $query);
-        $this->assertEquals(array($message1), $result);
-
-        // After.
-        $query = array('after' => $message1->id(), 'limit' => 2);
-        $result = \local_mail_message::search_index(201, 'course', 101, $query);
-        $this->assertEquals(array($message3, $message2), $result);
-
         // Attach.
         $query = array('attach' => true);
         $result = \local_mail_message::search_index(202, 'course', 101, $query);

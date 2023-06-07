@@ -129,7 +129,7 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
     $url = new moodle_url('/local/mail/view.php', ['t' => 'inbox']);
     $title = get_string('pluginname', 'local_mail');
     $class = 'btn h-100 d-flex align-items-center px-2 py-0';
-    
+
     $viewurl = new moodle_url('/local/mail/view.php');
     if ($PAGE->url->compare($viewurl, URL_MATCH_BASE)) {
         // Menu is handled from the view page.
@@ -139,12 +139,12 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
         return $container;
 
     } else {
-        // Other page in the site-
+        // Other page in the site.
         $icon = html_writer::tag('i', '', ['class' => 'fa fa-fw fa-envelope-o', 'style' => "font-size: 16px"]);
         $attributes = ['href' => $url, 'class' => $class, 'title' => $title];
-        $link = html_writer::tag('a', $icon, $attributes);    
+        $link = html_writer::tag('a', $icon, $attributes);
         $container = html_writer::div($link, '', ['id' => 'local-mail-navbar']);
-    
+
         // Pass all data via a script tag to avoid web service requests.
         $strings = local_mail_get_strings();
         $data = [

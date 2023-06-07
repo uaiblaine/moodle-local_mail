@@ -64,7 +64,6 @@ class mail_compose_form extends moodleform {
         }
 
         $label = get_string('addrecipients', 'local_mail');
-        $mform->addElement('submit', 'recipients', $label);
         $mform->addElement('button', 'recipients_ajax', $label, array('class' => 'mail_hidden'));
 
         // Subject.
@@ -127,7 +126,7 @@ class mail_compose_form extends moodleform {
 
         // At least one recipient.
         if (!empty($data['send']) && (!$message || !$message->recipients())) {
-            $errors['recipients'] = get_string('erroremptyrecipients', 'local_mail');
+            $errors['recipients_ajax'] = get_string('erroremptyrecipients', 'local_mail');
         }
 
         // Maximum number of attachmnents.

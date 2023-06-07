@@ -24,7 +24,6 @@
 require_once('../../config.php');
 require_once('locallib.php');
 require_once('compose_form.php');
-require_once('recipients_selector.php');
 
 global $PAGE;
 
@@ -101,12 +100,6 @@ if ($data = $mform->get_data()) {
     $files = $fs->get_area_files($PAGE->context->id, 'local_mail', 'message', $message->id(), 'filename', false);
 
     $message->save(trim($data->subject), $content, $data->content['format'], count($files));
-
-    // Select recipients.
-    if (!empty($data->recipients)) {
-        $url = new moodle_url('/local/mail/recipients.php', array('m' => $message->id()));
-        redirect($url);
-    }
 
     // Save message.
     if (!empty($data->save)) {
