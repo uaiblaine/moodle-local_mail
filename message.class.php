@@ -112,6 +112,8 @@ class local_mail_message {
     public static function create($userid, $courseid, $time=false) {
         global $DB;
 
+        $time = $time ?: time();
+
         $transaction = $DB->start_delegated_transaction();
 
         $message = new self;
@@ -124,11 +126,14 @@ class local_mail_message {
         $record->content = $message->content = '';
         $record->format = $message->format = -1;
         $record->draft = $message->draft = true;
-        $record->time = $message->time = $time ?: time();
+        $record->time = $message->time = $time;
         $message->id = $DB->insert_record('local_mail_messages', $record);
 
         $record = new stdClass;
         $record->messageid = $message->id;
+        $record->courseid = $message->course->id;
+        $record->draft = $message->draft = true;
+        $record->time = $message->time = $time;
         $record->userid = $userid;
         $record->role = $message->role[$userid] = self::ROLE_FROM;
         $record->unread = $message->unread[$userid] = false;
@@ -359,6 +364,9 @@ class local_mail_message {
 
         $record = new stdClass;
         $record->messageid = $this->id;
+        $record->courseid = $this->course->id;
+        $record->draft = $this->draft;
+        $record->time = $this->time;
         $record->userid = $userid;
         $record->role = $this->role[$userid] = self::ROLES[$role];
         $record->unread = $this->unread[$userid] = true;
@@ -612,10 +620,8 @@ class local_mail_message {
 
         $transaction = $DB->start_delegated_transaction();
         $DB->update_record('local_mail_messages', $record);
-        $DB->set_field('local_mail_index', 'time', $this->time, array(
-            'messageid' => $this->id,
-        ));
-
+        $DB->set_field('local_mail_message_users', 'time', $this->time, ['messageid' => $this->id]);
+        $DB->set_field('local_mail_index', 'time', $this->time, ['messageid' => $this->id]);
         $transaction->allow_commit();
     }
 
@@ -632,15 +638,15 @@ class local_mail_message {
         $record->time = $this->time = $time ?: time();
         $DB->update_record('local_mail_messages', $record);
 
-        $DB->set_field('local_mail_index', 'time', $this->time, array(
-            'messageid' => $this->id,
-        ));
+        $DB->set_field('local_mail_message_users', 'draft', 0, ['messageid' => $this->id]);
+        $DB->set_field('local_mail_message_users', 'time', $this->time, ['messageid' => $this->id]);
 
-        $DB->set_field('local_mail_index', 'type', 'sent', array(
+        $DB->set_field('local_mail_index', 'time', $this->time, ['messageid' => $this->id]);
+        $DB->set_field('local_mail_index', 'type', 'sent', [
             'messageid' => $this->id,
             'userid' => $this->sender()->id,
             'type' => 'drafts',
-        ));
+        ]);
 
         foreach ($this->recipients() as $user) {
             $this->create_index($user->id, 'inbox');

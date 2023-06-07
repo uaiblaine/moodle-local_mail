@@ -283,5 +283,49 @@ function xmldb_local_mail_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2023060701, 'local', 'mail');
     }
 
+    // Add redundant courseid, draft and time fields to local_mail_message_users.
+
+    if ($oldversion < 2023060702) {
+        $table = new xmldb_table('local_mail_message_users');
+
+        // Create field courseid with default value 0.
+        $field = new xmldb_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'messageid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Create field draft with default value 0.
+        $field = new xmldb_field('draft', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'courseid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Create field time with default value 0.
+        $field = new xmldb_field('time', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'draft');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Copy data from local_mail_messages.
+        $sql = 'UPDATE {local_mail_message_users} mu'
+            . ' JOIN {local_mail_messages} m ON m.id = mu.messageid'
+            . ' SET mu.courseid = m.courseid, mu.draft = m.draft, mu.time = m.time';
+        $DB->execute($sql);
+
+        // Remove default value from field courseid.
+        $field = new xmldb_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'messageid');
+        $dbman->change_field_default($table, $field);
+
+        // Remove default value from field draft.
+        $field = new xmldb_field('draft', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null, 'courseid');
+        $dbman->change_field_default($table, $field);
+
+        // Remove default value from field time.
+        $field = new xmldb_field('time', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'draft');
+        $dbman->change_field_default($table, $field);
+
+        upgrade_plugin_savepoint(true, 2023060702, 'local', 'mail');
+    }
+
     return true;
 }
