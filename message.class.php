@@ -346,9 +346,12 @@ class local_mail_message {
             $record = new stdClass;
             $record->messageid = $this->id;
             $record->courseid = $this->course->id;
+            $record->draft = $this->draft;
             $record->time = $this->time;
             $record->labelid = $label->id();
+            $record->role = $this->role[$label->userid()];
             $record->unread = $this->unread($label->userid());
+            $record->starred = $this->starred($label->userid());
             $record->deleted = $this->deleted($label->userid());
             $DB->insert_record('local_mail_message_labels', $record);
             $this->create_index($label->userid(), 'label', $label->id());
@@ -645,6 +648,7 @@ class local_mail_message {
 
         $DB->set_field('local_mail_message_users', 'draft', 0, ['messageid' => $this->id]);
         $DB->set_field('local_mail_message_users', 'time', $this->time, ['messageid' => $this->id]);
+        $DB->set_field('local_mail_message_labels', 'draft', 0, ['messageid' => $this->id]);
         $DB->set_field('local_mail_message_labels', 'time', $this->time, ['messageid' => $this->id]);
 
         $DB->set_field('local_mail_index', 'time', $this->time, ['messageid' => $this->id]);
@@ -762,6 +766,13 @@ class local_mail_message {
 
         $conditions = array('messageid' => $this->id, 'userid' => $userid);
         $DB->set_field('local_mail_message_users', 'starred', (bool) $value, $conditions);
+
+        foreach ($this->labels as $label) {
+            if ($label->userid() == $userid) {
+                $conditions = ['messageid' => $this->id, 'labelid' => $label->id()];
+                $DB->set_field('local_mail_message_labels', 'starred', (bool) $value, $conditions);
+            }
+        }
 
         if ($value) {
             $this->create_index($userid, 'starred');

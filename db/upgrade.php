@@ -327,9 +327,9 @@ function xmldb_local_mail_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2023060702, 'local', 'mail');
     }
 
-    // Add redundant courseid, time, unread and deleted fields to local_mail_message_labels.
+    // Add redundant courseid, draft, time, role, unread, starred and deleted fields to local_mail_message_labels.
 
-    if ($oldversion < 2023060703) {
+    if ($oldversion < 2023060704) {
         $table = new xmldb_table('local_mail_message_labels');
 
         // Create field courseid with default value 0.
@@ -338,54 +338,84 @@ function xmldb_local_mail_upgrade($oldversion) {
             $dbman->add_field($table, $field);
         }
 
+        // Create field draft with default value 0.
+        $field = new xmldb_field('draft', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'courseid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
         // Create field time with default value 0.
-        $field = new xmldb_field('time', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'courseid');
+        $field = new xmldb_field('time', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'draft');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Create field role with default value 0.
+        $field = new xmldb_field('role', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'labelid');
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
         // Create field unread with default value 0.
-        $field = new xmldb_field('unread', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'labelid');
+        $field = new xmldb_field('unread', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'role');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Create field starred with default value 0.
+        $field = new xmldb_field('starred', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'unread');
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
         // Create field deleted with default value 0.
-        $field = new xmldb_field('deleted', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'unread');
+        $field = new xmldb_field('deleted', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'starred');
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        // Copy courseid and time from local_mail_messages.
+        // Copy courseid, draft and time from local_mail_messages.
         $sql = 'UPDATE {local_mail_message_labels} ml'
             . ' JOIN {local_mail_messages} m ON m.id = ml.messageid'
-            . ' SET ml.courseid = m.courseid, ml.time = m.time';
+            . ' SET ml.courseid = m.courseid, ml.draft = m.draft, ml.time = m.time';
         $DB->execute($sql);
 
-        // Copy unread and deleted from local_mail_message_users.
+        // Copy role, unread, starred and deleted from local_mail_message_users.
         $sql = 'UPDATE {local_mail_message_labels} ml'
             . ' JOIN {local_mail_labels} l ON l.id = ml.labelid'
             . ' JOIN {local_mail_message_users} mu ON mu.messageid = ml.messageid AND mu.userid = l.userid'
-            . ' SET ml.unread = mu.unread, ml.deleted = mu.deleted';
+            . ' SET ml.role = mu.role, ml.unread = mu.unread, ml.starred = mu.starred, ml.deleted = mu.deleted';
         $DB->execute($sql);
 
         // Remove default value from field courseid.
         $field = new xmldb_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'messageid');
         $dbman->change_field_default($table, $field);
 
+        // Remove default value from field draft.
+        $field = new xmldb_field('draft', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null, 'courseid');
+        $dbman->change_field_default($table, $field);
+
         // Remove default value from field time.
-        $field = new xmldb_field('time', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'courseid');
+        $field = new xmldb_field('time', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'draft');
+        $dbman->change_field_default($table, $field);
+
+        // Remove default value from field role.
+        $field = new xmldb_field('role', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null, 'labelid');
         $dbman->change_field_default($table, $field);
 
         // Remove default value from field unread.
-        $field = new xmldb_field('unread', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null, 'labelid');
+        $field = new xmldb_field('unread', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null, 'role');
+        $dbman->change_field_default($table, $field);
+
+        // Remove default value from field starred.
+        $field = new xmldb_field('starred', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null, 'unread');
         $dbman->change_field_default($table, $field);
 
         // Remove default value from field deleted.
-        $field = new xmldb_field('deleted', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null, 'unread');
+        $field = new xmldb_field('deleted', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null, 'starred');
         $dbman->change_field_default($table, $field);
 
-        upgrade_plugin_savepoint(true, 2023060703, 'local', 'mail');
+        upgrade_plugin_savepoint(true, 2023060704, 'local', 'mail');
     }
 
     return true;

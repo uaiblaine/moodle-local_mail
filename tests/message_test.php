@@ -88,12 +88,23 @@ class message_test extends testcase {
         }
 
         foreach ($message->labels() as $label) {
+            $labelrole = 0;
+            foreach ($roleusers as $role => $users) {
+                foreach ($users as $user) {
+                    if ($user->id == $label->userid()) {
+                        $labelrole = $role;
+                    }
+                }
+            }
             $conditions = [
                 'messageid' => $message->id(),
                 'courseid' => $message->course()->id,
+                'draft' => $message->draft(),
                 'time' => $message->time(),
                 'labelid' => $label->id(),
+                'role' => $labelrole,
                 'unread' => (int) $message->unread($label->userid()),
+                'starred' => (int) $message->starred($label->userid()),
                 'deleted' => $message->deleted($label->userid()),
             ];
             self::assert_records('message_labels', $conditions);
@@ -328,10 +339,10 @@ class message_test extends testcase {
              [ 504,         101,        0,       1234567893, 201,      2,      0,        0,          0       ],
         ]);
         $this->load_records('local_mail_message_labels', [
-            ['messageid', 'courseid', 'time',     'labelid',     'unread', 'deleted'],
-            [ 501,         101,        1234567890, $label1->id(), 0,        1       ],
-            [ 501,         101,        1234567890, $label2->id(), 0,        1       ],
-            [ 502,         101,        1234567891, $label3->id(), 0,        0       ],
+            ['messageid', 'courseid', 'draft', 'time',     'labelid',      'role', 'unread', 'starred', 'deleted'],
+            [ 501,         101,        0,       1234567890, $label1->id(),  1,      0,        0,         1       ],
+            [ 501,         101,        0,       1234567890, $label3->id(),  2,      0,        1,         0       ],
+            [ 502,         101,        1,       1234567891, $label2->id(),  1,      0,        0,         0       ],
         ]);
 
         $result = \local_mail_message::fetch(501);
@@ -364,7 +375,7 @@ class message_test extends testcase {
         $this->assertEquals(\local_mail_message::NOT_DELETED, $result->deleted(203));
         $this->assertCount(2, $result->labels());
         $this->assertEqualsCanonicalizing($label1, $result->labels()[0]);
-        $this->assertEqualsCanonicalizing($label2, $result->labels()[1]);
+        $this->assertEqualsCanonicalizing($label3, $result->labels()[1]);
 
         $this->assertFalse(\local_mail_message::fetch(505));
     }

@@ -61,10 +61,10 @@ class label_test extends testcase {
         $label = \local_mail_label::create(201, 'label', 'red');
         $other = \local_mail_label::create(201, 'other', 'green');
         $this->load_records('local_mail_message_labels', [
-            ['messageid', 'courseid', 'time',     'labelid',    'unread', 'deleted'],
-            [ 501,         101,        1234567890, $label->id(), 0,        0       ],
-            [ 502,         101,        1234567890, $label->id(), 0,        0       ],
-            [ 501,         101,        1234567890, $other->id(), 0,        0       ],
+            ['messageid', 'courseid', 'draft', 'time',     'labelid',     'role', 'starred', 'unread', 'deleted'],
+            [ 501,         101,        0,       1234567890, $label->id(),  1,      0,         0,        0       ],
+            [ 502,         101,        1,       1234567891, $label->id(),  2,      1,         1,        0       ],
+            [ 501,         101,        0,       1234567893, $other->id(),  3,      0,         0,        1       ],
         ]);
         $this->load_records('local_mail_index', [
             ['userid', 'type',  'item',        'time', 'messageid', 'unread'],
