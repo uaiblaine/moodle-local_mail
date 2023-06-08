@@ -418,5 +418,34 @@ function xmldb_local_mail_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2023060704, 'local', 'mail');
     }
 
+    // Add new indexes to local_mail_message_users and local_mail_message_labels.
+
+    if ($oldversion < 2023060705) {
+
+        $table = new xmldb_table('local_mail_message_users');
+        $index = new xmldb_index('courseid', XMLDB_INDEX_NOTUNIQUE, ['courseid']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+        $index = new xmldb_index('userid', XMLDB_INDEX_NOTUNIQUE,
+            ['userid', 'courseid', 'draft', 'role', 'unread', 'starred', 'deleted', 'time', 'messageid']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        $table = new xmldb_table('local_mail_message_labels');
+        $index = new xmldb_index('courseid', XMLDB_INDEX_NOTUNIQUE, ['courseid']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+        $index = new xmldb_index('labelid', XMLDB_INDEX_NOTUNIQUE,
+            ['labelid', 'courseid', 'draft', 'role', 'unread', 'starred', 'deleted', 'time', 'messageid']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        upgrade_plugin_savepoint(true, 2023060705, 'local', 'mail');
+    }
+
     return true;
 }

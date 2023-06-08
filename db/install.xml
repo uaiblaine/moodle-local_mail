@@ -56,6 +56,8 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="messageid" UNIQUE="false" FIELDS="messageid"/>
+        <INDEX NAME="courseid" UNIQUE="false" FIELDS="courseid"/>
+        <INDEX NAME="labelid" UNIQUE="false" FIELDS="labelid, courseid, draft, role, unread, starred, deleted, time, messageid"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="local_mail_message_refs" COMMENT="-">
@@ -90,6 +92,8 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="messageid" UNIQUE="false" FIELDS="messageid"/>
+        <INDEX NAME="courseid" UNIQUE="false" FIELDS="courseid"/>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid, courseid, draft, role, unread, starred, deleted, time, messageid"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="local_mail_index" COMMENT="-">
