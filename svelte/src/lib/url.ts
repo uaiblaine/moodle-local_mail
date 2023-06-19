@@ -1,4 +1,4 @@
-import type { ViewParams, ViewType } from "./store";
+import type { ViewParams, ViewTray } from './store';
 
 export function composeUrl(messageid: number): string {
     return baseUrl() + 'compose.php?m=' + messageid;
@@ -29,7 +29,7 @@ export function replyAllUrl(messageid: number): string {
 }
 
 export function viewUrl(params: ViewParams): string {
-    let url = baseUrl() + 'view.php?t=' + params.type;
+    let url = baseUrl() + 'view.php?t=' + params.tray;
     if (params.courseid) {
         url += '&c=' + params.courseid;
     }
@@ -45,7 +45,7 @@ export function viewUrl(params: ViewParams): string {
 export function getViewParamsFromUrl(): ViewParams {
     const url = new URL(window.location.href);
     return {
-        type: (url.searchParams.get('t') as ViewType) || 'inbox',
+        tray: (url.searchParams.get('t') as ViewTray) || 'inbox',
         courseid: parseInt(url.searchParams.get('c') || '') || undefined,
         labelid: parseInt(url.searchParams.get('l') || '') || undefined,
         messageid: parseInt(url.searchParams.get('m') || '') || undefined,

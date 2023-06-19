@@ -16,7 +16,10 @@ async function init() {
             props: {
                 settings: data.settings,
                 strings: data.strings,
-                menu: data.menu,
+                unread: data.unread,
+                drafts: data.drafts,
+                courses: data.courses,
+                labels: data.labels,
             },
         });
     }

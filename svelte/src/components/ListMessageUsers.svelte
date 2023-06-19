@@ -9,7 +9,7 @@
     export let message: MessageSummary;
 
     $: users =
-        $store.params.type == 'sent' || $store.params.type == 'drafts'
+        $store.params.tray == 'sent' || $store.params.tray == 'drafts'
             ? message.recipients.length > 0
                 ? message.recipients.map((user) => user.fullname)
                 : [$store.strings.norecipient]

@@ -46,7 +46,7 @@
         bind:offsetHeight={height}
     >
         <div class=" w-100 d-flex justify-content-around" role="group">
-            {#if $store.params.type == 'trash'}
+            {#if $store.params.tray == 'trash'}
                 <RestoreButton {store} transparent={true} />
                 <DeleteForeverButton {store} transparent={true} />
             {:else}

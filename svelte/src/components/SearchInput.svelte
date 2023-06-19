@@ -34,48 +34,36 @@
         );
     };
 
-    $: content = $store.params.query?.content || '';
-    $: sender = $store.params.query?.sender || '';
-    $: recipients = $store.params.query?.recipients || '';
-    $: unread = $store.params.query?.unread || false;
-    $: attachments = $store.params.query?.attachments || false;
-    $: date = dateFromTimestamp($store.params.query?.time || 0);
+    $: content = $store.params.search?.content || '';
+    $: sendername = $store.params.search?.sendername || '';
+    $: recipientname = $store.params.search?.recipientname || '';
+    $: unread = $store.params.search?.unread || false;
+    $: withfilesonly = $store.params.search?.withfilesonly || false;
+    $: maxdate = dateFromTimestamp($store.params.search?.maxtime || 0);
 
     $: advancedEnabled = Boolean(
-        $store.params.query?.sender ||
-            $store.params.query?.recipients ||
-            $store.params.query?.unread ||
-            $store.params.query?.attachments ||
-            $store.params.query?.time,
+        $store.params.search?.sendername ||
+            $store.params.search?.recipientname ||
+            $store.params.search?.unread ||
+            $store.params.search?.withfilesonly ||
+            $store.params.search?.maxtime,
     );
-    $: searchEnabled = Boolean($store.params.query?.content || advancedEnabled);
-    $: submitEnabled = Boolean(content || sender || recipients || unread || attachments || date);
+    $: searchEnabled = Boolean($store.params.search?.content || advancedEnabled);
+    $: submitEnabled = Boolean(content || sendername || recipientname || unread || withfilesonly || maxdate);
 
     const cancel = () => {
-        store.navigate({
-            ...$store.params,
-            query: {
-                ...$store.params.query,
-                content: undefined,
-                sender: undefined,
-                recipients: undefined,
-                unread: undefined,
-                attachments: undefined,
-                time: undefined,
-            },
-        });
+        store.navigate({ ...$store.params, search: undefined });
         window.jQuery(dropdownNode).dropdown('hide');
     };
 
     const submit = () => {
         store.search({
-            startid: undefined,
             content,
-            sender,
-            recipients,
+            sendername,
+            recipientname,
             unread,
-            attachments,
-            time: timestampFromDate(date),
+            withfilesonly,
+            maxtime: timestampFromDate(maxdate),
         });
         window.jQuery(dropdownNode).dropdown('hide');
     };
@@ -127,37 +115,37 @@
     </button>
     <div class="dropdown-menu dropdown-menu-right p-3">
         <div class="form-group">
-            <label for="local-mail-search-input-semder">
+            <label for="local-mail-search-input-sendername">
                 {$store.strings.from}
             </label>
             <input
                 type="text"
                 class="form-control"
-                id="local-mail-search-input-sender"
-                bind:value={sender}
+                id="local-mail-search-input-sendername"
+                bind:value={sendername}
                 bind:this={senderNode}
             />
         </div>
         <div class="form-group">
-            <label for="local-mail-search-input-recipients">
+            <label for="local-mail-search-input-recipientname">
                 {$store.strings.to}
             </label>
             <input
                 type="text"
                 class="form-control"
-                id="local-mail-search-input-recipients"
-                bind:value={recipients}
+                id="local-mail-search-input-recipientname"
+                bind:value={recipientname}
             />
         </div>
         <div class="form-group">
-            <label for="local-mail-search-input-date">
+            <label for="local-mail-search-input-maxdate">
                 {$store.strings.filterbydate}
             </label>
             <input
                 type="date"
                 class="form-control"
-                id="local-mail-search-input-date"
-                bind:value={date}
+                id="local-mail-search-input-maxdate"
+                bind:value={maxdate}
             />
         </div>
         <div class="form-group">
@@ -178,10 +166,10 @@
                 <input
                     class="form-check-input"
                     type="checkbox"
-                    id="local-mail-search-input-attachments"
-                    bind:checked={attachments}
+                    id="local-mail-search-input-withfilesonly"
+                    bind:checked={withfilesonly}
                 />
-                <label class="form-check-label" for="local-mail-search-input-attachments">
+                <label class="form-check-label" for="local-mail-search-input-withfilesonly">
                     {$store.strings.searchbyattach}
                 </label>
             </div>

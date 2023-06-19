@@ -2,9 +2,9 @@
 
 <script lang="ts">
     import { truncate } from '../actions/truncate';
-    import type { Course, Settings } from '../lib/services';
+    import type { MessageCourse, Settings } from '../lib/services';
 
-    export let course: Course;
+    export let course: MessageCourse;
     export let settings: Settings;
 
     $: text = settings.coursebadges == 'shortname' ? course.shortname : course.fullname;

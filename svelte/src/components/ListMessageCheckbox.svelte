@@ -7,13 +7,13 @@
     export let store: Store;
     export let message: MessageSummary;
 
-    $: checkClass = $store.selectedMessageIds.has(message.id) ? 'fa-check-square-o' : 'fa-square-o';
+    $: checkClass = $store.selectedMessages.has(message.id) ? 'fa-check-square-o' : 'fa-square-o';
 </script>
 
 <button
     class="btn px-2"
     role="checkbox"
-    aria-checked={Boolean($store.selectedMessageIds.has(message.id))}
+    aria-checked={Boolean($store.selectedMessages.has(message.id))}
     title={$store.strings.select}
     on:click={() => store.toggleSelected(message.id)}
 >

@@ -10,7 +10,14 @@
     type="button"
     class="local-mail-back-button btn btn-secondary"
     title={$store.strings.back}
-    on:click={() => store.navigate({ ...$store.params, messageid: undefined })}
+    on:click={() =>
+        store.navigate({
+            ...$store.params,
+            messageid: undefined,
+            offset:
+                Math.floor(($store.messageOffset || 0) / $store.preferences.perpage) *
+                $store.preferences.perpage,
+        })}
 >
     <i class="fa fa fa-fw fa-arrow-left" />
 </button>

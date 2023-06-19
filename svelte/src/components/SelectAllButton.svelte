@@ -6,11 +6,11 @@
     export let store: Store;
 
     $: iconClass =
-        $store.selectedMessageIds.size == $store.list.messages.length
-            ? 'fa-check-square-o'
-            : $store.selectedMessageIds.size > 0
+        $store.selectedMessages.size == 0
+            ? 'fa-square-o'
+            : $store.selectedMessages.size < $store.listMessages.length
             ? 'fa-minus-square-o'
-            : 'fa-square-o';
+            : 'fa-check-square-o';
 </script>
 
 <div class="btn-group mr-3" role="group">

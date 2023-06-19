@@ -34,7 +34,7 @@
 
 {#key $store.navigationId}
     <div class="list-group">
-        {#each $store.list.messages as message (message.id)}
+        {#each $store.listMessages as message (message.id)}
             <a
                 animate:flip={{ delay: 400, duration: 400 }}
                 in:fade|local={{ delay: 400 }}
@@ -43,9 +43,9 @@
                 href={message.draft
                     ? composeUrl(message.id)
                     : viewUrl({ ...$store.params, messageid: message.id })}
-                class:list-group-item-primary={$store.selectedMessageIds.has(message.id)}
+                class:list-group-item-primary={$store.selectedMessages.has(message.id)}
                 class:list-group-item-secondary={!message.unread &&
-                    !$store.selectedMessageIds.has(message.id)}
+                    !$store.selectedMessages.has(message.id)}
                 class:font-weight-bold={message.unread}
                 on:click={clickHandler(message)}
             >

@@ -22,7 +22,7 @@
     {/if}
     {#if $store.viewSize >= ViewSize.MD}
         <div class="btn-group mr-auto" role="group">
-            {#if $store.params.type == 'trash'}
+            {#if $store.params.tray == 'trash'}
                 <RestoreButton {store} />
                 <DeleteForeverButton {store} />
             {:else}

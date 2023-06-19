@@ -1,13 +1,12 @@
 import { require } from './amd';
 
 export type ServiceRequest =
-    | GetInfoRequest
     | SetPreferencesRequest
-    | GetMenuRequest
-    | GetIndexRequest
-    | SearchIndexRequest
+    | GetCoursesRequest
+    | GetLabelsRequest
+    | CountMessagesRequest
+    | SearchMessagesRequest
     | GetMessageRequest
-    | FindOffsetRequest
     | SetUnreadRequest
     | SetStarredRequest
     | SetDeletedRequest
@@ -17,54 +16,50 @@ export type ServiceRequest =
     | DeleteLabelRequest
     | SetLabelsRequest;
 
-export interface GetInfoRequest {
-    readonly methodname: 'get_info';
-}
-
 export interface SetPreferencesRequest {
     readonly methodname: 'set_preferences';
     readonly preferences: Partial<Preferences>;
 }
 
-export interface GetMenuRequest {
-    readonly methodname: 'get_menu';
+export interface GetCoursesRequest {
+    readonly methodname: 'get_courses';
 }
 
-export interface GetIndexRequest {
-    readonly methodname: 'get_index';
-    readonly type: 'inbox' | 'drafts' | 'sent' | 'starred' | 'course' | 'label' | 'trash';
-    readonly itemid: number;
-    readonly offset: number;
-    readonly limit: number;
+export interface GetLabelsRequest {
+    readonly methodname: 'get_labels';
 }
 
-export interface SearchIndexRequest {
-    readonly methodname: 'search_index';
-    readonly type: 'inbox' | 'drafts' | 'sent' | 'starred' | 'course' | 'label' | 'trash';
-    readonly itemid: number;
-    readonly query: SearchQuery;
-}
-
-export interface SearchQuery {
-    readonly startid?: number;
-    readonly backwards?: boolean;
-    readonly content?: string;
-    readonly sender?: string;
-    readonly recipients?: string;
+export interface Query {
+    readonly courseid?: number;
+    readonly labelid?: number;
+    readonly draft?: boolean;
+    readonly roles?: ReadonlyArray<string>;
     readonly unread?: boolean;
-    readonly attachments?: boolean;
-    readonly time?: number;
+    readonly starred?: boolean;
+    readonly deleted?: boolean;
+    readonly content?: string;
+    readonly sendername?: string;
+    readonly recipientname?: string;
+    readonly withfilesonly?: boolean;
+    readonly maxtime?: number;
+    readonly startid?: number;
+    readonly reverse?: boolean;
+}
+
+export interface CountMessagesRequest {
+    readonly methodname: 'count_messages';
+    readonly query: Query;
+}
+
+export interface SearchMessagesRequest {
+    readonly methodname: 'search_messages';
+    readonly query: Query;
+    readonly offset?: number;
     readonly limit?: number;
 }
+
 export interface GetMessageRequest {
     readonly methodname: 'get_message';
-    readonly messageid: number;
-}
-
-export interface FindOffsetRequest {
-    readonly methodname: 'find_offset';
-    readonly type: string;
-    readonly itemid: number;
     readonly messageid: number;
 }
 
@@ -120,20 +115,18 @@ export interface SetLabelsRequest {
     readonly labelids: ReadonlyArray<number>;
 }
 
-export type ServiceResponse<T> = T extends GetInfoRequest
-    ? Info
-    : T extends SetPreferencesRequest
+export type ServiceResponse<T> = T extends SetPreferencesRequest
     ? void
-    : T extends GetMenuRequest
-    ? Menu
-    : T extends GetIndexRequest
-    ? IndexList
-    : T extends SearchIndexRequest
-    ? SearchList
+    : T extends GetCoursesRequest
+    ? ReadonlyArray<Course>
+    : T extends GetLabelsRequest
+    ? ReadonlyArray<Label>
+    : T extends CountMessagesRequest
+    ? number
+    : T extends SearchMessagesRequest
+    ? ReadonlyArray<MessageSummary>
     : T extends GetMessageRequest
     ? Message
-    : T extends FindOffsetRequest
-    ? number
     : T extends SetUnreadRequest
     ? void
     : T extends SetStarredRequest
@@ -152,13 +145,6 @@ export type ServiceResponse<T> = T extends GetInfoRequest
     ? void
     : unknown;
 
-export interface Info {
-    readonly userid: number;
-    readonly settings: Settings;
-    readonly preferences: Preferences;
-    readonly strings: Strings;
-}
-
 export interface Settings {
     globaltrays: ReadonlyArray<string>;
     coursetrays: 'none' | 'unread' | 'all';
@@ -173,32 +159,19 @@ export interface Preferences {
     readonly perpage: number;
     readonly markasread: boolean;
 }
-
-export interface Menu {
-    readonly unread: number;
-    readonly drafts: number;
-    readonly courses: ReadonlyArray<MenuCourse>;
-    readonly labels: ReadonlyArray<MenuLabel>;
-}
-
-export interface MenuCourse extends Course {
+export interface Course {
     readonly id: number;
     readonly shortname: string;
     readonly fullname: string;
-    readonly unread: number;
     readonly visible: boolean;
+    readonly unread: number;
 }
 
-export interface MenuLabel {
+export interface Label {
     readonly id: number;
     readonly name: string;
     readonly color: string;
     readonly unread: number;
-}
-
-export interface IndexList {
-    readonly totalcount: number;
-    readonly messages: ReadonlyArray<MessageSummary>;
 }
 
 export interface MessageSummary {
@@ -212,13 +185,13 @@ export interface MessageSummary {
     readonly unread: boolean;
     readonly starred: boolean;
     readonly deleted: boolean;
-    readonly course: Course;
+    readonly course: MessageCourse;
     readonly sender: Sender;
     readonly recipients: ReadonlyArray<Recipient>;
     readonly labels: ReadonlyArray<MessageLabel>;
 }
 
-export interface Course {
+export interface MessageCourse {
     readonly id: number;
     readonly shortname: string;
     readonly fullname: string;
@@ -243,13 +216,6 @@ export interface MessageLabel {
     readonly id: number;
     readonly name: string;
     readonly color: string;
-}
-
-export interface SearchList extends IndexList {
-    readonly firstoffset: number;
-    readonly lastoffset: number;
-    readonly previousid: number;
-    readonly nextid: number;
 }
 
 export interface Message extends MessageSummary {
@@ -281,10 +247,10 @@ export interface Attachment {
 }
 
 export interface ServiceError {
+    readonly error: string;
     readonly errorcode: string;
-    readonly message: string;
     readonly debuginfo?: string;
-    readonly backtrace?: string;
+    readonly stacktrace?: string;
 }
 
 /**

@@ -12,12 +12,12 @@
     type="button"
     class="local-mail-action-delete btn"
     class:btn-secondary={!transparent}
-    class:disabled={!$store.targetMessageIds.size}
-    disabled={!$store.targetMessageIds.size}
+    class:disabled={!$store.selectedMessages.size}
+    disabled={!$store.selectedMessages.size}
     title={$store.strings.restore}
     on:click={() =>
         store.setDeleted(
-            Array.from($store.targetMessageIds.values()),
+            Array.from($store.selectedMessages.keys()),
             DeletedStatus.NotDeleted,
             true,
         )}

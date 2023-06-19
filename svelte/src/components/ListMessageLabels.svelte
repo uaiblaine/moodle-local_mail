@@ -11,17 +11,17 @@
 </script>
 
 {#if $store.viewSize < ViewSize.MD}
-    {#if $store.params.type != 'course' || $store.params.courseid != message.course.id}
+    {#if $store.params.tray != 'course' || $store.params.courseid != message.course.id}
         <CourseBadge course={message.course} settings={$store.settings} />
     {/if}
 {/if}
 {#each message.labels as label (label.id)}
-    {#if $store.params.type != 'label' || $store.params.labelid != label.id}
+    {#if $store.params.tray != 'label' || $store.params.labelid != label.id}
         <LabelBadge {label} />
     {/if}
 {/each}
 {#if $store.viewSize >= ViewSize.MD}
-    {#if $store.params.type != 'course' || $store.params.courseid != message.course.id}
+    {#if $store.params.tray != 'course' || $store.params.courseid != message.course.id}
         <CourseBadge course={message.course} settings={$store.settings} />
     {/if}
 {/if}

@@ -2,16 +2,14 @@ import { get, writable } from 'svelte/store';
 import {
     callServices,
     DeletedStatus,
+    type Course,
     type CreateLabelRequest,
     type DeleteLabelRequest,
     type EmptyTrashRequest,
-    type Info,
-    type Menu,
+    type Label,
     type Message,
     type Preferences,
-    type SearchIndexRequest,
-    type SearchList,
-    type SearchQuery,
+    type Query,
     type ServiceError,
     type ServiceRequest,
     type SetDeletedRequest,
@@ -22,18 +20,31 @@ import {
     type SetUnreadRequest,
     type Strings,
     type UpdateLabelRequest,
+    type MessageSummary,
 } from './services';
 import { getViewParamsFromUrl, setUrlFromViewParams } from './url';
 import { replaceStringParams, sleep } from './utils';
 
-export type ViewType = 'inbox' | 'sent' | 'drafts' | 'starred' | 'course' | 'label' | 'trash';
+export type ViewTray = 'inbox' | 'sent' | 'drafts' | 'starred' | 'course' | 'label' | 'trash';
+
+export interface SearchParams {
+    readonly content?: string;
+    readonly sendername?: string;
+    readonly recipientname?: string;
+    readonly unread?: boolean;
+    readonly withfilesonly?: boolean;
+    readonly maxtime?: number;
+    readonly startid?: number;
+    readonly reverse?: boolean;
+}
 
 export interface ViewParams {
-    readonly type: ViewType;
+    readonly tray: ViewTray;
     readonly courseid?: number;
     readonly labelid?: number;
     readonly messageid?: number;
-    readonly query?: SearchQuery;
+    readonly offset?: number;
+    readonly search?: SearchParams;
 }
 
 export enum ViewSize {
@@ -59,18 +70,21 @@ export interface State {
     readonly params: ViewParams;
 
     /* Data fetched using web services for the current view.  */
-    readonly menu: Menu;
-    readonly list: SearchList;
+    readonly unread: number;
+    readonly drafts: number;
+    readonly courses: ReadonlyArray<Course>;
+    readonly labels: ReadonlyArray<Label>;
+    readonly totalCount: number;
+    readonly listMessages: ReadonlyArray<MessageSummary>;
     readonly message?: Message;
     readonly messageOffset?: number;
+    readonly nextMessageId?: number;
+    readonly prevMessageId?: number;
 
     /* Transient interface state. */
     readonly loading: boolean;
     readonly error?: ServiceError;
-    readonly nextPageParams?: ViewParams;
-    readonly prevPageParams?: ViewParams;
-    readonly selectedMessageIds: ReadonlySet<number>;
-    readonly targetMessageIds: ReadonlySet<number>;
+    readonly selectedMessages: ReadonlyMap<number, MessageSummary>;
     readonly toasts: ReadonlyArray<Toast>;
     readonly viewSize: number;
     readonly navigationId: number;
@@ -78,39 +92,37 @@ export interface State {
 
 export type SelectAllType = 'all' | 'none' | 'read' | 'unread' | 'starred' | 'unstarred';
 
-export async function createStore(info: Info) {
+export interface InitialData {
+    readonly userid: number;
+    readonly settings: Settings;
+    readonly preferences: Preferences;
+    readonly strings: Strings;
+}
+
+export async function createStore(data: InitialData) {
     let currentActionId = 0;
 
     const { subscribe, update } = writable<State>({
         /* Info */
-        userid: info.userid,
-        settings: info.settings,
-        preferences: info.preferences,
-        strings: info.strings,
+        userid: data.userid,
+        settings: data.settings,
+        preferences: data.preferences,
+        strings: data.strings,
 
         /* Params */
-        params: { type: 'inbox' },
+        params: { tray: 'inbox' },
 
         /* Data */
-        menu: {
-            unread: 0,
-            drafts: 0,
-            labels: [],
-            courses: [],
-        },
-        list: {
-            totalcount: 0,
-            messages: [],
-            firstoffset: 0,
-            lastoffset: 0,
-            previousid: 0,
-            nextid: 0,
-        },
+        unread: 0,
+        drafts: 0,
+        courses: [],
+        labels: [],
+        totalCount: 0,
+        listMessages: [],
 
         /* Transient */
         loading: true,
-        selectedMessageIds: new Set(),
-        targetMessageIds: new Set(),
+        selectedMessages: new Map(),
         toasts: [],
         navigationId: 0,
         viewSize: 0,
@@ -135,43 +147,95 @@ export async function createStore(info: Info) {
 
             update((state) => ({ ...state, loading: true }));
 
+            // Number of unread messages.
             requests.push({
-                methodname: 'get_menu',
+                methodname: 'count_messages',
+                query: { roles: ['to', 'cc', 'bcc'], unread: true },
             });
 
-            const itemid: number =
-                params.type == 'course'
-                    ? params.courseid || 0
-                    : params.type == 'label'
-                    ? params.labelid || 0
-                    : 0;
-
+            // Number of drafts.
             requests.push({
-                methodname: 'search_index',
-                type: params.type,
-                itemid,
-                query: {
-                    ...params.query,
-                    startid: params.query?.startid || params.messageid,
-                    limit: perpage,
-                },
+                methodname: 'count_messages',
+                query: { draft: true },
+            });
+
+            // Courses.
+            requests.push({
+                methodname: 'get_courses',
+            });
+
+            // Labels.
+            requests.push({
+                methodname: 'get_labels',
+            });
+
+            const query: Query = {
+                courseid: params.tray == 'course' ? params.courseid : undefined,
+                labelid: params.tray == 'label' ? params.labelid : undefined,
+                draft: params.tray == 'drafts' ? true : params.tray == 'sent' ? false : undefined,
+                roles:
+                    params.tray == 'inbox'
+                        ? ['to', 'cc', 'bcc']
+                        : params.tray == 'sent'
+                        ? ['from']
+                        : undefined,
+                starred: params.tray == 'starred' ? true : undefined,
+                deleted: params.tray == 'trash',
+            };
+
+            // Total count of messages.
+            requests.push({
+                methodname: 'count_messages',
+                query,
             });
 
             if (params.messageid) {
-                requests.push({
-                    methodname: 'set_unread',
-                    messageid: params.messageid,
-                    unread: false,
-                });
+                // Full message.
                 requests.push({
                     methodname: 'get_message',
                     messageid: params.messageid,
                 });
+
+                // Offset of the message.
                 requests.push({
-                    methodname: 'find_offset',
-                    type: params.type,
-                    itemid,
-                    messageid: params.messageid,
+                    methodname: 'count_messages',
+                    query: {
+                        ...query,
+                        startid: params.messageid,
+                        reverse: true,
+                    },
+                });
+
+                // Next message.
+                requests.push({
+                    methodname: 'search_messages',
+                    query: {
+                        ...query,
+                        ...params.search,
+                        startid: params.messageid,
+                        reverse: false,
+                    },
+                    limit: 1,
+                });
+
+                // Previous message.
+                requests.push({
+                    methodname: 'search_messages',
+                    query: {
+                        ...query,
+                        ...params.search,
+                        startid: params.messageid,
+                        reverse: true,
+                    },
+                    limit: 1,
+                });
+            } else {
+                // List of messages.
+                requests.push({
+                    methodname: 'search_messages',
+                    query: { ...query, ...params.search },
+                    offset: params.search ? undefined : params.offset,
+                    limit: params.search ? perpage + 1 : perpage,
                 });
             }
 
@@ -183,54 +247,44 @@ export async function createStore(info: Info) {
                 return [];
             }
 
-            let messageOffset: number | undefined;
             let message: Message | undefined;
+            let messageOffset: number | undefined;
+            let nextMessageId: number | undefined;
+            let prevMessageId: number | undefined;
+            let listMessages: ReadonlyArray<MessageSummary> = [];
+
             if (params.messageid) {
+                prevMessageId = (responses.pop() as MessageSummary[])[0]?.id;
+                nextMessageId = (responses.pop() as MessageSummary[])[0]?.id;
                 messageOffset = responses.pop() as number;
                 message = responses.pop() as Message;
-                responses.pop(); // set_unread response.
+            } else {
+                listMessages = responses.pop() as ReadonlyArray<MessageSummary>;
+                if (params.search) {
+                    if (params.search.reverse) {
+                        prevMessageId = listMessages[perpage]?.id;
+                        nextMessageId = params.search.startid;
+                        listMessages = listMessages.slice(0, perpage).reverse();
+                    } else {
+                        prevMessageId = params.search.startid;
+                        nextMessageId = listMessages[perpage]?.id;
+                        listMessages = listMessages.slice(0, perpage);
+                    }
+                }
             }
-            let list = responses.pop() as SearchList;
-            const menu = responses.pop() as Menu;
+            let totalCount = responses.pop() as number;
+            let labels = responses.pop() as ReadonlyArray<Label>;
+            let courses = responses.pop() as ReadonlyArray<Course>;
+            let drafts = responses.pop() as number;
+            let unread = responses.pop() as number;
 
             // Check if the course or label exists.
             if (
-                (params.type == 'course' && !menu.courses.find((c) => c.id == params.courseid)) ||
-                (params.type == 'label' && !menu.labels.find((l) => l.id == params.labelid))
+                (params.tray == 'course' && !courses.find((c) => c.id == params.courseid)) ||
+                (params.tray == 'label' && !labels.find((l) => l.id == params.labelid))
             ) {
-                await store.navigate({ type: 'inbox' }, true);
+                await store.navigate({ tray: 'inbox' }, true);
                 return responses;
-            }
-
-            // In some corner cases, when navigating to the previous page, less messages than than perpage may be fetched.
-            // Fetch additional messages to fill the page.
-            if (list.messages.length < perpage && list.nextid) {
-                const request: SearchIndexRequest = {
-                    methodname: 'search_index',
-                    type: params.type,
-                    itemid,
-                    query: {
-                        ...params.query,
-                        startid: list.nextid,
-                        backwards: false,
-                        limit: perpage - list.messages.length,
-                    },
-                };
-                let list2: SearchList;
-                try {
-                    [list2] = await callServices([request]);
-                } catch (error) {
-                    store.setError(error as ServiceError);
-                    return [];
-                }
-                list = {
-                    totalcount: list2.totalcount,
-                    messages: list.messages.concat(list2.messages),
-                    firstoffset: list.firstoffset,
-                    lastoffset: list2.lastoffset,
-                    previousid: list.previousid,
-                    nextid: list2.nextid,
-                };
             }
 
             // Check if the user has done some other action during the web service calls.
@@ -238,116 +292,34 @@ export async function createStore(info: Info) {
                 return responses;
             }
 
-            // Normalize current params.
-            params = {
-                ...params,
-                query: {
-                    ...params.query,
-                    startid: list.messages.length > 0 ? list.messages[0].id : undefined,
-                    backwards: false,
-                },
-            };
-
-            // Calculate next/previous params.
-            let nextPageParams: ViewParams | undefined;
-            let prevPageParams: ViewParams | undefined;
-            if (message) {
-                // Displaying a single message.
-                let index = list.messages.findIndex((m) => m.id == message?.id);
-                let nextId: number;
-                let prevId: number;
-                if (index >= 0) {
-                    // Message is on the list.
-                    nextId =
-                        index < list.messages.length - 1
-                            ? list.messages[index + 1].id
-                            : list.nextid;
-                    prevId = index > 0 ? list.messages[index - 1].id : list.previousid;
-                } else {
-                    // Message not on the list, find closest message.
-                    index = list.messages.findIndex(
-                        (m) =>
-                            m.time <= message!.time &&
-                            (m.time < message!.time || m.id < message!.id),
-                    );
-                    nextId = index < list.messages.length ? list.messages[index].id : list.nextid;
-                    prevId = index > 0 ? list.messages[index].id : list.previousid;
-                }
-                if (nextId) {
-                    if (nextId == list.nextid) {
-                        nextPageParams = {
-                            ...params,
-                            messageid: nextId,
-                            query: { ...params.query, startid: nextId, backwards: false },
-                        };
-                    } else {
-                        nextPageParams = {
-                            ...params,
-                            messageid: nextId,
-                        };
-                    }
-                }
-                if (prevId) {
-                    if (prevId == list.previousid) {
-                        prevPageParams = {
-                            ...params,
-                            messageid: prevId,
-                            query: { ...params.query, startid: prevId, backwards: true },
-                        };
-                    } else {
-                        prevPageParams = {
-                            ...params,
-                            messageid: prevId,
-                        };
-                    }
-                }
-            } else {
-                // Displaying a list of messages.
-                if (list.nextid) {
-                    nextPageParams = {
-                        ...params,
-                        query: {
-                            ...params.query,
-                            startid: list.nextid,
-                            backwards: false,
-                        },
-                    };
-                }
-                if (list.previousid) {
-                    prevPageParams = {
-                        ...params,
-                        query: {
-                            ...params.query,
-                            startid: list.previousid,
-                            backwards: true,
-                        },
-                    };
-                }
-            }
-
             // Update state.
             update((state): State => {
-                const selectedMessageIds = new Set(
-                    list.messages
-                        .filter((m) => state.selectedMessageIds.has(m.id))
-                        .map((m) => m.id),
-                );
                 return {
                     ...state,
                     params,
-                    menu,
-                    list,
-                    message,
+                    unread,
+                    drafts,
+                    courses,
+                    labels,
                     messageOffset,
-                    nextPageParams,
-                    prevPageParams,
-                    selectedMessageIds,
-                    targetMessageIds: params.messageid
-                        ? new Set([params.messageid])
-                        : selectedMessageIds,
+                    totalCount,
+                    listMessages,
+                    message,
+                    nextMessageId,
+                    prevMessageId,
+                    selectedMessages: new Map(
+                        message
+                            ? [[message.id, message]]
+                            : state.message
+                            ? []
+                            : listMessages
+                                  .filter((message) => state.selectedMessages.has(message.id))
+                                  .map((message) => [message.id, message]),
+                    ),
                     loading: false,
                 };
             });
+
             setUrlFromViewParams(params, redirect);
 
             return responses;
@@ -370,7 +342,7 @@ export async function createStore(info: Info) {
                 methodname: 'delete_label',
                 labelid,
             };
-            store.callServicesAndRefresh([request], { type: 'inbox' });
+            store.callServicesAndRefresh([request], { tray: 'inbox' });
         },
 
         async emptyTrash() {
@@ -392,7 +364,15 @@ export async function createStore(info: Info) {
         },
 
         async navigate(params?: ViewParams, redirect = false) {
-            await store.callServicesAndRefresh([], params, redirect);
+            const requests: ServiceRequest[] = [];
+            if (params?.messageid) {
+                requests.push({
+                    methodname: 'set_unread',
+                    messageid: params.messageid,
+                    unread: false,
+                });
+            }
+            await store.callServicesAndRefresh(requests, params, redirect);
 
             // Scroll to top and prevent animations.
             update((state) => ({
@@ -401,10 +381,15 @@ export async function createStore(info: Info) {
             }));
         },
 
-        async search(query?: SearchQuery) {
+        async search(search?: SearchParams) {
             update((state) => ({
                 ...state,
-                params: { ...state.params, query },
+                params: {
+                    ...state.params,
+                    search,
+                    messageid: undefined,
+                    offset: undefined,
+                },
             }));
 
             await store.navigate();
@@ -412,24 +397,20 @@ export async function createStore(info: Info) {
 
         selectAll(type: SelectAllType) {
             update((state) => {
-                const selectedMessageIds = new Set(
-                    state.list.messages
-                        .filter(
-                            (message) =>
-                                type == 'all' ||
-                                (type == 'read' && !message.unread) ||
-                                (type == 'unread' && message.unread) ||
-                                (type == 'starred' && message.starred) ||
-                                (type == 'unstarred' && !message.starred),
-                        )
-                        .map((message) => message.id),
-                );
                 return {
                     ...state,
-                    selectedMessageIds,
-                    targetMessageIds: state.params.messageid
-                        ? new Set([state.params.messageid])
-                        : selectedMessageIds,
+                    selectedMessages: new Map(
+                        state.listMessages
+                            .filter(
+                                (message) =>
+                                    type == 'all' ||
+                                    (type == 'read' && !message.unread) ||
+                                    (type == 'unread' && message.unread) ||
+                                    (type == 'starred' && message.starred) ||
+                                    (type == 'unstarred' && !message.starred),
+                            )
+                            .map((message) => [message.id, message]),
+                    ),
                 };
             });
         },
@@ -476,9 +457,9 @@ export async function createStore(info: Info) {
 
             update((state) => ({
                 ...state,
-                messages: state.list.messages.map((message) => {
+                messages: state.listMessages.map((message) => {
                     if (messageids.includes(message.id)) {
-                        const labels = state.menu.labels.filter((label) => {
+                        const labels = state.labels.filter((label) => {
                             if (added.includes(label.id)) {
                                 return true;
                             } else if (removed.includes(label.id)) {
@@ -531,7 +512,7 @@ export async function createStore(info: Info) {
         async setStarred(messageids: ReadonlyArray<number>, starred: boolean) {
             update((state) => ({
                 ...state,
-                messages: state.list.messages.map((message) => {
+                messages: state.listMessages.map((message) => {
                     if (messageids.includes(message.id)) {
                         return { ...message, starred };
                     } else {
@@ -555,7 +536,7 @@ export async function createStore(info: Info) {
 
             update((state) => ({
                 ...state,
-                messages: state.list.messages.map((message) => {
+                messages: state.listMessages.map((message) => {
                     if (messageids.includes(message.id)) {
                         return { ...message, unread };
                     } else {
@@ -583,21 +564,17 @@ export async function createStore(info: Info) {
 
         toggleSelected(id: number) {
             update((state) => {
-                const selectedMessageIds = new Set(
-                    state.list.messages
-                        .filter(
-                            (message) =>
-                                (message.id != id && state.selectedMessageIds.has(message.id)) ||
-                                (message.id == id && !state.selectedMessageIds.has(message.id)),
-                        )
-                        .map((message) => message.id),
-                );
                 return {
                     ...state,
-                    selectedMessageIds,
-                    targetMessageIds: state.params.messageid
-                        ? new Set([state.params.messageid])
-                        : selectedMessageIds,
+                    selectedMessages: new Map(
+                        state.listMessages
+                            .filter((message) =>
+                                message.id == id
+                                    ? !state.selectedMessages.has(message.id)
+                                    : state.selectedMessages.has(message.id),
+                            )
+                            .map((message) => [message.id, message]),
+                    ),
                 };
             });
         },

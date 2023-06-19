@@ -22,20 +22,20 @@
     let prevNavigationId = 0;
 
     $: heading =
-        $store.params.type == 'inbox'
+        $store.params.tray == 'inbox'
             ? $store.strings.inbox
-            : $store.params.type == 'starred'
+            : $store.params.tray == 'starred'
             ? $store.strings.starredmail
-            : $store.params.type == 'sent'
+            : $store.params.tray == 'sent'
             ? $store.strings.sentmail
-            : $store.params.type == 'drafts'
+            : $store.params.tray == 'drafts'
             ? $store.strings.drafts
-            : $store.params.type == 'trash'
+            : $store.params.tray == 'trash'
             ? $store.strings.trash
-            : $store.params.type == 'label'
-            ? $store.menu.labels.find((l) => l.id == $store.params.labelid)?.name || ''
-            : $store.params.type == 'course'
-            ? $store.menu.courses.find((c) => c.id == $store.params.courseid)?.fullname || ''
+            : $store.params.tray == 'label'
+            ? $store.labels.find((l) => l.id == $store.params.labelid)?.name || ''
+            : $store.params.tray == 'course'
+            ? $store.courses.find((c) => c.id == $store.params.courseid)?.fullname || ''
             : '';
 
     $: title = $store.message ? $store.message.subject : heading;
@@ -106,7 +106,10 @@
                 <Menu
                     settings={$store.settings}
                     strings={$store.strings}
-                    menu={$store.menu}
+                    unread={$store.unread}
+                    drafts={$store.drafts}
+                    courses={$store.courses}
+                    labels={$store.labels}
                     params={$store.params}
                     onClick={(params) => store.navigate(params)}
                 />

@@ -27,7 +27,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="local-mail-error-modal-title">
-                    {$store.error?.message}
+                    {$store.error?.error}
                 </h5>
                 <button
                     type="button"
@@ -38,13 +38,13 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            {#if $store.error?.debuginfo || $store.error?.backtrace}
+            {#if $store.error?.debuginfo || $store.error?.stacktrace}
                 <div class="modal-body">
                     {#if $store.error?.debuginfo}
                         <p>{$store.error?.debuginfo}</p>
                     {/if}
-                    {#if $store.error?.backtrace}
-                        <pre>{$store.error?.backtrace}</pre>
+                    {#if $store.error?.stacktrace}
+                        <pre>{$store.error?.stacktrace}</pre>
                     {/if}
                 </div>
             {/if}

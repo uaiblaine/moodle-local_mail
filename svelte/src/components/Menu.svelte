@@ -1,26 +1,29 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { Menu, MenuCourse, Settings, Strings } from '../lib/services';
-    import type { ViewParams, ViewType } from '../lib/store';
+    import type { Label, Course, Settings, Strings } from '../lib/services';
+    import type { ViewParams, ViewTray } from '../lib/store';
     import MenuItem from './MenuItem.svelte';
 
     export let settings: Settings;
     export let strings: Strings;
-    export let menu: Menu;
+    export let unread: number;
+    export let drafts: number;
+    export let courses: ReadonlyArray<Course>;
+    export let labels: ReadonlyArray<Label>;
     export let params: ViewParams | undefined = undefined;
     export let onClick: ((params: ViewParams) => void) | undefined = undefined;
     export let flush = false;
 
-    $: trayVisible = (type: ViewType): boolean => {
-        return settings.globaltrays.includes(type) || params?.type == type;
+    $: trayVisible = (type: ViewTray): boolean => {
+        return settings.globaltrays.includes(type) || params?.tray == type;
     };
 
-    $: courseVisible = (course: MenuCourse): boolean => {
+    $: courseVisible = (course: Course): boolean => {
         return (
             settings.coursetrays == 'all' ||
             (settings.coursetrays == 'unread' && course.unread > 0) ||
-            (params?.type == 'course' && params?.courseid == course.id)
+            (params?.tray == 'course' && params?.courseid == course.id)
         );
     };
 </script>
@@ -29,17 +32,17 @@
     <MenuItem
         icon="fa-inbox"
         text={strings.inbox}
-        count={menu.unread}
-        params={{ type: 'inbox' }}
-        active={params?.type == 'inbox'}
+        count={unread}
+        params={{ tray: 'inbox' }}
+        active={params?.tray == 'inbox'}
         {onClick}
     />
     {#if trayVisible('starred')}
         <MenuItem
             icon="fa-star"
             text={strings.starredmail}
-            params={{ type: 'starred' }}
-            active={params?.type == 'starred'}
+            params={{ tray: 'starred' }}
+            active={params?.tray == 'starred'}
             {onClick}
         />
     {/if}
@@ -47,8 +50,8 @@
         <MenuItem
             icon="fa-paper-plane"
             text={strings.sentmail}
-            params={{ type: 'sent' }}
-            active={params?.type == 'sent'}
+            params={{ tray: 'sent' }}
+            active={params?.tray == 'sent'}
             {onClick}
         />
     {/if}
@@ -56,9 +59,9 @@
         <MenuItem
             icon="fa-file"
             text={strings.drafts}
-            count={menu.drafts}
-            params={{ type: 'drafts' }}
-            active={params?.type == 'drafts'}
+            count={drafts}
+            params={{ tray: 'drafts' }}
+            active={params?.tray == 'drafts'}
             {onClick}
         />
     {/if}
@@ -66,30 +69,30 @@
         <MenuItem
             icon="fa-trash"
             text={strings.trash}
-            params={{ type: 'trash' }}
-            active={params?.type == 'trash'}
+            params={{ tray: 'trash' }}
+            active={params?.tray == 'trash'}
             {onClick}
         />
     {/if}
-    {#each menu.labels as label (label.id)}
+    {#each labels as label (label.id)}
         <MenuItem
             icon="fa-tag"
             text={label.name}
             count={label.unread}
             color={label.color}
-            params={{ type: 'label', labelid: label.id }}
-            active={params?.type == 'label' && params?.labelid == label.id}
+            params={{ tray: 'label', labelid: label.id }}
+            active={params?.tray == 'label' && params?.labelid == label.id}
             {onClick}
         />
     {/each}
-    {#each menu.courses as course (course.id)}
+    {#each courses as course (course.id)}
         {#if courseVisible(course)}
             <MenuItem
                 icon="fa-university"
                 text={settings.coursetraysname == 'fullname' ? course.fullname : course.shortname}
                 count={course.unread}
-                params={{ type: 'course', courseid: course.id }}
-                active={params?.type == 'course' && params?.courseid == course.id}
+                params={{ tray: 'course', courseid: course.id }}
+                active={params?.tray == 'course' && params?.courseid == course.id}
                 {onClick}
             />
         {/if}

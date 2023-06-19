@@ -11,34 +11,32 @@
     export let dropup = false;
 
     $: label =
-        $store.params.type == 'label' && $store.message == null
-            ? $store.menu.labels.find((label) => label.id == $store.params.labelid)
+        $store.params.tray == 'label' && $store.message == null
+            ? $store.labels.find((label) => label.id == $store.params.labelid)
             : null;
 
-    $: someRead = $store.list.messages.some(
-        (message) => $store.targetMessageIds.has(message.id) && !message.unread,
-    );
-    $: someUnread = $store.list.messages.some(
-        (message) => $store.targetMessageIds.has(message.id) && message.unread,
-    );
-    $: someStarred = $store.list.messages.some(
-        (message) => $store.targetMessageIds.has(message.id) && message.starred,
-    );
-    $: someUnstarred = $store.list.messages.some(
-        (message) => $store.targetMessageIds.has(message.id) && !message.starred,
-    );
-
+    $: messages = Array.from($store.selectedMessages.values());
+    $: someRead = messages.some((message) => !message.unread);
+    $: someUnread = messages.some((message) => message.unread);
+    $: someStarred = messages.some((message) => message.starred);
+    $: someUnstarred = messages.some((message) => !message.starred);
     $: disabled =
-        $store.params.type == 'trash'
-            ? !$store.list.totalcount
+        $store.params.tray == 'trash'
+            ? !$store.totalCount
             : !label && !someRead && !someUnread && !someStarred && !someUnstarred;
 
     const setUnread = (unread: boolean) => {
-        store.setUnread(Array.from($store.targetMessageIds.values()), unread);
+        store.setUnread(
+            messages.map((message) => message.id),
+            unread,
+        );
     };
 
     const setStarred = (starred: boolean) => {
-        store.setStarred(Array.from($store.targetMessageIds.values()), starred);
+        store.setStarred(
+            messages.map((message) => message.id),
+            starred,
+        );
     };
 </script>
 
@@ -56,7 +54,7 @@
         <i class="fa fa-fw fa-ellipsis-v" />
     </button>
     <div class="dropdown-menu">
-        {#if $store.params.type == 'trash'}
+        {#if $store.params.tray == 'trash'}
             <button
                 type="button"
                 class="dropdown-item"
@@ -110,11 +108,11 @@
         {/if}
     </div>
 
-    {#if $store.params.type == 'trash'}
+    {#if $store.params.tray == 'trash'}
         <ConfirmationModal
             id="local-mail-action-empty-trash-modal"
             title={$store.strings.emptytrash}
-            body={replaceStringParams($store.strings.messagesdeleteconfirm, $store.list.totalcount)}
+            body={replaceStringParams($store.strings.messagesdeleteconfirm, $store.totalCount)}
             cancelText={$store.strings.cancel}
             confirmText={$store.strings.emptytrash}
             confirmCallback={() => store.emptyTrash()}

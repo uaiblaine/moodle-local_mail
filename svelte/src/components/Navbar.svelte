@@ -2,28 +2,31 @@
 
 <script lang="ts">
     import MenuComponent from './Menu.svelte';
-    import { type Menu, type Settings, type Strings } from '../lib/services';
-    import { type ViewParams } from '../lib/store';
+    import type { Course, Label, Settings, Strings } from '../lib/services';
+    import type { ViewParams } from '../lib/store';
     import ComposeButton from './ComposeButton.svelte';
     import PreferencesButton from './PreferencesButton.svelte';
     import { viewUrl } from '../lib/url';
 
     export let settings: Settings;
     export let strings: Strings;
-    export let menu: Menu;
+    export let unread: number;
+    export let drafts: number;
+    export let courses: ReadonlyArray<Course>;
+    export let labels: ReadonlyArray<Label>;
     export let params: ViewParams | undefined = undefined;
     export let onClick: ((params: ViewParams) => void) | undefined = undefined;
 
     let viewportWidth: number;
 
-    $: displayMenu = settings.globaltrays.length > 0 || menu.labels.length > 0;
+    $: displayMenu = settings.globaltrays.length > 0 || labels.length > 0;
 
     $: handleClick = (event: Event) => {
         if (displayMenu) {
             event.preventDefault();
         } else if (onClick) {
             event.preventDefault();
-            onClick({ type: 'inbox' });
+            onClick({ tray: 'inbox' });
         }
     };
 </script>
@@ -36,12 +39,12 @@
         aria-expanded="false"
         aria-label={strings.togglemailmenu}
         class="btn h-100 position-relative d-flex align-items-center px-2 py-0"
-        href={viewUrl({ type: 'inbox' })}
+        href={viewUrl({ tray: 'inbox' })}
         on:click={handleClick}
     >
         <i class="fa fa-fw fa-envelope-o" aria-label={strings.plugginname} />
-        {#if menu.unread > 0}
-            <div class="local-mail-navbar-count count-container">{menu.unread}</div>
+        {#if unread > 0}
+            <div class="local-mail-navbar-count count-container">{unread}</div>
         {/if}
     </a>
     <div class="local-mail-navbar-dropdown dropdown-menu dropdown-menu-right p-0">
@@ -50,7 +53,17 @@
             <PreferencesButton {strings} />
         </div>
         <hr class="m-0" />
-        <MenuComponent {settings} {strings} {menu} {params} {onClick} flush={true} />
+        <MenuComponent
+            {settings}
+            {strings}
+            {unread}
+            {drafts}
+            {courses}
+            {labels}
+            {params}
+            {onClick}
+            flush={true}
+        />
     </div>
 </div>
 

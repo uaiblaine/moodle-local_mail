@@ -2,12 +2,12 @@
 
 <script lang="ts">
     import { jQueryEvents } from '../actions/jQueryEvents';
-    import type { MenuLabel } from '../lib/services';
+    import type { Label } from '../lib/services';
     import type { Store } from '../lib/store';
     import { colors, normalizeLabelName } from '../lib/utils';
 
     export let store: Store;
-    export let label: MenuLabel | undefined = undefined;
+    export let label: Label | undefined = undefined;
 
     let nameEl: HTMLElement;
 
@@ -15,7 +15,7 @@
     $: name = label?.name || '';
     $: selectedColor = label?.color || colors[0];
     $: emptyName = normalizeLabelName(name) == '';
-    $: repeatedName = $store.menu.labels.some(
+    $: repeatedName = $store.labels.some(
         (l) => l.id != label?.id && l.name == normalizeLabelName(name),
     );
     $: validName = !emptyName && !repeatedName;
@@ -32,7 +32,7 @@
         } else {
             const id = await store.createLabel(name, selectedColor);
             if (id) {
-                store.setLabels(Array.from($store.targetMessageIds.values()), [id], []);
+                store.setLabels(Array.from($store.selectedMessages.keys()), [id], []);
             }
         }
     };

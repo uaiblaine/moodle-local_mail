@@ -14,8 +14,8 @@
     type="button"
     class="local-mail-action-delete-forever btn flex-grow-0"
     class:btn-secondary={!transparent}
-    class:disabled={!$store.targetMessageIds.size}
-    disabled={!$store.targetMessageIds.size}
+    class:disabled={!$store.selectedMessages.size}
+    disabled={!$store.selectedMessages.size}
     title={$store.strings.deleteforever}
     data-toggle="modal"
     data-target="#local-mail-action-delete-forever-modal"
@@ -26,12 +26,12 @@
 <ConfirmationModal
     id="local-mail-action-delete-forever-modal"
     title={$store.strings.deleteforever}
-    body={replaceStringParams($store.strings.messagesdeleteconfirm, $store.targetMessageIds.size)}
+    body={replaceStringParams($store.strings.messagesdeleteconfirm, $store.selectedMessages.size)}
     cancelText={$store.strings.cancel}
     confirmText={$store.strings.deleteforever}
     confirmCallback={() =>
         store.setDeleted(
-            Array.from($store.targetMessageIds.values()),
+            Array.from($store.selectedMessages.keys()),
             DeletedStatus.DeletedForever,
             true,
         )}

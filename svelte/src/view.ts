@@ -25,7 +25,10 @@ async function init() {
             props: {
                 settings: store.get().settings,
                 strings: store.get().strings,
-                menu: store.get().menu,
+                unread: store.get().unread,
+                drafts: store.get().drafts,
+                courses: store.get().courses,
+                labels: store.get().labels,
                 onClick: (params: ViewParams) => store.navigate(params),
             },
         });
@@ -35,7 +38,10 @@ async function init() {
             navbar.$set({
                 settings: state.settings,
                 strings: state.strings,
-                menu: state.menu,
+                unread: state.unread,
+                drafts: state.drafts,
+                courses: state.courses,
+                labels: state.labels,
             });
         });
     }

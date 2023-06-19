@@ -9,18 +9,18 @@
     export let store: Store;
 
     $: recentParams = {
-        type: $store.params.type,
+        tray: $store.params.tray,
         courseid: $store.params.courseid,
         labelid: $store.params.labelid,
     };
 </script>
 
-{#if !$store.list.messages.length && !$store.list.nextid}
+{#if !$store.listMessages.length}
     <div in:fade|local={{ delay: 400 }} class="alert alert-info">
         <div>
             {$store.strings.nomessagestoview}
         </div>
-        {#if $store.list.totalcount > 0}
+        {#if $store.totalCount > 0}
             <a
                 class="btn btn-info text-white mt-3"
                 href={viewUrl(recentParams)}
