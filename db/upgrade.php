@@ -462,5 +462,17 @@ function xmldb_local_mail_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2023060705, 'local', 'mail');
     }
 
+    // Drop local_mail_index table.
+
+    if ($oldversion < 2023061600) {
+        $table = new xmldb_table('local_mail_index');
+
+        if ($dbman->table_exists($table)) {
+            $dbman->drop_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2023061600, 'local', 'mail');
+    }
+
     return true;
 }
