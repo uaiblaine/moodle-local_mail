@@ -14,26 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Event observers used in local mail.
- *
- * @package    local-mail
- * @copyright  2014 Institut Obert de Catalunya
- * @author     Marc Català <reskit@gmail.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
+namespace local_mail;
 
-/**
- * Event observer for local_mail.
- */
-class local_mail_observer {
+class exception extends \moodle_exception {
 
     /**
-     * Triggered via course_deleted event.
+     * Constructor.
      *
-     * @param \core\event\course_deleted $event
+     * @param string $errorcode Language string name.
+     * @param ?mixed $a Language string parameters.
+     * @param ?string $debuginfo Optional debugging information
      */
-    public static function course_deleted(\core\event\course_deleted $event) {
-        local_mail\course::delete_messages($event->objectid);
+    public function __construct(string $errorcode, mixed $a=null, string $debuginfo=null) {
+        parent::__construct($errorcode, 'local_mail', '', $a, $debuginfo);
     }
 }

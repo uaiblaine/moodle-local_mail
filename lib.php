@@ -21,10 +21,14 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_mail\external;
+use local_mail\message;
+use local_mail\user;
+use local_mail\search;
+
 defined('MOODLE_INTERNAL') || die;
 
 require_once($CFG->dirroot . '/local/mail/locallib.php');
-
 
 function local_mail_extend_navigation($root) {
     global $COURSE, $PAGE;
@@ -89,11 +93,13 @@ function local_mail_pluginfile($course, $cm, $context, $filearea, $args,
 
     require_login($SITE, false);
 
+    $user = user::current();
+
     // Check message.
 
     $messageid = (int) array_shift($args);
-    $message = local_mail_message::fetch($messageid);
-    if ($filearea != 'message' || !$message || !$message->viewable($USER->id, true)) {
+    $message = message::fetch($messageid);
+    if ($filearea != 'message' || !$message || !$user->can_view_files($message)) {
         return false;
     }
 
@@ -119,11 +125,14 @@ function local_mail_pluginfile($course, $cm, $context, $filearea, $args,
 function local_mail_render_navbar_output(\renderer_base $renderer) {
     global $PAGE;
 
-    if (!isloggedin() || isguestuser() || \core_user::awaiting_action() || !local_mail_is_installed()) {
+    if (!local_mail_is_installed()) {
         return '';
     }
 
-    $menu = local_mail_get_menu();
+    $user = user::current();
+    if (!$user) {
+        return;
+    }
 
     // Fallback link to avoid layout changes during page load.
     $url = new moodle_url('/local/mail/view.php', ['t' => 'inbox']);
@@ -146,9 +155,18 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
         $container = html_writer::div($link, '', ['id' => 'local-mail-navbar']);
 
         // Pass all data via a script tag to avoid web service requests.
-        $strings = local_mail_get_strings();
+        $strings = external::get_strings_raw();
+
+        $search = new search($user);
+        $search->unread = true;
+        $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
+        $unread = $search->count();
+        $search = new search($user);
+        $search->draft = true;
+        $drafts = $search->count();
+
         $data = [
-            'settings' => local_mail_get_settings(),
+            'settings' => external::get_settings_raw(),
             'strings' => [
                 'togglemailmenu' => $strings['togglemailmenu'],
                 'compose' => $strings['compose'],
@@ -159,7 +177,10 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
                 'drafts' => $strings['drafts'],
                 'trash' => $strings['trash'],
             ],
-            'menu' => $menu,
+            'unread' => $unread,
+            'drafts' => $drafts,
+            'courses' => external::get_courses_raw(),
+            'labels' => external::get_labels_raw(),
         ];
         $datascript = html_writer::script('window.local_mail_navbar_data = '. json_encode($data));
         $sveltescript = local_mail_svelte_script('src/navbar.ts');

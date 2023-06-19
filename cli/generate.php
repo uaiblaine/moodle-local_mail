@@ -14,12 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_mail;
+
 define('CLI_SCRIPT', true);
 
 require(__DIR__ . '/../../../config.php');
 require_once($CFG->dirroot.'/course/lib.php');
 require_once($CFG->libdir.'/clilib.php');
-require_once($CFG->dirroot.'/local/mail/message.class.php');
 
 const EMOJIS = ['😀', '😛', '😱', '👍'];
 const CONSONANTS = ['b', 'c', 'ç', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'x', 'y', 'z'];
@@ -56,12 +57,13 @@ const REPLY_ALL_FREQ = 0.5;
 const UNREAD_FREQ_EXP = 4;
 const STARRED_FREQ = 0.2;
 const DELETED_FREQ = 0.1;
-const LABEL_FREQ = 0.1;
+const MESSAGE_LABEL_EX = 0;
+const MESSAGE_LABEL_SD = 1;
 
 set_debugging(DEBUG_DEVELOPER, true);
 
 function main() {
-    global $CFG, $DB;
+    global $DB;
 
     raise_memory_limit(MEMORY_HUGE);
 
@@ -72,11 +74,11 @@ function main() {
     }
     cli_writeln('');
 
-    $adminid = 0;
+    $admin = null;
     $adminname = trim(cli_input("Name of a user that will receive all mail as BCC [none]", ''));
     if ($adminname) {
-        $adminid = $DB->get_field('user', 'id', ['username' => $adminname, 'deleted' => 0, 'confirmed' => 1]);
-        if (!$adminid) {
+        $admin = user::fetch($DB->get_field('user', 'id', ['username' => $adminname]));
+        if (!$admin) {
             cli_error('User not found.');
         }
     }
@@ -91,41 +93,36 @@ function main() {
     $starttime = time();
 
     $fs = get_file_storage();
-    $select = 'id <> :guestid AND deleted = 0';
-    $params = ['guestid' => $CFG->siteguest];
-    $userids = array_keys($DB->get_records_select('user', $select, $params, 'id ASC', 'id'));
-    $courses = get_courses('all', 'c.id ASC', 'c.id');
-    unset($courses[SITEID]);
-    $courseids = array_keys($courses);
+    $courses = course::fetch_many(array_keys(get_courses('all', 'c.sortorder', 'c.id')));
 
-    delete_messages($fs, $courseids);
-    generate_user_labels($userids);
-    foreach ($courseids as $courseid) {
-        generate_course_messages($fs, $courseid, $adminid, $countperuser);
+    delete_messages($courses);
+    generate_user_labels();
+    foreach ($courses as $course) {
+        generate_course_messages($fs, $course, $admin, $countperuser);
     }
 
     $seconds = (int) (time() - $starttime);
     cli_writeln("\n\nFinished in $seconds seconds.");
 }
 
-function delete_messages(file_storage $fs, array $courseids) {
+function delete_messages(array $courses) {
     global $DB;
 
-    foreach ($courseids as $courseid) {
-        print_progress("Deleting course mail", count($courseids));
+    foreach ($courses as $course) {
+        print_progress("Deleting course mail", count($courses));
 
-        local_mail_message::delete_course($courseid);
-        $context = context_course::instance($courseid);
         $transaction = $DB->start_delegated_transaction();
-        $fs->delete_area_files($context->id, 'local_mail');
+        course::delete_messages($course->id);
         $transaction->allow_commit();
     }
 }
 
-function add_random_attachments(file_storage $fs, local_mail_message $message, int $count) {
-    $context = context_course::instance($message->course()->id);
+function add_random_attachments(\file_storage $fs, message $message) {
+    $context = $message->course->context();
 
     $filenames = [];
+
+    $count = random_count(0, ATTACHMENTS_EX, ATTACHMENTS_SD);
 
     for ($i = 0; $i < $count; $i++) {
         $filename = '';
@@ -137,11 +134,11 @@ function add_random_attachments(file_storage $fs, local_mail_message $message, i
             'contextid' => $context->id,
             'component' => 'local_mail',
             'filearea' => 'message',
-            'itemid' => $message->id(),
+            'itemid' => $message->id,
             'filepath' => '/',
             'filename' => $filename,
-            'timecreated' => (int) $message->time(),
-            'timemodified' => (int) $message->time(),
+            'timecreated' => (int) $message->time,
+            'timemodified' => (int) $message->time,
             'userid' => $message->sender()->id,
             'mimetype' => 'text/html',
         ];
@@ -149,44 +146,42 @@ function add_random_attachments(file_storage $fs, local_mail_message $message, i
     }
 }
 
-function add_random_recipients(local_mail_message $message, array $userids): void {
-    $counts = [
-        'to' => random_count(1, TO_RECIPIENTS_EX, TO_RECIPIENTS_SD),
-        'cc' => random_count(0, CC_RECIPIENTS_EX, CC_RECIPIENTS_SD),
-        'bcc' => random_count(0, BCC_RECIPIENTS_EX, BCC_RECIPIENTS_SD)
-    ];
-    $counts['to'] = min($counts['to'], count($userids) - 1);
-    $counts['cc'] = min($counts['cc'], count($userids) - 1 - $counts['to']);
-    $counts['bcc'] = min($counts['bcc'], count($userids) - 1 - $counts['to'] - $counts['cc']);
+function add_random_recipients(message $message, array $users): void {
+    $counts = [];
+    $maxcount = count($users) - 1;
+    $counts[message::ROLE_TO] = min($maxcount, random_count(1, TO_RECIPIENTS_EX, TO_RECIPIENTS_SD));
+    $maxcount -= $counts[message::ROLE_TO];
+    $counts[message::ROLE_CC] = min($maxcount, random_count(0, CC_RECIPIENTS_EX, CC_RECIPIENTS_SD));
+    $maxcount -= $counts[message::ROLE_CC];
+    $counts[message::ROLE_BCC] = min($maxcount, random_count(0, BCC_RECIPIENTS_EX, BCC_RECIPIENTS_SD));
 
     foreach ($counts as $role => $count) {
         while ($count > 0) {
-            $userid = random_item($userids);
-            if ($userid != $message->sender()->id && !$message->has_recipient($userid)) {
-                $message->add_recipient($role, $userid);
+            $user = random_item($users);
+            if ($user->id != $message->sender()->id && !$message->has_recipient($user)) {
+                $message->add_recipient($user, $role);
                 $count--;
             }
         }
     }
 }
 
-function generate_course_messages(file_storage $fs, int $courseid, int $adminid, int $countperuser): void {
+function generate_course_messages(\file_storage $fs, course $course, ?user $admin, int $countperuser): void {
     global $DB;
 
-    $context = context_course::instance($courseid);
-    $userids = array_keys(get_enrolled_users($context));
-    if (count($userids) < 2) {
+    $users = user::fetch_many(array_keys(get_enrolled_users($course->context())));
+    if (count($users) < 2) {
         return;
     }
 
-    $count = $countperuser * count($userids);
+    $count = $countperuser * count($users);
     $endtime = time();
     $starttime = $endtime - 365 * 86400;
     $sentmessages = [];
     $transaction = null;
 
     for ($i = 0; $i < $count; $i++) {
-        print_progress("Generating messages for course $courseid", $count);
+        print_progress("Generating messages for course " . $course->shortname, $count);
         if ($i % 10 == 0) {
             $transaction?->allow_commit();
             $transaction = $DB->start_delegated_transaction();
@@ -195,13 +190,13 @@ function generate_course_messages(file_storage $fs, int $courseid, int $adminid,
         if ($i > 0 && random_bool(REPLY_FREQ)) {
             $message = generate_random_reply($fs, random_item($sentmessages), $time);
         } else if ($i > 0 && random_bool(FORWARD_FREQ / (1 - REPLY_FREQ))) {
-            $message = generate_random_forward($fs, random_item($sentmessages), $userids, $time);
+            $message = generate_random_forward($fs, random_item($sentmessages), $users, $time);
         } else {
-            $message = generate_random_message($fs, $courseid, $userids, $adminid);
+            $message = generate_random_message($fs, $course, $users, $time);
         }
         if ($i == 0 || !random_bool(DRAFT_FREQ)) {
-            if ($adminid > 0 && $message->sender()->id != $adminid && !$message->has_recipient($adminid)) {
-                $message->add_recipient('bcc', $adminid);
+            if ($admin && $message->sender()->id != $admin->id && !$message->has_recipient($admin)) {
+                $message->add_recipient($admin, message::ROLE_BCC);
             }
             $message->send($time);
             $sentmessages[] = $message;
@@ -220,52 +215,50 @@ function generate_course_messages(file_storage $fs, int $courseid, int $adminid,
     $transaction?->allow_commit();
 }
 
-function generate_random_forward(file_storage $fs, local_mail_message $message, array $userids, int $time): local_mail_message {
-    $users = array_merge($message->recipients('to'), $message->recipients('cc'));
-    $user = random_item($users);
-    $forward = $message->forward($user->id, $time);
-    $attachments = random_count(0, ATTACHMENTS_EX, ATTACHMENTS_SD);
-    $forward->save($forward->subject(), random_content(), FORMAT_HTML, $attachments, $time);
-    add_random_attachments($fs, $message, $attachments);
-    add_random_recipients($forward, $userids);
+function generate_random_forward(\file_storage $fs, message $message, array $users, int $time): message {
+    $sender = random_item($message->recipients(message::ROLE_TO, message::ROLE_CC));
+    $forward = $message->forward($sender, $time);
+    add_random_attachments($fs, $message);
+    add_random_recipients($forward, $users);
+    $forward->update($forward->subject, random_content(), FORMAT_HTML, $time);
     return $forward;
 }
 
-function generate_random_message(file_storage $fs, int $courseid, array $userids, int $time): local_mail_message {
-    $message = local_mail_message::create(random_item($userids), $courseid, $time);
-    $attachments = random_count(0, ATTACHMENTS_EX, ATTACHMENTS_SD);
-    $message->save(random_sentence(), random_content(), FORMAT_HTML, $attachments, $time);
-    add_random_attachments($fs, $message, $attachments);
-    add_random_recipients($message, $userids);
+function generate_random_message(\file_storage $fs, course $course, array $users, int $time): message {
+    $message = message::create($course, random_item($users), $time);
+    add_random_attachments($fs, $message);
+    add_random_recipients($message, $users);
+    $message->update(random_sentence(), random_content(), FORMAT_HTML, $time);
     return $message;
 }
 
-function generate_random_reply(file_storage $fs, local_mail_message $message, int $time): local_mail_message {
-    $all = (rand() / getrandmax() < REPLY_ALL_FREQ);
-    $users = array_merge($message->recipients('to'), $message->recipients('cc'));
-    $user = random_item($users);
-    $reply = $message->reply($user->id, $all, $time);
-    $attachments = random_count(0, ATTACHMENTS_EX, ATTACHMENTS_SD);
-    $reply->save($reply->subject(), random_content(), FORMAT_HTML, $attachments, $time);
-    add_random_attachments($fs, $reply, $attachments);
+function generate_random_reply(\file_storage $fs, message $message, int $time): message {
+    $all = random_bool(REPLY_ALL_FREQ);
+    $user = random_item($message->recipients(message::ROLE_TO, message::ROLE_CC));
+    $reply = $message->reply($user, $all, $time);
+    add_random_attachments($fs, $reply);
+    $reply->update($reply->subject, random_content(), FORMAT_HTML, $time);
     return $reply;
 }
 
-function generate_user_labels(array $userids) {
+function generate_user_labels() {
     global $DB;
 
-    foreach ($userids as $userid) {
-        print_progress('Generating user labels', count($userids));
+    $records = $DB->get_records('user', null, '', 'id');
+    $users = user::fetch_many(array_keys($records));
+
+    foreach ($users as $user) {
+        print_progress('Generating user labels', count($users));
 
         $transaction = $DB->start_delegated_transaction();
-        foreach (local_mail_label::fetch_user($userid) as $label) {
+        foreach (label::fetch_by_user($user) as $label) {
             $label->delete();
         }
         $n = random_count(0, LABELS_PER_USER_EX, LABELS_PER_USER_SD);
         for ($i = 0; $i < $n; $i++) {
             $name = random_word(true);
-            $color = random_item(local_mail_label::valid_colors());
-            local_mail_label::create($userid, $name, $color);
+            $color = random_item(label::COLORS);
+            label::create($user, $name, $color);
         }
         $transaction->allow_commit();
     }
@@ -375,43 +368,41 @@ function random_word($capitalize=false): string {
     return $s;
 }
 
-function set_random_deleted(local_mail_message $message): void {
-    if (!$message->draft()) {
-        $message->set_deleted($message->sender()->id, random_bool(DELETED_FREQ));
+function set_random_deleted(message $message): void {
+    if (!$message->draft) {
+        $message->set_deleted($message->sender(), random_bool(DELETED_FREQ));
         foreach ($message->recipients() as $user) {
-            $message->set_deleted($user->id, random_bool(DELETED_FREQ));
+            $message->set_deleted($user, random_bool(DELETED_FREQ));
         }
     }
 }
 
-function set_random_labels(local_mail_message $message): void {
+function set_random_labels(message $message): void {
     $users = array_merge([$message->sender()], $message->recipients());
     foreach ($users as $user) {
-        if (!$message->draft() || $user->id == $message->sender()->id) {
-            $labels = local_mail_label::fetch_user($user->id);
-            foreach ($labels as $label) {
-                if (random_bool(LABEL_FREQ)) {
-                    $message->add_label($label);
-                }
-            }
+        if (!$message->draft || $user->id == $message->sender()->id) {
+            $labels = label::fetch_by_user($user);
+            shuffle($labels);
+            $count = random_count(0, MESSAGE_LABEL_EX, MESSAGE_LABEL_SD);
+            $message->set_labels($user, array_slice($labels, 0, $count));
         }
     }
 }
 
-function set_random_starred(local_mail_message $message): void {
-    $message->set_starred($message->sender()->id, random_bool(STARRED_FREQ));
-    if (!$message->draft()) {
+function set_random_starred(message $message): void {
+    $message->set_starred($message->sender(), random_bool(STARRED_FREQ));
+    if (!$message->draft) {
         foreach ($message->recipients() as $user) {
-            $message->set_starred($user->id, random_bool(STARRED_FREQ));
+            $message->set_starred($user, random_bool(STARRED_FREQ));
         }
     }
 }
 
-function set_random_unread(local_mail_message $message, int $starttime, int $endtime): void {
-    if (!$message->draft()) {
-        $freq = pow(($message->time() - $starttime) / ($endtime - $starttime) , UNREAD_FREQ_EXP);
+function set_random_unread(message $message, int $starttime, int $endtime): void {
+    if (!$message->draft) {
+        $freq = pow(($message->time - $starttime) / ($endtime - $starttime) , UNREAD_FREQ_EXP);
         foreach ($message->recipients() as $user) {
-            $message->set_unread($user->id, random_bool($freq));
+            $message->set_unread($user, random_bool($freq));
         }
     }
 }

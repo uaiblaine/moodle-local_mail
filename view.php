@@ -14,6 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+use local_mail\external;
+use local_mail\message;
+use local_mail\user;
+
 require_once('../../config.php');
 require_once('locallib.php');
 
@@ -35,22 +39,27 @@ if (!local_mail_is_installed()) {
 if ($reply || $replyall || $forward) {
     $messageid = required_param('m', PARAM_INT);
 
-    $message = local_mail_message::fetch($messageid);
-    if (!$message || !$message->viewable($USER->id)) {
-        throw new \moodle_exception('invalidmessage', 'local_mail');
+    $message = message::fetch($messageid);
+    $user = user::current();
+    if (!$message || !$user->can_view_message($message)) {
+        throw new \moodle_exception('errormessagenotfound', 'local_mail');
     }
 
-    require_login($message->course()->id, false);
+    require_login($message->course->id, false);
     require_sesskey();
     require_capability('local/mail:usemail', $PAGE->context);
 
-    if ($forward) {
-        $newmessage = $message->forward($USER->id);
-    } else {
-        $newmessage = $message->reply($USER->id, $replyall);
+    if (!$user->can_view_message($message)) {
+        throw new \moodle_exception('errormessagenotfound', 'local_mail');
     }
 
-    $url = new moodle_url('/local/mail/compose.php', array('m' => $newmessage->id()));
+    if ($forward) {
+        $newmessage = $message->forward($user, time());
+    } else {
+        $newmessage = $message->reply($user, $replyall, time());
+    }
+
+    $url = new moodle_url('/local/mail/compose.php', array('m' => $newmessage->id));
     redirect($url);
 }
 
@@ -79,9 +88,9 @@ $PAGE->set_title(get_string('pluginname', 'local_mail'));
 // Initial data passed via a script tag.
 $data = [
     'userid' => $USER->id,
-    'settings' => local_mail_get_settings(),
-    'preferences' => local_mail_get_preferences(),
-    'strings' => local_mail_get_strings(),
+    'settings' => external::get_settings_raw(),
+    'preferences' => external::get_preferences_raw(),
+    'strings' => external::get_strings_raw(),
 ];
 
 $datascript = html_writer::script('window.local_mail_view_data = '. json_encode($data));

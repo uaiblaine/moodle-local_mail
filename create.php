@@ -21,6 +21,11 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_mail\course;
+use local_mail\message;
+use local_mail\user;
+
+
 require_once('../../config.php');
 require_once('locallib.php');
 require_once('create_form.php');
@@ -46,13 +51,13 @@ $context = context_course::instance($course->id);
 
 if ($course->id != $SITE->id && has_capability('local/mail:usemail', $context)) {
     require_sesskey();
-    $message = local_mail_message::create($USER->id, $course->id);
+    $message = message::create(course::fetch($course->id), user::current(), time());
     if ($recipients) {
         local_mail_add_recipients($message, explode(',', $recipients), $role);
     } else if (local_mail_valid_recipient($recipient)) {
-        $message->add_recipient('to', $recipient);
+        $message->add_recipient(user::fetch($recipient), message::ROLE_TO);
     }
-    $params = array('m' => $message->id());
+    $params = array('m' => $message->id);
     $url = new moodle_url('/local/mail/compose.php', $params);
     redirect($url);
 }

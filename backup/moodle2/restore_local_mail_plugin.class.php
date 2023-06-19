@@ -67,35 +67,10 @@ class restore_local_mail_plugin extends restore_local_plugin {
     public function process_local_mail_message_user($data) {
         global $DB;
 
-        $transaction = $DB->start_delegated_transaction();
-
         $data = (object) $data;
         $data->messageid = $this->get_new_parentid('local_mail_message');
         $data->userid = $this->get_mappingid('user', $data->userid);
         $DB->insert_record('local_mail_message_users', $data);
-
-        $message = $DB->get_record('local_mail_messages', array('id' => $data->messageid), '*', MUST_EXIST);
-
-        if (!$message->draft && $data->role != 'from' && !$data->deleted) {
-            $this->add_to_index($data->userid, 'inbox', 0, $message->id, $message->time, $data->unread);
-        }
-        if ($message->draft && $data->role == 'from' && !$data->deleted) {
-            $this->add_to_index($data->userid, 'draft', 0, $message->id, $message->time, $data->unread);
-        }
-        if (!$message->draft && $data->role == 'from' && !$data->deleted) {
-            $this->add_to_index($data->userid, 'sent', 0, $message->id, $message->time, $data->unread);
-        }
-        if ($data->starred && !$data->deleted) {
-            $this->add_to_index($data->userid, 'starred', 0, $message->id, $message->time, $data->unread);
-        }
-        if ((!$message->draft || $data->role == 'from') && !$data->deleted) {
-            $this->add_to_index($data->userid, 'course', $message->courseid, $message->id, $message->time, $data->unread);
-        }
-        if ($data->deleted && $data->deleted == 1) {
-            $this->add_to_index($data->userid, 'trash', 0, $message->id, $message->time, $data->unread);
-        }
-
-        $transaction->allow_commit();
     }
 
     public function process_local_mail_message_label($data) {
@@ -118,29 +93,10 @@ class restore_local_mail_plugin extends restore_local_plugin {
 
         $DB->insert_record('local_mail_message_labels', array('messageid' => $message->id, 'labelid' => $labelid));
 
-        if (!$message->draft) {
-            $conditions = array('messageid' => $message->id, 'userid' => $data->userid);
-            $messageuser = $DB->get_record('local_mail_message_users', $conditions, '*', MUST_EXIST);
-            $this->add_to_index($data->userid, 'label', $labelid, $message->id, $message->time, $messageuser->unread);
-        }
-
         $transaction->allow_commit();
     }
 
     protected function after_execute_course() {
         $this->add_related_files('local_mail', 'message', 'local_mail_message');
-    }
-
-    private function add_to_index($userid, $type, $item, $messageid, $time, $unread) {
-        global $DB;
-
-        $record = new stdClass;
-        $record->userid = $userid;
-        $record->type = $type;
-        $record->item = $item;
-        $record->messageid = $messageid;
-        $record->time = $time;
-        $record->unread = $unread;
-        $DB->insert_record('local_mail_index', $record);
     }
 }

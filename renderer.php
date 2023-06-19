@@ -21,17 +21,23 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_mail\message;
+
+defined('MOODLE_INTERNAL') || die;
+
+require_once($CFG->dirroot . '/local/mail/locallib.php');
+
 class local_mail_renderer extends plugin_renderer_base {
 
     private function custom_image_url($imagename, $component = 'moodle') {
         return $this->output->image_url($imagename, $component);
     }
 
-    public function date($message, $viewmail = false) {
+    public function date(message $message, $viewmail = false) {
         $tz = core_date::get_user_timezone();
         $date = new DateTime('now', new DateTimeZone($tz));
         $offset = ($date->getOffset() - dst_offset_on(time(), $tz)) / (3600.0);
-        $time = ($offset < 13) ? $message->time() + $offset : $message->time();
+        $time = ($offset < 13) ? $message->time + $offset : $message->time;
         $now = ($offset < 13) ? time() + $offset : time();
         $daysago = floor($now / 86400) - floor($time / 86400);
         $yearsago = (int) date('Y', $now) - (int) date('Y', $time);
@@ -267,17 +273,17 @@ class local_mail_renderer extends plugin_renderer_base {
         return $output;
     }
 
-    public function mail($message) {
+    public function mail(message $message) {
         $output = '';
         $output .= $this->output->container_start('mail_header');
         $output .= $this->output->container_start('left');
-        $output .= $this->output->user_picture($message->sender());
+        $output .= $this->output->user_picture((object) (array) $message->sender());
         $output .= $this->output->container_end();
         $output .= $this->output->container_start('mail_info');
         $output .= html_writer::link(new moodle_url('/user/view.php',
                                             array(
                                                 'id' => $message->sender()->id,
-                                                'course' => $message->course()->id
+                                                'course' => $message->course->id
                                             )),
                                     fullname($message->sender()),
                                     array('class' => 'user_from'));
@@ -299,7 +305,7 @@ class local_mail_renderer extends plugin_renderer_base {
                 $output .= html_writer::tag('span', $text, array('class' => 'mail_attachment_text'));
                 $urlparams = array(
                     't' => 'course',
-                    'm' => $message->id(),
+                    'm' => $message->id,
                     'downloadall' => '1',
                 );
                 $downloadurl = new moodle_url('/local/mail/view.php', $urlparams);

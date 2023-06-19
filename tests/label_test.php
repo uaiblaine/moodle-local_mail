@@ -23,112 +23,124 @@
 
 namespace local_mail;
 
-defined('MOODLE_INTERNAL') || die();
-
-global $CFG;
-require_once($CFG->dirroot.'/local/mail/tests/testcase.class.php');
-require_once($CFG->dirroot.'/local/mail/label.class.php');
-
 /**
- * @covers \local_mail_label
+ * @covers \local_mail\label
  */
 class label_test extends testcase {
 
-    /* 1xx -> users
-       4xx -> labels
-       5xx -> maessages */
-
-    public static function assert_label(\local_mail_label $label) {
-        self::assert_records('labels', array(
-            'id' => $label->id(),
-            'userid' => $label->userid(),
-            'name' => $label->name(),
-            'color' => $label->color(),
-        ));
-    }
-
     public function test_create() {
-        $label = \local_mail_label::create(201, 'name', 'red');
+        $generator = self::getDataGenerator();
+        $user = new user($generator->create_user());
 
-        $this->assertNotEquals(false, $label->id());
-        $this->assertEquals(201, $label->userid());
-        $this->assertEquals('name', $label->name());
-        $this->assertEquals('red', $label->color());
-        $this->assert_label($label);
+        $label = label::create($user, 'name', 'red');
+
+        self::assertInstanceOf(label::class, $label);
+        self::assertGreaterThan(0, $label->id);
+        self::assertEquals($user, $label->user);
+        self::assertEquals('name', $label->name);
+        self::assertEquals('red', $label->color);
+        self::assert_label($label);
     }
 
     public function test_delete() {
-        $label = \local_mail_label::create(201, 'label', 'red');
-        $other = \local_mail_label::create(201, 'other', 'green');
-        $this->load_records('local_mail_message_labels', [
-            ['messageid', 'courseid', 'draft', 'time',     'labelid',     'role', 'starred', 'unread', 'deleted'],
-            [ 501,         101,        0,       1234567890, $label->id(),  1,      0,         0,        0       ],
-            [ 502,         101,        1,       1234567891, $label->id(),  2,      1,         1,        0       ],
-            [ 501,         101,        0,       1234567893, $other->id(),  3,      0,         0,        1       ],
-        ]);
-        $this->load_records('local_mail_index', [
-            ['userid', 'type',  'item',        'time', 'messageid', 'unread'],
-            [ 201,     'label',  $label->id(),  1,      501,         0      ],
-            [ 201,     'label',  $label->id(),  2,      501,         0      ],
-            [ 201,     'label',  $other->id(),  3,      501,         0      ],
-        ]);
+        $generator = self::getDataGenerator();
+        $user = new user($generator->create_user());
 
-        $label->delete();
+        $label1 = label::create($user, 'name 1', 'red');
+        $label2 = label::create($user, 'name 2');
 
-        $this->assert_not_records('labels', array('id' => $label->id()));
-        $this->assert_not_records('message_labels', array('labelid' => $label->id()));
-        $this->assert_records('labels');
-        $this->assert_records('message_labels');
-        $this->assert_not_index(201, 'label', $label->id(), 501);
-        $this->assert_not_index(201, 'label', $label->id(), 501);
-        $this->assert_index(201, 'label', $other->id(), 3, 501, 0);
+        self::insert_records('message_labels',
+            ['messageid', 'courseid', 'draft', 'time', 'labelid',   'role', 'unread', 'starred', 'deleted'],
+            [ 0,           0,          0,       0,      $label1->id, 0,      0,        0,         0       ],
+            [ 0,           0,          0,       0,      $label2->id, 0,      0,        0,         0       ],
+            [ 0,           0,          0,       0,      $label2->id, 0,      0,        0,         0       ],
+        );
+
+        $label1->delete();
+
+        self::assert_record_count(0, 'labels', ['id' => $label1->id]);
+        self::assert_record_count(0, 'message_labels', ['labelid' => $label1->id]);
+        self::assert_record_count(1, 'labels');
+        self::assert_record_count(2, 'message_labels');
     }
 
     public function test_fetch() {
-        $this->load_records('local_mail_labels', [
-            ['id', 'userid', 'name',   'color'],
-            [ 401,  201,     'label1', 'red'  ],
-            [ 402,  201,     'label2', ''     ],
-        ]);
+        $generator = self::getDataGenerator();
+        $user = new user($generator->create_user());
+        $label = label::create($user, 'name 1', 'red');
 
-        $result = \local_mail_label::fetch(401);
+        self::assertEquals($label, label::fetch($label->id));
 
-        $this->assertInstanceOf('\local_mail_label', $result);
-        $this->assertEquals(401, $result->id());
-        $this->assertEquals(201, $result->userid());
-        $this->assertEquals('label1', $result->name());
-        $this->assertEquals('red', $result->color());
+        self::assertNull(label::fetch(0));
     }
 
-    public function test_fetch_user() {
-        $label1 = \local_mail_label::create(201, 'label1', 'red');
-        $label2 = \local_mail_label::create(201, 'label2', 'green');
-        $label3 = \local_mail_label::create(202, 'label3', 'blue');
+    public function test_fetch_by_user() {
+        $generator = self::getDataGenerator();
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $label2 = label::create($user1, 'name 2', 'blue');
+        $label4 = label::create($user1, 'name 4', 'purple');
+        $label3 = label::create($user2, 'name 3', 'yellow');
+        $label1 = label::create($user1, 'name 1', 'red');
 
-        $result = \local_mail_label::fetch_user(201);
+        $labels = label::fetch_by_user($user1);
+        self::assertEquals([$label1->id, $label2->id, $label4->id], array_keys($labels));
+        self::assertEquals([$label1, $label2, $label4], array_values($labels));
 
-        $this->assertCount(2, $result);
-        $this->assertEqualsCanonicalizing($label1, $result[0]);
-        $this->assertEqualsCanonicalizing($label2, $result[1]);
+        self::assertEquals([], label::fetch_by_user($user3));
     }
 
-    public function test_save() {
-        $label = \local_mail_label::create(201, 'name', 'red');
+    public function test_fetch_many() {
+        $generator = self::getDataGenerator();
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $label1 = label::create($user1, 'name 1', 'red');
+        $label2 = label::create($user2, 'name 2', 'blue');
+        $label3 = label::create($user1, 'name 3', 'yellow');
 
-        $label->save('changed', 'green');
+        $labels = label::fetch_many([$label1->id, $label2->id, 0, $label1->id]);
+        self::assertEquals([$label1->id, $label2->id], array_keys($labels));
+        self::assertEquals([$label1, $label2], array_values($labels));
 
-        $this->assertEquals('changed', $label->name());
-        $this->assertEquals('green', $label->color());
-        $this->assert_label($label);
+        self::assertEquals([], label::fetch_many([]));
+    }
+
+    public function test_update() {
+        $generator = self::getDataGenerator();
+        $user = new user($generator->create_user());
+        $label = label::create($user, 'name 1', 'red');
+
+        $label->update('new name', 'indigo');
+
+        self::assertEquals('new name', $label->name);
+        self::assertEquals('indigo', $label->color);
+        self::assert_label($label);
     }
 
     public function test_normalized_name() {
-        $this->assertEquals('', \local_mail_label::nromalized_name(''));
-        $this->assertEquals('word', \local_mail_label::nromalized_name('word'));
-        $this->assertEquals('multiple words', \local_mail_label::nromalized_name('multiple words'));
-        $this->assertEquals('collapse space', \local_mail_label::nromalized_name('collapse     space'));
-        $this->assertEquals('replace line breaks', \local_mail_label::nromalized_name("replace\nline\rbreaks"));
-        $this->assertEquals('replace tab character', \local_mail_label::nromalized_name("replace\ttab\tcharacter"));
-        $this->assertEquals('trim text', \local_mail_label::nromalized_name('  trim text  '));
+        self::assertEquals('', label::nromalized_name(''));
+        self::assertEquals('word', label::nromalized_name('word'));
+        self::assertEquals('multiple words', label::nromalized_name('multiple words'));
+        self::assertEquals('collapse space', label::nromalized_name('collapse     space'));
+        self::assertEquals('replace line breaks', label::nromalized_name("replace\nline\rbreaks"));
+        self::assertEquals('replace tab character', label::nromalized_name("replace\ttab\tcharacter"));
+        self::assertEquals('trim text', label::nromalized_name('  trim text  '));
+    }
+
+    /**
+     * Asserts that a label is stored correctly in the database.
+     *
+     * @param label $label Label.
+     * @throws ExpectationFailedException
+     */
+    protected static function assert_label(label $label): void {
+        self::assert_record_data('labels', [
+            'id' => $label->id,
+        ], [
+            'userid' => $label->user->id,
+            'name' => $label->name,
+            'color' => $label->color,
+        ]);
     }
 }

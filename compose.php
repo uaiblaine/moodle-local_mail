@@ -21,6 +21,10 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_mail\exception;
+use local_mail\message;
+use local_mail\user;
+
 require_once('../../config.php');
 require_once('locallib.php');
 require_once('compose_form.php');
@@ -32,27 +36,27 @@ $remove = optional_param_array('remove', false, PARAM_INT);
 
 // Fetch message.
 
-$message = local_mail_message::fetch($messageid);
-if (!$message || !$message->editable($USER->id)) {
-    throw new \moodle_exception('local_mail', 'invalidmessage');
+$message = message::fetch($messageid);
+if (!$message || !user::current()->can_edit_message($message)) {
+    throw new exception('errormessagenotfound');
 }
 
 // Fetch references.
 
-$references = $message->references();
+$references = $message->fetch_references();
 
 // Set up page.
 
 $url = new moodle_url('/local/mail/compose.php');
-$url->param('m', $message->id());
-require_login($message->course()->id, false);
-local_mail_setup_page($message->course(), $url);
+$url->param('m', $message->id);
+require_login($message->course->id, false);
+local_mail_setup_page($message->course, $url);
 
 // Remove recipients.
 
 if ($remove) {
     require_sesskey();
-    $message->remove_recipient(key($remove));
+    $message->remove_recipient(user::fetch(key($remove)));
 }
 
 // Set up form.
@@ -66,13 +70,13 @@ $mform = new mail_compose_form($url, $customdata);
 
 $draftareaid = file_get_submitted_draft_itemid('message');
 $content = file_prepare_draft_area($draftareaid, $PAGE->context->id,
-                                   'local_mail', 'message', $message->id(),
+                                   'local_mail', 'message', $message->id,
                                    mail_compose_form::file_options(),
-                                   $message->content());
-$format = $message->format() >= 0 ? $message->format() : editors_get_preferred_format();
+                                   $message->content);
+$format = $message->format >= 0 ? $message->format : editors_get_preferred_format();
 
-$data['course'] = $message->course()->id;
-$data['subject'] = $message->subject();
+$data['course'] = $message->course->id;
+$data['subject'] = $message->subject;
 $data['content']['format'] = $format;
 $data['content']['text'] = $content;
 $data['content']['itemid'] = $draftareaid;
@@ -86,20 +90,20 @@ if ($data = $mform->get_data()) {
 
     // Discard message.
     if (!empty($data->discard)) {
-        $message->set_deleted($USER->id, local_mail_message::DELETED_FOREVER);
-        $params = array('t' => 'course', 'c' => $message->course()->id);
+        $message->set_deleted(user::current(), message::DELETED_FOREVER);
+        $params = array('t' => 'course', 'c' => $message->course->id);
         $url = new moodle_url('/local/mail/view.php', $params);
         redirect($url);
     }
 
     $content = file_save_draft_area_files($data->content['itemid'], $PAGE->context->id,
-                                          'local_mail', 'message', $message->id(),
+                                          'local_mail', 'message', $message->id,
                                           mail_compose_form::file_options(),
                                           $data->content['text']);
 
-    $files = $fs->get_area_files($PAGE->context->id, 'local_mail', 'message', $message->id(), 'filename', false);
+    $files = $fs->get_area_files($PAGE->context->id, 'local_mail', 'message', $message->id, 'filename', false);
 
-    $message->save(trim($data->subject), $content, $data->content['format'], count($files));
+    $message->update(trim($data->subject), $content, $data->content['format'], time());
 
     // Save message.
     if (!empty($data->save)) {
@@ -109,8 +113,8 @@ if ($data = $mform->get_data()) {
 
     // Send message.
     if (!empty($data->send)) {
-        $message->send();
-        $params = array('t' => 'course', 'c' => $message->course()->id);
+        $message->send(time());
+        $params = array('t' => 'course', 'c' => $message->course->id);
         $url = new moodle_url('/local/mail/view.php', $params);
         local_mail_send_notifications($message);
         redirect($url);
@@ -124,7 +128,7 @@ $mform->display();
 $mailoutput = $PAGE->get_renderer('local_mail');
 
 // Recipients form ajax.
-echo $mailoutput->recipientsform($message->course()->id, $message->sender()->id);
+echo $mailoutput->recipientsform($message->course->id, $message->sender()->id);
 $PAGE->requires->js('/local/mail/recipients.js');
 $PAGE->requires->strings_for_js(array(
     'emptyrecipients',

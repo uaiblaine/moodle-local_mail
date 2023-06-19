@@ -23,945 +23,879 @@
 
 namespace local_mail;
 
-defined('MOODLE_INTERNAL') || die();
-
-global $CFG;
-require_once($CFG->dirroot.'/local/mail/tests/testcase.class.php');
-require_once($CFG->dirroot.'/local/mail/message.class.php');
-require_once($CFG->dirroot.'/local/mail/label.class.php');
-
 /**
- * @covers \local_mail_message
+ * @covers \local_mail\message
  */
 class message_test extends testcase {
 
-    /* 1xx -> courses
-       2xx -> users
-       3xx -> formats
-       5xx -> messages */
-
-    private $course1, $course2, $user1, $user2, $user3;
-
-    public static function assert_message(\local_mail_message $message) {
-        global $DB;
-
-        $course = $message->course();
-
-        $record = $DB->get_record('local_mail_messages', array('id' => $message->id()));
-        self::assertNotEquals(false, $record);
-        self::assertEquals($course->id, $record->courseid);
-        self::assertEquals($message->subject(), $record->subject);
-        self::assertEquals($message->content(), $record->content);
-        self::assertEquals($message->format(), $record->format);
-        self::assertEquals($message->attachments(), $record->attachments);
-        self::assertEquals($message->draft(), (bool) $record->draft);
-        self::assertEquals($message->time(), $record->time);
-
-        foreach ($message->references() as $reference) {
-            self::assert_records('message_refs', array(
-                'messageid' => $message->id(),
-                'reference' => $reference->id(),
-            ));
-        }
-
-        $roleusers = array(
-            1 => array($message->sender()),
-            2 => $message->recipients('to'),
-            3 => $message->recipients('cc'),
-            4 => $message->recipients('bcc'),
-        );
-
-        foreach ($roleusers as $role => $users) {
-            foreach ($users as $user) {
-                self::assert_records('message_users', array(
-                    'messageid' => $message->id(),
-                    'courseid' => $message->course()->id,
-                    'draft' => $message->draft(),
-                    'time' => $message->time(),
-                    'userid' => $user->id,
-                    'role' => $role,
-                    'unread' => (int) $message->unread($user->id),
-                    'starred' => (int) $message->starred($user->id),
-                    'deleted' => (int) $message->deleted($user->id),
-                ));
-            }
-        }
-
-        foreach ($message->labels() as $label) {
-            $labelrole = 0;
-            foreach ($roleusers as $role => $users) {
-                foreach ($users as $user) {
-                    if ($user->id == $label->userid()) {
-                        $labelrole = $role;
-                    }
-                }
-            }
-            $conditions = [
-                'messageid' => $message->id(),
-                'courseid' => $message->course()->id,
-                'draft' => $message->draft(),
-                'time' => $message->time(),
-                'labelid' => $label->id(),
-                'role' => $labelrole,
-                'unread' => (int) $message->unread($label->userid()),
-                'starred' => (int) $message->starred($label->userid()),
-                'deleted' => $message->deleted($label->userid()),
-            ];
-            self::assert_records('message_labels', $conditions);
-        }
-    }
-
-    public function setUp(): void {
-        global $DB;
-
-        parent::setUp();
-
-        $course = array(
-            array('id',  'shortname', 'fullname', 'groupmode'),
-            array('101', 'C1',        'Course 1', '0'),
-            array('102', 'C2',        'Course 2', '0'),
-        );
-        $user = array(
-            array(
-                'id', 'username', 'firstname', 'lastname', 'email',
-                'picture', 'imagealt', 'maildisplay', 'confirmed'),
-            array(
-                201, 'user1', 'User1', 'Name', 'user1@ex.org',
-                1, 'User 1', 1, 1),
-            array(
-                202, 'user2', 'User2', 'Name', 'user2@ex.org',
-                1, 'User 2', 1, 1),
-            array(
-                203, 'user3', 'User3', 'Name', 'user3@ex.org',
-                1, 'User 3', 1, 1),
-        );
-
-        $this->load_records('course', $course);
-        $this->load_records('user', $user);
-
-        $this->course1 = (object) array_combine($course[0], $course[1]);
-        $this->course2 = (object) array_combine($course[0], $course[2]);
-
-        // When adding users, we need them to have all the fields that Moodle gets for the user.
-        $userfields = \core_user\fields::for_userpic();
-        $userfields->including(...array('username', 'maildisplay'));
-        $fields = $userfields->get_sql('', false, '', '', false)->selects;
-        $this->user1 = $DB->get_record('user', array('id' => $user[1][0]), $fields, MUST_EXIST);
-        $this->user2 = $DB->get_record('user', array('id' => $user[2][0]), $fields, MUST_EXIST);
-        $this->user3 = $DB->get_record('user', array('id' => $user[3][0]), $fields, MUST_EXIST);
-
-        // User need to be logged in to be able to have the local/mail:usemail, so we make ourselves
-        // the admin to ensure we behave as a logged in user rather than a guest.
-        $this->setAdminUser();
-    }
-
-    public function test_add_label() {
-        $label1 = \local_mail_label::create(201, 'name1');
-        $label2 = \local_mail_label::create(202, 'name2');
-        $message = \local_mail_message::create(201, 101);
-        $message->add_recipient('to', 202);
-        $message->send();
-
-        $message->add_label($label1);
-        $message->add_label($label2);
-        $message->add_label($label2);
-
-        $this->assertCount(2, $message->labels());
-        $this->assertContains($label1, $message->labels());
-        $this->assertContains($label2, $message->labels());
-        $this->assertTrue($message->has_label($label1));
-        $this->assertTrue($message->has_label($label2));
-        $this->assertCount(1, $message->labels(201));
-        $this->assertContains($label1, $message->labels(201));
-        $this->assertCount(1, $message->labels(202));
-        $this->assertContains($label2, $message->labels(202));
-        $this->assert_message($message);
-        $this->assert_index(201, 'label', $label1->id(), $message->time(), $message->id(), false);
-        $this->assert_index(202, 'label', $label2->id(), $message->time(), $message->id(), true);
-    }
-
     public function test_add_recipient() {
-        $message = \local_mail_message::create(201, 101);
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $user4 = new user($generator->create_user());
+        $time = make_timestamp(2021, 10, 11, 12, 0);
+        $message = message::create($course, $user1, $time);
 
-        $message->add_recipient('to', 202);
-        $message->add_recipient('cc', 203);
+        $message->add_recipient($user2, message::ROLE_TO);
+        $message->add_recipient($user3, message::ROLE_CC);
+        $message->add_recipient($user4, message::ROLE_BCC);
 
-        $this->assertTrue($message->has_recipient(202));
-        $this->assertTrue($message->has_recipient(203));
-        $this->assertCount(2, $message->recipients());
-        $this->assertCount(1, $message->recipients('to'));
-        $this->assertCount(1, $message->recipients('cc'));
-        $this->assertCount(0, $message->recipients('bcc'));
-        $this->assertEqualsCanonicalizing($this->user2, $message->recipients()[0]);
-        $this->assertEqualsCanonicalizing($this->user3, $message->recipients()[1]);
-        $this->assertEqualsCanonicalizing($this->user2, $message->recipients('to')[0]);
-        $this->assertEqualsCanonicalizing($this->user3, $message->recipients('cc')[0]);
-        $this->assert_message($message);
-    }
+        self::assertEquals([
+            $user1->id => message::ROLE_FROM,
+            $user2->id => message::ROLE_TO,
+            $user3->id => message::ROLE_CC,
+            $user4->id => message::ROLE_BCC,
+        ], $message->roles);
 
-    public function test_attachments() {
-        $message1 = \local_mail_message::create(201, 101);
-        $message1->save('subject', 'content', 301, 3);
-        $message1->add_recipient('to', 202);
-        $message1->send();
+        self::assertEquals([
+            $user1->id => false,
+            $user2->id => true,
+            $user3->id => true,
+            $user4->id => true,
+        ], $message->unread);
 
-        $message2 = $message1->reply(202);
-        $message2->save('subject', 'content', 301, 0);
-        $message2->send();
+        self::assertEquals([
+            $user1->id => false,
+            $user2->id => false,
+            $user3->id => false,
+            $user4->id => false,
+        ], $message->starred);
 
-        $message3 = $message2->reply(201);
-        $message3->save('subject', 'content', 301, 2);
+        self::assertEquals([
+            $user1->id => message::NOT_DELETED,
+            $user2->id => message::NOT_DELETED,
+            $user3->id => message::NOT_DELETED,
+            $user4->id => message::NOT_DELETED,
+        ], $message->deleted);
 
-        $this->assertEquals(3, $message1->attachments());
-        $this->assertEquals(3, $message1->attachments(true));
-        $this->assertEquals(0, $message2->attachments());
-        $this->assertEquals(3, $message2->attachments(true));
-        $this->assertEquals(2, $message3->attachments());
-        $this->assertEquals(5, $message3->attachments(true));
-    }
+        self::assertEquals([
+            $user1->id => [],
+            $user2->id => [],
+            $user3->id => [],
+            $user4->id => [],
+        ], $message->labels);
 
-    public function test_count_index() {
-        $message1 = \local_mail_message::create(201, 101);
-        $message1->add_recipient('to', 202);
-        $message1->send();
-        $message2 = \local_mail_message::create(201, 102);
-        $message2->add_recipient('to', 202);
-        $message2->send();
-        \local_mail_message::create(202, 101);
-
-        $result = \local_mail_message::count_index(202, 'inbox');
-
-        $this->assertEquals(2, $result);
-
-        $message1->set_deleted(202, \local_mail_message::DELETED);
-
-        $result = \local_mail_message::count_index(202, 'trash');
-
-        $this->assertEquals(1, $result);
-
-        $message1->set_deleted(202, \local_mail_message::DELETED_FOREVER);
-
-        $result = \local_mail_message::count_index(202, 'trash');
-
-        $this->assertEquals(0, $result);
+        self::assert_message($message);
     }
 
     public function test_create() {
-        $result = \local_mail_message::create(201, 101, 1234567890);
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user = new user($generator->create_user());
+        $time = make_timestamp(2021, 10, 11, 12, 0);
 
-        $this->assertNotEquals(false, $result->id());
-        $this->assertEquals($this->course1, $result->course());
-        $this->assertEquals('', $result->subject());
-        $this->assertEquals('', $result->content());
-        $this->assertEquals(-1, $result->format());
-        $this->assertEquals(0, $result->attachments());
-        $this->assertTrue($result->draft());
-        $this->assertEquals(1234567890, $result->time());
-        $this->assertEquals(array(), $result->references());
-        $this->assertEquals($this->user1, $result->sender());
-        $this->assertCount(0, $result->recipients());
-        $this->assertCount(0, $result->labels());
-        $this->assert_message($result);
-        $this->assert_index(201, 'drafts', 0, 1234567890, $result->id(), false);
-        $this->assert_index(201, 'course', 101, 1234567890, $result->id(), false);
+        $message = message::create($course, $user, $time);
+
+        self::assertGreaterThan(0, $message->id);
+        self::assertEquals($course, $message->course);
+        self::assertEquals('', $message->subject);
+        self::assertEquals('', $message->content);
+        self::assertEquals(FORMAT_HTML, $message->format);
+        self::assertEquals(0, $message->attachments);
+        self::assertEquals($time, $message->time);
+        self::assertEquals([$user->id => message::ROLE_FROM], $message->roles);
+        self::assertEquals([$user->id => false], $message->unread);
+        self::assertEquals([$user->id => false], $message->starred);
+        self::assertEquals([$user->id => message::NOT_DELETED], $message->deleted);
+        self::assertEquals([$user->id => []], $message->labels);
+        self::assert_message($message);
+        self::assertEquals([], $message->fetch_references());
     }
 
-    public function test_delete_course() {
-        $label = \local_mail_label::create(201, 'name');
-        $message1 = \local_mail_message::create(201, 101);
-        $message1->add_recipient('to', 202);
-        $message1->add_label($label);
-        $message1->send();
-        $message2 = $message1->reply(202);
-        $other = \local_mail_message::create(201, 102);
-        $other->add_recipient('to', 202);
-        $other->add_label($label);
-        $other->send();
-        $other->reply(202);
 
-        \local_mail_message::delete_course(101);
+    public function test_empty_trash() {
+        $generator = self::getDataGenerator();
+        $course1 = new course($generator->create_course());
+        $course2 = new course($generator->create_course());
+        $course3 = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $generator->enrol_user($user1->id, $course1->id);
+        $generator->enrol_user($user2->id, $course1->id);
+        $time = make_timestamp(2021, 10, 11, 12, 0);
 
-        $this->assert_not_records('messages', array('courseid' => 101));
-        $this->assert_not_records('message_refs', array('messageid' => $message2->id()));
-        $this->assert_not_records('message_users', array('messageid' => $message1->id()));
-        $this->assert_not_records('message_users', array('messageid' => $message2->id()));
-        $this->assert_not_records('message_labels', array('messageid' => $message1->id()));
-        $this->assert_not_records('message_labels', array('messageid' => $message2->id()));
-        $this->assert_records('messages');
-        $this->assert_records('message_users');
-        $this->assert_records('message_refs');
-        $this->assert_records('message_labels');
-        $this->assert_not_index(201, 'course', 101, $message1->id());
-        $this->assert_not_index(202, 'course', 101, $message2->id());
-    }
+        $message1 = message::create($course1, $user1, $time);
+        $message1->update('Subject 1', 'Content 1', FORMAT_HTML, $time);
+        $message1->add_recipient($user2, message::ROLE_TO);
+        $message1->send($time);
+        $message1->set_deleted($user1, message::DELETED);
+        $message1->set_deleted($user2, message::DELETED);
 
-    public function test_editable() {
-        $message = \local_mail_message::create(201, 101);
-        $message->add_recipient('to', 202);
+        $message2 = message::create($course1, $user2, $time);
+        $message2->update('Subject 2', 'Content 2', FORMAT_HTML, $time);
+        $message2->add_recipient($user1, message::ROLE_TO);
+        $message2->send($time);
+        $message2->set_deleted($user1, message::DELETED);
 
-        $this->assertTrue($message->editable(201));
-        $this->assertFalse($message->editable(202));
-        $this->assertFalse($message->editable(203));
+        $message3 = message::create($course1, $user2, $time);
+        $message3->update('Subject 3', 'Content 3', FORMAT_HTML, $time);
+        $message3->add_recipient($user1, message::ROLE_TO);
+        $message3->send($time);
 
-        $message->send();
+        $message4 = message::create($course1, $user2, $time);
+        $message4->update('Subject 4', 'Content 4', FORMAT_HTML, $time);
+        $message4->add_recipient($user1, message::ROLE_TO);
+        $message4->send($time);
+        $message4->set_deleted($user1, message::DELETED_FOREVER);
 
-        $this->assertFalse($message->editable(201));
-        $this->assertFalse($message->editable(202));
-        $this->assertFalse($message->editable(203));
+        $message5 = message::create($course2, $user2, $time);
+        $message5->update('Subject 5', 'Content 5', FORMAT_HTML, $time);
+        $message5->add_recipient($user1, message::ROLE_TO);
+        $message5->send($time);
+        $message5->set_deleted($user1, message::DELETED);
+
+        $message6 = message::create($course3, $user2, $time);
+        $message6->update('Subject 6', 'Content 6', FORMAT_HTML, $time);
+        $message6->add_recipient($user1, message::ROLE_TO);
+        $message6->send($time);
+        $message6->set_deleted($user1, message::DELETED);
+
+        message::empty_trash($user1, [$course1, $course2]);
+
+        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message1->id)->deleted[$user1->id]);
+        $this->assertEquals(message::DELETED, message::fetch($message1->id)->deleted[$user2->id]);
+        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message2->id)->deleted[$user1->id]);
+        $this->assertEquals(message::NOT_DELETED, message::fetch($message2->id)->deleted[$user2->id]);
+        $this->assertEquals(message::NOT_DELETED, message::fetch($message3->id)->deleted[$user1->id]);
+        $this->assertEquals(message::NOT_DELETED, message::fetch($message3->id)->deleted[$user2->id]);
+        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message4->id)->deleted[$user1->id]);
+        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message5->id)->deleted[$user1->id]);
+        $this->assertEquals(message::DELETED, message::fetch($message6->id)->deleted[$user1->id]);
+
+        // No courses.
+
+        message::empty_trash($user1, []);
+
+        $this->assertEquals(message::DELETED, message::fetch($message6->id)->deleted[$user1->id]);
     }
 
     public function test_fetch() {
-        $label1 = \local_mail_label::create(201, 'label1');
-        $label2 = \local_mail_label::create(201, 'label2');
-        $label3 = \local_mail_label::create(202, 'label3');
-        $this->load_records('local_mail_messages', [
-            ['id', 'courseid', 'subject',  'content', 'format', 'attachments', 'draft', 'time'      ],
-            [ 501,  101,       'subject1', 'content1', 301,      3,             0,       1234567890 ],
-            [ 502,  101,       'subject2', 'content2', 301,      0,             1,       1234567891 ],
-            [ 503,  101,       'subject3', 'content3', 301,      0,             0,       1234567892 ],
-            [ 504,  101,       'subject4', 'content4', 301,      0,             0,       1234567893 ],
-        ]);
-        $this->load_records('local_mail_message_refs', [
-            ['messageid', 'reference'],
-            [ 501,         504       ],
-            [ 501,         503       ],
-            [ 502,         501       ],
-        ]);
-        $this->load_records('local_mail_message_users', [
-             ['messageid', 'courseid', 'draft', 'time',     'userid', 'role', 'unread', 'starred',  'deleted'],
-             [ 501,         101,        0,       1234567890, 201,      1,      0,        0,          1       ],
-             [ 501,         101,        0,       1234567890, 202,      2,      0,        1,          0       ],
-             [ 501,         101,        0,       1234567890, 203,      3,      1,        0,          0       ],
-             [ 502,         101,        1,       1234567891, 201,      1,      0,        0,          0       ],
-             [ 503,         101,        0,       1234567892, 201,      1,      0,        0,          0       ],
-             [ 503,         101,        0,       1234567892, 202,      2,      0,        0,          0       ],
-             [ 504,         101,        0,       1234567893, 202,      1,      0,        0,          0       ],
-             [ 504,         101,        0,       1234567893, 201,      2,      0,        0,          0       ],
-        ]);
-        $this->load_records('local_mail_message_labels', [
-            ['messageid', 'courseid', 'draft', 'time',     'labelid',      'role', 'unread', 'starred', 'deleted'],
-            [ 501,         101,        0,       1234567890, $label1->id(),  1,      0,        0,         1       ],
-            [ 501,         101,        0,       1234567890, $label3->id(),  2,      0,        1,         0       ],
-            [ 502,         101,        1,       1234567891, $label2->id(),  1,      0,        0,         0       ],
-        ]);
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $time1 = make_timestamp(2021, 10, 11, 12, 0);
+        $time2 = make_timestamp(2021, 10, 11, 13, 0);
+        $label1 = label::create($user1, 'label1');
+        $label2 = label::create($user2, 'label2');
+        $message1 = message::create($course, $user1, $time1);
+        $message1->update('Subject 1', 'Content 1', FORMAT_PLAIN, $time1);
+        $message1->add_recipient($user2, message::ROLE_TO);
+        $message1->add_recipient($user3, message::ROLE_CC);
+        $message1->send($time1);
+        $message2 = $message1->reply($user2, true, $time2);
+        $message2->update('Subject 2', 'Content 2', FORMAT_PLAIN, $time2);
+        $message2->send($time2);
+        $message2->set_labels($user1, [$label1]);
+        $message2->set_labels($user2, [$label2]);
 
-        $result = \local_mail_message::fetch(501);
-
-        $this->assertInstanceOf('local_mail_message', $result);
-        $this->assertEquals(501, $result->id());
-        $this->assertEquals($this->course1, $result->course());
-        $this->assertEquals('subject1', $result->subject());
-        $this->assertEquals('content1', $result->content());
-        $this->assertEquals(301, $result->format());
-        $this->assertEquals(3, $result->attachments());
-        $this->assertFalse($result->draft());
-        $this->assertEquals(1234567890, $result->time());
-        $references = array(\local_mail_message::fetch(504), \local_mail_message::fetch(503));
-        $this->assertEquals($references, $result->references());
-        $this->assertEquals($this->user1, $result->sender());
-        $this->assertFalse($result->unread(201));
-        $this->assertFalse($result->starred(201));
-        $this->assertEquals(\local_mail_message::DELETED, $result->deleted(201));
-        $this->assertCount(1, $result->recipients('to'));
-        $this->assertCount(1, $result->recipients('cc'));
-        $this->assertCount(0, $result->recipients('bcc'));
-        $this->assertEqualsCanonicalizing($this->user2, $result->recipients('to')[0]);
-        $this->assertEqualsCanonicalizing($this->user3, $result->recipients('cc')[0]);
-        $this->assertFalse($result->unread(202));
-        $this->assertTrue($result->starred(202));
-        $this->assertEquals(\local_mail_message::NOT_DELETED, $result->deleted(202));
-        $this->assertTrue($result->unread(203));
-        $this->assertFalse($result->starred(203));
-        $this->assertEquals(\local_mail_message::NOT_DELETED, $result->deleted(203));
-        $this->assertCount(2, $result->labels());
-        $this->assertEqualsCanonicalizing($label1, $result->labels()[0]);
-        $this->assertEqualsCanonicalizing($label3, $result->labels()[1]);
-
-        $this->assertFalse(\local_mail_message::fetch(505));
-    }
-
-    public function test_fetch_index() {
-        $message1 = \local_mail_message::create(201, 101);
-        $message1->save('subject1', 'content1', 301);
-        $message1->add_recipient('to', 202);
-        $message1->send(12345567890);
-        $message2 = \local_mail_message::create(201, 102);
-        $message2->save('subject2', 'content2', 302);
-        $message2->add_recipient('to', 202);
-        $message2->send(12345567891);
-        $message3 = \local_mail_message::create(201, 102);
-        $message3->save('subject3', 'content3', 302);
-        $message3->add_recipient('to', 202);
-        $message3->send(12345567891);
-        $other = \local_mail_message::create(202, 101);
-        $other->save('subject', 'content', 0);
-
-        $result = \local_mail_message::fetch_index(202, 'inbox');
-
-        $this->assertEquals(array($message3, $message2, $message1), $result);
+        self::assertEquals($message1, message::fetch($message1->id));
+        self::assertEquals($message2, message::fetch($message2->id));
+        self::assertNull(message::fetch(0));
     }
 
     public function test_fetch_many() {
-        $label1 = \local_mail_label::create(201, 'label1');
-        $label2 = \local_mail_label::create(202, 'label2');
-        $message1 = \local_mail_message::create(201, 101);
-        $message1->save('subject1', 'content1', 301);
-        $message1->add_recipient('to', 202);
-        $message2 = \local_mail_message::create(201, 101);
-        $message2->save('subject2', 'content2', 302);
-        $message2->add_recipient('to', 202);
-        $message2->add_recipient('cc', 203);
-        $message2->send();
-        $message2->add_label($label1);
-        $message2->add_label($label2);
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $time1 = make_timestamp(2021, 10, 11, 12, 0);
+        $time2 = make_timestamp(2021, 10, 11, 13, 0);
+        $time3 = make_timestamp(2021, 10, 11, 14, 0);
+        $time4 = make_timestamp(2021, 10, 11, 15, 0);
+        $label1 = label::create($user1, 'label1');
+        $label2 = label::create($user2, 'label2');
+        $message1 = message::create($course, $user1, $time1);
+        $message1->update('Subject 1', 'Content 1', FORMAT_PLAIN, $time1);
+        $message1->add_recipient($user2, message::ROLE_TO);
+        $message1->add_recipient($user3, message::ROLE_CC);
+        $message1->send($time1);
+        $message2 = $message1->reply($user2, true, $time2);
+        $message2->update('Subject 2', 'Content 2', FORMAT_PLAIN, $time2);
+        $message2->send($time2);
+        $message2->set_labels($user1, [$label1]);
+        $message2->set_labels($user2, [$label2]);
+        $message3 = message::create($course, $user2, $time3);
+        $message4 = message::create($course, $user3, $time4);
 
-        $result = \local_mail_message::fetch_many(array($message1->id(), $message2->id()));
+        $messages = message::fetch_many([$message1->id, $message2->id, $message1->id, 0, $message4->id]);
 
-        $this->assertEquals(array($message1, $message2), $result);
+        self::assertIsArray($messages);
+        self::assertEquals([$message4->id, $message2->id, $message1->id], array_keys($messages));
+        self::assertEquals(message::fetch($message1->id), $messages[$message1->id]);
+        self::assertEquals(message::fetch($message2->id), $messages[$message2->id]);
+        self::assertEquals(message::fetch($message4->id), $messages[$message4->id]);
+
+        self::assertEquals([], message::fetch_many([]));
     }
 
-    public function test_fetch_menu() {
-        $label1 = \local_mail_label::create(201, 'label1');
-        $label2 = \local_mail_label::create(201, 'label2');
-        $message1 = \local_mail_message::create(201, 101);
-        $message2 = \local_mail_message::create(202, 101);
-        $message2->add_recipient('to', 201);
-        $message2->send();
-        $message2->set_unread(201, false);
-        $message2->add_label($label1);
-        $message2->add_label($label2);
-        $message3 = \local_mail_message::create(201, 102);
-        $message3->add_recipient('to', 202);
-        $message3->send();
-        $message4 = \local_mail_message::create(202, 101);
-        $message4->add_recipient('to', 201);
-        $message4->send();
-        $message4->add_label($label1);
-        $message4->set_starred(201, true);
+    public function test_fetch_references() {
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $time1 = make_timestamp(2021, 10, 11, 12, 0);
+        $time2 = make_timestamp(2021, 10, 11, 13, 0);
+        $time3 = make_timestamp(2021, 10, 11, 14, 0);
+        $time4 = make_timestamp(2021, 10, 11, 15, 0);
+        $message1 = message::create($course, $user1, $time1);
+        $message1->update('Subject 1', 'Content 1', FORMAT_PLAIN, $time1);
+        $message1->add_recipient($user2, message::ROLE_TO);
+        $message1->send($time1);
+        $message2 = $message1->reply($user2, true, $time2);
+        $message2->update('Subject 2', 'Content 2', FORMAT_PLAIN, $time2);
+        $message2->send($time2);
+        $message3 = $message2->forward($user2, $time3);
+        $message3->add_recipient($user3, message::ROLE_TO);
+        $message3->send($time3);
 
-        $result = \local_mail_message::count_menu(201);
-
-        $this->assertNotEmpty($result);
-        $this->assertEquals(1, $result->inbox);
-        $this->assertEquals(1, $result->drafts);
-        $this->assertEquals(array(101 => 1), $result->courses);
-        $this->assertEquals(array($label1->id() => 1), $result->labels);
+        $this->assertEquals(message::fetch_many([]), $message1->fetch_references());
+        $this->assertEquals(message::fetch_many([$message1->id]), $message2->fetch_references());
+        $this->assertEquals(message::fetch_many([$message2->id, $message1->id]), $message3->fetch_references());
+        $this->assertEquals(message::fetch_many([$message3->id, $message2->id]), $message1->fetch_references(true));
+        $this->assertEquals(message::fetch_many([$message3->id]), $message2->fetch_references(true));
+        $this->assertEquals(message::fetch_many([]), $message3->fetch_references(true));
     }
 
     public function test_forward() {
-        $label = \local_mail_label::create(202, 'label');
-        $message = \local_mail_message::create(201, 101);
-        $message->save('subject', 'content', 301);
-        $message->add_recipient('to', 202);
-        $message->send();
-        $message->add_label($label);
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $time1 = make_timestamp(2021, 10, 11, 12, 0);
+        $time2 = make_timestamp(2021, 10, 11, 13, 0);
+        $time3 = make_timestamp(2021, 10, 11, 14, 0);
+        $label1 = label::create($user1, 'Label', 'blue');
+        $label2 = label::create($user2, 'Label', 'blue');
+        $message1 = message::create($course, $user1, $time1);
+        $message1->update('subject', 'content', FORMAT_PLAIN, $time1);
+        $message1->add_recipient($user2, message::ROLE_TO);
+        $message1->send($time1);
+        $message1->set_labels($user1, [$label1]);
+        $message1->set_labels($user2, [$label2]);
 
-        $result = $message->forward(202, 1234567890);
+        $message2 = $message1->forward($user2, $time2);
 
-        $this->assertInstanceOf('local_mail_message', $result);
-        $this->assertNotEquals(false, $result->id());
-        $this->assertEquals($this->course1, $result->course());
-        $this->assertEquals('FW: subject', $result->subject());
-        $this->assertEquals('', $result->content());
-        $this->assertEquals(-1, $result->format());
-        $this->assertEquals(0, $result->attachments());
-        $this->assertTrue($result->draft());
-        $this->assertEquals(1234567890, $result->time());
-        $this->assertEquals(array($message), $result->references());
-        $this->assertEquals($this->user2, $result->sender());
-        $this->assertCount(0, $result->recipients());
-        $this->assertCount(1, $result->labels());
-        $this->assertContains($label, $result->labels());
-        $this->assert_message($result);
-        $this->assert_index(202, 'drafts', 0, 1234567890, $result->id(), false);
-        $this->assert_index(202, 'course', 101, 1234567890, $result->id(), false);
-        $this->assert_index(202, 'label', $label->id(), 1234567890, $result->id(), false);
+        self::assertGreaterThan(0, $message2->id);
+        self::assertEquals($course, $message2->course);
+        self::assertEquals('FW: subject', $message2->subject);
+        self::assertEquals('', $message2->content);
+        self::assertEquals(FORMAT_HTML, $message2->format);
+        self::assertEquals(0, $message2->attachments);
+        self::assertEquals($time2, $message2->time);
+        self::assertEquals([$user2->id => message::ROLE_FROM], $message2->roles);
+        self::assertEquals([$user2->id => false], $message2->unread);
+        self::assertEquals([$user2->id => false], $message2->starred);
+        self::assertEquals([$user2->id => message::NOT_DELETED], $message2->deleted);
+        self::assertEquals([$user2->id => [$label2->id => $label2]], $message2->labels);
+        self::assert_message($message2);
+        self::assertEquals(message::fetch_many([$message1->id]), $message2->fetch_references());
+
+        // Forward forwarded message.
+
+        $message2->add_recipient($user3, message::ROLE_TO);
+        $message2->send($time2);
+
+        $message3 = $message2->forward($user3, $time3);
+
+        self::assertEquals('FW: subject', $message3->subject);
+        self::assert_message($message3);
+        self::assertEquals(message::fetch_many([$message2->id, $message1->id]), $message3->fetch_references());
     }
 
-    public function test_find_offset() {
-        $label = \local_mail_label::create(202, 'Label');
-        $message1 = \local_mail_message::create(201, 101);
-        $message1->save('subject1', 'content1', 301);
-        $message1->add_recipient('to', 202);
-        $message1->send(12345567890);
-        $message1->add_label($label);
-        $message2 = \local_mail_message::create(201, 101);
-        $message2->save('subject2', 'content2', 302);
-        $message2->add_recipient('to', 202);
-        $message2->send(12345567891);
-        $message2->add_label($label);
-        $message3 = \local_mail_message::create(201, 101);
-        $message3->save('subject3', 'content3', 302);
-        $message3->add_recipient('to', 202);
-        $message3->send(12345567891);
-        $message4 = \local_mail_message::create(201, 102);
-        $message4->save('subject4', 'content4', 302);
-        $message4->add_recipient('to', 202);
-        $message4->send(12345567891);
-        $message4->add_label($label);
+    public function test_has_recipient() {
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $user4 = new user($generator->create_user());
+        $user5 = new user($generator->create_user());
 
-        $this->assertEquals(3, $message1->find_offset(202, 'inbox'));
-        $this->assertEquals(2, $message2->find_offset(202, 'inbox'));
-        $this->assertEquals(1, $message3->find_offset(202, 'inbox'));
-        $this->assertEquals(0, $message4->find_offset(202, 'inbox'));
+        $time = make_timestamp(2021, 10, 11, 12, 0);
 
-        $this->assertEquals(2, $message1->find_offset(202, 'label', $label->id()));
-        $this->assertEquals(1, $message2->find_offset(202, 'label', $label->id()));
-        $this->assertEquals(1, $message3->find_offset(202, 'label', $label->id()));
-        $this->assertEquals(0, $message4->find_offset(202, 'label', $label->id()));
+        $message = message::create($course, $user1, $time);
+        $message->add_recipient($user2, message::ROLE_TO);
+        $message->add_recipient($user3, message::ROLE_CC);
+        $message->add_recipient($user4, message::ROLE_BCC);
 
-        $this->assertEquals(2, $message1->find_offset(202, 'course', 101));
-        $this->assertEquals(1, $message2->find_offset(202, 'course', 101));
-        $this->assertEquals(0, $message3->find_offset(202, 'course', 101));
-        $this->assertEquals(0, $message4->find_offset(202, 'course', 101));
+        $this->assertFalse($message->has_recipient($user1));
+        $this->assertTrue($message->has_recipient($user2));
+        $this->assertTrue($message->has_recipient($user3));
+        $this->assertTrue($message->has_recipient($user4));
+        $this->assertFalse($message->has_recipient($user5));
     }
 
-    public function test_remove_label() {
-        $label1 = \local_mail_label::create(201, 'label1');
-        $label2 = \local_mail_label::create(202, 'label2');
-        $label3 = \local_mail_label::create(202, 'label3');
-        $message = \local_mail_message::create(201, 101);
-        $message->add_recipient('to', 202);
-        $message->send();
-        $message->add_label($label1);
-        $message->add_label($label2);
-        $message->add_label($label3);
+    public function test_normalize_text() {
+        self::assertEquals('', message::normalize_text(''));
+        self::assertEquals('text', message::normalize_text('   text   '));
+        self::assertEquals('text text', message::normalize_text('text     text'));
+        self::assertEquals('text text', message::normalize_text('text😛😛text'));
+    }
 
-        $message->remove_label($label1);
-        $message->remove_label($label2);
-        $message->remove_label($label2);
+    public function test_recipients() {
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $user4 = new user($generator->create_user());
+        $user5 = new user($generator->create_user());
 
-        $this->assertCount(1, $message->labels());
-        $this->assertNotContains($label1, $message->labels());
-        $this->assertNotContains($label2, $message->labels());
-        $this->assertFalse($message->has_label($label1));
-        $this->assertFalse($message->has_label($label2));
-        $this->assertCount(0, $message->labels(201));
-        $this->assertCount(1, $message->labels(202));
-        $this->assertNotContains($label2, $message->labels(202));
-        $this->assert_message($message);
-        $this->assert_not_index(201, 'label', $label1->id(), $message->id());
-        $this->assert_not_index(202, 'label', $label2->id(), $message->time());
-        $this->assert_index(202, 'label', $label3->id(), $message->time(), $message->id(), true);
+        $time = make_timestamp(2021, 10, 11, 12, 0);
+
+        $message = message::create($course, $user1, $time);
+        $message->add_recipient($user2, message::ROLE_TO);
+        $message->add_recipient($user3, message::ROLE_TO);
+        $message->add_recipient($user4, message::ROLE_CC);
+        $message->add_recipient($user5, message::ROLE_BCC);
+
+        $this->assertEquals([$user2, $user3, $user4, $user5], $message->recipients());
+        $this->assertEquals([$user2, $user3], $message->recipients(message::ROLE_TO));
+        $this->assertEquals([$user4], $message->recipients(message::ROLE_CC));
+        $this->assertEquals([$user5], $message->recipients(message::ROLE_BCC));
+        $this->assertEquals([$user2, $user3, $user4], $message->recipients(message::ROLE_TO, message::ROLE_CC));
     }
 
     public function test_remove_recipient() {
-        $message = \local_mail_message::create(201, 101);
-        $message->add_recipient('to', 202);
-        $message->add_recipient('cc', 203);
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $user4 = new user($generator->create_user());
+        $time = make_timestamp(2021, 10, 11, 12, 0);
+        $message = message::create($course, $user1, $time);
+        $message->add_recipient($user2, message::ROLE_TO);
+        $message->add_recipient($user3, message::ROLE_CC);
+        $message->add_recipient($user4, message::ROLE_BCC);
 
-        $message->remove_recipient(202);
+        $message->remove_recipient($user2);
+        $message->remove_recipient($user4);
 
-        $this->assertFalse($message->has_recipient(202));
-        $this->assertTrue($message->has_recipient(203));
-        $this->assertCount(1, $message->recipients());
-        $this->assertCount(0, $message->recipients('to'));
-        $this->assertCount(1, $message->recipients('cc'));
-        $this->assertCount(0, $message->recipients('bcc'));
-        $this->assertEqualsCanonicalizing($this->user3, $message->recipients()[0]);
-        $this->assertEqualsCanonicalizing($this->user3, $message->recipients('cc')[0]);
-        $this->assert_message($message);
+        self::assertEquals([
+            $user1->id => message::ROLE_FROM,
+            $user3->id => message::ROLE_CC,
+        ], $message->roles);
+
+        self::assertEquals([
+            $user1->id => false,
+            $user3->id => true,
+        ], $message->unread);
+
+        self::assertEquals([
+            $user1->id => false,
+            $user3->id => false,
+        ], $message->starred);
+
+        self::assertEquals([
+            $user1->id => message::NOT_DELETED,
+            $user3->id => message::NOT_DELETED,
+        ], $message->deleted);
+
+        self::assertEquals([
+            $user1->id => [],
+            $user3->id => [],
+        ], $message->labels);
+
+        self::assert_message($message);
     }
 
     public function test_reply() {
-        $label = \local_mail_label::create(202, 'label');
-        $message = \local_mail_message::create(201, 101);
-        $message->save('subject', 'content', 301);
-        $message->add_recipient('to', 202);
-        $message->add_recipient('to', 203);
-        $message->send();
-        $message->add_label($label);
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $user4 = new user($generator->create_user());
+        $user5 = new user($generator->create_user());
+        $time1 = make_timestamp(2021, 10, 11, 12, 0);
+        $time2 = make_timestamp(2021, 10, 11, 13, 0);
+        $time3 = make_timestamp(2021, 10, 11, 14, 0);
+        $time4 = make_timestamp(2021, 10, 11, 15, 0);
+        $time5 = make_timestamp(2021, 10, 11, 16, 0);
+        $time6 = make_timestamp(2021, 10, 11, 17, 0);
+        $label1 = label::create($user1, 'Label 1', 'blue');
+        $label2 = label::create($user2, 'Label 2', 'red');
+        $label3 = label::create($user3, 'Label 3', 'green');
+        $label4 = label::create($user4, 'Label 4', 'yellow');
+        $message1 = message::create($course, $user1, $time1);
+        $message1->update('subject', 'content', FORMAT_PLAIN, $time1);
+        $message1->add_recipient($user2, message::ROLE_TO);
+        $message1->add_recipient($user3, message::ROLE_TO);
+        $message1->add_recipient($user4, message::ROLE_CC);
+        $message1->add_recipient($user5, message::ROLE_BCC);
+        $message1->send($time1);
+        $message1->set_labels($user1, [$label1]);
+        $message1->set_labels($user2, [$label2]);
+        $message1->set_labels($user3, [$label3]);
+        $message1->set_labels($user4, [$label4]);
 
-        $result = $message->reply(202, false, 1234567890);
+        // Reply to sender.
 
-        $this->assertInstanceOf('local_mail_message', $result);
-        $this->assertNotEquals(false, $result->id());
-        $this->assertEquals($this->course1, $result->course());
-        $this->assertEquals('RE: subject', $result->subject());
-        $this->assertEquals('', $result->content());
-        $this->assertEquals(-1, $result->format());
-        $this->assertEquals(0, $result->attachments());
-        $this->assertTrue($result->draft());
-        $this->assertEquals(1234567890, $result->time());
-        $this->assertEquals(array($message), $result->references());
-        $this->assertEquals($this->user2, $result->sender());
-        $this->assertCount(1, $result->recipients());
-        $this->assertEqualsCanonicalizing($this->user1, $result->recipients('to')[0]);
-        $this->assertCount(1, $result->labels());
-        $this->assertContains($label, $result->labels());
-        $this->assert_message($result);
-        $this->assert_index(202, 'drafts', 0, 1234567890, $result->id(), false);
-        $this->assert_index(202, 'course', 101, 1234567890, $result->id(), false);
-        $this->assert_index(202, 'label', $label->id(), 1234567890, $result->id(), false);
-    }
+        $message2 = $message1->reply($user2, false, $time2);
 
-    public function test_reply_all() {
-        $message = \local_mail_message::create(201, 101);
-        $message->add_recipient('to', 202);
-        $message->add_recipient('to', 203);
-        $message->send();
+        self::assertGreaterThan(0, $message2->id);
+        self::assertEquals($course, $message2->course);
+        self::assertEquals('RE: subject', $message2->subject);
+        self::assertEquals('', $message2->content);
+        self::assertEquals(FORMAT_HTML, $message2->format);
+        self::assertEquals(0, $message2->attachments);
+        self::assertEquals($time2, $message2->time);
+        self::assertEquals([
+            $user1->id => message::ROLE_TO,
+            $user2->id => message::ROLE_FROM,
+        ], $message2->roles);
+        self::assertEquals([
+            $user1->id => true,
+            $user2->id => false,
+        ], $message2->unread);
+        self::assertEquals([
+            $user1->id => false,
+            $user2->id => false,
+        ], $message2->starred);
+        self::assertEquals([
+            $user1->id => message::NOT_DELETED,
+            $user2->id => message::NOT_DELETED,
+        ], $message2->deleted);
+        self::assertEquals([
+            $user1->id => [],
+            $user2->id => [$label2->id => $label2],
+        ], $message2->labels);
+        self::assert_message($message2);
+        self::assertEquals(message::fetch_many([$message1->id]), $message2->fetch_references());
 
-        $result = $message->reply(202, true);
+        // Reply to sender (all).
 
-        $this->assertCount(2, $result->recipients());
-        $this->assertEqualsCanonicalizing($this->user1, $result->recipients('to')[0]);
-        $this->assertEqualsCanonicalizing($this->user3, $result->recipients('cc')[0]);
-        $this->assert_message($result);
-    }
+        $message3 = $message1->reply($user2, true, $time3);
 
-    public function test_reply_subject() {
-        $message = \local_mail_message::create(201, 101);
-        $message->save('subject', 'content', 301);
-        $message->add_recipient('to', 202);
-        $message->send();
+        self::assertEquals([
+            $user1->id => message::ROLE_TO,
+            $user2->id => message::ROLE_FROM,
+            $user3->id => message::ROLE_CC,
+            $user4->id => message::ROLE_CC,
+        ], $message3->roles);
+        self::assertEquals([
+            $user1->id => true,
+            $user2->id => false,
+            $user3->id => true,
+            $user4->id => true,
+        ], $message3->unread);
+        self::assertEquals([
+            $user1->id => false,
+            $user2->id => false,
+            $user3->id => false,
+            $user4->id => false,
+        ], $message3->starred);
+        self::assertEquals([
+            $user1->id => message::NOT_DELETED,
+            $user2->id => message::NOT_DELETED,
+            $user3->id => message::NOT_DELETED,
+            $user4->id => message::NOT_DELETED,
+        ], $message3->deleted);
+        self::assertEquals([
+            $user1->id => [],
+            $user2->id => [$label2->id => $label2],
+            $user3->id => [],
+            $user4->id => [],
+        ], $message3->labels);
+        self::assert_message($message3);
 
-        $result = $message->reply(202);
-        $this->assertEquals('RE: subject', $result->subject());
+        // Reply to self.
 
-        $result->send();
-        $result = $result->reply(201);
-        $this->assertEquals('RE [2]: subject', $result->subject());
+        $message4 = $message1->reply($user1, false, $time4);
 
-        $result->send();
-        $result = $result->reply(202);
-        $this->assertEquals('RE [3]: subject', $result->subject());
-    }
+        self::assertEquals([
+            $user1->id => message::ROLE_FROM,
+            $user2->id => message::ROLE_TO,
+            $user3->id => message::ROLE_TO,
+        ], $message4->roles);
+        self::assertEquals([
+            $user1->id => false,
+            $user2->id => true,
+            $user3->id => true,
+        ], $message4->unread);
+        self::assertEquals([
+            $user1->id => false,
+            $user2->id => false,
+            $user3->id => false,
+        ], $message4->starred);
+        self::assertEquals([
+            $user1->id => message::NOT_DELETED,
+            $user2->id => message::NOT_DELETED,
+            $user3->id => message::NOT_DELETED,
+        ], $message4->deleted);
+        self::assertEquals([
+            $user1->id => [$label1->id => $label1],
+            $user2->id => [],
+            $user3->id => [],
+        ], $message4->labels);
+        self::assert_message($message4);
 
-    public function test_save() {
-        $message = \local_mail_message::create(201, 101);
-        $message->save('subject', 'content', 301, 7, 1234567890);
+        // Reply to self (all).
 
-        $this->assertEquals($this->course1, $message->course());
-        $this->assertEquals('subject', $message->subject());
-        $this->assertEquals('content', $message->content());
-        $this->assertEquals(301, $message->format());
-        $this->assertEquals(7, $message->attachments());
-        $this->assertTrue($message->draft());
-        $this->assertEquals(1234567890, $message->time());
-        $this->assert_message($message);
-        $this->assert_index(201, 'drafts', 0, 1234567890, $message->id(), false);
-        $this->assert_index(201, 'course', 101, 1234567890, $message->id(), false);
-    }
+        $message5 = $message1->reply($user1, true, $time5);
 
-    public function test_search_index() {
-        $message1 = \local_mail_message::create(201, 101);
-        $message1->add_recipient('to', 202);
-        $message1->save('subject', 'content', 301, 0, 1234567890);
-        $message2 = \local_mail_message::create(201, 101);
-        $message2->add_recipient('to', 202);
-        $message2->save('subject foo bar', 'content', 301, 0, 1234567890);
-        $message3 = \local_mail_message::create(201, 101);
-        $message3->save('subject', 'content <p>foo</p> <p>bar</p>', 301, 0, 1234567891);
-        $message4 = \local_mail_message::create(201, 101);
-        $message4->save('subject', 'content', 301, 0, 1234567891);
-        $message4->set_unread(201, true);
-        $message5 = \local_mail_message::create(202, 101);
-        $message5->add_recipient('to', 201);
-        $message5->save('subject5', 'content5', 301, 1, 1234567890);
+        self::assertEquals([
+            $user1->id => message::ROLE_FROM,
+            $user2->id => message::ROLE_TO,
+            $user3->id => message::ROLE_TO,
+            $user4->id => message::ROLE_CC,
+        ], $message5->roles);
+        self::assertEquals([
+            $user1->id => false,
+            $user2->id => true,
+            $user3->id => true,
+            $user4->id => true,
+        ], $message5->unread);
+        self::assertEquals([
+            $user1->id => false,
+            $user2->id => false,
+            $user3->id => false,
+            $user4->id => false,
+        ], $message5->starred);
+        self::assertEquals([
+            $user1->id => message::NOT_DELETED,
+            $user2->id => message::NOT_DELETED,
+            $user3->id => message::NOT_DELETED,
+            $user4->id => message::NOT_DELETED,
+        ], $message5->deleted);
+        self::assertEquals([
+            $user1->id => [$label1->id => $label1],
+            $user2->id => [],
+            $user3->id => [],
+            $user4->id => [],
+        ], $message5->labels);
+        self::assert_message($message5);
 
-        // Subject and content.
-        $query = array('pattern' => ' foo  bar ');
-        $result = \local_mail_message::search_index(201, 'course', 101, $query);
-        $this->assertEquals(array($message3, $message2), $result);
+        // Reply to replied message.
 
-        // Users.
-        $query = array('pattern' => fullname($this->user2));
-        $result = \local_mail_message::search_index(201, 'course', 101, $query);
-        $this->assertEquals(array($message2, $message1), $result);
+        $message2->send($time2);
+        $message6 = $message2->reply($user1, false, $time6);
 
-        // Unread.
-        $query = array('unread' => true);
-        $result = \local_mail_message::search_index(201, 'course', 101, $query);
-        $this->assertEquals(array($message4), $result);
-
-        // Date.
-        $query = array('time' => 1234567890);
-        $result = \local_mail_message::search_index(201, 'course', 101, $query);
-        $this->assertEquals(array($message2, $message1), $result);
-
-        // Limit.
-        $query = array('limit' => 2);
-        $result = \local_mail_message::search_index(201, 'course', 101, $query);
-        $this->assertEquals(array($message4, $message3), $result);
-
-        // Attach.
-        $query = array('attach' => true);
-        $result = \local_mail_message::search_index(202, 'course', 101, $query);
-        $this->assertEquals(array($message5), $result);
-
-        // From.
-        $query = array('searchfrom' => fullname($this->user2));
-        $result = \local_mail_message::search_index(202, 'course', 101, $query);
-        $this->assertEquals(array($message5), $result);
-
-        // To.
-        $query = array('searchto' => fullname($this->user1));
-        $result = \local_mail_message::search_index(202, 'course', 101, $query);
-        $this->assertEquals(array($message5), $result);
-
-        // From and to.
-        $query = array('searchfrom' => fullname($this->user2), 'searchto' => fullname($this->user1));
-        $result = \local_mail_message::search_index(202, 'course', 101, $query);
-        $this->assertEquals(array($message5), $result);
+        self::assertEquals('RE: subject', $message6->subject);
+        self::assertEquals([
+            $user1->id => message::ROLE_FROM,
+            $user2->id => message::ROLE_TO,
+        ], $message6->roles);
+        self::assertEquals([
+            $user1->id => false,
+            $user2->id => true,
+        ], $message6->unread);
+        self::assertEquals([
+            $user1->id => false,
+            $user2->id => false,
+        ], $message6->starred);
+        self::assertEquals([
+            $user1->id => message::NOT_DELETED,
+            $user2->id => message::NOT_DELETED,
+        ], $message6->deleted);
+        self::assertEquals([
+            $user1->id => [$label1->id => $label1],
+            $user2->id => [],
+        ], $message6->labels);
+        self::assert_message($message6);
+        self::assertEquals(message::fetch_many([$message2->id, $message1->id]), $message6->fetch_references());
     }
 
     public function test_send() {
-        $label = \local_mail_label::create(201, 'label');
-        $message = \local_mail_message::create(201, 101);
-        $message->add_recipient('to', 202);
-        $message->add_label($label);
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $user4 = new user($generator->create_user());
+        $label1 = label::create($user1, 'Label 1', 'blue');
+        $time1 = make_timestamp(2021, 10, 11, 12, 0);
+        $time2 = make_timestamp(2021, 10, 11, 13, 0);
+        $time3 = make_timestamp(2021, 10, 11, 14, 0);
+        $time4 = make_timestamp(2021, 10, 11, 15, 0);
+        $message1 = message::create($course, $user1, $time1);
+        $message1->update('subject', 'content', FORMAT_PLAIN, $time1);
+        $message1->add_recipient($user2, message::ROLE_TO);
+        $message1->add_recipient($user3, message::ROLE_CC);
+        $message1->add_recipient($user4, message::ROLE_BCC);
 
-        $message->send(1234567890);
+        // Send message without references.
 
-        $this->assertFalse($message->draft());
-        $this->assertEquals(1234567890, $message->time());
-        $this->assertContains($label, $message->labels());
-        $this->assert_message($message);
-        $this->assert_not_index(201, 'drafts', 0, $message->id());
-        $this->assert_index(201, 'sent', 0, 1234567890, $message->id(), false);
-        $this->assert_index(201, 'course', 101, 1234567890, $message->id(), false);
-        $this->assert_index(202, 'inbox', 0, 1234567890, $message->id(), true);
-        $this->assert_index(202, 'course', 101, 1234567890, $message->id(), true);
+        $message1->send($time2);
+
+        self::assertFalse($message1->draft);
+        self::assertEquals($time2, $message1->time);
+        self::assert_message($message1);
+
+        // Send message with references.
+
+        $message1->set_labels($user1, [$label1]);
+        $message2 = $message1->reply($user2, false, $time3);
+        $message2->send($time4);
+
+        self::assertFalse($message2->draft);
+        self::assertEquals($time4, $message2->time);
+        self::assertEquals([
+            $user1->id => [$label1->id => $label1],
+            $user2->id => [],
+        ], $message2->labels);
+        self::assert_message($message1);
     }
 
-    public function test_send_with_reference() {
-        $label = \local_mail_label::create(201, 'label');
-        $reference = \local_mail_message::create(201, 101);
-        $reference->add_recipient('to', 202);
-        $reference->send();
-        $reference->add_label($label);
-        $message = $reference->reply(202);
-        $message->add_recipient('cc', 203);
+    public function test_sender() {
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
 
-        $message->send();
+        $time = make_timestamp(2021, 10, 11, 12, 0);
 
-        $this->assertEqualsCanonicalizing($label, $message->labels()[0]);
-        $this->assert_message($message);
-        $this->assert_index(201, 'label', $label->id(), $message->time(), $message->id(), true);
+        $message = message::create($course, $user1, $time);
+        $message->add_recipient($user2, message::ROLE_TO);
+
+        $this->assertEquals($user1, $message->sender());
     }
 
     public function test_set_deleted() {
-        $label1 = \local_mail_label::create(201, 'label1');
-        $label2 = \local_mail_label::create(202, 'label2');
-        $message = \local_mail_message::create(201, 101);
-        $message->add_recipient('to', 202);
-        $message->send();
-        $message->add_label($label1);
-        $message->add_label($label2);
-        $message->set_starred(201, true);
+        $fs = \get_file_storage();
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $label1 = label::create($user1, 'Label 1');
+        $label2 = label::create($user2, 'Label 2');
+        $time = make_timestamp(2021, 10, 11, 12, 0);
+        $message = message::create($course, $user1, $time);
+        $message->update('subject', 'content', FORMAT_PLAIN, $time);
+        $message->add_recipient($user2, message::ROLE_TO);
+        $message->send($time);
+        $message->set_labels($user2, [$label2]);
+        $draft = message::create($course, $user1, $time);
+        $draft->add_recipient($user2, message::ROLE_TO);
+        $draft->set_labels($user1, [$label1]);
 
-        $message->set_deleted(201, \local_mail_message::DELETED);
+        // Delete draft forever.
 
-        $this->assertEquals(\local_mail_message::DELETED, $message->deleted(201));
-        $this->assertEquals(\local_mail_message::NOT_DELETED, $message->deleted(202));
-        $this->assertEquals([$label1], $message->labels(201));
-        $this->assertEquals([$label2], $message->labels(202));
-        $this->assert_not_index(201, 'sent', 0, $message->id());
-        $this->assert_not_index(201, 'starred', 0, $message->id());
-        $this->assert_not_index(201, 'course', 101, $message->id());
-        $this->assert_not_index(201, 'label', $label1->id(), $message->id());
-        $this->assert_index(201, 'trash', 0, $message->time(), $message->id(), false);
-        $this->assert_index(202, 'inbox', 0,  $message->time(), $message->id(), true);
-        $this->assert_index(202, 'course', 101, $message->time(), $message->id(), true);
-        $this->assert_index(202, 'label', $label2->id(), $message->time(), $message->id(), true);
-        $this->assert_not_index(202, 'trash', 0, $message->id());
-        $this->assert_message($message);
+        $draft->set_deleted($user1, message::DELETED_FOREVER);
 
-        $message->set_deleted(201, \local_mail_message::NOT_DELETED);
+        self::assert_record_count(0, 'messages', ['id' => $draft->id]);
+        self::assert_record_count(0, 'message_refs', ['messageid' => $draft->id]);
+        self::assert_record_count(0, 'message_users', ['messageid' => $draft->id]);
+        self::assert_record_count(0, 'message_labels', ['messageid' => $draft->id]);
+        self::assertEquals([], $fs->get_area_files($course->context()->id, 'local_mail', 'message', $draft->id));
+        self::assertEquals(message::DELETED_FOREVER, $draft->deleted[$user1->id]);
+        self::assertEquals([], $draft->labels[$user1->id]);
 
-        $this->assertEquals(\local_mail_message::NOT_DELETED, $message->deleted(201));
-        $this->assertEquals(\local_mail_message::NOT_DELETED, $message->deleted(202));
-        $this->assert_index(201, 'sent', 0, $message->time(), $message->id(), false);
-        $this->assert_index(201, 'starred', 0, $message->time(), $message->id(), false);
-        $this->assert_index(201, 'course', 101, $message->time(), $message->id(), false);
-        $this->assert_index(201, 'label', $label1->id(), $message->time(), $message->id(), false);
-        $this->assert_not_index(201, 'trash', 0, $message->id());
-        $this->assert_index(202, 'inbox', 0,  $message->time(), $message->id(), true);
-        $this->assert_index(202, 'course', 101, $message->time(), $message->id(), true);
-        $this->assert_index(202, 'label', $label2->id(), $message->time(), $message->id(), true);
-        $this->assert_not_index(202, 'trash', 0, $message->id());
-        $this->assert_message($message);
+        // Delete sent message.
 
-        $message->set_deleted(201, \local_mail_message::DELETED_FOREVER);
+        $message->set_deleted($user2, message::DELETED);
 
-        $this->assertEquals(\local_mail_message::DELETED_FOREVER, $message->deleted(201));
-        $this->assertEquals(\local_mail_message::NOT_DELETED, $message->deleted(202));
-        $this->assertEquals([], $message->labels(201));
-        $this->assertEquals([$label2], $message->labels(202));
-        $this->assert_not_index(201, 'sent', 0, $message->id());
-        $this->assert_not_index(201, 'starred', 0, $message->id());
-        $this->assert_not_index(201, 'course', 101, $message->id());
-        $this->assert_not_index(201, 'label', $label1->id(), $message->id());
-        $this->assert_not_index(201, 'trash', 0, $message->id());
-        $this->assert_index(202, 'inbox', 0,  $message->time(), $message->id(), true);
-        $this->assert_index(202, 'course', 101, $message->time(), $message->id(), true);
-        $this->assert_index(202, 'label', $label2->id(), $message->time(), $message->id(), true);
-        $this->assert_not_index(202, 'trash', 0, $message->id());
-        $this->assert_not_records('message_labels', ['messageid' => $message->id(), 'labelid' => $label1->id()]);
-        $this->assert_records('message_labels', ['messageid' => $message->id(), 'labelid' => $label2->id()]);
+        self::assertEquals(message::DELETED, $message->deleted[$user2->id]);
+        self::assert_message($message);
+
+        // Restore deleted message.
+
+        $message->set_deleted($user2, message::NOT_DELETED);
+
+        self::assertEquals(message::NOT_DELETED, $message->deleted[$user2->id]);
+        self::assert_message($message);
+
+        // Delete sent message forever.
+
+        $message->set_deleted($user2, message::DELETED_FOREVER);
+
+        self::assertEquals(message::DELETED_FOREVER, $message->deleted[$user2->id]);
+        self::assert_message($message);
     }
 
-    public function test_set_deleted_draft() {
-        $label = \local_mail_label::create(201, 'name');
-        $reference = \local_mail_message::create(202, 101);
-        $reference->add_recipient('to', 201);
-        $reference->send();
-        $message = $reference->reply(201);
-        $message->add_label($label);
-        $other = $reference->forward(201);
-        $other->add_label($label);
-        $fs = get_file_storage();
-        $context = \context_course::instance(101);
-        $filerecord = [
-            'contextid' => $context->id,
-            'component' => 'local_mail',
-            'filearea' => 'message',
-            'itemid' => $message->id(),
-            'filepath' => '/',
-            'filename' => 'test.txt',
-            'timecreated' => (int) $message->time(),
-            'timemodified' => (int) $message->time(),
-            'userid' => $message->sender()->id,
-            'mimetype' => 'text/plain',
-        ];
-        $fs->create_file_from_string($filerecord, 'test content');
+    public function test_set_labels() {
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $time = make_timestamp(2021, 10, 11, 12, 0);
+        $label1 = label::create($user1, 'Label 1', 'blue');
+        $label2 = label::create($user1, 'Label 2', 'red');
+        $label3 = label::create($user1, 'Label 3', 'green');
+        $label4 = label::create($user2, 'Label 4', 'purple');
+        $message = message::create($course, $user1, $time);
+        $message->update('subject', 'content', FORMAT_PLAIN, $time);
+        $message->add_recipient($user2, message::ROLE_TO);
+        $message->send($time);
 
-        $message->set_deleted(201, \local_mail_message::DELETED);
+        $message->set_labels($user1, [$label1, $label2]);
 
-        $this->assertEquals(\local_mail_message::DELETED, $message->deleted(201));
-        $this->assertEquals([$label], $message->labels(201));
-        $this->assert_not_index(201, 'drafts', 0, $message->id());
-        $this->assert_not_index(201, 'course', $message->course()->id, $message->id());
-        $this->assert_index(201, 'trash', 0, $message->time(), $message->id(), false);
-        $this->assert_message($message);
+        self::assertEquals([
+            $user1->id => [$label1->id => $label1, $label2->id => $label2],
+            $user2->id => [],
+        ], $message->labels);
+        self::assert_message($message);
 
-        $message->set_deleted(201, \local_mail_message::NOT_DELETED);
+        $message->set_labels($user1, [$label2, $label3]);
+        self::assertEquals([
+            $user1->id => [$label2->id => $label2, $label3->id => $label3],
+            $user2->id => [],
+        ], $message->labels);
+        self::assert_message($message);
 
-        $this->assertEquals(\local_mail_message::NOT_DELETED, $message->deleted(201));
-        $this->assertEquals([$label], $message->labels(201));
-        $this->assert_index(201, 'drafts', 0, $message->time(), $message->id(), false);
-        $this->assert_index(201, 'course', $message->course()->id, $message->time(), $message->id(), false);
-        $this->assert_not_index(201, 'trash', 0, $message->id());
-        $this->assert_message($message);
+        $message->set_labels($user2, [$label4]);
+        self::assertEquals([
+            $user1->id => [$label2->id => $label2, $label3->id => $label3],
+            $user2->id => [$label4->id => $label4]
+        ], $message->labels);
+        self::assert_message($message);
 
-        $message->set_deleted(201, \local_mail_message::DELETED_FOREVER);
+        $message->set_labels($user1, []);
+        self::assertEquals([
+            $user1->id => [],
+            $user2->id => [$label4->id => $label4]
+        ], $message->labels);
+        self::assert_message($message);
 
-        $this->assertEquals(\local_mail_message::DELETED_FOREVER, $message->deleted(201));
-        $this->assertEquals([], $message->labels(201));
-        $this->assert_not_records('messages', array('id' => $message->id()));
-        $this->assert_not_records('message_users', array('messageid' => $message->id()));
-        $this->assert_not_records('message_refs', array('messageid' => $message->id()));
-        $this->assert_not_records('message_labels', array('messageid' => $message->id()));
-        $this->assert_records('messages');
-        $this->assert_records('message_users');
-        $this->assert_records('message_refs');
-        $this->assert_records('message_labels');
-        $this->assert_not_index(201, 'drafts', 0, $message->id());
-        $this->assert_not_index(201, 'course', 101, $message->id());
-        $this->assertEquals([], $fs->get_area_files($context->id, 'local_mail', 'message', $message->id()));
-    }
-
-    public function test_empty_trash() {
-        $label1 = \local_mail_label::create(201, 'label1');
-        $label2 = \local_mail_label::create(201, 'label2');
-        $message = \local_mail_message::create(201, 101);
-        $message->add_recipient('to', 202);
-        $message->send();
-        $message->add_label($label1);
-        $message->set_starred(201, true);
-        $message2 = \local_mail_message::create(201, 101);
-        $message2->add_recipient('to', 203);
-        $message2->send();
-        $message2->add_label($label2);
-
-        $message->set_deleted(201, \local_mail_message::DELETED);
-        $message2->set_deleted(201, \local_mail_message::DELETED);
-
-        $result = \local_mail_message::fetch_index(201, 'trash');
-        $this->assertCount(2, $result);
-
-        \local_mail_message::empty_trash(201);
-
-        $result = \local_mail_message::fetch_index(201, 'trash');
-        $this->assertCount(0, $result);
-
-        $this->assert_not_index(201, 'sent', 0, $message->id());
-        $this->assert_not_index(201, 'starred', 0, $message->id());
-        $this->assert_not_index(201, 'course', $message->course()->id, $message->id());
-        $this->assert_not_index(201, 'label', $label1->id(), $message->id());
-        $this->assert_not_index(201, 'inbox', 0, $message2->id());
-        $this->assert_not_index(201, 'course', $message2->course()->id, $message2->id());
-        $this->assert_not_index(201, 'sent', 0, $message2->id());
-        $this->assert_not_index(201, 'trash', 0, $message->id());
-        $this->assert_not_index(201, 'trash', 0, $message2->id());
+        $message->set_labels($user2, []);
+        self::assertEquals([
+            $user1->id => [],
+            $user2->id => []
+        ], $message->labels);
+        self::assert_message($message);
     }
 
     public function test_set_starred() {
-        $message = \local_mail_message::create(201, 101);
-        $message->add_recipient('to', 202);
-        $message->send();
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $label = label::create($user2, 'label');
+        $time = make_timestamp(2021, 10, 11, 12, 0);
+        $message = message::create($course, $user1, $time);
+        $message->update('subject', 'content', FORMAT_PLAIN, $time);
+        $message->add_recipient($user2, message::ROLE_TO);
+        $message->send($time);
+        $message->set_labels($user2, [$label]);
 
-        $message->set_starred(201, true);
-        $message->set_starred(202, true);
+        // Set starred.
 
-        $this->assertTrue($message->starred(201));
-        $this->assertTrue($message->starred(202));
-        $this->assert_index(201, 'starred', 0, $message->time(), $message->id(), false);
-        $this->assert_index(202, 'starred', 0, $message->time(), $message->id(), true);
-        $this->assert_message($message);
+        $message->set_starred($user2, true);
 
-        $message->set_starred(201, false);
-        $message->set_starred(202, false);
+        self::assertTrue($message->starred[$user2->id]);
+        self::assert_message($message);
 
-        $this->assertFalse($message->starred(201));
-        $this->assertFalse($message->starred(202));
-        $this->assert_not_index(201, 'starred', 0, $message->id());
-        $this->assert_not_index(202, 'starred', 0, $message->id());
-        $this->assert_message($message);
+        // Set unstarred.
+
+        $message->set_starred($user2, false);
+
+        self::assertFalse($message->starred[$user2->id]);
+        self::assert_message($message);
     }
 
     public function test_set_unread() {
-        $label = \local_mail_label::create(201, 'label');
-        $message = \local_mail_message::create(201, 101);
-        $message->add_label($label);
-        $message->set_starred(201, true);
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $label = label::create($user2, 'label');
+        $time = make_timestamp(2021, 10, 11, 12, 0);
+        $message = message::create($course, $user1, $time);
+        $message->update('subject', 'content', FORMAT_PLAIN, $time);
+        $message->add_recipient($user2, message::ROLE_TO);
+        $message->send($time);
+        $message->set_labels($user2, [$label]);
 
-        $message->set_unread(201, true);
+        // Set unread.
 
-        $this->assertTrue($message->unread(201));
-        $this->assert_index(201, 'drafts', 0, $message->time(), $message->id(), true);
-        $this->assert_index(201, 'starred', 0, $message->time(), $message->id(), true);
-        $this->assert_index(201, 'course', $message->course()->id, $message->time(), $message->id(), true);
-        $this->assert_message($message);
+        $message->set_unread($user2, false);
 
-        $message->set_unread(201, false);
+        self::assertFalse($message->unread[$user2->id]);
+        self::assert_message($message);
 
-        $this->assertFalse($message->unread(201));
-        $this->assert_index(201, 'drafts', 0, $message->time(), $message->id(), false);
-        $this->assert_index(201, 'starred', 0, $message->time(), $message->id(), false);
-        $this->assert_index(201, 'course', $message->course()->id, $message->time(), $message->id(), false);
-        $this->assert_message($message);
+        // Set read.
+
+        $message->set_unread($user2, true);
+
+        self::assertTrue($message->unread[$user2->id]);
+        self::assert_message($message);
     }
 
-    public function test_viewable() {
-        $message = \local_mail_message::create(201, 101);
-        $message->add_recipient('to', 202);
+    public function test_update() {
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user = new user($generator->create_user());
+        $time1 = make_timestamp(2021, 10, 11, 12, 0);
+        $time2 = make_timestamp(2021, 10, 11, 13, 0);
+        $message = message::create($course, $user, $time1);
+        self::create_attachment($course->id, $message->id, 'file1.txt', 'File 1');
+        self::create_attachment($course->id, $message->id, 'file2.txt', 'File 2');
+        self::create_attachment($course->id, $message->id, 'file3.txt', 'File 3');
 
-        $this->assertTrue($message->viewable(201));
-        $this->assertFalse($message->viewable(202));
-        $this->assertFalse($message->viewable(203));
+        $message->update('updated_subject', 'updated_content', FORMAT_PLAIN, $time2);
 
-        $message->send();
+        self::assertEquals('updated_subject', $message->subject);
+        self::assertEquals('updated_content', $message->content);
+        self::assertEquals(FORMAT_PLAIN, $message->format);
+        self::assertEquals(3, $message->attachments);
+        self::assertEquals($time2, $message->time);
+        self::assert_message($message);
 
-        $this->assertTrue($message->viewable(201));
-        $this->assertTrue($message->viewable(202));
-        $this->assertFalse($message->viewable(203));
+        // Deleted message.
 
-        $forwarded = $message->forward(202);
-        $forwarded->add_recipient('to', 203);
-        $forwarded->send();
+        $message->set_deleted($user, message::DELETED);
 
-        $this->assertFalse($message->viewable(203));
-        $this->assertTrue($message->viewable(203, true));
+        $message->update('updated_subject', 'updated_content', FORMAT_PLAIN, $time2);
+
+        self::assertEquals($message->deleted[$user->id], message::NOT_DELETED);
+        self::assert_message($message);
+    }
+
+    /**
+     * Asserts that a message is stored correctly in the database.
+     *
+     * @param message $message Message.
+     * @throws ExpectationFailedException
+     */
+    protected static function assert_message(message $message): void {
+        self::assert_record_data('messages', [
+            'id' => $message->id,
+        ], [
+            'courseid' => $message->course->id,
+            'subject' => $message->subject,
+            'content' => $message->content,
+            'format' => $message->format,
+            'attachments' => $message->attachments,
+            'draft' => (int) $message->draft,
+            'time' => $message->time,
+            'normalizedsubject' => message::normalize_text($message->subject),
+            'normalizedcontent' => message::normalize_text($message->content),
+        ]);
+
+        $numusers = count($message->users);
+        self::assert_record_count($numusers, 'message_users', ['messageid' => $message->id]);
+
+        $numlabels = array_sum(array_map('count', $message->labels));
+        self::assert_record_count($numlabels, 'message_labels', ['messageid' => $message->id]);
+
+        foreach ($message->users as $user) {
+            $data = [
+                'courseid' => $message->course->id,
+                'draft' => (int) $message->draft,
+                'time' => $message->time,
+                'role' => $message->roles[$user->id],
+                'unread' => (int) $message->unread[$user->id],
+                'starred' => (int) $message->starred[$user->id],
+                'deleted' => $message->deleted[$user->id],
+            ];
+            self::assert_record_data('message_users', [
+                'messageid' => $message->id,
+                'userid' => $user->id
+            ], $data);
+            foreach ($message->labels[$user->id] as $label) {
+                self::assert_record_data('message_labels', [
+                    'messageid' => $message->id,
+                    'labelid' => $label->id,
+                ], $data);
+            }
+        }
     }
 }
