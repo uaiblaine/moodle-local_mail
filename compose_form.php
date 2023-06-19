@@ -148,14 +148,20 @@ class mail_compose_form extends moodleform {
 
         $configmaxbytes = get_config('local_mail', 'maxbytes') ?: $CFG->maxbytes;
         $configmaxfiles = get_config('local_mail', 'maxfiles');
-        $maxbytes = get_user_max_upload_file_size($PAGE->context, $CFG->maxbytes,
-                                                  $COURSE->maxbytes, $configmaxbytes);
+        $maxbytes = get_user_max_upload_file_size(
+            $PAGE->context,
+            $CFG->maxbytes,
+            $COURSE->maxbytes,
+            $configmaxbytes
+        );
         $maxfiles = is_numeric($configmaxfiles) ? $configmaxfiles : LOCAL_MAIL_MAXFILES;
-        return array('accepted_types' => '*',
-                     'maxbytes' => $maxbytes,
-                     'maxfiles' => $maxfiles,
-                     'return_types' => FILE_INTERNAL | FILE_EXTERNAL,
-                     'subdirs' => false);
+        return array(
+            'accepted_types' => '*',
+            'maxbytes' => $maxbytes,
+            'maxfiles' => $maxfiles,
+            'return_types' => FILE_INTERNAL | FILE_EXTERNAL,
+            'subdirs' => false
+        );
     }
 
     private function format_recipients($users) {
@@ -173,14 +179,18 @@ class mail_compose_form extends moodleform {
 
         foreach ($users as $user) {
             $content .= html_writer::start_tag('div', array('class' => 'mail_recipient'));
-            $options = array('courseid' => $message->course->id,
-                             'link' => false, 'alttext' => false);
+            $options = array(
+                'courseid' => $message->course->id,
+                'link' => false, 'alttext' => false
+            );
             $content .= $OUTPUT->user_picture((object) (array) $user, $options);
             $content .= html_writer::tag('span', s(fullname($user)));
-            $attributes = array('type' => 'image',
-                                'name' => "remove[{$user->id}]",
-                                'src' => $OUTPUT->$imageurl('t/delete'),
-                                'alt' => get_string('remove'));
+            $attributes = array(
+                'type' => 'image',
+                'name' => "remove[{$user->id}]",
+                'src' => $OUTPUT->$imageurl('t/delete'),
+                'alt' => get_string('remove')
+            );
             $content .= html_writer::tag('input', '', $attributes);
             $content .= html_writer::end_tag('div');
         }

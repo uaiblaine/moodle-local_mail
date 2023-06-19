@@ -25,7 +25,7 @@ class exception extends \moodle_exception {
      * @param ?mixed $a Language string parameters.
      * @param ?string $debuginfo Optional debugging information
      */
-    public function __construct(string $errorcode, mixed $a=null, string $debuginfo=null) {
+    public function __construct(string $errorcode, mixed $a = null, string $debuginfo = null) {
         parent::__construct($errorcode, 'local_mail', '', $a, $debuginfo);
     }
 }

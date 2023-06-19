@@ -41,8 +41,10 @@ function local_mail_extend_navigation($root) {
 
     // User profile.
 
-    if ($PAGE->url->compare(new moodle_url('/user/view.php'), URL_MATCH_BASE) &&
-            has_capability('local/mail:usemail', $context)) {
+    if (
+        $PAGE->url->compare(new moodle_url('/user/view.php'), URL_MATCH_BASE) &&
+        has_capability('local/mail:usemail', $context)
+    ) {
         $userid = optional_param('id', false, PARAM_INT);
         if (local_mail_valid_recipient($userid)) {
             $vars = array('course' => $COURSE->id, 'recipient' => $userid);
@@ -54,41 +56,52 @@ function local_mail_extend_navigation($root) {
 
     // Users list.
 
-    if ($PAGE->url->compare(new moodle_url('/user/index.php'), URL_MATCH_BASE) &&
-            has_capability('local/mail:usemail', $context)) {
+    if (
+        $PAGE->url->compare(new moodle_url('/user/index.php'), URL_MATCH_BASE) &&
+        has_capability('local/mail:usemail', $context)
+    ) {
         $userid = optional_param('id', false, PARAM_INT);
         $vars = array('course' => $COURSE->id);
         $PAGE->requires->string_for_js('choosedots', 'moodle');
         $PAGE->requires->strings_for_js(array(
-                'bulkmessage',
-                'to',
-                'cc',
-                'bcc',
-                ), 'local_mail');
+            'bulkmessage',
+            'to',
+            'cc',
+            'bcc',
+        ), 'local_mail');
         $PAGE->requires->js_init_code('M.local_mail = ' . json_encode($vars));
         $PAGE->requires->js('/local/mail/users.js');
     }
 
     // Block completion_progress.
 
-    if ($PAGE->url->compare(new moodle_url('/blocks/completion_progress/overview.php'), URL_MATCH_BASE) &&
-            has_capability('local/mail:usemail', $context)) {
+    if (
+        $PAGE->url->compare(new moodle_url('/blocks/completion_progress/overview.php'), URL_MATCH_BASE) &&
+        has_capability('local/mail:usemail', $context)
+    ) {
         $userid = optional_param('id', false, PARAM_INT);
         $vars = array('course' => $COURSE->id);
         $PAGE->requires->string_for_js('choosedots', 'moodle');
         $PAGE->requires->strings_for_js(array(
-                'bulkmessage',
-                'to',
-                'cc',
-                'bcc',
-                ), 'local_mail');
+            'bulkmessage',
+            'to',
+            'cc',
+            'bcc',
+        ), 'local_mail');
         $PAGE->requires->js_init_code('M.local_mail = ' . json_encode($vars));
         $PAGE->requires->js('/local/mail/users.js');
     }
 }
 
-function local_mail_pluginfile($course, $cm, $context, $filearea, $args,
-                               $forcedownload, array $options=array()) {
+function local_mail_pluginfile(
+    $course,
+    $cm,
+    $context,
+    $filearea,
+    $args,
+    $forcedownload,
+    array $options = array()
+) {
     global $SITE, $USER;
 
     require_login($SITE, false);
@@ -146,7 +159,6 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
         $spinner = html_writer::tag('div', $icon, ['class' => $class]);
         $container = html_writer::div($spinner, '', ['id' => 'local-mail-navbar']);
         return $container;
-
     } else {
         // Other page in the site.
         $icon = html_writer::tag('i', '', ['class' => 'fa fa-fw fa-envelope-o', 'style' => "font-size: 16px"]);
@@ -182,7 +194,7 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
             'courses' => external::get_courses_raw(),
             'labels' => external::get_labels_raw(),
         ];
-        $datascript = html_writer::script('window.local_mail_navbar_data = '. json_encode($data));
+        $datascript = html_writer::script('window.local_mail_navbar_data = ' . json_encode($data));
         $sveltescript = local_mail_svelte_script('src/navbar.ts');
         return  $container . $datascript . $sveltescript;
     }

@@ -65,15 +65,24 @@ class external extends \external_api {
         return new \external_single_structure([
             'globaltrays' => new \external_multiple_structure(
                 new \external_value(PARAM_ALPHA, 'Type of tray: "starred", "sent", "drafts" or "trash"'),
-                'Global trays to display'),
-            'coursetrays' => new \external_value(PARAM_ALPHA,
-                    'Course trays to display: "none", "unread", or "all"'),
-            'coursetraysname' => new \external_value(PARAM_ALPHA,
-                    'Name of course trays to display: "shortname" or "fullname"'),
-            'coursebadges' => new \external_value(PARAM_ALPHA,
-                'Type of course badges: "none", "shortname", or "fullname"'),
-            'coursebadgeslength' => new \external_value(PARAM_INT,
-                'Trunate course badges to this length in characters.'),
+                'Global trays to display'
+            ),
+            'coursetrays' => new \external_value(
+                PARAM_ALPHA,
+                'Course trays to display: "none", "unread", or "all"'
+            ),
+            'coursetraysname' => new \external_value(
+                PARAM_ALPHA,
+                'Name of course trays to display: "shortname" or "fullname"'
+            ),
+            'coursebadges' => new \external_value(
+                PARAM_ALPHA,
+                'Type of course badges: "none", "shortname", or "fullname"'
+            ),
+            'coursebadgeslength' => new \external_value(
+                PARAM_INT,
+                'Trunate course badges to this length in characters.'
+            ),
         ]);
     }
 
@@ -154,9 +163,15 @@ class external extends \external_api {
         return new \external_function_parameters([
             'preferences' => new \external_single_structure([
                 'perpage' => new \external_value(
-                    PARAM_INT, 'Number of messages to display per page (5-100)', VALUE_OPTIONAL),
+                    PARAM_INT,
+                    'Number of messages to display per page (5-100)',
+                    VALUE_OPTIONAL
+                ),
                 'markasread' => new \external_value(
-                    PARAM_BOOL, 'Mark new messages as read if a notification is sent', VALUE_OPTIONAL),
+                    PARAM_BOOL,
+                    'Mark new messages as read if a notification is sent',
+                    VALUE_OPTIONAL
+                ),
             ]),
         ]);
     }
@@ -288,34 +303,86 @@ class external extends \external_api {
     private static function query_parameters() {
         return new \external_single_structure([
             'courseid' => new \external_value(
-                PARAM_INT, 'Search messages in this course', VALUE_DEFAULT, 0),
+                PARAM_INT,
+                'Search messages in this course',
+                VALUE_DEFAULT,
+                0
+            ),
             'labelid' => new \external_value(
-                PARAM_INT, 'Search messages with this label', VALUE_DEFAULT, 0),
+                PARAM_INT,
+                'Search messages with this label',
+                VALUE_DEFAULT,
+                0
+            ),
             'draft' => new \external_value(
-                PARAM_BOOL, 'Search messages with this draft status', VALUE_OPTIONAL),
+                PARAM_BOOL,
+                'Search messages with this draft status',
+                VALUE_OPTIONAL
+            ),
             'roles' => new \external_multiple_structure(
                 new \external_value(PARAM_ALPHA, 'Role: "from", "to", "cc" or "bcc"'),
-                'Search messages in which the user has one of these roles', VALUE_DEFAULT, []),
+                'Search messages in which the user has one of these roles',
+                VALUE_DEFAULT,
+                []
+            ),
             'unread' => new \external_value(
-                PARAM_BOOL, 'Search messages with this unread status', VALUE_OPTIONAL),
+                PARAM_BOOL,
+                'Search messages with this unread status',
+                VALUE_OPTIONAL
+            ),
             'starred' => new \external_value(
-                PARAM_BOOL, 'Search messages with this starred status', VALUE_OPTIONAL),
+                PARAM_BOOL,
+                'Search messages with this starred status',
+                VALUE_OPTIONAL
+            ),
             'deleted' => new \external_value(
-                PARAM_BOOL, 'Search deleted messages.', VALUE_DEFAULT, false),
+                PARAM_BOOL,
+                'Search deleted messages.',
+                VALUE_DEFAULT,
+                false
+            ),
             'content' => new \external_value(
-                PARAM_TEXT, 'Search messages with this text in ', VALUE_DEFAULT, ''),
+                PARAM_TEXT,
+                'Search messages with this text in ',
+                VALUE_DEFAULT,
+                ''
+            ),
             'sendername' => new \external_value(
-                PARAM_TEXT, 'Text to search the name of the sender', VALUE_DEFAULT, ''),
+                PARAM_TEXT,
+                'Text to search the name of the sender',
+                VALUE_DEFAULT,
+                ''
+            ),
             'recipientname' => new \external_value(
-                PARAM_TEXT, 'Text to search the names of the recipients', VALUE_DEFAULT, ''),
+                PARAM_TEXT,
+                'Text to search the names of the recipients',
+                VALUE_DEFAULT,
+                ''
+            ),
             'withfilesonly' => new \external_value(
-                PARAM_BOOL, 'Search only messages with attachments', VALUE_DEFAULT, false),
+                PARAM_BOOL,
+                'Search only messages with attachments',
+                VALUE_DEFAULT,
+                false
+            ),
             'maxtime' => new \external_value(
-                PARAM_INT, 'Searh only messages older than this timestamp', VALUE_DEFAULT, 0),
+                PARAM_INT,
+                'Searh only messages older than this timestamp',
+                VALUE_DEFAULT,
+                0
+            ),
             'startid' => new \external_value(
-                PARAM_INT, 'Start serching from the position of this message exclusively.', VALUE_DEFAULT, 0),
+                PARAM_INT,
+                'Start serching from the position of this message exclusively.',
+                VALUE_DEFAULT,
+                0
+            ),
             'reverse' => new \external_value(
-                PARAM_BOOL, 'Search messages from older to newer instead of from newer to older.', VALUE_DEFAULT, false),
+                PARAM_BOOL,
+                'Search messages from older to newer instead of from newer to older.',
+                VALUE_DEFAULT,
+                false
+            ),
         ]);
     }
 
@@ -402,9 +469,17 @@ class external extends \external_api {
         return new \external_function_parameters([
             'query' => self::query_parameters(),
             'offset' => new \external_value(
-                PARAM_INT, 'Skip this number of messages', VALUE_DEFAULT, 0),
+                PARAM_INT,
+                'Skip this number of messages',
+                VALUE_DEFAULT,
+                0
+            ),
             'limit' => new \external_value(
-                PARAM_INT, 'Maximum number of messages', VALUE_DEFAULT, 0),
+                PARAM_INT,
+                'Maximum number of messages',
+                VALUE_DEFAULT,
+                0
+            ),
         ]);
     }
 
@@ -544,8 +619,14 @@ class external extends \external_api {
     public static function get_message_response(int $userid, message $message) {
         $contextid = $message->course->context()->id;
 
-        list($content, $format) = \external_format_text($message->content, $message->format, $contextid,
-                                                        'local_mail', 'message', $message->id);
+        list($content, $format) = \external_format_text(
+            $message->content,
+            $message->format,
+            $contextid,
+            'local_mail',
+            'message',
+            $message->id
+        );
 
         $sender = $message->sender();
 
@@ -607,8 +688,14 @@ class external extends \external_api {
         }
 
         foreach ($message->fetch_references() as $ref) {
-            list($content, $format) = \external_format_text($ref->content, $ref->format, $contextid,
-                                                           'local_mail', 'message', $ref->id);
+            list($content, $format) = \external_format_text(
+                $ref->content,
+                $ref->format,
+                $contextid,
+                'local_mail',
+                'message',
+                $ref->id
+            );
 
             $attachments = [];
             $files = $fs->get_area_files($contextid, 'local_mail', 'message', $ref->id, 'filename', false);
@@ -800,8 +887,10 @@ class external extends \external_api {
     public static function set_deleted_parameters() {
         return new \external_function_parameters([
             'messageid' => new \external_value(PARAM_INT, 'ID of the message'),
-            'deleted' => new \external_value(PARAM_INT,
-                'New deleted status: 0 (not deleted), 1 (deleted), 2 (deleted forever)'),
+            'deleted' => new \external_value(
+                PARAM_INT,
+                'New deleted status: 0 (not deleted), 1 (deleted), 2 (deleted forever)'
+            ),
         ]);
     }
 
@@ -963,10 +1052,12 @@ class external extends \external_api {
         return new \external_function_parameters([
             'messageid' => new \external_value(PARAM_INT, 'ID of the message'),
             'labelids' => new \external_multiple_structure(
-                new \external_value(PARAM_INT,
-                    'ID of a label'),
-                )
-            ]);
+                new \external_value(
+                    PARAM_INT,
+                    'ID of a label'
+                ),
+            )
+        ]);
     }
 
     public static function set_labels($messageid, $labelids) {
@@ -1025,8 +1116,13 @@ class external extends \external_api {
 
     private static function file_url(\stored_file $file) {
         $fileurl = \moodle_url::make_pluginfile_url(
-            $file->get_contextid(), $file->get_component(), $file->get_filearea(),
-            $file->get_itemid(), $file->get_filepath(), $file->get_filename());
+            $file->get_contextid(),
+            $file->get_component(),
+            $file->get_filearea(),
+            $file->get_itemid(),
+            $file->get_filepath(),
+            $file->get_filename()
+        );
         return $fileurl->out(false);
     }
 }

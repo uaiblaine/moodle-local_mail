@@ -26,7 +26,7 @@ use local_mail\user;
 
 define('AJAX_SCRIPT', true);
 
-require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
+require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
 
 global $CFG, $USER;
 
@@ -83,11 +83,11 @@ function local_mail_getrecipients($message, $search, $groupid, $roleid) {
     if ($message->course->groupmode == SEPARATEGROUPS && !has_capability('moodle/site:accessallgroups', $context)) {
         $groups = groups_get_user_groups($message->course->id, $message->sender()->id);
         if (count($groups[0]) == 0) {
-                $mailoutput = $PAGE->get_renderer('local_mail');
-                return array(
-                    'msgerror' => '',
-                    'html' => $mailoutput->recipientslist($participants)
-                );
+            $mailoutput = $PAGE->get_renderer('local_mail');
+            return array(
+                'msgerror' => '',
+                'html' => $mailoutput->recipientslist($participants)
+            );
         } else {
             if (!in_array($groupid, $groups[0])) {
                 $groupid = $groups[0][0];
@@ -147,16 +147,16 @@ function local_mail_updaterecipients($message, $recipients, $roles) {
     if ($message->course->groupmode == SEPARATEGROUPS && !has_capability('moodle/site:accessallgroups', $context)) {
         $groups = groups_get_user_groups($message->course->id, $message->sender()->id);
         if (count($groups[0]) == 0) {
-                return array(
-                    'msgerror' => '',
-                    'info' => '',
-                    'html' => '',
-                    'redirect' => 'ok'
-                );
-        } else if (count($groups[0]) == 1) {// Only one group.
+            return array(
+                'msgerror' => '',
+                'info' => '',
+                'html' => '',
+                'redirect' => 'ok'
+            );
+        } else if (count($groups[0]) == 1) { // Only one group.
             $groupid = $groups[0][0];
         } else {
-            $severalseparategroups = true;// Several groups.
+            $severalseparategroups = true; // Several groups.
         }
     }
 
@@ -168,12 +168,17 @@ function local_mail_updaterecipients($message, $recipients, $roles) {
     }
 
     $participants = array();
-    list($select, $from, $where, $sort, $params) = local_mail_getsqlrecipients($message->course->id, '',
-                                                                               $groupid, 0, implode(',', $recipients));
+    list($select, $from, $where, $sort, $params) = local_mail_getsqlrecipients(
+        $message->course->id,
+        '',
+        $groupid,
+        0,
+        implode(',', $recipients)
+    );
     $rs = $DB->get_recordset_sql("$select $from $where $sort", $params);
 
     foreach ($rs as $rec) {
-        if (!array_key_exists($rec->id, $participants)) {// Avoid duplicated users.
+        if (!array_key_exists($rec->id, $participants)) { // Avoid duplicated users.
             if ($severalseparategroups) {
                 $valid = false;
                 foreach ($groups[0] as $group) {

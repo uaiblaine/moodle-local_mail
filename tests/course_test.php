@@ -43,36 +43,41 @@ class course_test extends testcase {
         $user1 = $generator->create_user();
         $user2 = $generator->create_user();
 
-        list($labelid1, $labelid2) = self::insert_records('labels',
-            ['userid',    'name',    'color'],
-            [ $user1->id, 'Label 1', 'red'  ],
-            [ $user2->id, 'Label 2', 'blue' ],
+        list($labelid1, $labelid2) = self::insert_records(
+            'labels',
+            ['userid',   'name',    'color'],
+            [$user1->id, 'Label 1', 'red'],
+            [$user2->id, 'Label 2', 'blue'],
         );
-        list($messageid1, $messageid2, $messageid3, $messageid4) = self::insert_records('messages',
-            ['courseid',    'subject',   'content',  'format', 'attachments', 'draft', 'time'],
-            [ $course1->id, 'Subject 1', 'Content 1', 0,        0,             0,       0    ],
-            [ $course1->id, 'Subject 2', 'Content 2', 0,        0,             0,       0    ],
-            [ $course2->id, 'Subject 3', 'Content 3', 0,        0,             0,       0    ],
-            [ $course2->id, 'Subject 4', 'Content 4', 0,        0,             0,       0    ],
+        list($messageid1, $messageid2, $messageid3, $messageid4) = self::insert_records(
+            'messages',
+            ['courseid',   'subject',   'content',  'format', 'attachments', 'draft', 'time'],
+            [$course1->id, 'Subject 1', 'Content 1', 0,        0,             0,       0],
+            [$course1->id, 'Subject 2', 'Content 2', 0,        0,             0,       0],
+            [$course2->id, 'Subject 3', 'Content 3', 0,        0,             0,       0],
+            [$course2->id, 'Subject 4', 'Content 4', 0,        0,             0,       0],
         );
-        self::insert_records('message_refs',
+        self::insert_records(
+            'message_refs',
             ['messageid', 'reference'],
-            [ $messageid1, $messageid2],
-            [ $messageid3, $messageid4],
+            [$messageid1, $messageid2],
+            [$messageid3, $messageid4],
         );
-        $this->insert_records('message_users',
+        $this->insert_records(
+            'message_users',
             ['messageid', 'courseid',   'draft', 'time', 'userid',   'role', 'unread', 'starred',  'deleted'],
-            [ $messageid1, $course1->id, 0,       0,      $user1->id, 0,      0,        0,          0       ],
-            [ $messageid2, $course1->id, 0,       0,      $user2->id, 0,      0,        0,          0       ],
-            [ $messageid3, $course2->id, 0,       0,      $user1->id, 0,      0,        0,          0       ],
-            [ $messageid4, $course2->id, 0,       0,      $user2->id, 0,      0,        0,          0       ],
+            [$messageid1,  $course1->id, 0,       0,      $user1->id, 0,      0,        0,          0],
+            [$messageid2,  $course1->id, 0,       0,      $user2->id, 0,      0,        0,          0],
+            [$messageid3,  $course2->id, 0,       0,      $user1->id, 0,      0,        0,          0],
+            [$messageid4,  $course2->id, 0,       0,      $user2->id, 0,      0,        0,          0],
         );
-        $this->insert_records('message_labels',
+        $this->insert_records(
+            'message_labels',
             ['messageid', 'courseid',   'draft', 'time', 'labelid', 'role', 'unread', 'starred', 'deleted'],
-            [ $messageid1, $course1->id, 0,       0,      $labelid1, 0,      0,        0,         0       ],
-            [ $messageid2, $course1->id, 0,       0,      $labelid2, 0,      0,        0,         0       ],
-            [ $messageid3, $course2->id, 0,       0,      $labelid1, 0,      0,        0,         0       ],
-            [ $messageid4, $course2->id, 0,       0,      $labelid2, 0,      0,        0,         0       ],
+            [$messageid1,  $course1->id, 0,       0,      $labelid1, 0,      0,        0,         0],
+            [$messageid2,  $course1->id, 0,       0,      $labelid2, 0,      0,        0,         0],
+            [$messageid3,  $course2->id, 0,       0,      $labelid1, 0,      0,        0,         0],
+            [$messageid4,  $course2->id, 0,       0,      $labelid2, 0,      0,        0,         0],
         );
 
         self::create_attachment($course1->id, $messageid1, 'file1.txt', 'test');

@@ -19,8 +19,8 @@ namespace local_mail;
 define('CLI_SCRIPT', true);
 
 require(__DIR__ . '/../../../config.php');
-require_once($CFG->dirroot.'/course/lib.php');
-require_once($CFG->libdir.'/clilib.php');
+require_once($CFG->dirroot . '/course/lib.php');
+require_once($CFG->libdir . '/clilib.php');
 
 const EMOJIS = ['😀', '😛', '😱', '👍'];
 const CONSONANTS = ['b', 'c', 'ç', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'x', 'y', 'z'];
@@ -324,7 +324,7 @@ function random_paragraph(): string {
     return $s;
 }
 
-function random_sentence($period=false): string {
+function random_sentence($period = false): string {
     if (random_bool(EMOJI_FREQ)) {
         return random_item(EMOJIS);
     }
@@ -350,7 +350,7 @@ function random_sentence($period=false): string {
     return $s;
 }
 
-function random_word($capitalize=false): string {
+function random_word($capitalize = false): string {
     $s = '';
     $n = random_count(1, SYLLABES_PER_WORD_EX, SYLLABES_PER_WORD_SD);
 
@@ -400,7 +400,7 @@ function set_random_starred(message $message): void {
 
 function set_random_unread(message $message, int $starttime, int $endtime): void {
     if (!$message->draft) {
-        $freq = pow(($message->time - $starttime) / ($endtime - $starttime) , UNREAD_FREQ_EXP);
+        $freq = pow(($message->time - $starttime) / ($endtime - $starttime), UNREAD_FREQ_EXP);
         foreach ($message->recipients() as $user) {
             $message->set_unread($user, random_bool($freq));
         }

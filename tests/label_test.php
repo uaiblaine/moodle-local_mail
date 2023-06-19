@@ -49,11 +49,12 @@ class label_test extends testcase {
         $label1 = label::create($user, 'name 1', 'red');
         $label2 = label::create($user, 'name 2');
 
-        self::insert_records('message_labels',
+        self::insert_records(
+            'message_labels',
             ['messageid', 'courseid', 'draft', 'time', 'labelid',   'role', 'unread', 'starred', 'deleted'],
-            [ 0,           0,          0,       0,      $label1->id, 0,      0,        0,         0       ],
-            [ 0,           0,          0,       0,      $label2->id, 0,      0,        0,         0       ],
-            [ 0,           0,          0,       0,      $label2->id, 0,      0,        0,         0       ],
+            [0,            0,          0,       0,      $label1->id, 0,      0,        0,         0],
+            [0,            0,          0,       0,      $label2->id, 0,      0,        0,         0],
+            [0,            0,          0,       0,      $label2->id, 0,      0,        0,         0],
         );
 
         $label1->delete();

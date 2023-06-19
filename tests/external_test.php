@@ -135,7 +135,6 @@ class external_test extends testcase {
             'markasread' => false,
         ];
         $this->assertEquals($expected, $result);
-
     }
 
     public function test_set_preferences() {

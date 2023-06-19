@@ -63,7 +63,7 @@ class label {
      * @param string $color Color of the label, optional.
      * @return self Created label.
      */
-    public static function create(user $user, string $name, string $color=''): self {
+    public static function create(user $user, string $name, string $color = ''): self {
         global $DB;
 
         assert(\core_text::strlen(self::nromalized_name($name)) > 0);

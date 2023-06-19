@@ -37,22 +37,22 @@ class user {
     /** @var string Email address. */
     public string $email;
 
-     /** @var int Picture file ID. */
+    /** @var int Picture file ID. */
     public int $picture;
 
     /** @var ?string Picture description. */
     public ?string $imagealt;
 
-     /** @var string Phonetic spelling of first name. */
+    /** @var string Phonetic spelling of first name. */
     public string $firstnamephonetic;
 
-     /** @var string Phonetic spelling of last name. */
+    /** @var string Phonetic spelling of last name. */
     public string $lastnamephonetic;
 
-     /** @var string Middle name. */
+    /** @var string Middle name. */
     public string $middlename;
 
-     /** @var string Alternate name. */
+    /** @var string Alternate name. */
     public string $alternatename;
 
     /**

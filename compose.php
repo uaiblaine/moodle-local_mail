@@ -69,10 +69,15 @@ $customdata['context'] = $PAGE->context;
 $mform = new mail_compose_form($url, $customdata);
 
 $draftareaid = file_get_submitted_draft_itemid('message');
-$content = file_prepare_draft_area($draftareaid, $PAGE->context->id,
-                                   'local_mail', 'message', $message->id,
-                                   mail_compose_form::file_options(),
-                                   $message->content);
+$content = file_prepare_draft_area(
+    $draftareaid,
+    $PAGE->context->id,
+    'local_mail',
+    'message',
+    $message->id,
+    mail_compose_form::file_options(),
+    $message->content
+);
 $format = $message->format >= 0 ? $message->format : editors_get_preferred_format();
 
 $data['course'] = $message->course->id;
@@ -96,10 +101,15 @@ if ($data = $mform->get_data()) {
         redirect($url);
     }
 
-    $content = file_save_draft_area_files($data->content['itemid'], $PAGE->context->id,
-                                          'local_mail', 'message', $message->id,
-                                          mail_compose_form::file_options(),
-                                          $data->content['text']);
+    $content = file_save_draft_area_files(
+        $data->content['itemid'],
+        $PAGE->context->id,
+        'local_mail',
+        'message',
+        $message->id,
+        mail_compose_form::file_options(),
+        $data->content['text']
+    );
 
     $files = $fs->get_area_files($PAGE->context->id, 'local_mail', 'message', $message->id, 'filename', false);
 
@@ -138,7 +148,7 @@ $PAGE->requires->strings_for_js(array(
     'addrecipients',
     'applychanges',
     'notingroup'
-    ), 'local_mail');
+), 'local_mail');
 if (!empty($references)) {
     echo $mailoutput->references($references, true);
 }

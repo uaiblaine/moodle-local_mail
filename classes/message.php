@@ -325,7 +325,7 @@ class message {
             $field = 'reference';
         }
 
-        $records = $DB->get_records('local_mail_message_refs', $conditions , '', $field);
+        $records = $DB->get_records('local_mail_message_refs', $conditions, '', $field);
 
         return self::fetch_many(array_keys($records));
     }
@@ -724,8 +724,14 @@ class message {
         $attachments = count($files);
 
         // Normalized content.
-        $content = file_rewrite_pluginfile_urls($content, 'pluginfile.php', $context->id,
-                                                'local_mail', 'message', $this->id);
+        $content = file_rewrite_pluginfile_urls(
+            $content,
+            'pluginfile.php',
+            $context->id,
+            'local_mail',
+            'message',
+            $this->id
+        );
         $content = format_text($content, $format, ['filter' => false, 'nocache' => true]);
         $normalizedsubject = self::normalize_text($subject);
         $normalizedcontent = self::normalize_text(html_to_text($content, 0, false));

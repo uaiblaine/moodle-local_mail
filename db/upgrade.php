@@ -161,7 +161,7 @@ function xmldb_local_mail_upgrade($oldversion) {
 
     if ($oldversion < 2017070402) {
 
-        $normalize = function($text) {
+        $normalize = function ($text) {
             return trim(preg_replace('/(*UTF8)[^\p{L}\p{N}]+/', ' ', $text));
         };
         $lastid = 0;
@@ -173,8 +173,14 @@ function xmldb_local_mail_upgrade($oldversion) {
             $records = $DB->get_records_select('local_mail_messages', $select, $params, 'id', $fields, 0, 100);
             foreach ($records as $record) {
                 $context = context_course::instance($record->courseid);
-                $content = file_rewrite_pluginfile_urls($record->content, 'pluginfile.php', $context->id,
-                                                        'local_mail', 'message', $record->id);
+                $content = file_rewrite_pluginfile_urls(
+                    $record->content,
+                    'pluginfile.php',
+                    $context->id,
+                    'local_mail',
+                    'message',
+                    $record->id
+                );
                 $content = format_text($record->content, $record->format, ['filter' => false, 'nocache' => true]);
                 $data = new stdClass;
                 $data->id = $record->id;
@@ -227,8 +233,11 @@ function xmldb_local_mail_upgrade($oldversion) {
 
         // Define index userid_type_item_time_messageid (unique) to be added to local_mail_index.
         $table = new xmldb_table('local_mail_index');
-        $index = new xmldb_index('userid_type_item_time_messageid', XMLDB_INDEX_UNIQUE,
-            array('userid', 'type', 'item', 'time', 'messageid'));
+        $index = new xmldb_index(
+            'userid_type_item_time_messageid',
+            XMLDB_INDEX_UNIQUE,
+            array('userid', 'type', 'item', 'time', 'messageid')
+        );
 
         // Conditionally launch add index userid_type_item_time_messageid.
         if (!$dbman->index_exists($table, $index)) {
@@ -427,8 +436,11 @@ function xmldb_local_mail_upgrade($oldversion) {
         if (!$dbman->index_exists($table, $index)) {
             $dbman->add_index($table, $index);
         }
-        $index = new xmldb_index('userid', XMLDB_INDEX_NOTUNIQUE,
-            ['userid', 'courseid', 'draft', 'role', 'unread', 'starred', 'deleted', 'time', 'messageid']);
+        $index = new xmldb_index(
+            'userid',
+            XMLDB_INDEX_NOTUNIQUE,
+            ['userid', 'courseid', 'draft', 'role', 'unread', 'starred', 'deleted', 'time', 'messageid']
+        );
         if (!$dbman->index_exists($table, $index)) {
             $dbman->add_index($table, $index);
         }
@@ -438,8 +450,11 @@ function xmldb_local_mail_upgrade($oldversion) {
         if (!$dbman->index_exists($table, $index)) {
             $dbman->add_index($table, $index);
         }
-        $index = new xmldb_index('labelid', XMLDB_INDEX_NOTUNIQUE,
-            ['labelid', 'courseid', 'draft', 'role', 'unread', 'starred', 'deleted', 'time', 'messageid']);
+        $index = new xmldb_index(
+            'labelid',
+            XMLDB_INDEX_NOTUNIQUE,
+            ['labelid', 'courseid', 'draft', 'role', 'unread', 'starred', 'deleted', 'time', 'messageid']
+        );
         if (!$dbman->index_exists($table, $index)) {
             $dbman->add_index($table, $index);
         }

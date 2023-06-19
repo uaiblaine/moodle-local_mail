@@ -93,7 +93,7 @@ $data = [
     'strings' => external::get_strings_raw(),
 ];
 
-$datascript = html_writer::script('window.local_mail_view_data = '. json_encode($data));
+$datascript = html_writer::script('window.local_mail_view_data = ' . json_encode($data));
 
 $sveltescript = local_mail_svelte_script('src/view.ts');
 

@@ -93,7 +93,8 @@ class search_test extends testcase {
         $result = [];
 
         foreach ($messages as $message) {
-            if (!in_array($message->course->id, $courseids) ||
+            if (
+                !in_array($message->course->id, $courseids) ||
                 $search->user->id != $message->sender()->id && !$message->has_recipient($search->user) ||
                 $search->user->id != $message->sender()->id && $message->draft ||
                 $search->label && !isset($message->labels[$search->label->user->id][$search->label->id]) ||
@@ -106,7 +107,8 @@ class search_test extends testcase {
                 $search->withfilesonly && $message->attachments == 0 ||
                 $search->maxtime && $message->time > $search->maxtime ||
                 $search->start && !$search->reverse && $message->id >= $search->start->id ||
-                $search->start && $search->reverse && $message->id <= $search->start->id) {
+                $search->start && $search->reverse && $message->id <= $search->start->id
+            ) {
                 continue;
             }
             if ($search->content != '') {

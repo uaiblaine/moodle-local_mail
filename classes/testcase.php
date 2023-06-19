@@ -40,8 +40,10 @@ abstract class testcase extends \advanced_testcase {
     private const DELETED_FOREVER_FREQ = 0.1;
     private const ATTACHMENT_FREQ = 0.2;
     private const INC_TIME_FREQ = 0.9;
-    private const WORDS = ['Xiuxiuejar', 'Aixopluc', 'Caliu', 'Tendresa', 'Llibertat',
-                    'Moixaina', 'Amanyagar', 'Enraonar', 'Ginesta', 'Atzavara'];
+    private const WORDS = [
+        'Xiuxiuejar', 'Aixopluc', 'Caliu', 'Tendresa', 'Llibertat',
+        'Moixaina', 'Amanyagar', 'Enraonar', 'Ginesta', 'Atzavara'
+    ];
 
     public function setUp(): void {
         $this->resetAfterTest(true);
