@@ -173,6 +173,7 @@
         padding-right: 15px;
         padding-left: 15px;
         flex-basis: 100%;
+        flex-grow: 1;
         min-width: 0;
         column-gap: 1rem;
     }
@@ -181,6 +182,7 @@
         padding-right: 15px;
         padding-left: 15px;
         flex-basis: 100%;
+        flex-grow: 1;
         min-width: 0;
     }
 
