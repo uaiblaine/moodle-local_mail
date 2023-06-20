@@ -165,7 +165,7 @@
                 handleCancel={cancelEmptyTrash}
                 handleConfirm={confirmEmptyTrash}
             >
-                {replaceStringParams($store.strings.messagesdeleteconfirm, $store.totalCount)}
+                {$store.strings.emptytrashconfirm}
             </ModalDialog>
         {/if}
     {:else if label}

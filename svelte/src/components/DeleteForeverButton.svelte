@@ -1,10 +1,9 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import ModalDialog from './ModalDialog.svelte';
     import { DeletedStatus } from '../lib/services';
     import type { Store } from '../lib/store';
-    import { replaceStringParams } from '../lib/utils';
+    import ModalDialog from './ModalDialog.svelte';
 
     export let store: Store;
     export let transparent = false;
@@ -16,7 +15,6 @@
     };
 
     const cancel = () => {
-        console.log('cancel');
         modalOpen = false;
     };
 
@@ -51,6 +49,6 @@
         handleCancel={cancel}
         handleConfirm={confirm}
     >
-        {replaceStringParams($store.strings.messagesdeleteconfirm, $store.selectedMessages.size)}
+        {$store.strings.messagedeleteconfirm}
     </ModalDialog>
 {/if}
