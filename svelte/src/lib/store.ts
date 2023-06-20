@@ -442,10 +442,14 @@ export async function createStore(data: InitialData) {
             await store.callServicesAndRefresh(requests, params, true);
 
             if (deleted != DeletedStatus.DeletedForever) {
-                const text = replaceStringParams(
-                    store.get().strings[deleted ? 'undodelete' : 'undorestore'],
-                    ids.length,
-                );
+                const string = deleted
+                    ? ids.length > 1
+                        ? 'undodeletemany'
+                        : 'undodeleteone'
+                    : ids.length > 1
+                    ? 'undorestoremany'
+                    : 'undorestoreone';
+                const text = replaceStringParams(store.get().strings[string], ids.length);
                 const undo = () => {
                     store.setDeleted(
                         ids,
