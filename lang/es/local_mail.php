@@ -85,6 +85,7 @@ $string['emptycoursefilterresults'] = 'Ningún curso coincide con el texto intro
 $string['emptyrecipients'] = 'No hay destinatarios.';
 $string['emptytrash'] = 'Vacíar papelera';
 $string['emptytrashconfirm'] = '¿Está seguro de vaciar la papelera?';
+$string['error'] = 'Error';
 $string['erroremptycourse'] = 'Por favor indique un curso.';
 $string['erroremptylabelname'] = 'Por favor indique un nombre de etiqueta.';
 $string['erroremptyrecipients'] = 'Indique un destinatario como mínimo.';

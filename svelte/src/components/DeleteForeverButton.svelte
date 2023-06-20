@@ -1,13 +1,33 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import ConfirmationModal from './ConfirmationModal.svelte';
+    import ModalDialog from './ModalDialog.svelte';
     import { DeletedStatus } from '../lib/services';
     import type { Store } from '../lib/store';
     import { replaceStringParams } from '../lib/utils';
 
     export let store: Store;
     export let transparent = false;
+
+    let modalOpen = false;
+
+    const open = () => {
+        modalOpen = true;
+    };
+
+    const cancel = () => {
+        console.log('cancel');
+        modalOpen = false;
+    };
+
+    const confirm = () => {
+        modalOpen = false;
+        store.setDeleted(
+            Array.from($store.selectedMessages.keys()),
+            DeletedStatus.DeletedForever,
+            true,
+        );
+    };
 </script>
 
 <button
@@ -17,22 +37,20 @@
     class:disabled={!$store.selectedMessages.size}
     disabled={!$store.selectedMessages.size}
     title={$store.strings.deleteforever}
-    data-toggle="modal"
-    data-target="#local-mail-action-delete-forever-modal"
+    on:click={open}
 >
     <i class="fa fa-fw fa-trash" />
 </button>
 
-<ConfirmationModal
-    id="local-mail-action-delete-forever-modal"
-    title={$store.strings.deleteforever}
-    body={replaceStringParams($store.strings.messagesdeleteconfirm, $store.selectedMessages.size)}
-    cancelText={$store.strings.cancel}
-    confirmText={$store.strings.deleteforever}
-    confirmCallback={() =>
-        store.setDeleted(
-            Array.from($store.selectedMessages.keys()),
-            DeletedStatus.DeletedForever,
-            true,
-        )}
-/>
+{#if modalOpen}
+    <ModalDialog
+        title={$store.strings.deleteforever}
+        cancelText={$store.strings.cancel}
+        confirmText={$store.strings.deleteforever}
+        confirmClass="btn-danger"
+        handleCancel={cancel}
+        handleConfirm={confirm}
+    >
+        {replaceStringParams($store.strings.messagesdeleteconfirm, $store.selectedMessages.size)}
+    </ModalDialog>
+{/if}

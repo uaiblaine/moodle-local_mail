@@ -1,14 +1,20 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import ConfirmationModal from './ConfirmationModal.svelte';
+    import { blur } from '../actions/blur';
     import type { Store } from '../lib/store';
     import { replaceStringParams } from '../lib/utils';
+    import ModalDialog from './ModalDialog.svelte';
     import LabelModal from './LabelModal.svelte';
 
     export let store: Store;
     export let transparent = false;
     export let dropup = false;
+
+    let expanded = false;
+    let editLabelModal = false;
+    let deleteLabelModal = false;
+    let emptyTrashModal = false;
 
     $: label =
         $store.params.tray == 'label' && $store.message == null
@@ -25,7 +31,16 @@
             ? !$store.totalCount
             : !label && !someRead && !someUnread && !someStarred && !someUnstarred;
 
+    const closeMenu = () => {
+        expanded = false;
+    };
+
+    const toggleMenu = () => {
+        expanded = !expanded;
+    };
+
     const setUnread = (unread: boolean) => {
+        expanded = false;
         store.setUnread(
             messages.map((message) => message.id),
             unread,
@@ -33,100 +48,142 @@
     };
 
     const setStarred = (starred: boolean) => {
+        expanded = false;
         store.setStarred(
             messages.map((message) => message.id),
             starred,
         );
     };
+
+    const openEditLabelModal = () => {
+        expanded = false;
+        editLabelModal = true;
+    };
+
+    const cancelEditLabel = () => {
+        editLabelModal = false;
+    };
+
+    const updateLabel = async (name: string, color: string) => {
+        editLabelModal = false;
+        if (label) {
+            store.updateLabel(label.id, name, color);
+        }
+    };
+
+    const openDeleteLabelModal = () => {
+        expanded = false;
+        deleteLabelModal = true;
+    };
+
+    const cancelDeleteLabel = () => {
+        deleteLabelModal = false;
+    };
+
+    const confirmDeleteLabel = () => {
+        deleteLabelModal = false;
+        store.deleteLabel($store.params.labelid || 0);
+    };
+
+    const openEmptyTrashModal = () => {
+        expanded = false;
+        emptyTrashModal = true;
+    };
+
+    const cancelEmptyTrash = () => {
+        emptyTrashModal = false;
+    };
+
+    const confirmEmptyTrash = () => {
+        emptyTrashModal = false;
+        store.emptyTrash();
+    };
 </script>
 
-<div class="btn-group" class:dropup>
+<div class="btn-group" class:dropup use:blur={closeMenu}>
     <button
         type="button"
         class="local-mail-action-more-button btn dropdown-toggle"
         class:btn-secondary={!transparent}
         class:disabled
         {disabled}
-        data-toggle="dropdown"
-        aria-expanded="false"
+        aria-expanded={expanded}
         title={$store.strings.moreactions}
+        on:click={toggleMenu}
     >
         <i class="fa fa-fw fa-ellipsis-v" />
     </button>
-    <div class="dropdown-menu">
-        {#if $store.params.tray == 'trash'}
-            <button
-                type="button"
-                class="dropdown-item"
-                data-toggle="modal"
-                data-target="#local-mail-action-empty-trash-modal"
-            >
-                {$store.strings.emptytrash}
-            </button>
-        {:else}
-            {#if someUnread}
-                <button type="button" class="dropdown-item" on:click={() => setUnread(false)}>
-                    {$store.strings.markasread}
+    {#if expanded}
+        <div class="dropdown-menu show">
+            {#if $store.params.tray == 'trash'}
+                <button type="button" class="dropdown-item" on:click={openEmptyTrashModal}>
+                    {$store.strings.emptytrash}
                 </button>
-            {/if}
-            {#if someRead}
-                <button type="button" class="dropdown-item" on:click={() => setUnread(true)}>
-                    {$store.strings.markasunread}
-                </button>
-            {/if}
-            {#if someUnstarred}
-                <button type="button" class="dropdown-item" on:click={() => setStarred(true)}>
-                    {$store.strings.markasstarred}
-                </button>
-            {/if}
-            {#if someStarred}
-                <button type="button" class="dropdown-item" on:click={() => setStarred(false)}>
-                    {$store.strings.markasunstarred}
-                </button>
-            {/if}
-            {#if label}
-                {#if someUnread || someRead || someUnstarred || someStarred}
-                    <div class="dropdown-divider" />
+            {:else}
+                {#if someUnread}
+                    <button type="button" class="dropdown-item" on:click={() => setUnread(false)}>
+                        {$store.strings.markasread}
+                    </button>
                 {/if}
-                <button
-                    type="button"
-                    class="dropdown-item"
-                    data-toggle="modal"
-                    data-target="#local-mail-label-modal-{$store.params.labelid}"
-                >
-                    {$store.strings.editlabel}
-                </button>
-                <button
-                    type="button"
-                    class="dropdown-item"
-                    data-toggle="modal"
-                    data-target="#local-mail-action-delete-label-modal"
-                >
-                    {$store.strings.deletelabel}
-                </button>
+                {#if someRead}
+                    <button type="button" class="dropdown-item" on:click={() => setUnread(true)}>
+                        {$store.strings.markasunread}
+                    </button>
+                {/if}
+                {#if someUnstarred}
+                    <button type="button" class="dropdown-item" on:click={() => setStarred(true)}>
+                        {$store.strings.markasstarred}
+                    </button>
+                {/if}
+                {#if someStarred}
+                    <button type="button" class="dropdown-item" on:click={() => setStarred(false)}>
+                        {$store.strings.markasunstarred}
+                    </button>
+                {/if}
+                {#if label}
+                    {#if someUnread || someRead || someUnstarred || someStarred}
+                        <div class="dropdown-divider" />
+                    {/if}
+                    <button type="button" class="dropdown-item" on:click={openEditLabelModal}>
+                        {$store.strings.editlabel}
+                    </button>
+                    <button type="button" class="dropdown-item" on:click={openDeleteLabelModal}>
+                        {$store.strings.deletelabel}
+                    </button>
+                {/if}
             {/if}
-        {/if}
-    </div>
+        </div>
+    {/if}
 
     {#if $store.params.tray == 'trash'}
-        <ConfirmationModal
-            id="local-mail-action-empty-trash-modal"
-            title={$store.strings.emptytrash}
-            body={replaceStringParams($store.strings.messagesdeleteconfirm, $store.totalCount)}
-            cancelText={$store.strings.cancel}
-            confirmText={$store.strings.emptytrash}
-            confirmCallback={() => store.emptyTrash()}
-        />
+        {#if emptyTrashModal}
+            <ModalDialog
+                title={$store.strings.emptytrash}
+                cancelText={$store.strings.cancel}
+                confirmText={$store.strings.emptytrash}
+                confirmClass="btn-danger"
+                handleCancel={cancelEmptyTrash}
+                handleConfirm={confirmEmptyTrash}
+            >
+                {replaceStringParams($store.strings.messagesdeleteconfirm, $store.totalCount)}
+            </ModalDialog>
+        {/if}
     {:else if label}
-        <LabelModal {store} {label} />
-        <ConfirmationModal
-            id="local-mail-action-delete-label-modal"
-            title={$store.strings.deletelabel}
-            body={replaceStringParams($store.strings.labeldeleteconfirm, label.name)}
-            cancelText={$store.strings.cancel}
-            confirmText={$store.strings.deletelabel}
-            confirmCallback={() => store.deleteLabel($store.params.labelid || 0)}
-        />
+        {#if editLabelModal}
+            <LabelModal {store} {label} handleCancel={cancelEditLabel} handleSubmit={updateLabel} />
+        {/if}
+        {#if deleteLabelModal}
+            <ModalDialog
+                title={$store.strings.deletelabel}
+                cancelText={$store.strings.cancel}
+                confirmText={$store.strings.deletelabel}
+                confirmClass="btn-danger"
+                handleCancel={cancelDeleteLabel}
+                handleConfirm={confirmDeleteLabel}
+            >
+                {replaceStringParams($store.strings.labeldeleteconfirm, label.name)}
+            </ModalDialog>
+        {/if}
     {/if}
 </div>
 

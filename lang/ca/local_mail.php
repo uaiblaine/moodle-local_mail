@@ -85,6 +85,7 @@ $string['emptycoursefilterresults'] = 'Cap curs coincideix amb el text introduï
 $string['emptyrecipients'] = 'No hi ha destinataris.';
 $string['emptytrash'] = 'Buida la paperera';
 $string['emptytrashconfirm'] = 'Esteu segur de buidar la paperera?';
+$string['error'] = 'Error';
 $string['erroremptycourse'] = 'Indiqueu un curs.';
 $string['erroremptylabelname'] = 'Indiqueu un nom d\'etiqueta.';
 $string['erroremptyrecipients'] = 'Indiqueu un destinatari com a mínim.';

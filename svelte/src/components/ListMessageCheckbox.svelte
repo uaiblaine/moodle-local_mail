@@ -15,7 +15,7 @@
     role="checkbox"
     aria-checked={Boolean($store.selectedMessages.has(message.id))}
     title={$store.strings.select}
-    on:click={() => store.toggleSelected(message.id)}
+    on:click|preventDefault|stopPropagation={() => store.toggleSelected(message.id)}
 >
     <i class="fa align-middle {checkClass}" />
 </button>

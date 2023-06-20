@@ -415,7 +415,7 @@ export async function createStore(data: InitialData) {
             });
         },
 
-        async setFilterByCourseInput(id?: number) {
+        async selectCourse(id?: number) {
             const params = this.get().params;
             await this.navigate({
                 ...params,

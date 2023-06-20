@@ -20,11 +20,7 @@
 
     const clickHandler = (message: MessageSummary) => {
         return (event: MouseEvent) => {
-            // Check if the event target or its parent is a button,
-            // which would mean that the select or star button is being clicked.
-            if ((event.target as HTMLElement).matches('button, button > *')) {
-                event.preventDefault();
-            } else if (!message.draft) {
+            if (!message.draft) {
                 event.preventDefault();
                 store.navigate({ ...$store.params, messageid: message.id });
             }

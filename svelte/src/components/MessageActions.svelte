@@ -1,8 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import CourseBadge from './CourseBadge.svelte';
-    import LabelBadge from './LabelBadge.svelte';
+    import { blur } from '../actions/blur';
     import type { Message } from '../lib/services';
     import { ViewSize, type Store } from '../lib/store';
     import { forwardeUrl as forwardUrl, replyAllUrl, replyUrl } from '../lib/url';
@@ -11,7 +10,17 @@
     export let message: Message;
     export let canReplyAll: boolean;
 
+    let expanded = false;
+
     $: starClass = message.starred ? 'fa-star text-warning' : 'fa-star-o';
+
+    const toggleMenu = () => {
+        expanded = !expanded;
+    };
+
+    const closeMenu = () => {
+        expanded = false;
+    };
 </script>
 
 <button
@@ -26,35 +35,37 @@
 </button>
 
 {#if $store.viewSize < ViewSize.SM}
-    <div class="dropdown">
+    <div class="dropdown" use:blur={closeMenu}>
         <button
             type="button"
             class="btn"
-            data-toggle="dropdown"
-            aria-expanded="false"
+            aria-expanded={expanded}
             title={$store.strings.moreactions}
+            on:click={toggleMenu}
         >
             <i class="fa fa-fw fa-ellipsis-v align-middle" />
         </button>
-        <div class="dropdown-menu dropdown-menu-right">
-            <a type="button" class="dropdown-item" href="{replyUrl(message.id)}}">
-                <i class="fa fa-fw fa-reply" aria-hidden="true" />
-                {$store.strings.reply}
-            </a>
-            <a
-                type="button"
-                class="dropdown-item"
-                href="{replyAllUrl(message.id)}}"
-                class:disabled={!canReplyAll}
-            >
-                <i class="fa fa-fw fa-reply-all" aria-hidden="true" />
-                {$store.strings.replyall}
-            </a>
-            <a type="button" class="dropdown-item" href="{forwardUrl(message.id)}}">
-                <i class="fa fa-fw fa-share" aria-hidden="true" />
-                {$store.strings.forward}
-            </a>
-        </div>
+        {#if expanded}
+            <div class="dropdown-menu dropdown-menu-right show">
+                <a type="button" class="dropdown-item" href="{replyUrl(message.id)}}">
+                    <i class="fa fa-fw fa-reply" aria-hidden="true" />
+                    {$store.strings.reply}
+                </a>
+                <a
+                    type="button"
+                    class="dropdown-item"
+                    href="{replyAllUrl(message.id)}}"
+                    class:disabled={!canReplyAll}
+                >
+                    <i class="fa fa-fw fa-reply-all" aria-hidden="true" />
+                    {$store.strings.replyall}
+                </a>
+                <a type="button" class="dropdown-item" href="{forwardUrl(message.id)}}">
+                    <i class="fa fa-fw fa-share" aria-hidden="true" />
+                    {$store.strings.forward}
+                </a>
+            </div>
+        {/if}
     </div>
 {/if}
 

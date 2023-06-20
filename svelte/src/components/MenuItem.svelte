@@ -14,7 +14,7 @@
     export let color: string | undefined = undefined;
     export let onClick: ((params: ViewParams) => void) | undefined = undefined;
 
-    $: handleClick = (event: Event) => {
+    const handleClick = (event: Event) => {
         if (onClick) {
             event.preventDefault();
             onClick(params);

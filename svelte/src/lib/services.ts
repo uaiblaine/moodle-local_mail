@@ -248,7 +248,7 @@ export interface Attachment {
 }
 
 export interface ServiceError {
-    readonly error: string;
+    readonly message: string;
     readonly errorcode: string;
     readonly debuginfo?: string;
     readonly stacktrace?: string;

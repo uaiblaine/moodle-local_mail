@@ -85,6 +85,7 @@ $string['emptycoursefilterresults'] = 'No course matches the entered text';
 $string['emptyrecipients'] = 'No recipients.';
 $string['emptytrash'] = 'Empty trash';
 $string['emptytrashconfirm'] = 'You are about to empty trash';
+$string['error'] = 'Error';
 $string['errorduplicaterecipient'] = 'Duplicate message recipient';
 $string['erroremptycourse'] = 'Please specifiy a course.';
 $string['erroremptylabelname'] = 'Please specify a label name.';

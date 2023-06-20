@@ -1,12 +1,12 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { jQueryEvents } from '../actions/jQueryEvents';
+    import { blur } from '../actions/blur';
     import type { Store } from '../lib/store';
 
     export let store: Store;
 
-    let dropdownNode: HTMLElement;
+    let expanded = false;
     let senderNode: HTMLElement;
 
     const dateFromTimestamp = (time: number): string => {
@@ -54,11 +54,20 @@
     );
 
     const cancel = () => {
+        closeDropdown();
         store.navigate({ ...$store.params, search: undefined });
-        window.jQuery(dropdownNode).dropdown('hide');
+    };
+
+    const closeDropdown = () => {
+        expanded = false;
+    };
+
+    const toggleDropdown = () => {
+        expanded = !expanded;
     };
 
     const submit = () => {
+        closeDropdown();
         store.search({
             content,
             sendername,
@@ -67,7 +76,6 @@
             withfilesonly,
             maxtime: timestampFromDate(maxdate),
         });
-        window.jQuery(dropdownNode).dropdown('hide');
     };
 
     const handleKeypress = (event: KeyboardEvent) => {
@@ -80,12 +88,8 @@
 
 <form
     class="local-mail-search-input position-relative"
-    on:submit|preventDefault={() => submit}
-    use:jQueryEvents={{
-        'shown.bs.dropdown': () => {
-            senderNode.focus();
-        },
-    }}
+    on:submit|preventDefault={submit}
+    use:blur={closeDropdown}
 >
     <div
         class="position-absolute h-100 d-flex align-items-center px-2"
@@ -104,94 +108,94 @@
         on:keypress={handleKeypress}
     />
     <button
-        data-toggle="dropdown"
-        data-reference="parent"
-        aria-expanded="false"
+        aria-expanded={expanded}
         class="btn position-absolute h-100 d-flex align-items-center px-2"
         class:text-primary={advancedEnabled}
         style="top: 0; right: 0"
         title={$store.strings.advsearch}
-        bind:this={dropdownNode}
+        on:click|preventDefault={toggleDropdown}
     >
         <i class="fa fa-fw fa-sliders" aria-hidden="true" />
     </button>
-    <div class="dropdown-menu dropdown-menu-right p-3">
-        <div class="form-group">
-            <label for="local-mail-search-input-sendername">
-                {$store.strings.from}
-            </label>
-            <input
-                type="text"
-                class="form-control"
-                id="local-mail-search-input-sendername"
-                bind:value={sendername}
-                bind:this={senderNode}
-            />
-        </div>
-        <div class="form-group">
-            <label for="local-mail-search-input-recipientname">
-                {$store.strings.to}
-            </label>
-            <input
-                type="text"
-                class="form-control"
-                id="local-mail-search-input-recipientname"
-                bind:value={recipientname}
-            />
-        </div>
-        <div class="form-group">
-            <label for="local-mail-search-input-maxdate">
-                {$store.strings.filterbydate}
-            </label>
-            <input
-                type="date"
-                class="form-control"
-                id="local-mail-search-input-maxdate"
-                bind:value={maxdate}
-            />
-        </div>
-        <div class="form-group">
-            <div class="form-check">
-                <input
-                    class="form-check-input"
-                    type="checkbox"
-                    id="local-mail-search-input-unread"
-                    bind:checked={unread}
-                />
-                <label class="form-check-label" for="local-mail-search-input-unread">
-                    {$store.strings.searchbyunread}
+    {#if expanded}
+        <div class="dropdown-menu dropdown-menu-right show p-3">
+            <div class="form-group">
+                <label for="local-mail-search-input-sendername">
+                    {$store.strings.from}
                 </label>
+                <input
+                    type="text"
+                    class="form-control"
+                    id="local-mail-search-input-sendername"
+                    bind:value={sendername}
+                    bind:this={senderNode}
+                />
+            </div>
+            <div class="form-group">
+                <label for="local-mail-search-input-recipientname">
+                    {$store.strings.to}
+                </label>
+                <input
+                    type="text"
+                    class="form-control"
+                    id="local-mail-search-input-recipientname"
+                    bind:value={recipientname}
+                />
+            </div>
+            <div class="form-group">
+                <label for="local-mail-search-input-maxdate">
+                    {$store.strings.filterbydate}
+                </label>
+                <input
+                    type="date"
+                    class="form-control"
+                    id="local-mail-search-input-maxdate"
+                    bind:value={maxdate}
+                />
+            </div>
+            <div class="form-group">
+                <div class="form-check">
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="local-mail-search-input-unread"
+                        bind:checked={unread}
+                    />
+                    <label class="form-check-label" for="local-mail-search-input-unread">
+                        {$store.strings.searchbyunread}
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="form-check">
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="local-mail-search-input-withfilesonly"
+                        bind:checked={withfilesonly}
+                    />
+                    <label class="form-check-label" for="local-mail-search-input-withfilesonly">
+                        {$store.strings.searchbyattach}
+                    </label>
+                </div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <input
+                    type="button"
+                    class="btn btn-secondary"
+                    on:click={cancel}
+                    value={$store.strings.cancel}
+                />
+                <input
+                    type="submit"
+                    disabled={!submitEnabled}
+                    class="btn btn-primary"
+                    on:click={submit}
+                    value={$store.strings.search}
+                />
             </div>
         </div>
-        <div class="form-group">
-            <div class="form-check">
-                <input
-                    class="form-check-input"
-                    type="checkbox"
-                    id="local-mail-search-input-withfilesonly"
-                    bind:checked={withfilesonly}
-                />
-                <label class="form-check-label" for="local-mail-search-input-withfilesonly">
-                    {$store.strings.searchbyattach}
-                </label>
-            </div>
-        </div>
-        <div class="d-flex justify-content-between">
-            <input
-                type="button"
-                class="btn btn-secondary"
-                on:click={() => cancel()}
-                value={$store.strings.cancel}
-            />
-            <input
-                type="submit"
-                disabled={!submitEnabled}
-                class="btn btn-primary"
-                on:click={() => submit()}
-                value={$store.strings.search}
-            />
-        </div>
-    </div>
+    {/if}
 </form>
 
 <style>

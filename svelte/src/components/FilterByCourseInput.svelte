@@ -2,16 +2,14 @@
 
 <script lang="ts">
     import { tick } from 'svelte';
+    import { blur } from '../actions/blur';
     import { truncate } from '../actions/truncate';
     import type { Course } from '../lib/services';
     import type { Store } from '../lib/store';
 
     export let store: Store;
 
-    let node: HTMLElement;
-    let dropdownNode: HTMLElement;
     let inputNode: HTMLInputElement;
-
     let inputText = '';
     let entering = false;
     let currentCourse: Course | undefined;
@@ -22,63 +20,57 @@
     $: inputPattern = new RegExp(escape(inputText.trim()).replaceAll(/\s+/gu, '\\s+'), 'giu');
     $: dropdownCourses = $store.courses.filter((course) => !!inputPattern.exec(course[nameField]));
     $: dropdownIconClass = !entering ? 'fa-caret-down' : inputText ? 'fa-times' : 'fa-caret-up';
-
     $: courseHtml = (course: Course): string =>
         course[nameField].replaceAll(inputPattern, (match) =>
             match.trim() ? '<mark>' + match + '</mark>' : match,
         );
 
-    $: handleInputFocus = () => {
+    const escape = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+
+    const openDropdown = async () => {
         entering = true;
+        inputText = '';
+        await tick();
+        inputNode.focus();
     };
 
-    $: handleInputKeyup = (event: KeyboardEvent) => {
+    const closeDropdown = () => {
+        entering = false;
+        inputText = '';
+    };
+
+    const toggleDropdown = async () => {
+        if (entering) {
+            closeDropdown();
+        } else {
+            openDropdown();
+        }
+    };
+
+    const selectAllCourses = async () => {
+        await store.selectCourse();
+        entering = false;
+        inputText = '';
+    };
+
+    const selectCourse = async (course: Course) => {
+        await store.selectCourse(course.id);
+        entering = false;
+        inputText = '';
+    };
+
+    const handleInputKey = (event: KeyboardEvent) => {
         if (event.key == 'Escape') {
             entering = false;
             inputText = '';
             inputNode.blur();
         }
     };
-
-    $: handleDropdownToggle = async () => {
-        if (entering) {
-            entering = false;
-            inputText = '';
-        } else {
-            entering = true;
-            inputText = '';
-            await tick();
-            inputNode.focus();
-        }
-    };
-
-    $: handleAllCoursesClick = async () => {
-        await store.setFilterByCourseInput();
-        entering = false;
-        inputText = '';
-    };
-
-    $: handleCourseClick = async (course: Course) => {
-        await store.setFilterByCourseInput(course.id);
-        entering = false;
-        inputText = '';
-    };
-
-    $: handleWindowClick = (event: Event) => {
-        if (event.target instanceof HTMLElement && !node.contains(event.target)) {
-            entering = false;
-            inputText = '';
-        }
-    };
-
-    const escape = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
 </script>
-
-<svelte:document on:click|capture={handleWindowClick} on:keyup|capture={handleWindowClick} />
 
 <div
     class="local-mail-course-filter position-relative d-flex ml-auto mr-0 ml-md-0 mr-md-auto"
-    bind:this={node}
+    use:blur={closeDropdown}
 >
     <div
         class="position-absolute h-100 d-flex align-items-center px-2 flex-shrink-1"
@@ -103,14 +95,14 @@
             aria-label={$store.strings.filterbycourse}
             bind:value={inputText}
             bind:this={inputNode}
-            on:focus={handleInputFocus}
-            on:keyup={handleInputKeyup}
+            on:focus={openDropdown}
+            on:keyup={handleInputKey}
         />
     {:else}
         <button
             class="local-mail-course-filter-input alert-primary form-control px-5 text-left"
             use:truncate={currentCourse?.[nameField] || ''}
-            on:click={handleDropdownToggle}
+            on:click={toggleDropdown}
         >
             {currentCourse?.[nameField]}
         </button>
@@ -120,8 +112,7 @@
             aria-expanded={entering}
             class="btn position-absolute h-100 d-flex align-items-center px-2"
             style="top: 0; right: 0"
-            on:click={handleDropdownToggle}
-            bind:this={dropdownNode}
+            on:click={toggleDropdown}
         >
             <i class="fa fa-fw {dropdownIconClass}" aria-hidden="true" />
             <span class="sr-only">{$store.strings.togglefilterresults}n</span>
@@ -133,7 +124,7 @@
             <button
                 type="button"
                 class="dropdown-item text-truncate"
-                on:click={() => handleAllCoursesClick()}
+                on:click={() => selectAllCourses()}
             >
                 {$store.strings.allcourses}
             </button>
@@ -143,7 +134,7 @@
                 <button
                     type="button"
                     class="dropdown-item text-truncate"
-                    on:click={() => handleCourseClick(course)}
+                    on:click={() => selectCourse(course)}
                 >
                     {@html courseHtml(course)}
                 </button>

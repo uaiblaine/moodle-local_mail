@@ -1,9 +1,26 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { Store } from '../lib/store';
+    import exp from 'constants';
+    import { blur } from '../actions/blur';
+    import type { SelectAllType, Store } from '../lib/store';
 
     export let store: Store;
+
+    let expanded = false;
+
+    const closeMenu = () => {
+        expanded = false;
+    };
+
+    const toggleMenu = () => {
+        expanded = !expanded;
+    };
+
+    const selectAll = (type: SelectAllType) => {
+        closeMenu();
+        store.selectAll(type);
+    };
 
     $: iconClass =
         $store.selectedMessages.size == 0
@@ -13,33 +30,35 @@
             : 'fa-check-square-o';
 </script>
 
-<div class="btn-group" role="group">
+<div class="btn-group" role="group" use:blur={closeMenu}>
     <button
         class="btn btn-secondary dropdown-toggle"
-        data-toggle="dropdown"
-        aria-expanded="false"
+        aria-expanded={expanded}
         title={$store.strings.select}
+        on:click={toggleMenu}
     >
         <i class="fa fa-fw {iconClass}" />
     </button>
-    <div class="dropdown-menu">
-        <button class="dropdown-item" on:click={() => store.selectAll('all')}>
-            {$store.strings.all}
-        </button>
-        <button class="dropdown-item" on:click={() => store.selectAll('none')}>
-            {$store.strings.none}
-        </button>
-        <button class="dropdown-item" on:click={() => store.selectAll('read')}>
-            {$store.strings.read}
-        </button>
-        <button class="dropdown-item" on:click={() => store.selectAll('unread')}>
-            {$store.strings.unread}
-        </button>
-        <button class="dropdown-item" on:click={() => store.selectAll('starred')}>
-            {$store.strings.starred}
-        </button>
-        <button class="dropdown-item" on:click={() => store.selectAll('unstarred')}>
-            {$store.strings.unstarred}
-        </button>
-    </div>
+    {#if expanded}
+        <div class="dropdown-menu show">
+            <button class="dropdown-item" on:click={() => selectAll('all')}>
+                {$store.strings.all}
+            </button>
+            <button class="dropdown-item" on:click={() => selectAll('none')}>
+                {$store.strings.none}
+            </button>
+            <button class="dropdown-item" on:click={() => selectAll('read')}>
+                {$store.strings.read}
+            </button>
+            <button class="dropdown-item" on:click={() => selectAll('unread')}>
+                {$store.strings.unread}
+            </button>
+            <button class="dropdown-item" on:click={() => selectAll('starred')}>
+                {$store.strings.starred}
+            </button>
+            <button class="dropdown-item" on:click={() => selectAll('unstarred')}>
+                {$store.strings.unstarred}
+            </button>
+        </div>
+    {/if}
 </div>
