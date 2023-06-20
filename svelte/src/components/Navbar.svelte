@@ -25,7 +25,7 @@
         expanded = false;
     };
 
-    const handleClick = (event: Event) => {
+    const handleIconClick = (event: Event) => {
         if (settings.globaltrays.length > 0 || labels.length > 0) {
             expanded = !expanded;
             event.preventDefault();
@@ -33,6 +33,11 @@
             event.preventDefault();
             onClick({ tray: 'inbox' });
         }
+    };
+
+    const handleMenuClick = (params: ViewParams) => {
+        expanded = false;
+        onClick?.(params);
     };
 </script>
 
@@ -48,7 +53,7 @@
         aria-label={strings.togglemailmenu}
         class="btn h-100 position-relative d-flex align-items-center px-2 py-0"
         href={viewUrl({ tray: 'inbox' })}
-        on:click={handleClick}
+        on:click={handleIconClick}
     >
         <i class="fa fa-fw fa-envelope-o" aria-label={strings.plugginname} />
         {#if unread > 0}
@@ -72,7 +77,7 @@
                 {courses}
                 {labels}
                 {params}
-                {onClick}
+                onClick={handleMenuClick}
                 flush={true}
             />
         </div>

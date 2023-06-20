@@ -42,6 +42,8 @@ async function init() {
                 drafts: state.drafts,
                 courses: state.courses,
                 labels: state.labels,
+                params: state.params,
+                onClick: (params: ViewParams) => store.navigate(params),
             });
         });
     }

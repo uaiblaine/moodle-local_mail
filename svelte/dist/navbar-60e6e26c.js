@@ -1,0 +1,1 @@
+import{ai as n}from"./global-8cfc19a0.js";async function t(){const s=document.getElementById("local-mail-navbar");if(s){s.innerHTML="";const a=window.local_mail_navbar_data||{};new n({target:s,props:{settings:a.settings,strings:a.strings,unread:a.unread,drafts:a.drafts,courses:a.courses,labels:a.labels}})}}t();
