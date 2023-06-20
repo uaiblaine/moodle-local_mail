@@ -24,6 +24,6 @@
 
 <style>
     .local-mail-back-button {
-        margin-right: calc(1rem + 13px);
+        margin-right: 13px;
     }
 </style>

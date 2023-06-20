@@ -188,7 +188,6 @@
 
     .local-mail-view-search {
         flex-grow: 1;
-        max-width: 30rem;
         margin-right: auto;
     }
 
@@ -205,6 +204,9 @@
             flex-basis: 25%;
             flex-shrink: 1;
             max-width: 18rem;
+        }
+        .local-mail-view-search {
+            max-width: 30rem;
         }
     }
 </style>

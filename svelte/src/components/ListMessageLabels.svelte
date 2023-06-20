@@ -11,7 +11,7 @@
 </script>
 
 {#if $store.viewSize < ViewSize.MD}
-    {#if $store.params.tray != 'course' || $store.params.courseid != message.course.id}
+    {#if $store.params.courseid != message.course.id}
         <CourseBadge course={message.course} settings={$store.settings} />
     {/if}
 {/if}
@@ -21,7 +21,7 @@
     {/if}
 {/each}
 {#if $store.viewSize >= ViewSize.MD}
-    {#if $store.params.tray != 'course' || $store.params.courseid != message.course.id}
+    {#if $store.params.courseid != message.course.id}
         <CourseBadge course={message.course} settings={$store.settings} />
     {/if}
 {/if}

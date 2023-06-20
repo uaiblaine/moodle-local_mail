@@ -29,8 +29,9 @@ class external_test extends testcase {
         set_config('globaltrays', 'drafts,trash', 'local_mail');
         set_config('coursetrays', 'unread', 'local_mail');
         set_config('coursetraysname', 'shortname', 'local_mail');
-        set_config('coursebadges', 'none', 'local_mail');
+        set_config('coursebadges', 'hidden', 'local_mail');
         set_config('coursebadgeslength', 10, 'local_mail');
+        set_config('filterbycourse', 'hidden', 'local_mail');
         $this->setUser($user);
 
         $result = external::get_settings();
@@ -41,8 +42,9 @@ class external_test extends testcase {
             'globaltrays' => ['drafts', 'trash'],
             'coursetrays' => 'unread',
             'coursetraysname' => 'shortname',
-            'coursebadges' => 'none',
+            'coursebadges' => 'hidden',
             'coursebadgeslength' => 10,
+            'filterbycourse' => 'hidden',
         ];
         $this->assertEquals($expected, $result);
 
@@ -53,6 +55,7 @@ class external_test extends testcase {
         unset_config('coursetraysname', 'local_mail');
         unset_config('coursebadges', 'local_mail');
         unset_config('coursebadgeslength', 'local_mail');
+        unset_config('filterbycourse', 'local_mail');
 
         $result = external::get_settings();
 
@@ -64,6 +67,7 @@ class external_test extends testcase {
             'coursetraysname' => 'fullname',
             'coursebadges' => 'fullname',
             'coursebadgeslength' => 20,
+            'filterbycourse' => 'fullname',
         ];
         $this->assertEquals($expected, $result);
     }

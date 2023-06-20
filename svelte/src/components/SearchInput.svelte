@@ -49,7 +49,9 @@
             $store.params.search?.maxtime,
     );
     $: searchEnabled = Boolean($store.params.search?.content || advancedEnabled);
-    $: submitEnabled = Boolean(content || sendername || recipientname || unread || withfilesonly || maxdate);
+    $: submitEnabled = Boolean(
+        content || sendername || recipientname || unread || withfilesonly || maxdate,
+    );
 
     const cancel = () => {
         store.navigate({ ...$store.params, search: undefined });
@@ -195,6 +197,6 @@
 <style>
     .local-mail-search-input {
         width: 100%;
-        max-width: 100;
+        max-width: 100%;
     }
 </style>

@@ -47,7 +47,7 @@
             <div class="local-mail-navbar-count count-container">{unread}</div>
         {/if}
     </a>
-    <div class="local-mail-navbar-dropdown dropdown-menu dropdown-menu-right p-0">
+    <div class="local-mail-navbar-dropdown dropdown-menu dropdown-menu-right p-0 overflow-auto">
         <div class="d-flex justify-content-between pl-3 pr-2 py-2">
             <ComposeButton {strings} />
             <PreferencesButton {strings} />

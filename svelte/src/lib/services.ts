@@ -149,8 +149,9 @@ export interface Settings {
     globaltrays: ReadonlyArray<string>;
     coursetrays: 'none' | 'unread' | 'all';
     coursetraysname: 'shortname' | 'fullname';
-    coursebadges: 'none' | 'shortname' | 'fullname';
+    coursebadges: 'hidden' | 'shortname' | 'fullname';
     coursebadgeslength: number;
+    filterbycourse: 'hidden' | 'shortname' | 'fullname';
 }
 
 export type Strings = Record<string, string>;

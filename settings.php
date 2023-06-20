@@ -110,7 +110,7 @@ if ($hassiteconfig) {
     $description = get_string('configcoursebadgesdesc', 'local_mail');
     $defaultsetting = 'fullname';
     $choices = [
-        'none' => get_string('none'),
+        'hidden' => get_string('hide'),
         'shortname' => get_string('shortname'),
         'fullname' => get_string('fullname'),
     ];
@@ -123,6 +123,18 @@ if ($hassiteconfig) {
     $defaultsetting = 20;
     $paramtype = PARAM_INT;
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
+
+    // Course badge type.
+    $name = 'local_mail/filterbycourse';
+    $visiblename = get_string('configfilterbycourse', 'local_mail');
+    $description = get_string('configfilterbycoursedesc', 'local_mail');
+    $defaultsetting = 'fullname';
+    $choices = [
+        'hidden' => get_string('hide'),
+        'shortname' => get_string('shortname'),
+        'fullname' => get_string('fullname'),
+    ];
+    $settings->add(new admin_setting_configselect($name, $visiblename, $description, $defaultsetting, $choices));
 
     $ADMIN->add('localplugins', $settings);
 }

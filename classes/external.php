@@ -58,6 +58,7 @@ class external extends \external_api {
             'coursetraysname' => get_config('local_mail', 'coursetraysname') ?: 'fullname',
             'coursebadges' => get_config('local_mail', 'coursebadges') ?: 'fullname',
             'coursebadgeslength' => get_config('local_mail', 'coursebadgeslength') ?: 20,
+            'filterbycourse' => get_config('local_mail', 'filterbycourse') ?: 'fullname',
         ];
     }
 
@@ -77,11 +78,15 @@ class external extends \external_api {
             ),
             'coursebadges' => new \external_value(
                 PARAM_ALPHA,
-                'Type of course badges: "none", "shortname", or "fullname"'
+                'Type of course badges: "hidden", "shortname", or "fullname"'
             ),
             'coursebadgeslength' => new \external_value(
                 PARAM_INT,
                 'Trunate course badges to this length in characters.'
+            ),
+            'filterbycourse' => new \external_value(
+                PARAM_ALPHA,
+                'Type of filter by course: "hidden", "shortname", or "fullname"'
             ),
         ]);
     }

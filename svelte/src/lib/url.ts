@@ -33,11 +33,13 @@ export function viewUrl(params: ViewParams): string {
     if (params.courseid) {
         url += '&c=' + params.courseid;
     }
-    if (params.labelid) {
+    if (params.tray == 'label' && params.labelid) {
         url += '&l=' + params.labelid;
     }
     if (params.messageid) {
         url += '&m=' + params.messageid;
+    } else if (params.offset) {
+        url += '&o=' + params.offset;
     }
     return url;
 }
@@ -49,6 +51,7 @@ export function getViewParamsFromUrl(): ViewParams {
         courseid: parseInt(url.searchParams.get('c') || '') || undefined,
         labelid: parseInt(url.searchParams.get('l') || '') || undefined,
         messageid: parseInt(url.searchParams.get('m') || '') || undefined,
+        offset: parseInt(url.searchParams.get('o') || '') || undefined,
     };
 }
 

@@ -13,7 +13,7 @@
             : 'fa-check-square-o';
 </script>
 
-<div class="btn-group mr-3" role="group">
+<div class="btn-group" role="group">
     <button
         class="btn btn-secondary dropdown-toggle"
         data-toggle="dropdown"

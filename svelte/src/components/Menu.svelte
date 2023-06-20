@@ -26,6 +26,8 @@
             (params?.tray == 'course' && params?.courseid == course.id)
         );
     };
+
+    $: courseid = params?.tray != 'course' ? params?.courseid : undefined;
 </script>
 
 <div class="list-group" class:list-group-flush={flush}>
@@ -33,7 +35,7 @@
         icon="fa-inbox"
         text={strings.inbox}
         count={unread}
-        params={{ tray: 'inbox' }}
+        params={{ tray: 'inbox', courseid }}
         active={params?.tray == 'inbox'}
         {onClick}
     />
@@ -41,7 +43,7 @@
         <MenuItem
             icon="fa-star"
             text={strings.starredmail}
-            params={{ tray: 'starred' }}
+            params={{ tray: 'starred', courseid }}
             active={params?.tray == 'starred'}
             {onClick}
         />
@@ -50,7 +52,7 @@
         <MenuItem
             icon="fa-paper-plane"
             text={strings.sentmail}
-            params={{ tray: 'sent' }}
+            params={{ tray: 'sent', courseid }}
             active={params?.tray == 'sent'}
             {onClick}
         />
@@ -60,7 +62,7 @@
             icon="fa-file"
             text={strings.drafts}
             count={drafts}
-            params={{ tray: 'drafts' }}
+            params={{ tray: 'drafts', courseid }}
             active={params?.tray == 'drafts'}
             {onClick}
         />
@@ -69,7 +71,7 @@
         <MenuItem
             icon="fa-trash"
             text={strings.trash}
-            params={{ tray: 'trash' }}
+            params={{ tray: 'trash', courseid }}
             active={params?.tray == 'trash'}
             {onClick}
         />
@@ -80,7 +82,7 @@
             text={label.name}
             count={label.unread}
             color={label.color}
-            params={{ tray: 'label', labelid: label.id }}
+            params={{ tray: 'label', labelid: label.id, courseid }}
             active={params?.tray == 'label' && params?.labelid == label.id}
             {onClick}
         />

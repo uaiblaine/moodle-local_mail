@@ -10,7 +10,9 @@
     export let message: Message;
 </script>
 
-<CourseBadge course={message.course} settings={$store.settings} />
+{#if message.course.id != $store.params.courseid}
+    <CourseBadge course={message.course} settings={$store.settings} />
+{/if}
 {#each message.labels as label (label.id)}
     <LabelBadge {label} />
 {/each}

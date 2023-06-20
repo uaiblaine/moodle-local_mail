@@ -10,6 +10,7 @@
     import RestoreButton from './RestoreButton.svelte';
     import SelectAllButton from './SelectAllButton.svelte';
     import { ViewSize, type Store } from '../lib/store';
+    import FilterByCourseInput from './FilterByCourseInput.svelte';
 
     export let store: Store;
 </script>
@@ -21,7 +22,7 @@
         <SelectAllButton {store} />
     {/if}
     {#if $store.viewSize >= ViewSize.MD}
-        <div class="btn-group mr-auto" role="group">
+        <div class="btn-group" role="group">
             {#if $store.params.tray == 'trash'}
                 <RestoreButton {store} />
                 <DeleteForeverButton {store} />
@@ -31,6 +32,17 @@
             {/if}
             <MoreActionsButton {store} />
         </div>
+    {/if}
+    {#if ['shortname', 'fullname'].includes($store.settings.filterbycourse)}
+        <FilterByCourseInput {store} />
+    {/if}
+    {#if $store.viewSize >= ViewSize.MD}
         <PagingButtons {store} />
     {/if}
 </div>
+
+<style>
+    .local-mail-toolbar {
+        column-gap: 1rem;
+    }
+</style>

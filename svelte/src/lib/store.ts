@@ -170,7 +170,7 @@ export async function createStore(data: InitialData) {
             });
 
             const query: Query = {
-                courseid: params.tray == 'course' ? params.courseid : undefined,
+                courseid: params.courseid,
                 labelid: params.tray == 'label' ? params.labelid : undefined,
                 draft: params.tray == 'drafts' ? true : params.tray == 'sent' ? false : undefined,
                 roles:
@@ -412,6 +412,19 @@ export async function createStore(data: InitialData) {
                             .map((message) => [message.id, message]),
                     ),
                 };
+            });
+        },
+
+        async setFilterByCourseInput(id?: number) {
+            const params = this.get().params;
+            await this.navigate({
+                ...params,
+                courseid: id,
+                offset: 0,
+                messageid: undefined,
+                search: params.search
+                    ? { ...params.search, startid: undefined, reverse: undefined }
+                    : undefined,
             });
         },
 
