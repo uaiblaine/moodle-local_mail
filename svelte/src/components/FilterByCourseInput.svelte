@@ -18,7 +18,7 @@
     $: nameField = $store.settings.filterbycourse == 'shortname' ? 'shortname' : 'fullname';
     $: currentCourse = $store.courses.find((course) => course.id == $store.params.courseid);
     $: inputPattern = new RegExp(escape(inputText.trim()).replaceAll(/\s+/gu, '\\s+'), 'giu');
-    $: dropdownCourses = $store.courses.filter((course) => !!inputPattern.exec(course[nameField]));
+    $: dropdownCourses = $store.courses.filter((course) => course[nameField].match(inputPattern));
     $: dropdownIconClass = !entering ? 'fa-caret-down' : inputText ? 'fa-times' : 'fa-caret-up';
     $: courseHtml = (course: Course): string =>
         course[nameField].replaceAll(inputPattern, (match) =>
