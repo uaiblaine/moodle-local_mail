@@ -77,7 +77,7 @@
                 {courses}
                 {labels}
                 {params}
-                onClick={handleMenuClick}
+                onClick={onClick ? handleMenuClick : undefined}
                 flush={true}
             />
         </div>
