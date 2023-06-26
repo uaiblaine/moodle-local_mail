@@ -43,6 +43,7 @@ export interface Query {
     readonly withfilesonly?: boolean;
     readonly maxtime?: number;
     readonly startid?: number;
+    readonly stopid?: number;
     readonly reverse?: boolean;
 }
 

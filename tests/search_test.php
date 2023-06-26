@@ -87,12 +87,11 @@ class search_test extends testcase {
      * @return message[] Found messages, ordered from newer to older and indexed by ID.
      */
     protected static function search_result(array $messages, search $search, int $offset = 0, int $limit = 0): array {
-        $messages = $search->reverse ? $messages : array_reverse($messages);
         $courseids = $search->course ? [$search->course->id] : array_keys($search->user->get_courses());
-        $i = 0;
+
         $result = [];
 
-        foreach ($messages as $message) {
+        foreach (array_reverse($messages) as $message) {
             if (
                 !in_array($message->course->id, $courseids) ||
                 $search->user->id != $message->sender()->id && !$message->has_recipient($search->user) ||
@@ -107,7 +106,9 @@ class search_test extends testcase {
                 $search->withfilesonly && $message->attachments == 0 ||
                 $search->maxtime && $message->time > $search->maxtime ||
                 $search->start && !$search->reverse && $message->id >= $search->start->id ||
-                $search->start && $search->reverse && $message->id <= $search->start->id
+                $search->start && $search->reverse && $message->id <= $search->start->id ||
+                $search->stop && !$search->reverse && $message->id <= $search->stop->id ||
+                $search->stop && $search->reverse && $message->id >= $search->stop->id
             ) {
                 continue;
             }
@@ -149,15 +150,14 @@ class search_test extends testcase {
                     continue;
                 }
             }
-            if ($i >= $offset) {
-                $result[$message->id] = $message;
-            }
-            if ($limit > 0 && count($result) == $limit) {
-                break;
-            }
-            $i++;
+
+            $result[$message->id] = $message;
         }
 
-        return $result;
+        if ($search->reverse) {
+            $result = array_reverse($result, true);
+        }
+
+        return array_slice($result, $offset, $limit ?: null, true);
     }
 }

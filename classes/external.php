@@ -378,7 +378,13 @@ class external extends \external_api {
             ),
             'startid' => new \external_value(
                 PARAM_INT,
-                'Start serching from the position of this message exclusively.',
+                'Start searching from the position of this message (excluded).',
+                VALUE_DEFAULT,
+                0
+            ),
+            'stopid' => new \external_value(
+                PARAM_INT,
+                'Stop serching at the position of this message (excluded).',
                 VALUE_DEFAULT,
                 0
             ),
@@ -441,6 +447,13 @@ class external extends \external_api {
             $search->start = message::fetch($query['startid']);
             if (!$search->start) {
                 throw new \invalid_parameter_exception('invalid startid: ' . $query['startid']);
+            }
+        }
+
+        if ($query['stopid']) {
+            $search->stop = message::fetch($query['stopid']);
+            if (!$search->stop) {
+                throw new \invalid_parameter_exception('invalid stopid: ' . $query['stopid']);
             }
         }
 

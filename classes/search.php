@@ -57,10 +57,13 @@ class search {
     /** @var int If not zero, search messages older than this date. */
     public int $maxtime = 0;
 
-    /** @var ?message It not null, start serching from the position of this message exclusively. */
+    /** @var ?message If not null, start serching from the position of this message (excluded). */
     public ?message $start = null;
 
-    /** @var bool  Search messages from older to newer instead of from newer to older. */
+    /** @var ?message If not null, stop serching at the position of this message (excluded). */
+    public ?message $stop = null;
+
+    /** @var bool Search messages from older to newer instead of from newer to older. */
     public bool $reverse = false;
 
     /**
@@ -118,6 +121,9 @@ class search {
         }
         if ($this->start) {
             $params['start'] = $this->start->id;
+        }
+        if ($this->stop) {
+            $params['stop'] = $this->stop->id;
         }
         if ($this->reverse) {
             $params['reverse'] = true;
@@ -329,6 +335,17 @@ class search {
             $params['startid'] = $this->start->id;
             $params['starttime1'] = $this->start->time;
             $params['starttime2'] = $this->start->time;
+        }
+
+        if ($this->stop) {
+            if ($this->reverse) {
+                $selects[] = 'i.time <= :stoptime1 AND (i.time < :stoptime2 OR i.messageid < :stopid)';
+            } else {
+                $selects[] = 'i.time >= :stoptime1 AND (i.time > :stoptime2 OR i.messageid > :stopid)';
+            }
+            $params['stopid'] = $this->stop->id;
+            $params['stoptime1'] = $this->stop->time;
+            $params['stoptime2'] = $this->stop->time;
         }
 
         $wheresql = 'WHERE ' . implode(' AND ', $selects);

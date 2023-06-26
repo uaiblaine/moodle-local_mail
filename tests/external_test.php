@@ -294,6 +294,9 @@ class external_test extends testcase {
             if ($search->start) {
                 $query['startid'] = $search->start->id;
             }
+            if ($search->stop) {
+                $query['stopid'] = $search->stop->id;
+            }
             if ($search->reverse) {
                 $query['reverse'] = true;
             }
@@ -343,6 +346,16 @@ class external_test extends testcase {
             self::fail();
         } catch (invalid_parameter_exception $e) {
             $this->assertEquals('invalid startid: -1', $e->debuginfo);
+        }
+
+        // Invalid stopid.
+        self::setUser($users[0]->id);
+        $query = ['stopid' => '-1'];
+        try {
+            external::count_messages($query);
+            self::fail();
+        } catch (invalid_parameter_exception $e) {
+            $this->assertEquals('invalid stopid: -1', $e->debuginfo);
         }
     }
 
@@ -396,6 +409,9 @@ class external_test extends testcase {
             if ($search->start) {
                 $query['startid'] = $search->start->id;
             }
+            if ($search->stop) {
+                $query['stopid'] = $search->stop->id;
+            }
             if ($search->reverse) {
                 $query['reverse'] = true;
             }
@@ -442,6 +458,16 @@ class external_test extends testcase {
             self::fail();
         } catch (invalid_parameter_exception $e) {
             $this->assertEquals('invalid startid: -1', $e->debuginfo);
+        }
+
+        // Invalid stopid.
+        self::setUser($users[0]->id);
+        $query = ['stopid' => '-1'];
+        try {
+            external::search_messages($query);
+            self::fail();
+        } catch (invalid_parameter_exception $e) {
+            $this->assertEquals('invalid stopid: -1', $e->debuginfo);
         }
     }
 

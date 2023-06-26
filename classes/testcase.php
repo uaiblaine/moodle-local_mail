@@ -358,6 +358,11 @@ abstract class testcase extends \advanced_testcase {
             $search->start = self::random_item($messages);
             $result[] = $search;
 
+            // Stop message.
+            $search = new search($user);
+            $search->stop = self::random_item($messages);
+            $result[] = $search;
+
             // Reverse.
             $search = new search($user);
             $search->reverse = true;
@@ -366,6 +371,12 @@ abstract class testcase extends \advanced_testcase {
             // Start and reverse.
             $search = new search($user);
             $search->start = self::random_item($messages);
+            $search->reverse = true;
+            $result[] = $search;
+
+            // Stop and reverse.
+            $search = new search($user);
+            $search->stop = self::random_item($messages);
             $search->reverse = true;
             $result[] = $search;
 
