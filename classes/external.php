@@ -57,8 +57,9 @@ class external extends \external_api {
             'coursetrays' => get_config('local_mail', 'coursetrays') ?: 'all',
             'coursetraysname' => get_config('local_mail', 'coursetraysname') ?: 'fullname',
             'coursebadges' => get_config('local_mail', 'coursebadges') ?: 'fullname',
-            'coursebadgeslength' => get_config('local_mail', 'coursebadgeslength') ?: 20,
+            'coursebadgeslength' => (int) get_config('local_mail', 'coursebadgeslength') ?: 20,
             'filterbycourse' => get_config('local_mail', 'filterbycourse') ?: 'fullname',
+            'quicksearchlimit' => (int) get_config('local_mail', 'quicksearchlimit') ?: 1000,
         ];
     }
 
@@ -87,6 +88,10 @@ class external extends \external_api {
             'filterbycourse' => new \external_value(
                 PARAM_ALPHA,
                 'Type of filter by course: "hidden", "shortname", or "fullname"'
+            ),
+            'quicksearchlimit' => new \external_value(
+                PARAM_INT,
+                'Maximum number of recent messages included in quick searches',
             ),
         ]);
     }

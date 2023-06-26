@@ -137,4 +137,15 @@ if ($hassiteconfig) {
     $settings->add(new admin_setting_configselect($name, $visiblename, $description, $defaultsetting, $choices));
 
     $ADMIN->add('localplugins', $settings);
+
+    // Search.
+    $settings->add(new admin_setting_heading('local_mail_search', get_string('search', 'local_mail'), ''));
+
+    // Quick search limit.
+    $name = 'local_mail/quicksearchlimit';
+    $visiblename = get_string('configquicksearchlimit', 'local_mail');
+    $description = get_string('configquicksearchlimitdesc', 'local_mail');
+    $defaultsetting = 1000;
+    $paramtype = PARAM_INT;
+    $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
 }

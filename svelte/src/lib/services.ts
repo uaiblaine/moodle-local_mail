@@ -153,6 +153,7 @@ export interface Settings {
     coursebadges: 'hidden' | 'shortname' | 'fullname';
     coursebadgeslength: number;
     filterbycourse: 'hidden' | 'shortname' | 'fullname';
+    quicksearchlimit: number;
 }
 
 export type Strings = Record<string, string>;
