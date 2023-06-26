@@ -76,6 +76,7 @@ export interface State {
     readonly labels: ReadonlyArray<Label>;
     readonly totalCount: number;
     readonly listMessages: ReadonlyArray<MessageSummary>;
+    readonly quickSearchStop?: MessageSummary;
     readonly message?: Message;
     readonly messageOffset?: number;
     readonly nextMessageId?: number;
@@ -189,21 +190,19 @@ export async function createStore(data: InitialData) {
                 query,
             });
 
+            // Quick search stop message.
+            requests.push({
+                methodname: 'search_messages',
+                query,
+                offset: store.get().settings.quicksearchlimit,
+                limit: 1,
+            });
+
             if (params.messageid) {
                 // Full message.
                 requests.push({
                     methodname: 'get_message',
                     messageid: params.messageid,
-                });
-
-                // Offset of the message.
-                requests.push({
-                    methodname: 'count_messages',
-                    query: {
-                        ...query,
-                        startid: params.messageid,
-                        reverse: true,
-                    },
                 });
 
                 // Next message.
@@ -229,6 +228,18 @@ export async function createStore(data: InitialData) {
                     },
                     limit: 1,
                 });
+
+                if (!params.search) {
+                    // Offset of the message.
+                    requests.push({
+                        methodname: 'count_messages',
+                        query: {
+                            ...query,
+                            startid: params.messageid,
+                            reverse: true,
+                        },
+                    });
+                }
             } else {
                 // List of messages.
                 requests.push({
@@ -254,9 +265,11 @@ export async function createStore(data: InitialData) {
             let listMessages: ReadonlyArray<MessageSummary> = [];
 
             if (params.messageid) {
+                if (!params.search) {
+                    messageOffset = responses.pop() as number;
+                }
                 prevMessageId = (responses.pop() as MessageSummary[])[0]?.id;
                 nextMessageId = (responses.pop() as MessageSummary[])[0]?.id;
-                messageOffset = responses.pop() as number;
                 message = responses.pop() as Message;
             } else {
                 listMessages = responses.pop() as ReadonlyArray<MessageSummary>;
@@ -272,6 +285,8 @@ export async function createStore(data: InitialData) {
                     }
                 }
             }
+
+            let quickSearchStop = (responses.pop() as MessageSummary[])[0];
             let totalCount = responses.pop() as number;
             let labels = responses.pop() as ReadonlyArray<Label>;
             let courses = responses.pop() as ReadonlyArray<Course>;
@@ -304,6 +319,7 @@ export async function createStore(data: InitialData) {
                     messageOffset,
                     totalCount,
                     listMessages,
+                    quickSearchStop,
                     message,
                     nextMessageId,
                     prevMessageId,
@@ -379,20 +395,6 @@ export async function createStore(data: InitialData) {
                 ...state,
                 navigationId: state.navigationId + 1,
             }));
-        },
-
-        async search(search?: SearchParams) {
-            update((state) => ({
-                ...state,
-                params: {
-                    ...state.params,
-                    search,
-                    messageid: undefined,
-                    offset: undefined,
-                },
-            }));
-
-            await store.navigate();
         },
 
         selectAll(type: SelectAllType) {

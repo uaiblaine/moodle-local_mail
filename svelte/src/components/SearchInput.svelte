@@ -1,201 +1,231 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+    import { tick } from 'svelte';
     import { blur } from '../actions/blur';
-    import type { Store } from '../lib/store';
+    import type { SearchParams, Store, ViewParams } from '../lib/store';
+    import AdvancedSearch from './AdvancedSearch.svelte';
+    import QuickSearch from './QuickSearch.svelte';
 
     export let store: Store;
 
-    let expanded = false;
-    let senderNode: HTMLElement;
+    let entering = !$store.params.search;
+    let advancedExpanded = false;
+    let inputNode: HTMLElement;
+    let advancedNode: AdvancedSearch;
+    let content = '';
+    let sendername = '';
+    let recipientname = '';
+    let unread = false;
+    let withfilesonly = false;
+    let maxtime = 0;
+    let loading = false;
 
-    const dateFromTimestamp = (time: number): string => {
-        if (time == 0) {
-            return '';
-        }
-        const date = new Date(time * 1000);
-        return [
-            String(date.getFullYear()),
-            String(date.getMonth() + 1).padStart(2, '0'),
-            String(date.getDate()).padStart(2, '0'),
-        ].join('-');
+    const updateFields = (search?: SearchParams) => {
+        content = search?.content || '';
+        sendername = search?.sendername || '';
+        recipientname = search?.recipientname || '';
+        unread = search?.unread || false;
+        withfilesonly = search?.withfilesonly || false;
+        maxtime = search?.maxtime || 0;
     };
 
-    const timestampFromDate = (date: string): number => {
-        if (!date) {
-            return 0;
-        }
-        return Math.floor(
-            new Date(
-                parseInt(date.slice(0, 4)),
-                parseInt(date.slice(5, 7)) - 1,
-                parseInt(date.slice(8, 10)),
-            ).getTime() / 1000,
-        );
-    };
+    $: search = $store.params.search;
 
-    $: content = $store.params.search?.content || '';
-    $: sendername = $store.params.search?.sendername || '';
-    $: recipientname = $store.params.search?.recipientname || '';
-    $: unread = $store.params.search?.unread || false;
-    $: withfilesonly = $store.params.search?.withfilesonly || false;
-    $: maxdate = dateFromTimestamp($store.params.search?.maxtime || 0);
+    $: updateFields(search);
 
     $: advancedEnabled = Boolean(
-        $store.params.search?.sendername ||
-            $store.params.search?.recipientname ||
-            $store.params.search?.unread ||
-            $store.params.search?.withfilesonly ||
-            $store.params.search?.maxtime,
+        search?.sendername ||
+            search?.recipientname ||
+            search?.unread ||
+            search?.withfilesonly ||
+            search?.maxtime,
     );
-    $: searchEnabled = Boolean($store.params.search?.content || advancedEnabled);
+
+    $: searchEnabled = search?.content || advancedEnabled;
+
     $: submitEnabled = Boolean(
-        content || sendername || recipientname || unread || withfilesonly || maxdate,
+        content.trim() ||
+            sendername.trim() ||
+            recipientname.trim() ||
+            unread ||
+            withfilesonly ||
+            maxtime,
     );
 
-    const cancel = () => {
-        closeDropdown();
-        store.navigate({ ...$store.params, search: undefined });
+    $: searchFields = [
+        { label: '', value: content },
+        { label: $store.strings.from, value: sendername },
+        { label: $store.strings.to, value: recipientname },
+        {
+            label: $store.strings.filterbydate,
+            value: maxtime > 0 ? new Date(maxtime * 1000).toLocaleDateString() : '',
+        },
+        { label: $store.strings.searchbyunread, value: unread },
+        { label: $store.strings.searchbyattach, value: withfilesonly },
+    ].filter(({ label, value }) => Boolean(value));
+
+    const startEntering = async () => {
+        entering = true;
+        if (advancedEnabled) {
+            advancedExpanded = true;
+        }
+        await tick();
+        inputNode.focus();
     };
 
-    const closeDropdown = () => {
-        expanded = false;
+    const stopEntering = async () => {
+        entering = !searchEnabled;
+        advancedExpanded = false;
+        updateFields(search);
     };
 
-    const toggleDropdown = () => {
-        expanded = !expanded;
+    const toggleDropdown = async () => {
+        if (advancedExpanded) {
+            advancedExpanded = false;
+            await tick();
+            inputNode.focus();
+        } else {
+            advancedExpanded = true;
+            startEntering();
+            await tick();
+            advancedNode.focus();
+        }
     };
 
-    const submit = () => {
-        closeDropdown();
-        store.search({
-            content,
-            sendername,
-            recipientname,
-            unread,
-            withfilesonly,
-            maxtime: timestampFromDate(maxdate),
+    const cancel = async () => {
+        entering = true;
+        advancedExpanded = false;
+        updateFields();
+        await store.navigate({ ...$store.params, offset: 0, search: undefined });
+        await tick();
+        inputNode.focus();
+    };
+
+    const submit = async () => {
+        await store.navigate({
+            ...$store.params,
+            messageid: undefined,
+            offset: undefined,
+            search: advancedExpanded
+                ? {
+                      content: content.trim(),
+                      sendername: sendername.trim(),
+                      recipientname: recipientname.trim(),
+                      unread,
+                      withfilesonly,
+                      maxtime,
+                  }
+                : {
+                      content: content.trim(),
+                  },
         });
+        advancedExpanded = false;
+        entering = false;
     };
 
     const handleKeypress = (event: KeyboardEvent) => {
         if (event.key == 'Enter') {
             event.preventDefault();
-            submit();
+            if (submitEnabled) {
+                submit();
+            } else {
+                cancel();
+            }
         }
+    };
+
+    const handleQuickSearchClick = async (params: ViewParams) => {
+        await store.navigate(params);
+        advancedExpanded = false;
+        entering = false;
     };
 </script>
 
-<form
-    class="local-mail-search-input position-relative"
-    on:submit|preventDefault={submit}
-    use:blur={closeDropdown}
->
+<form class="local-mail-search-input position-relative" use:blur={stopEntering}>
     <div
-        class="position-absolute h-100 d-flex align-items-center px-2"
-        class:text-primary={searchEnabled}
-        style="top: 0; left: 0"
+        class="position-absolute h-100 d-flex justify-content-center align-items-center px-0"
+        style="top: 0; left: 0; width: 2.5rem"
     >
-        <i class="fa fa-fw fa-search" aria-hidden="true" />
+        <i class="fa fa-fw {loading ? 'fa-spinner fa-pulse' : 'fa-search'}" aria-hidden="true" />
     </div>
 
-    <input
-        type="text"
-        class="form-control px-5"
-        placeholder={$store.strings.search}
-        aria-label={$store.strings.search}
-        bind:value={content}
-        on:keypress={handleKeypress}
-    />
-    <button
-        aria-expanded={expanded}
-        class="btn position-absolute h-100 d-flex align-items-center px-2"
-        class:text-primary={advancedEnabled}
-        style="top: 0; right: 0"
-        title={$store.strings.advsearch}
-        on:click|preventDefault={toggleDropdown}
-    >
-        <i class="fa fa-fw fa-sliders" aria-hidden="true" />
-    </button>
-    {#if expanded}
-        <div class="dropdown-menu dropdown-menu-right show p-3">
-            <div class="form-group">
-                <label for="local-mail-search-input-sendername">
-                    {$store.strings.from}
-                </label>
-                <input
-                    type="text"
-                    class="form-control"
-                    id="local-mail-search-input-sendername"
-                    bind:value={sendername}
-                    bind:this={senderNode}
-                />
-            </div>
-            <div class="form-group">
-                <label for="local-mail-search-input-recipientname">
-                    {$store.strings.to}
-                </label>
-                <input
-                    type="text"
-                    class="form-control"
-                    id="local-mail-search-input-recipientname"
-                    bind:value={recipientname}
-                />
-            </div>
-            <div class="form-group">
-                <label for="local-mail-search-input-maxdate">
-                    {$store.strings.filterbydate}
-                </label>
-                <input
-                    type="date"
-                    class="form-control"
-                    id="local-mail-search-input-maxdate"
-                    bind:value={maxdate}
-                />
-            </div>
-            <div class="form-group">
-                <div class="form-check">
-                    <input
-                        class="form-check-input"
-                        type="checkbox"
-                        id="local-mail-search-input-unread"
-                        bind:checked={unread}
-                    />
-                    <label class="form-check-label" for="local-mail-search-input-unread">
-                        {$store.strings.searchbyunread}
-                    </label>
-                </div>
-            </div>
-            <div class="form-group">
-                <div class="form-check">
-                    <input
-                        class="form-check-input"
-                        type="checkbox"
-                        id="local-mail-search-input-withfilesonly"
-                        bind:checked={withfilesonly}
-                    />
-                    <label class="form-check-label" for="local-mail-search-input-withfilesonly">
-                        {$store.strings.searchbyattach}
-                    </label>
-                </div>
-            </div>
-            <div class="d-flex justify-content-between">
-                <input
-                    type="button"
-                    class="btn btn-secondary"
-                    on:click={cancel}
-                    value={$store.strings.cancel}
-                />
-                <input
-                    type="submit"
-                    disabled={!submitEnabled}
-                    class="btn btn-primary"
-                    on:click={submit}
-                    value={$store.strings.search}
-                />
-            </div>
-        </div>
+    {#if entering}
+        <input
+            type="text"
+            class="form-control"
+            style="padding-left: 2.5rem; padding-right: 5rem"
+            placeholder={$store.strings.search}
+            aria-label={$store.strings.search}
+            autocomplete="off"
+            bind:value={content}
+            bind:this={inputNode}
+            on:keypress={handleKeypress}
+        />
+    {:else}
+        <button
+            type="button"
+            class="alert-primary form-control text-left text-truncate"
+            style="padding-left: 2.5rem; padding-right: 5rem"
+            on:click={startEntering}
+        >
+            {#each searchFields as { label, value }, i}
+                {#if i > 0}<span class="dimmed_text">,&ensp;</span>{/if}
+                {#if value === true}
+                    <span class="dimmed_text">{label}</span>
+                {:else}
+                    {#if label}<span class="dimmed_text">{label}: </span>{/if}
+                    {value}
+                {/if}
+            {/each}
+        </button>
     {/if}
+    <div class="position-absolute h-100 d-flex align-items-center" style="top: 0; right: 0">
+        {#if searchEnabled || submitEnabled}
+            <button
+                type="button"
+                class="btn px-0"
+                title={$store.strings.cancel}
+                style="width: 2.5rem"
+                on:click|preventDefault={cancel}
+            >
+                <i class="fa fa-fw fa-times" aria-hidden="true" />
+            </button>
+        {/if}
+        <button
+            type="button"
+            aria-expanded={advancedExpanded}
+            class="btn px-0"
+            style="width: 2.5rem"
+            title={$store.strings.advsearch}
+            on:click|preventDefault={toggleDropdown}
+        >
+            <i
+                class="fa fa-fw {advancedExpanded ? 'fa-caret-up' : 'fa-sliders'}"
+                aria-hidden="true"
+            />
+        </button>
+    </div>
+    {#if advancedExpanded}
+        <AdvancedSearch
+            bind:this={advancedNode}
+            {store}
+            bind:sendername
+            bind:recipientname
+            bind:unread
+            bind:withfilesonly
+            bind:maxtime
+            {submit}
+            {submitEnabled}
+        />
+    {/if}
+    <QuickSearch
+        {store}
+        enabled={entering && !advancedExpanded && !!content.trim()}
+        {content}
+        bind:loading
+        handleClick={handleQuickSearchClick}
+    />
 </form>
 
 <style>

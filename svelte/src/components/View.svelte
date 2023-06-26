@@ -161,6 +161,11 @@
         margin: 0 2rem 2rem auto;
     }
 
+    :global(.local-mail-view .dropdown-item:not(:focus):hover) {
+        color: inherit;
+        background-color: #eee;
+    }
+
     .local-mail-view {
         max-width: 100rem;
     }

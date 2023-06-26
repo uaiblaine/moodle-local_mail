@@ -8,67 +8,69 @@
     export let transparent = false;
     export let compact = false;
 
-    $: nextParams = $store.message
-        ? $store.nextMessageId
+    $: hasNext =
+        $store.nextMessageId ||
+        (!$store.params.search &&
+            ($store.params.offset || 0) + $store.preferences.perpage < $store.totalCount);
+
+    $: hasPrev = $store.prevMessageId || (!$store.params.search && ($store.params.offset || 0) > 0);
+
+    $: nextParams = hasNext
+        ? $store.message
             ? {
                   ...$store.params,
                   messageid: $store.nextMessageId,
+                  offset: ($store.params.offset || 0) + 1,
               }
-            : undefined
-        : $store.params.search
-        ? $store.nextMessageId
-            ? {
+            : {
                   ...$store.params,
-                  search: {
-                      ...$store.params.search,
-                      startid: $store.listMessages[$store.listMessages.length - 1]?.id,
-                      reverse: false,
-                  },
+                  messageid: undefined,
+                  offset: ($store.params.offset || 0) + $store.preferences.perpage,
+                  search: $store.params.search
+                      ? {
+                            ...$store.params.search,
+                            startid: $store.listMessages[$store.listMessages.length - 1]?.id,
+                            reverse: false,
+                        }
+                      : undefined,
               }
-            : undefined
-        : ($store.params.offset || 0) + $store.preferences.perpage < $store.totalCount
-        ? {
-              ...$store.params,
-              messageid: undefined,
-
-              offset: ($store.params.offset || 0) + $store.preferences.perpage,
-          }
         : undefined;
 
-    $: prevParams = $store.message
-        ? $store.prevMessageId
+    $: prevParams = hasPrev
+        ? $store.message
             ? {
                   ...$store.params,
                   messageid: $store.prevMessageId,
-                  offset: undefined,
+                  offset: Math.max(0, ($store.params.offset || 0) - 1),
               }
-            : undefined
-        : $store.params.search
-        ? $store.prevMessageId
-            ? {
+            : {
                   ...$store.params,
-                  search: {
-                      ...$store.params.search,
-                      startid: $store.listMessages[0].id,
-                      reverse: true,
-                  },
+                  messageid: undefined,
+                  offset: Math.max(0, ($store.params.offset || 0) - $store.preferences.perpage),
+                  search: $store.params.search
+                      ? {
+                            ...$store.params.search,
+                            startid: $store.listMessages[0].id,
+                            reverse: true,
+                        }
+                      : undefined,
               }
-            : undefined
-        : ($store.params.offset || 0) > 0
-        ? {
-              ...$store.params,
-              messageid: undefined,
-              offset: Math.max(0, ($store.params.offset || 0) - $store.preferences.perpage),
-          }
         : undefined;
 
     $: pagingText = $store.message
-        ? replaceStringParams($store.strings.pagingsingle, {
-              index: ($store.messageOffset || 0) + 1,
-              total: $store.totalCount,
-          })
+        ? $store.params.search
+            ? ($store.params.offset || 0) + 1
+            : replaceStringParams($store.strings.pagingsingle, {
+                  index: ($store.messageOffset || 0) + 1,
+                  total: $store.totalCount,
+              })
         : $store.listMessages.length == 0
         ? ''
+        : $store.params.search
+        ? replaceStringParams($store.strings.pagingsearch, {
+              first: ($store.params.offset || 0) + 1,
+              last: ($store.params.offset || 0) + $store.listMessages.length,
+          })
         : replaceStringParams($store.strings.pagingmultiple, {
               first: ($store.params.offset || 0) + 1,
               last: ($store.params.offset || 0) + $store.listMessages.length,
@@ -76,8 +78,8 @@
           });
 </script>
 
-<div class="local-mail-paging-buttons d-flex ml-auto">
-    {#if !compact && !$store.params.search}
+<div class="local-mail-paging-buttons d-flex" class:ml-auto={!compact}>
+    {#if !compact}
         <div class="align-self-center text-nowrap">
             {pagingText}
         </div>
@@ -88,12 +90,12 @@
             class="btn btn-secondary"
             class:btn-secondary={!transparent}
             disabled={!prevParams}
-            title={$store.strings.previouspage}
+            title={$store.strings[$store.message ? 'previousmessage' : 'previouspage']}
             on:click|preventDefault={() => store.navigate(prevParams)}
         >
             <i class="fa fa-w fa-chevron-left" aria-label={$store.strings.previouspage} />
         </button>
-        {#if compact && !$store.params.search}
+        {#if compact}
             <div class="text-truncate align-self-center mx-2">
                 {pagingText}
             </div>
@@ -102,7 +104,7 @@
             class="btn"
             class:btn-secondary={!transparent}
             disabled={!nextParams}
-            title={$store.strings.nextpage}
+            title={$store.strings[$store.message ? 'nextmessage' : 'nextpage']}
             on:click|preventDefault={() => store.navigate(nextParams)}
         >
             <i class="fa fa-w fa-chevron-right" aria-label={$store.strings.nextpage} />

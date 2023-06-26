@@ -3,7 +3,7 @@
 <script lang="ts">
     import { truncate } from '../actions/truncate';
     import type { MessageSummary } from '../lib/services';
-    import { ViewSize, type Store } from '../lib/store';
+    import { type Store } from '../lib/store';
 
     export let store: Store;
     export let message: MessageSummary;
@@ -16,9 +16,6 @@
             : [message.sender.fullname];
 </script>
 
-<div
-    use:truncate={users.join('\n')}
-    class:local-mail-list-messaege-users-md={$store.viewSize >= ViewSize.MD}
->
+<div use:truncate={users.join('\n')}>
     {users.join(', ')}
 </div>

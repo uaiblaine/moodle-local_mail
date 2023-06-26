@@ -16,6 +16,24 @@ export const colors: ReadonlyArray<string> = [
 ];
 
 /**
+ * Converts a timestamp to a date string.
+ *
+ * @param time UNIX Timestamp.
+ * @returns Date in YYYY-MM-DD format.
+ */
+export function dateFromTimestamp(time: number): string {
+    if (time == 0) {
+        return '';
+    }
+    const date = new Date(time * 1000);
+    return [
+        String(date.getFullYear()),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0'),
+    ].join('-');
+}
+
+/**
  * Format size to include units.
  *
  * @param size Number of bytes.
@@ -81,4 +99,26 @@ export async function sleep(miliseconds: number): Promise<void> {
     return new Promise((resolve) => {
         setTimeout(resolve, miliseconds);
     });
+}
+
+/**
+ * Converts a date string to a timestamp.
+ *
+ * @param date Date in YYYY-MM-DD format.
+ * @returns UNIX Timestamp.
+ */
+export function timestampFromDate(date: string): number {
+    if (!date) {
+        return 0;
+    }
+    return Math.floor(
+        new Date(
+            parseInt(date.slice(0, 4)),
+            parseInt(date.slice(5, 7)) - 1,
+            parseInt(date.slice(8, 10)),
+            23,
+            59,
+            59,
+        ).getTime() / 1000,
+    );
 }

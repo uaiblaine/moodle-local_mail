@@ -18,7 +18,7 @@
 {#if !$store.listMessages.length}
     <div in:fade|local={{ delay: 400 }} class="alert alert-info">
         <div>
-            {$store.strings.nomessagestoview}
+            {$store.strings.nomessagesfound}
         </div>
         {#if $store.totalCount > 0}
             <a

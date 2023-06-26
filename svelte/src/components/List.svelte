@@ -18,11 +18,19 @@
 
     export let store: Store;
 
-    const clickHandler = (message: MessageSummary) => {
+    const messageParams = (message: MessageSummary, i: number) => {
+        return {
+            ...$store.params,
+            messageid: message.id,
+            offset: ($store.params.offset || 0) + i,
+        };
+    };
+
+    const clickHandler = (message: MessageSummary, i: number) => {
         return (event: MouseEvent) => {
             if (!message.draft) {
                 event.preventDefault();
-                store.navigate({ ...$store.params, messageid: message.id });
+                store.navigate(messageParams(message, i));
             }
         };
     };
@@ -30,20 +38,18 @@
 
 {#key $store.navigationId}
     <div class="list-group">
-        {#each $store.listMessages as message (message.id)}
+        {#each $store.listMessages as message, i (message.id)}
             <a
                 animate:flip={{ delay: 400, duration: 400 }}
                 in:fade|local={{ delay: 400 }}
                 out:fade|local={{ duration: 400 }}
                 class="local-mail-list-message list-group-item list-group-item-action p-0"
-                href={message.draft
-                    ? composeUrl(message.id)
-                    : viewUrl({ ...$store.params, messageid: message.id })}
+                href={message.draft ? composeUrl(message.id) : viewUrl(messageParams(message, i))}
                 class:list-group-item-primary={$store.selectedMessages.has(message.id)}
                 class:list-group-item-secondary={!message.unread &&
                     !$store.selectedMessages.has(message.id)}
                 class:font-weight-bold={message.unread}
-                on:click={clickHandler(message)}
+                on:click={clickHandler(message, i)}
             >
                 {#if $store.viewSize >= ViewSize.MD}
                     <div class="d-flex align-items-center pl-1 pr-3">

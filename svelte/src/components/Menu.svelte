@@ -28,6 +28,16 @@
     };
 
     $: courseid = params?.tray != 'course' ? params?.courseid : undefined;
+    $: search = params?.search
+        ? {
+              content: params.search.content,
+              sendername: params.search.sendername,
+              recipientname: params.search.recipientname,
+              maxtime: params.search.maxtime,
+              unread: params.search.unread,
+              withfilesonly: params.search.withfilesonly,
+          }
+        : undefined;
 </script>
 
 <div class="list-group" class:list-group-flush={flush}>
@@ -35,7 +45,7 @@
         icon="fa-inbox"
         text={strings.inbox}
         count={unread}
-        params={{ tray: 'inbox', courseid }}
+        params={{ tray: 'inbox', courseid, search }}
         active={params?.tray == 'inbox'}
         {onClick}
     />
@@ -43,7 +53,7 @@
         <MenuItem
             icon="fa-star"
             text={strings.starredmail}
-            params={{ tray: 'starred', courseid }}
+            params={{ tray: 'starred', courseid, search }}
             active={params?.tray == 'starred'}
             {onClick}
         />
@@ -52,7 +62,7 @@
         <MenuItem
             icon="fa-paper-plane"
             text={strings.sentmail}
-            params={{ tray: 'sent', courseid }}
+            params={{ tray: 'sent', courseid, search }}
             active={params?.tray == 'sent'}
             {onClick}
         />
@@ -62,7 +72,7 @@
             icon="fa-file"
             text={strings.drafts}
             count={drafts}
-            params={{ tray: 'drafts', courseid }}
+            params={{ tray: 'drafts', courseid, search }}
             active={params?.tray == 'drafts'}
             {onClick}
         />
@@ -71,7 +81,7 @@
         <MenuItem
             icon="fa-trash"
             text={strings.trash}
-            params={{ tray: 'trash', courseid }}
+            params={{ tray: 'trash', courseid, search }}
             active={params?.tray == 'trash'}
             {onClick}
         />
@@ -82,7 +92,7 @@
             text={label.name}
             count={label.unread}
             color={label.color}
-            params={{ tray: 'label', labelid: label.id, courseid }}
+            params={{ tray: 'label', labelid: label.id, courseid, search }}
             active={params?.tray == 'label' && params?.labelid == label.id}
             {onClick}
         />
@@ -93,7 +103,7 @@
                 icon="fa-university"
                 text={settings.coursetraysname == 'fullname' ? course.fullname : course.shortname}
                 count={course.unread}
-                params={{ tray: 'course', courseid: course.id }}
+                params={{ tray: 'course', courseid: course.id, search }}
                 active={params?.tray == 'course' && params?.courseid == course.id}
                 {onClick}
             />
