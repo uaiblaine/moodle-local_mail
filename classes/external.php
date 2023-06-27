@@ -59,7 +59,8 @@ class external extends \external_api {
             'coursebadges' => get_config('local_mail', 'coursebadges') ?: 'fullname',
             'coursebadgeslength' => (int) get_config('local_mail', 'coursebadgeslength') ?: 20,
             'filterbycourse' => get_config('local_mail', 'filterbycourse') ?: 'fullname',
-            'quicksearchlimit' => (int) get_config('local_mail', 'quicksearchlimit') ?: 1000,
+            'incrementalsearch' => (bool) get_config('local_mail', 'incrementalsearch'),
+            'incrementalsearchlimit' => (int) get_config('local_mail', 'incrementalsearchlimit') ?: 1000,
         ];
     }
 
@@ -89,9 +90,13 @@ class external extends \external_api {
                 PARAM_ALPHA,
                 'Type of filter by course: "hidden", "shortname", or "fullname"'
             ),
-            'quicksearchlimit' => new \external_value(
+            'incrementalsearch' => new \external_value(
+                PARAM_BOOL,
+                'Enables displaying results while the user is typing in the search box',
+            ),
+            'incrementalsearchlimit' => new \external_value(
                 PARAM_INT,
-                'Maximum number of recent messages included in quick searches',
+                'Maximum number of recent messages included in incremental search',
             ),
         ]);
     }

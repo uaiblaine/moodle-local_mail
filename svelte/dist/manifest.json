@@ -18,14 +18,14 @@
     "src": "src/navbar.ts"
   },
   "src/view.css": {
-    "file": "view-1bdb5fb6.css",
+    "file": "view-594ac5e8.css",
     "src": "src/view.css"
   },
   "src/view.ts": {
     "css": [
-      "view-1bdb5fb6.css"
+      "view-594ac5e8.css"
     ],
-    "file": "view-1fed6c25.js",
+    "file": "view-1e53f0f7.js",
     "imports": [
       "_global-b937fbcc.js"
     ],

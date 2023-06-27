@@ -21,6 +21,7 @@ import {
     type Strings,
     type UpdateLabelRequest,
     type MessageSummary,
+    type SearchMessagesRequest,
 } from './services';
 import { getViewParamsFromUrl, setUrlFromViewParams } from './url';
 import { replaceStringParams, sleep } from './utils';
@@ -65,6 +66,7 @@ export interface State {
     readonly settings: Settings;
     readonly preferences: Preferences;
     readonly strings: Strings;
+    readonly incrementalSearchStopId?: number;
 
     /* Parameters of the current view. */
     readonly params: ViewParams;
@@ -76,7 +78,6 @@ export interface State {
     readonly labels: ReadonlyArray<Label>;
     readonly totalCount: number;
     readonly listMessages: ReadonlyArray<MessageSummary>;
-    readonly quickSearchStop?: MessageSummary;
     readonly message?: Message;
     readonly messageOffset?: number;
     readonly nextMessageId?: number;
@@ -190,14 +191,6 @@ export async function createStore(data: InitialData) {
                 query,
             });
 
-            // Quick search stop message.
-            requests.push({
-                methodname: 'search_messages',
-                query,
-                offset: store.get().settings.quicksearchlimit,
-                limit: 1,
-            });
-
             if (params.messageid) {
                 // Full message.
                 requests.push({
@@ -286,7 +279,6 @@ export async function createStore(data: InitialData) {
                 }
             }
 
-            let quickSearchStop = (responses.pop() as MessageSummary[])[0];
             let totalCount = responses.pop() as number;
             let labels = responses.pop() as ReadonlyArray<Label>;
             let courses = responses.pop() as ReadonlyArray<Course>;
@@ -319,7 +311,6 @@ export async function createStore(data: InitialData) {
                     messageOffset,
                     totalCount,
                     listMessages,
-                    quickSearchStop,
                     message,
                     nextMessageId,
                     prevMessageId,
@@ -376,7 +367,22 @@ export async function createStore(data: InitialData) {
         },
 
         async init() {
-            await store.callServicesAndRefresh([], getViewParamsFromUrl());
+            const requests: ServiceRequest[] = [];
+            if (this.get().settings.incrementalsearch) {
+                requests.push({
+                    methodname: 'search_messages',
+                    query: { deleted: false },
+                    offset: store.get().settings.incrementalsearchlimit,
+                    limit: 1,
+                });
+            }
+
+            const responses = await store.callServicesAndRefresh(requests, getViewParamsFromUrl());
+
+            update((state) => ({
+                ...state,
+                incrementalSearchStopId: (responses.pop() as MessageSummary[] | undefined)?.[0]?.id,
+            }));
         },
 
         async navigate(params?: ViewParams, redirect = false) {

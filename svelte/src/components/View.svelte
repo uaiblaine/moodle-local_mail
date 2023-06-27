@@ -10,7 +10,7 @@
     import Menu from './Menu.svelte';
     import Message from './Message.svelte';
     import PerPageSelect from './PerPageSelect.svelte';
-    import SearchInput from './SearchInput.svelte';
+    import SearchBox from './SearchBox.svelte';
     import Toasts from './Toasts.svelte';
     import TopToolBar from './TopToolBar.svelte';
     import { ViewSize, type Store } from '../lib/store';
@@ -77,7 +77,7 @@
 
         <div class="local-mail-view-main-column d-flex mb-4">
             <div class="local-mail-view-search flex-shrink-1">
-                <SearchInput {store} />
+                <SearchBox {store} />
             </div>
             {#if $store.viewSize < ViewSize.LG}
                 <div class="flex-shrink-1 text-truncate d-flex">

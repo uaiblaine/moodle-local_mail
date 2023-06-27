@@ -141,10 +141,17 @@ if ($hassiteconfig) {
     // Search.
     $settings->add(new admin_setting_heading('local_mail_search', get_string('search', 'local_mail'), ''));
 
-    // Quick search limit.
-    $name = 'local_mail/quicksearchlimit';
-    $visiblename = get_string('configquicksearchlimit', 'local_mail');
-    $description = get_string('configquicksearchlimitdesc', 'local_mail');
+    // Incremental search.
+    $name = 'local_mail/incrementalsearch';
+    $visiblename = get_string('configincrementalsearch', 'local_mail');
+    $description = get_string('configincrementalsearchdesc', 'local_mail');
+    $defaultsetting = '0';
+    $settings->add(new admin_setting_configcheckbox($name, $visiblename, $description, $defaultsetting));
+
+    // Incremental search limit.
+    $name = 'local_mail/incrementalsearchlimit';
+    $visiblename = get_string('configincrementalsearchlimit', 'local_mail');
+    $description = get_string('configincrementalsearchlimitdesc', 'local_mail');
     $defaultsetting = 1000;
     $paramtype = PARAM_INT;
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));

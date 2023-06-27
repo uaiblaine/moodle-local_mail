@@ -5,7 +5,7 @@
     import { blur } from '../actions/blur';
     import type { SearchParams, Store, ViewParams } from '../lib/store';
     import AdvancedSearch from './AdvancedSearch.svelte';
-    import QuickSearch from './QuickSearch.svelte';
+    import IncrementalSearch from './IncrementalSearch.svelte';
 
     export let store: Store;
 
@@ -135,7 +135,7 @@
         }
     };
 
-    const handleQuickSearchClick = async (params: ViewParams) => {
+    const handleIncrementalSearchClick = async (params: ViewParams) => {
         await store.navigate(params);
         advancedExpanded = false;
         entering = false;
@@ -219,13 +219,15 @@
             {submitEnabled}
         />
     {/if}
-    <QuickSearch
-        {store}
-        enabled={entering && !advancedExpanded && !!content.trim()}
-        {content}
-        bind:loading
-        handleClick={handleQuickSearchClick}
-    />
+    {#if $store.settings.incrementalsearch}
+        <IncrementalSearch
+            {store}
+            enabled={entering && !advancedExpanded && !!content.trim()}
+            {content}
+            bind:loading
+            handleClick={handleIncrementalSearchClick}
+        />
+    {/if}
 </form>
 
 <style>

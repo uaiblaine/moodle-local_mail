@@ -54,7 +54,7 @@
                 starred: params.tray == 'starred' ? true : undefined,
                 deleted: params.tray == 'trash',
                 content: content.trim(),
-                stopid: $store.quickSearchStop?.id,
+                stopid: $store.incrementalSearchStopId,
             };
             const request: SearchMessagesRequest = {
                 methodname: 'search_messages',
@@ -72,7 +72,7 @@
             }
             loading = false;
             messages = responses[0] as ReadonlyArray<MessageSummary>;
-            moreResults = messages.length > LIMIT || $store.quickSearchStop != null;
+            moreResults = messages.length > LIMIT || Boolean($store.incrementalSearchStopId);
             messages = messages.slice(0, LIMIT);
         }, DELAY);
     };
@@ -117,13 +117,13 @@
                 <div class="dropdown-divider my-0" />
             {/if}
             <a
-                class="dropdown-item local-mail-quick-search-item"
+                class="dropdown-item local-mail-incremental-search-item"
                 class:font-weight-bold={message.unread}
                 href={message.draft ? composeUrl(message.id) : viewUrl(messageParams(message, i))}
                 on:click={clickHandler(message, i)}
             >
                 <ListMessageSubject {store} {message} />
-                <div class="local-mail-quick-search-muted d-flex">
+                <div class="local-mail-incremental-search-muted d-flex">
                     <ListMessageUsers {store} {message} />
                     <div title={message.fulltime} class="ml-auto">
                         {message.shorttime}
@@ -149,7 +149,7 @@
 {/if}
 
 <style>
-    .local-mail-quick-search-muted {
+    .local-mail-incremental-search-muted {
         opacity: 0.6;
     }
 </style>
