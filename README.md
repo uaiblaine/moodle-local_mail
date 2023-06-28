@@ -47,7 +47,7 @@ npm install
 npm run build
 ```
 
-The production code is stored in `local/mail/dist`.
+The production code is stored in `local/mail/build`.
 
 ### Unit tests
 

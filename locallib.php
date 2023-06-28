@@ -379,15 +379,15 @@ function local_mail_svelte_script(string $file): string {
     if (!empty($CFG->local_mail_devserver)) {
         $jsurl = $CFG->local_mail_devserver . '/' . $file;
     } else {
-        $manifestpath = $CFG->dirroot . '/local/mail/svelte/dist/manifest.json';
+        $manifestpath = $CFG->dirroot . '/local/mail/svelte/build/manifest.json';
         $manifest = json_decode(file_get_contents($manifestpath), true);
         if (!$manifest) {
-            throw new coding_exception('local_mail: "svelte/dist/manifest.json" not found');
+            throw new coding_exception('local_mail: "svelte/build/manifest.json" not found');
         }
         if (empty($manifest[$file])) {
             throw new coding_exception('local_mail: invalid svelte script name "' . $file . '"');
         }
-        $jsurl = $CFG->wwwroot . '/local/mail/svelte/dist/' . $manifest[$file]['file'];
+        $jsurl = $CFG->wwwroot . '/local/mail/svelte/build/' . $manifest[$file]['file'];
         $chunks = [$file];
         $cssurls = [];
         while ($file = array_pop($chunks)) {
@@ -395,7 +395,7 @@ function local_mail_svelte_script(string $file): string {
                 $chunks[] = $jsfile;
             }
             foreach ($manifest[$file]['css'] ?? [] as $cssfile) {
-                $cssurls[] = new moodle_url('/local/mail/svelte/dist/' . $cssfile);
+                $cssurls[] = new moodle_url('/local/mail/svelte/build/' . $cssfile);
             }
         }
         foreach ($cssurls as $cssurl) {

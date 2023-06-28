@@ -6,6 +6,7 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 export default defineConfig({
     build: {
         manifest: true,
+        outDir: 'build',
         rollupOptions: {
             input: [resolve(__dirname, 'src/view.ts'), resolve(__dirname, 'src/navbar.ts')],
             output: {
