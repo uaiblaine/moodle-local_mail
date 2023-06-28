@@ -6,18 +6,24 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "check": "svelte-check --tsconfig ./tsconfig.json"
+        "check": "svelte-check --tsconfig ./tsconfig.json",
+        "lint": "prettier --plugin-search-dir . --check . && eslint .",
+        "format": "prettier --plugin-search-dir . --write ."
     },
     "devDependencies": {
         "@sveltejs/vite-plugin-svelte": "^2.4.1",
         "@tsconfig/svelte": "^4.0.1",
+        "@typescript-eslint/eslint-plugin": "^5.60.1",
+        "@typescript-eslint/parser": "^5.60.1",
+        "eslint": "^8.43.0",
+        "eslint-config-prettier": "^8.8.0",
+        "eslint-plugin-svelte": "^2.31.1",
+        "prettier": "^2.8.8",
+        "prettier-plugin-svelte": "^2.10.1",
         "svelte": "^4.0.0",
         "svelte-check": "^3.4.3",
         "tslib": "^2.5.0",
         "typescript": "^5.0.0",
         "vite": "^4.3.2"
-    },
-    "dependencies": {
-        "@types/node": "^20.1.1"
     }
 }
