@@ -157,7 +157,7 @@ function local_mail_send_notifications($message) {
         $htmldata->subject = $message->subject() . ' ' . $attachment;
         $url = new moodle_url('/local/mail/view.php', array('t' => 'inbox', 'm' => $message->id()));
         $htmldata->url = $url->out(false);
-        $htmldata->content = $message->content();
+        $htmldata->content = format_text($message->content(), $message->format());
 
         $fullplainmessage = format_text_email(get_string('notificationbody', 'local_mail', $plaindata), $message->format());
 
