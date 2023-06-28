@@ -41,8 +41,8 @@
         {#each $store.listMessages as message, i (message.id)}
             <a
                 animate:flip={{ delay: 400, duration: 400 }}
-                in:fade|local={{ delay: 400 }}
-                out:fade|local={{ duration: 400 }}
+                in:fade={{ delay: 400 }}
+                out:fade={{ duration: 400 }}
                 class="local-mail-list-message list-group-item list-group-item-action p-0"
                 href={message.draft ? composeUrl(message.id) : viewUrl(messageParams(message, i))}
                 class:list-group-item-primary={$store.selectedMessages.has(message.id)}

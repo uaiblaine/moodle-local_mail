@@ -17,8 +17,8 @@
     {#each $store.toasts as toast (toast)}
         <div
             animate:flip
-            in:fly={{ y: 50, delay: 200 }}
-            out:fly={{ y: 50, duration: 400 }}
+            in:fly|global={{ y: 50, delay: 200 }}
+            out:fly|global={{ y: 50, duration: 400 }}
             class="toast mt-2 mb-0"
             role="alert"
             aria-live="assertive"

@@ -16,7 +16,7 @@
 </script>
 
 {#if !$store.listMessages.length}
-    <div in:fade|local={{ delay: 400 }} class="alert alert-info">
+    <div in:fade={{ delay: 400 }} class="alert alert-info">
         <div>
             {$store.strings.nomessagesfound}
         </div>

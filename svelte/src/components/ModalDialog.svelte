@@ -41,7 +41,7 @@
     aria-modal="true"
     on:keyup={handleKey}
     bind:this={node}
-    transition:fly={{ y: -100 }}
+    transition:fly|global={{ y: -100 }}
 >
     <div class="modal-dialog">
         <div class="modal-content" use:blur={handleCancel}>
@@ -79,4 +79,4 @@
     </div>
 </div>
 
-<div class="modal-backdrop show" transition:fade />
+<div class="modal-backdrop show" transition:fade|global />
