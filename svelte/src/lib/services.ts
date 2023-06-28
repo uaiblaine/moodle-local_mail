@@ -257,6 +257,10 @@ export interface ServiceError {
     readonly stacktrace?: string;
 }
 
+interface CoreAjax {
+    call: (requests: object[]) => Promise<unknown>[];
+}
+
 /**
  * Calls one or more web service methods in a single HTTP request.
  *
@@ -266,7 +270,7 @@ export interface ServiceError {
 export async function callServices<T extends ServiceRequest[] | []>(
     requests: T,
 ): Promise<{ [P in keyof T]: ServiceResponse<T[P]> }> {
-    let ajax = await require('core/ajax');
+    const ajax = (await require('core/ajax')) as CoreAjax;
     const responses = await Promise.all(
         ajax.call(
             Array.from(requests).map(({ methodname, ...args }) => ({

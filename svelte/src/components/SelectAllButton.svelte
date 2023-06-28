@@ -1,7 +1,6 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import exp from 'constants';
     import { blur } from '../actions/blur';
     import type { SelectAllType, Store } from '../lib/store';
 

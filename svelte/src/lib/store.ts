@@ -21,7 +21,6 @@ import {
     type Strings,
     type UpdateLabelRequest,
     type MessageSummary,
-    type SearchMessagesRequest,
 } from './services';
 import { getViewParamsFromUrl, setUrlFromViewParams } from './url';
 import { replaceStringParams, sleep } from './utils';
@@ -141,10 +140,10 @@ export async function createStore(data: InitialData) {
             requests: ServiceRequest[],
             newParams?: ViewParams,
             redirect = false,
-        ): Promise<any[]> {
+        ): Promise<unknown[]> {
             const actionId = ++currentActionId;
 
-            let params = newParams || store.get().params;
+            const params = newParams || store.get().params;
             const perpage = store.get().preferences.perpage;
 
             update((state) => ({ ...state, loading: true }));
@@ -243,7 +242,7 @@ export async function createStore(data: InitialData) {
                 });
             }
 
-            let responses: any[];
+            let responses: unknown[];
             try {
                 responses = await callServices(requests);
             } catch (error) {
@@ -279,11 +278,11 @@ export async function createStore(data: InitialData) {
                 }
             }
 
-            let totalCount = responses.pop() as number;
-            let labels = responses.pop() as ReadonlyArray<Label>;
-            let courses = responses.pop() as ReadonlyArray<Course>;
-            let drafts = responses.pop() as number;
-            let unread = responses.pop() as number;
+            const totalCount = responses.pop() as number;
+            const labels = responses.pop() as ReadonlyArray<Label>;
+            const courses = responses.pop() as ReadonlyArray<Course>;
+            const drafts = responses.pop() as number;
+            const unread = responses.pop() as number;
 
             // Check if the course or label exists.
             if (
@@ -341,7 +340,7 @@ export async function createStore(data: InitialData) {
 
             const responses = await store.callServicesAndRefresh([request]);
 
-            return responses.pop();
+            return responses.pop() as number | undefined;
         },
 
         async deleteLabel(labelid: number) {
@@ -446,7 +445,7 @@ export async function createStore(data: InitialData) {
             );
 
             // Redirect if deleting message in single view.
-            let params: ViewParams = { ...store.get().params, messageid: undefined };
+            const params: ViewParams = { ...store.get().params, messageid: undefined };
             await store.callServicesAndRefresh(requests, params, true);
 
             if (deleted != DeletedStatus.DeletedForever) {

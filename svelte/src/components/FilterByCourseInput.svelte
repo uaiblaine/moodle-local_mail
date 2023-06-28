@@ -135,6 +135,7 @@
                     class="dropdown-item text-truncate"
                     on:click={() => selectCourse(course)}
                 >
+                    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
                     {@html courseHtml(course)}
                 </button>
             {:else}

@@ -61,7 +61,7 @@
                 query,
                 limit: LIMIT + 1,
             };
-            let responses: any[];
+            let responses: unknown[];
             try {
                 responses = await callServices([request]);
             } catch (error) {

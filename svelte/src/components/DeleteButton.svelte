@@ -3,7 +3,6 @@
 <script lang="ts">
     import { DeletedStatus } from '../lib/services';
     import type { Store } from '../lib/store';
-    import Message from './Message.svelte';
 
     export let store: Store;
     export let transparent = false;

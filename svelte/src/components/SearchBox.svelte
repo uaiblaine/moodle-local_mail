@@ -63,7 +63,7 @@
         },
         { label: $store.strings.searchbyunread, value: unread },
         { label: $store.strings.searchbyattach, value: withfilesonly },
-    ].filter(({ label, value }) => Boolean(value));
+    ].filter(({ value }) => Boolean(value));
 
     const startEntering = async () => {
         entering = true;

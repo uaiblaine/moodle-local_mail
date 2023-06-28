@@ -9,8 +9,8 @@
 
     export let store: Store;
     export let label: Label | undefined = undefined;
-    export let handleCancel: () => any;
-    export let handleSubmit: (name: string, color: string) => any;
+    export let handleCancel: () => void;
+    export let handleSubmit: (name: string, color: string) => void;
 
     let nameEl: HTMLElement;
 

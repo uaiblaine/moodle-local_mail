@@ -1,8 +1,6 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import CourseBadge from './CourseBadge.svelte';
-    import LabelBadge from './LabelBadge.svelte';
     import type { Message } from '../lib/services';
     import { type Store } from '../lib/store';
 

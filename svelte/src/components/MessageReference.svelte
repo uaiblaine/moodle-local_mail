@@ -36,6 +36,7 @@
         </div>
         <hr />
         <div class="local-mail-message-reference-content">
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
             {@html reference.content}
         </div>
         {#if reference.attachments.length > 0}

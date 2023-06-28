@@ -47,7 +47,7 @@ export function formatSize(size: number): string {
         { bytes: 2 ** 10, name: 'KB' },
     ];
 
-    for (let unit of units) {
+    for (const unit of units) {
         if (size >= unit.bytes) {
             const formatter = Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
             return `${formatter.format(size / unit.bytes)} ${unit.name}`;

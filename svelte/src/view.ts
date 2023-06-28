@@ -1,5 +1,6 @@
 import Navbar from './components/Navbar.svelte';
 import View from './components/View.svelte';
+import type { Preferences, Settings, Strings } from './lib/services';
 import { createStore, type ViewParams } from './lib/store';
 
 import './global.css';
@@ -9,9 +10,17 @@ async function init() {
     const navbarTarget = document.getElementById('local-mail-navbar');
 
     // Get initial data from script tag.
-    const data = (window as any).local_mail_view_data || {};
+    const data = window.local_mail_view_data;
+    if (!data) {
+        return;
+    }
 
-    const store = await createStore(data);
+    const store = await createStore({
+        userid: data.userid as number,
+        settings: data.settings as Settings,
+        preferences: data.preferences as Preferences,
+        strings: data.strings as Strings,
+    });
     if (viewTarget) {
         new View({ target: viewTarget, props: { store } });
     }

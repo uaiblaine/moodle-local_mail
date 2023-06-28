@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import { flip } from 'svelte/animate';
-    import { fade, fly } from 'svelte/transition';
+    import { fly } from 'svelte/transition';
 
     import type { Store } from '../lib/store';
 

@@ -10,7 +10,7 @@
     export let unread = false;
     export let withfilesonly = false;
     export let maxtime = 0;
-    export let submit: () => any;
+    export let submit: () => void;
     export let submitEnabled: boolean;
 
     export function focus() {

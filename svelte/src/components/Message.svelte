@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { ViewSize, type Store } from '../lib/store';
+    import type { Store } from '../lib/store';
     import type { Message } from '../lib/services';
     import NessageActions from './MessageActions.svelte';
     import MessageAttachments from './MessageAttachments.svelte';
@@ -42,6 +42,7 @@
         <MessageUsers {store} {message} />
         <hr />
         <div class="local-mail-message-content">
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
             {@html message.content}
         </div>
         {#if message.attachments.length > 0}

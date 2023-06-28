@@ -1,4 +1,5 @@
 import Navbar from './components/Navbar.svelte';
+import type { Course, Label, Settings, Strings } from './lib/services';
 
 import './global.css';
 
@@ -9,17 +10,20 @@ async function init() {
         target.innerHTML = '';
 
         // Get needed data from script tag, to avoid doing web service requests.
-        const data = (window as any).local_mail_navbar_data || {};
+        const data = window.local_mail_navbar_data;
+        if (!data) {
+            return;
+        }
 
         new Navbar({
             target,
             props: {
-                settings: data.settings,
-                strings: data.strings,
-                unread: data.unread,
-                drafts: data.drafts,
-                courses: data.courses,
-                labels: data.labels,
+                settings: data.settings as Settings,
+                strings: data.strings as Strings,
+                unread: data.unread as number,
+                drafts: data.drafts as number,
+                courses: data.courses as Course[],
+                labels: data.labels as Label[],
             },
         });
     }
