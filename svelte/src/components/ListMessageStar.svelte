@@ -18,7 +18,7 @@
     title={message.deleted
         ? $store.strings[message.starred ? 'starred' : 'unstarred']
         : $store.strings[message.starred ? 'markasunstarred' : 'markasstarred']}
-    on:click={() => store.setStarred([message.id], !message.starred)}
+    on:click|preventDefault|stopPropagation={() => store.setStarred([message.id], !message.starred)}
 >
     <i class="fa {starClass}" />
 </button>

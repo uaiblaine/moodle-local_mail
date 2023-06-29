@@ -31,11 +31,10 @@
     );
 
     $: applyEnabled = Array.from(selectedLabels.entries()).some(([labelid, selected]) =>
-        $store.listMessages.some(
+        Array.from($store.selectedMessages.values()).some(
             (message) =>
-                $store.selectedMessages.has(message.id) &&
-                ((selected == 'true' && message.labels.every((label) => label.id != labelid)) ||
-                    (selected == 'false' && message.labels.some((label) => label.id == labelid))),
+                (selected == 'true' && message.labels.every((label) => label.id != labelid)) ||
+                (selected == 'false' && message.labels.some((label) => label.id == labelid)),
         ),
     );
 
@@ -70,7 +69,6 @@
     const applyLabels = () => {
         expanded = false;
         store.setLabels(
-            Array.from($store.selectedMessages.keys()),
             Array.from(selectedLabels.keys()).filter((id) => selectedLabels.get(id) == 'true'),
             Array.from(selectedLabels.keys()).filter((id) => selectedLabels.get(id) == 'false'),
         );
@@ -85,7 +83,7 @@
         modal = false;
         const id = await store.createLabel(name, color);
         if (id) {
-            store.setLabels(Array.from($store.selectedMessages.keys()), [id], []);
+            store.setLabels([id], []);
         }
     };
 </script>
