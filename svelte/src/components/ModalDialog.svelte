@@ -41,9 +41,10 @@
     aria-modal="true"
     bind:this={node}
     transition:fly|global={{ y: -100 }}
+    use:blur={handleCancel}
 >
     <div class="modal-dialog">
-        <div class="modal-content" use:blur={handleCancel}>
+        <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
                     {title}
