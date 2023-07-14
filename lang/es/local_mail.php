@@ -97,6 +97,7 @@ $string['erroremptysubject'] = 'Indique un asunto.';
 $string['errorlabelnotfound'] = 'Etiqueta no encontrada';
 $string['errormessagenotfound'] = 'Mensaje no encontrado';
 $string['errorinvalidcolor'] = 'Color no válido';
+$string['errorinvalidrecipients'] = 'Un o varios de los destinatarios indicados no son válidos.';
 $string['errorrepeatedlabelname'] = 'El nombre de la etiqueta ya existe';
 $string['filterbycourse'] = 'Filtrar por curso';
 $string['filterbydate'] = 'Fecha';

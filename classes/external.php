@@ -16,8 +16,6 @@
 
 namespace local_mail;
 
-use invalid_parameter_exception;
-
 defined('MOODLE_INTERNAL') || die;
 
 require_once("$CFG->libdir/externallib.php");
@@ -192,6 +190,8 @@ class external extends \external_api {
     }
 
     public static function set_preferences($preferences) {
+        self::validate_context(\context_system::instance());
+
         $params = ['preferences' => $preferences];
         $params = self::validate_parameters(self::set_preferences_parameters(), $params);
 
@@ -200,8 +200,6 @@ class external extends \external_api {
                 throw new \invalid_parameter_exception('"perpage" must be between 5 and 100');
             }
         }
-
-        self::validate_context(\context_system::instance());
 
         self::set_preferences_raw($params['preferences']);
 
@@ -240,7 +238,7 @@ class external extends \external_api {
             return [];
         }
 
-        $search = new search($user);
+        $search = new message_search($user);
         $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
         $search->unread = true;
         $unread = $search->count_per_course();
@@ -287,7 +285,7 @@ class external extends \external_api {
         $user = user::current();
         $courses = $user->get_courses();
 
-        $search = new search($user);
+        $search = new message_search($user);
         $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
         $search->unread = true;
         $unread = $search->count_per_label();
@@ -315,7 +313,7 @@ class external extends \external_api {
         );
     }
 
-    private static function query_parameters() {
+    private static function message_query_parameters() {
         return new \external_single_structure([
             'courseid' => new \external_value(
                 PARAM_INT,
@@ -407,22 +405,22 @@ class external extends \external_api {
         ]);
     }
 
-    private static function validate_query_parameter($query): search {
+    private static function validate_query_parameter($query): message_search {
         $user = user::current();
 
-        $search = new search($user);
+        $search = new message_search($user);
 
         if ($query['courseid']) {
             $search->course = course::fetch($query['courseid']);
             if (!$search->course || !$user->can_use_mail($search->course)) {
-                throw new exception('errorcoursenotfound', 'local_mail');
+                throw new exception('errorcoursenotfound');
             }
         }
 
         if ($query['labelid']) {
             $search->label = label::fetch($query['labelid']);
             if (!$search->label || $search->label->user->id != $user->id) {
-                throw new exception('errorlabelnotfound', 'local_mail');
+                throw new exception('errorlabelnotfound');
             }
         }
 
@@ -474,17 +472,17 @@ class external extends \external_api {
 
     public static function count_messages_parameters() {
         return new \external_function_parameters([
-            'query' => self::query_parameters(),
+            'query' => self::message_query_parameters(),
         ]);
     }
 
     public static function count_messages($query) {
+        self::validate_context(\context_system::instance());
+
         $params = ['query' => $query];
         $params = self::validate_parameters(self::count_messages_parameters(), $params);
 
         $search = self::validate_query_parameter($params['query']);
-
-        self::validate_context(\context_system::instance());
 
         return $search->count();
     }
@@ -495,7 +493,7 @@ class external extends \external_api {
 
     public static function search_messages_parameters() {
         return new \external_function_parameters([
-            'query' => self::query_parameters(),
+            'query' => self::message_query_parameters(),
             'offset' => new \external_value(
                 PARAM_INT,
                 'Skip this number of messages',
@@ -512,12 +510,12 @@ class external extends \external_api {
     }
 
     public static function search_messages($query, $offset = 0, $limit = 0) {
+        self::validate_context(\context_system::instance());
+
         $params = ['query' => $query, 'offset' => $offset, 'limit' => $limit];
         $params = self::validate_parameters(self::search_messages_parameters(), $params);
 
         $search = self::validate_query_parameter($params['query']);
-
-        self::validate_context(\context_system::instance());
 
         $messages = $search->fetch($params['offset'], $params['limit']);
 
@@ -594,7 +592,7 @@ class external extends \external_api {
                     'id' => new \external_value(PARAM_INT, 'Id of the course'),
                     'shortname' => new \external_value(PARAM_TEXT, 'Short name of the course'),
                     'fullname' => new \external_value(PARAM_TEXT, 'Full name of the course'),
-                ]),
+                ], '', VALUE_OPTIONAL),
                 'sender' => new \external_single_structure([
                     'id' => new \external_value(PARAM_INT, 'Id of the user'),
                     'fullname' => new \external_value(PARAM_RAW, 'Full name of the user'),
@@ -628,10 +626,10 @@ class external extends \external_api {
     }
 
     public static function get_message($messageid) {
+        self::validate_context(\context_system::instance());
+
         $params = ['messageid' => $messageid];
         $params = self::validate_parameters(self::get_message_parameters(), $params);
-
-        self::validate_context(\context_system::instance());
 
         $user = user::current();
 
@@ -641,10 +639,10 @@ class external extends \external_api {
             throw new exception('errormessagenotfound');
         }
 
-        return self::get_message_response($user->id, $message);
+        return self::get_message_response($user, $message);
     }
 
-    public static function get_message_response(int $userid, message $message) {
+    public static function get_message_response(user $user, message $message) {
         $contextid = $message->course->context()->id;
 
         list($content, $format) = \external_format_text(
@@ -668,9 +666,9 @@ class external extends \external_api {
             'time' => $message->time,
             'shorttime' => self::format_time($message->time),
             'fulltime' => self::format_time($message->time, true),
-            'unread' => $message->unread[$userid],
-            'starred' => $message->starred[$userid],
-            'deleted' => (bool) $message->deleted[$userid],
+            'unread' => $message->unread[$user->id],
+            'starred' => $message->starred[$user->id],
+            'deleted' => (bool) $message->deleted[$user->id],
             'course' => [
                 'id' => $message->course->id,
                 'shortname' => $message->course->shortname,
@@ -701,17 +699,22 @@ class external extends \external_api {
             ];
         }
 
-        foreach ($message->recipients() as $user) {
-            $role = $message->roles[$user->id];
-            if ($role == message::ROLE_BCC && $userid != $user->id && $userid != $sender->id) {
+        $search = new user_search($user, $message->course);
+        $search->include = array_keys($message->users);
+        $validrecipients = $search->fetch();
+
+        foreach ($message->recipients() as $recipient) {
+            $role = $message->roles[$recipient->id];
+            if ($role == message::ROLE_BCC && $user->id != $recipient->id && $user->id != $sender->id) {
                 continue;
             }
             $result['recipients'][] = [
                 'type' => self::ROLES[$role],
-                'id' => $user->id,
-                'fullname' => $user->fullname(),
-                'pictureurl' => $user->picture_url(),
-                'profileurl' => $user->profile_url(),
+                'id' => $recipient->id,
+                'fullname' => $recipient->fullname(),
+                'pictureurl' => $recipient->picture_url(),
+                'profileurl' => $recipient->profile_url(),
+                'isvalid' => isset($validrecipients[$recipient->id]),
             ];
         }
 
@@ -759,7 +762,7 @@ class external extends \external_api {
             ];
         }
 
-        foreach ($message->labels[$userid] as $label) {
+        foreach ($message->labels[$user->id] as $label) {
             $result['labels'][] = [
                 'id' => $label->id,
                 'name' => $label->name,
@@ -803,7 +806,7 @@ class external extends \external_api {
                     'fullname' => new \external_value(PARAM_RAW, 'Full name of the user'),
                     'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
                     'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
-
+                    'isvalid' => new \external_value(PARAM_BOOL, 'This user can receive messages.'),
                 ])
             ),
             'attachments' => new \external_multiple_structure(
@@ -862,10 +865,10 @@ class external extends \external_api {
     }
 
     public static function set_unread($messageid, $unread) {
+        self::validate_context(\context_system::instance());
+
         $params = ['messageid' => $messageid, 'unread' => $unread];
         $params = self::validate_parameters(self::set_unread_parameters(), $params);
-
-        self::validate_context(\context_system::instance());
 
         $user = user::current();
         $message = message::fetch($params['messageid']);
@@ -891,10 +894,10 @@ class external extends \external_api {
     }
 
     public static function set_starred($messageid, $starred) {
+        self::validate_context(\context_system::instance());
+
         $params = ['messageid' => $messageid, 'starred' => $starred];
         $params = self::validate_parameters(self::set_starred_parameters(), $params);
-
-        self::validate_context(\context_system::instance());
 
         $user = user::current();
         $message = message::fetch($params['messageid']);
@@ -923,10 +926,10 @@ class external extends \external_api {
     }
 
     public static function set_deleted($messageid, $deleted) {
+        self::validate_context(\context_system::instance());
+
         $params = ['messageid' => $messageid, 'deleted' => $deleted];
         $params = self::validate_parameters(self::set_deleted_parameters(), $params);
-
-        self::validate_context(\context_system::instance());
 
         $user = user::current();
         $message = message::fetch($params['messageid']);
@@ -971,10 +974,10 @@ class external extends \external_api {
     }
 
     public static function create_label($name, $color = '') {
+        self::validate_context(\context_system::instance());
+
         $params = ['name' => $name, 'color' => $color];
         $params = self::validate_parameters(self::create_label_parameters(), $params);
-
-        self::validate_context(\context_system::instance());
 
         $user = user::current();
 
@@ -1012,10 +1015,10 @@ class external extends \external_api {
     }
 
     public static function update_label($labelid, $name, $color = '') {
+        self::validate_context(\context_system::instance());
+
         $params = ['labelid' => $labelid, 'name' => $name, 'color' => $color];
         $params = self::validate_parameters(self::update_label_parameters(), $params);
-
-        self::validate_context(\context_system::instance());
 
         $user = user::current();
 
@@ -1055,10 +1058,10 @@ class external extends \external_api {
     }
 
     public static function delete_label($labelid) {
+        self::validate_context(\context_system::instance());
+
         $params = ['labelid' => $labelid];
         $params = self::validate_parameters(self::delete_label_parameters(), $params);
-
-        self::validate_context(\context_system::instance());
 
         $user = user::current();
 
@@ -1089,10 +1092,10 @@ class external extends \external_api {
     }
 
     public static function set_labels($messageid, $labelids) {
+        self::validate_context(\context_system::instance());
+
         $params = ['messageid' => $messageid, 'labelids' => $labelids];
         $params = self::validate_parameters(self::set_labels_parameters(), $params);
-
-        self::validate_context(\context_system::instance());
 
         $user = user::current();
         $message = message::fetch($params['messageid']);
@@ -1117,6 +1120,430 @@ class external extends \external_api {
         return null;
     }
 
+    public static function get_roles_parameters() {
+        return new \external_function_parameters([
+            'courseid' => new \external_value(PARAM_INT, 'ID of the course'),
+        ]);
+    }
+
+    public static function get_roles($courseid) {
+        self::validate_context(\context_system::instance());
+
+        $params = self::validate_parameters(self::get_groups_parameters(), ['courseid' => $courseid]);
+
+        $user = user::current();
+        $course = course::fetch($params['courseid']);
+
+        if (!$course || !$user->can_use_mail($course)) {
+            throw new exception('errorcoursenotfound');
+        }
+
+        $result = [];
+        foreach ($course->get_viewable_roles($user) as $id => $name) {
+            $result[] = ['id' => $id, 'name' => $name];
+        }
+        return $result;
+    }
+
+    public static function get_roles_returns() {
+        return new \external_multiple_structure(
+            new \external_single_structure([
+                'id' => new \external_value(PARAM_INT, 'ID of the role'),
+                'name' => new \external_value(PARAM_TEXT, 'Name of the role'),
+            ])
+        );
+    }
+
+    public static function get_groups_parameters() {
+        return new \external_function_parameters([
+            'courseid' => new \external_value(PARAM_INT, 'ID of the course'),
+        ]);
+    }
+
+    public static function get_groups($courseid) {
+        self::validate_context(\context_system::instance());
+
+        $params = self::validate_parameters(self::get_groups_parameters(), ['courseid' => $courseid]);
+
+        $user = user::current();
+        $course = course::fetch($params['courseid']);
+
+        if (!$course || !$user->can_use_mail($course)) {
+            throw new exception('errorcoursenotfound');
+        }
+
+        $result = [];
+        foreach ($course->get_viewable_groups($user) as $id => $name) {
+            $result[] = ['id' => $id, 'name' => $name];
+        }
+        return $result;
+    }
+
+    public static function get_groups_returns() {
+        return new \external_multiple_structure(
+            new \external_single_structure([
+                'id' => new \external_value(PARAM_INT, 'ID of the group'),
+                'name' => new \external_value(PARAM_TEXT, 'Name of the group'),
+            ])
+        );
+    }
+
+    public static function search_users_parameters() {
+        return new \external_function_parameters([
+            'query' => new \external_single_structure([
+                'courseid' => new \external_value(
+                    PARAM_INT,
+                    'Search messages in this course',
+                    VALUE_REQUIRED,
+                ),
+                'roleid' => new \external_value(
+                    PARAM_INT,
+                    'Search users with this role',
+                    VALUE_DEFAULT,
+                    0
+                ),
+                'groupid' => new \external_value(
+                    PARAM_INT,
+                    'Search users in this group',
+                    VALUE_DEFAULT,
+                    0
+                ),
+                'fullname' => new \external_value(
+                    PARAM_TEXT,
+                    'Search users with a full name that contains this text',
+                    VALUE_DEFAULT,
+                    ''
+                ),
+                'include' => new \external_multiple_structure(
+                    new \external_value(PARAM_INT),
+                    'Search users with one of these IDs.',
+                    VALUE_DEFAULT,
+                    []
+                ),
+            ]),
+            'offset' => new \external_value(
+                PARAM_INT,
+                'Skip this number of messages',
+                VALUE_DEFAULT,
+                0
+            ),
+            'limit' => new \external_value(
+                PARAM_INT,
+                'Maximum number of messages',
+                VALUE_DEFAULT,
+                0
+            ),
+        ]);
+    }
+
+    public static function search_users($query, $offset = 0, $limit = 0) {
+        $params = ['query' => $query, 'offset' => $offset, 'limit' => $limit];
+        $params = self::validate_parameters(self::search_users_parameters(), $params);
+
+        $user = user::current();
+        $course = course::fetch($params['query']['courseid']);
+        if (!$course || !$user->can_use_mail($course)) {
+            throw new exception('errorcoursenotfound');
+        }
+
+        $search = new user_search($user, $course);
+
+        if ($params['query']['roleid']) {
+            $search->roleid = $params['query']['roleid'];
+        }
+
+        if ($params['query']['groupid']) {
+            $search->groupid = $params['query']['groupid'];
+        }
+
+        if (\core_text::strlen($params['query']['fullname'])) {
+            $search->fullname = $params['query']['fullname'];
+        }
+
+        if ($params['query']['include']) {
+            $search->include = $params['query']['include'];
+        }
+
+        self::validate_context(\context_system::instance());
+
+        $users = $search->fetch($params['offset'], $params['limit']);
+
+        return self::search_users_response($users);
+    }
+
+    public static function search_users_response(array $users) {
+        $result = [];
+
+        foreach ($users as $user) {
+            $result[] = [
+                'id' => $user->id,
+                'fullname' => $user->fullname(),
+                'pictureurl' => $user->picture_url(),
+                'profileurl' => $user->profile_url(),
+            ];
+        }
+
+        return $result;
+    }
+
+    public static function search_users_returns() {
+        return new \external_multiple_structure(
+            new \external_single_structure([
+                'id' => new \external_value(PARAM_INT, 'Id of the user'),
+                'fullname' => new \external_value(PARAM_RAW, 'Full name of the user'),
+                'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
+                'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
+            ])
+        );
+    }
+
+    public static function get_message_form_parameters() {
+        return new \external_function_parameters([
+            'messageid' => new \external_value(PARAM_INT, 'Id of the message'),
+        ]);
+    }
+
+    public static function get_message_form($messageid) {
+        global $CFG, $PAGE;
+
+        require_once("$CFG->libdir/form/editor.php");
+        require_once("$CFG->libdir/form/filemanager.php");
+
+        self::validate_context(\context_system::instance());
+
+        $params = self::validate_parameters(self::get_message_form_parameters(), ['messageid' => $messageid]);
+
+        $user = user::current();
+        $message = message::fetch($params['messageid']);
+        if (!$message || !$user->can_edit_message($message)) {
+            throw new exception('errormessagenotfound');
+        }
+        $options = message_data::file_options();
+        $data = message_data::draft($message);
+        if ($data->format != FORMAT_HTML) {
+            $data->content = format_text($data->content, $data->format, ['filter' => false, 'para' => false]);
+            $data->format = FORMAT_HTML;
+        }
+
+        $PAGE->set_url(new \moodle_url('/local/mail/view.php',  ['t' => 'drafts', 'm' => $message->id]));
+        $PAGE->set_context(\context_system::instance());
+        $editor = new \MoodleQuickForm_editor('content', null, ['id' => 'local_mail_compose_editor'], $options);
+        $editor->setValue(['text' => $data->content, 'format' => $data->format, 'itemid' => $data->draftitemid]);
+        $filemanager = new \MoodleQuickForm_filemanager('attachments', null, ['id' => 'local_mail_compose_filemanager'], $options);
+        $filemanager->setValue($data->draftitemid);
+        $PAGE->initialise_theme_and_output();
+        $PAGE->start_collecting_javascript_requirements();
+        $javascript = $PAGE->requires->get_end_code();
+        $PAGE->end_collecting_javascript_requirements();
+
+        return [
+            'draftitemid' => $data->draftitemid,
+            'editorhtml' => $editor->toHtml(),
+            'filemanagerhtml' => $filemanager->toHtml(),
+            'javascript' => $javascript,
+        ];
+    }
+
+    public static function get_message_form_returns() {
+        return new \external_single_structure([
+            'draftitemid' => new \external_value(PARAM_INT, 'Id of the file draft item.'),
+            'editorhtml' => new \external_value(PARAM_RAW, 'HTML fragment of the editor'),
+            'filemanagerhtml' => new \external_value(PARAM_RAW, 'HTML fragment of the file manager'),
+            'javascript' => new \external_value(PARAM_RAW, 'Required Javascript HTML elements'),
+        ]);
+    }
+
+    public static function create_message_parameters() {
+        return new \external_function_parameters([
+            'courseid' => new \external_value(PARAM_INT, 'ID of the course'),
+        ]);
+    }
+
+    public static function create_message($courseid) {
+        self::validate_context(\context_system::instance());
+
+        $params = self::validate_parameters(self::create_message_parameters(), ['courseid' => $courseid]);
+
+        $user = user::current();
+        $course = course::fetch($params['courseid']);
+        if (!$course || !$user->can_use_mail($course)) {
+            throw new exception('errorcoursenotfound');
+        }
+
+        $data = message_data::new($course, $user);
+        $message = message::create($data);
+        return $message->id;
+    }
+
+    public static function create_message_returns() {
+        return new \external_value(PARAM_INT, 'Id of the created message');
+    }
+
+    public static function reply_message_parameters() {
+        return new \external_function_parameters([
+            'messageid' => new \external_value(PARAM_INT, 'Id of the message to reply.'),
+            'all' => new \external_value(PARAM_BOOL, 'Reply to all users.'),
+        ]);
+    }
+
+    public static function reply_message($messageid, $all) {
+        self::validate_context(\context_system::instance());
+
+        $params = self::validate_parameters(self::reply_message_parameters(), ['messageid' => $messageid, 'all' => $all]);
+
+        $user = user::current();
+        $message = message::fetch($params['messageid']);
+        if (!$message || !$user->can_view_message($message) || !$user->can_use_mail($message->course)) {
+            throw new exception('errormessagenotfound');
+        }
+
+        $data = message_data::reply($message, $user, $params['all']);
+        $message = message::create($data);
+        return $message->id;
+    }
+
+    public static function reply_message_returns() {
+        return new \external_value(PARAM_INT, 'Id of the created message');
+    }
+
+    public static function forward_message_parameters() {
+        return new \external_function_parameters([
+            'messageid' => new \external_value(PARAM_INT, 'Id of the message to reply.'),
+        ]);
+    }
+
+    public static function forward_message(int $messageid) {
+        self::validate_context(\context_system::instance());
+
+        $params = self::validate_parameters(self::forward_message_parameters(), ['messageid' => $messageid]);
+
+        $user = user::current();
+        $message = message::fetch($params['messageid']);
+        if (!$message || !$user->can_view_message($message) || !$user->can_use_mail($message->course)) {
+            throw new exception('errormessagenotfound');
+        }
+
+        $data = message_data::forward($message, $user);
+        $message = message::create($data);
+        return $message->id;
+    }
+
+    public static function forward_message_returns() {
+        return new \external_value(PARAM_INT, 'Id of the created message');
+    }
+
+    public static function update_message_parameters() {
+        return new \external_function_parameters([
+            'messageid' => new \external_value(PARAM_INT, 'Id of the message'),
+            'data' => new \external_single_structure([
+                'courseid' => new \external_value(PARAM_INT, 'Id of the course'),
+                'to' => new \external_multiple_structure(new \external_value(PARAM_INT), 'Ids of TO recipients.'),
+                'cc' => new \external_multiple_structure(new \external_value(PARAM_INT), 'Ids of CC recipients.'),
+                'bcc' => new \external_multiple_structure(new \external_value(PARAM_INT), 'Ids of BCC recipients.'),
+                'subject' => new \external_value(PARAM_TEXT, 'Subject of the message'),
+                'content' => new \external_value(PARAM_RAW, 'Content of the message'),
+                'format' => new \external_format_value('Format of the message'),
+                'draftitemid' => new \external_value(PARAM_INT, 'Id of the file draft item.'),
+            ]),
+        ]);
+    }
+
+    public static function update_message($messageid, $data) {
+        self::validate_context(\context_system::instance());
+
+        $params = self::validate_parameters(self::update_message_parameters(), ['messageid' => $messageid, 'data' => $data]);
+
+        $user = user::current();
+
+        $message = message::fetch($params['messageid']);
+        if (!$message || !$user->can_edit_message($message)) {
+            throw new exception('errormessagenotfound');
+        }
+
+        $course = course::fetch($params['data']['courseid']);
+        if (!$course || !$user->can_use_mail($course)) {
+            throw new exception('errorcoursenotfound');
+        }
+
+        $data = message_data::new($course, $user);
+        $data->subject = $params['data']['subject'];
+        $data->content = $params['data']['content'];
+        $data->format = $params['data']['format'];
+        $data->draftitemid = $params['data']['draftitemid'];
+        foreach (['to', 'cc', 'bcc'] as $rolename) {
+            if ($params['data'][$rolename]) {
+                $data->$rolename = user::fetch_many($params['data'][$rolename]);
+            }
+        }
+        $message->update($data);
+    }
+
+    public static function update_message_returns() {
+        return null;
+    }
+
+    public static function send_message_parameters() {
+        return new \external_function_parameters([
+            'messageid' => new \external_value(PARAM_INT, 'Id of the message', VALUE_DEFAULT, 0),
+        ]);
+    }
+
+    public static function send_message($messageid) {
+        self::validate_context(\context_system::instance());
+
+        $params = self::validate_parameters(self::send_message_parameters(), ['messageid' => $messageid]);
+
+        $user = user::current();
+
+        $message = message::fetch($params['messageid']);
+        if (!$message || !$user->can_edit_message($message)) {
+            throw new exception('errormessagenotfound');
+        }
+
+        $recipients = $message->recipients();
+
+        if (!$recipients) {
+            throw new exception('erroremptyrecipients');
+        }
+
+        $search = new user_search($user, $message->course);
+        $search->include = array_column($recipients, 'id');
+        $validrecipients = $search->fetch();
+
+        foreach ($recipients as $recipient) {
+            if (!isset($validrecipients[$recipient->id])) {
+                throw new exception('errorinvalidrecipients');
+            }
+        }
+
+        if (!\core_text::strlen(trim($message->subject))) {
+            throw new exception('erroremptysubject');
+        }
+
+        $message->send(time());
+    }
+
+    public static function send_message_returns() {
+        return null;
+    }
+
+    private static function file_icon_url(\stored_file $file) {
+        global $OUTPUT;
+        return $OUTPUT->image_url(file_file_icon($file, 24))->out(false);
+    }
+
+    private static function file_url(\stored_file $file) {
+        $fileurl = \moodle_url::make_pluginfile_url(
+            $file->get_contextid(),
+            $file->get_component(),
+            $file->get_filearea(),
+            $file->get_itemid(),
+            $file->get_filepath(),
+            $file->get_filename()
+        );
+        return $fileurl->out(false);
+    }
+
     public static function format_time(int $timestamp, $forcefull = false): string {
         $tz = \core_date::get_user_timezone();
         $date = new \DateTime('now', new \DateTimeZone($tz));
@@ -1135,22 +1562,5 @@ class external extends \external_api {
         } else {
             return userdate($time, get_string('strftimedatefullshort', 'langconfig'));
         }
-    }
-
-    private static function file_icon_url(\stored_file $file) {
-        global $OUTPUT;
-        return $OUTPUT->image_url(file_file_icon($file, 24))->out(false);
-    }
-
-    private static function file_url(\stored_file $file) {
-        $fileurl = \moodle_url::make_pluginfile_url(
-            $file->get_contextid(),
-            $file->get_component(),
-            $file->get_filearea(),
-            $file->get_itemid(),
-            $file->get_filepath(),
-            $file->get_filename()
-        );
-        return $fileurl->out(false);
     }
 }

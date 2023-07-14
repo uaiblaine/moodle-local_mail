@@ -24,7 +24,7 @@
 use local_mail\external;
 use local_mail\message;
 use local_mail\user;
-use local_mail\search;
+use local_mail\message_search;
 
 defined('MOODLE_INTERNAL') || die;
 
@@ -169,11 +169,11 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
         // Pass all data via a script tag to avoid web service requests.
         $strings = external::get_strings_raw();
 
-        $search = new search($user);
+        $search = new message_search($user);
         $search->unread = true;
         $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
         $unread = $search->count();
-        $search = new search($user);
+        $search = new message_search($user);
         $search->draft = true;
         $drafts = $search->count();
 

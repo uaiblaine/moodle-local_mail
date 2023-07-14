@@ -23,6 +23,8 @@
 
 namespace local_mail;
 
+use context_system;
+
 class message {
 
     // Deleted stataus constants.
@@ -52,7 +54,7 @@ class message {
     public int $format;
 
     /** @var int Number of attachments. */
-    public int $attachments = 0;
+    public int $attachments;
 
     /** @var bool Draft status. */
     public bool $draft;
@@ -82,7 +84,7 @@ class message {
      * Constructs a message instance from a database record.
      *
      * @param \stdClass $record Record of local_mail_messages.
-     * @param course $course Course of the message.
+     * @param course $course Course.
      */
     private function __construct(\stdClass $record, course $course) {
         $this->id = (int) $record->id;
@@ -96,90 +98,68 @@ class message {
     }
 
     /**
-     * Adds a recipient to the message.
-     *
-     * @param user $user Recipient user.
-     * @param int $role Recipient role.
-     */
-    public function add_recipient(user $user, int $role): void {
-        global $DB;
-
-        assert($this->draft);
-        assert(!isset($this->users[$user->id]));
-        assert(in_array($role, [self::ROLE_TO, self::ROLE_CC, self::ROLE_BCC]));
-
-        $transaction = $DB->start_delegated_transaction();
-
-        $DB->delete_records('local_mail_message_users', ['messageid' => $this->id, 'userid' => $user->id]);
-
-        $record = new \stdClass;
-        $record->messageid = $this->id;
-        $record->courseid = $this->course->id;
-        $record->draft = $this->draft;
-        $record->time = $this->time;
-        $record->userid = $user->id;
-        $record->role = $role;
-        $record->unread = 1;
-        $record->starred = 0;
-        $record->deleted = self::NOT_DELETED;
-        $DB->insert_record('local_mail_message_users', $record);
-
-        $transaction->allow_commit();
-
-        $this->users[$user->id] = $user;
-        $this->roles[$user->id] = $role;
-        $this->unread[$user->id] = true;
-        $this->starred[$user->id] = false;
-        $this->deleted[$user->id] = self::NOT_DELETED;
-        $this->labels[$user->id] = [];
-    }
-
-    /**
      * Creates a new empty draft.
      *
-     * @param course $course Course of the mssage.
-     * @param user $user Sender of the message.
-     * @param int $time Timestamp.
+     * @param message_data $data Message data.
      * @return self Created message.
      */
-    public static function create(course $course, user $user, int $time): self {
+    public static function create(message_data $data): self {
         global $DB;
+
+        assert(!$data->reference || isset($data->reference->users[$data->sender->id]));
+        assert(!$data->reference || $data->course->id == $data->reference->course->id);
 
         $transaction = $DB->start_delegated_transaction();
 
         $messagerecord = new \stdClass;
-        $messagerecord->courseid = $course->id;
+        $messagerecord->courseid = 0;
         $messagerecord->subject = '';
         $messagerecord->content = '';
         $messagerecord->format = FORMAT_HTML;
         $messagerecord->attachments = 0;
         $messagerecord->draft = 1;
-        $messagerecord->time = $time;
+        $messagerecord->time = 0;
         $messagerecord->normalizedsubject = '';
         $messagerecord->normalizedcontent = '';
         $messagerecord->id = $DB->insert_record('local_mail_messages', $messagerecord);
+        $message = new self($messagerecord, $data->course);
 
+        // Sender.
+        $message->users[$data->sender->id] = $data->sender;
+        $message->roles[$data->sender->id] = self::ROLE_FROM;
+        $message->unread[$data->sender->id] = false;
+        $message->starred[$data->sender->id] = false;
+        $message->deleted[$data->sender->id] = self::NOT_DELETED;
+        $message->labels[$data->sender->id] = [];
         $userrecord = new \stdClass;
-        $userrecord->messageid = $messagerecord->id;
-        $userrecord->courseid = $course->id;
+        $userrecord->messageid = $message->id;
+        $userrecord->courseid = 0;
         $userrecord->draft = 1;
-        $userrecord->time = $time;
-        $userrecord->userid = $user->id;
+        $userrecord->time = 0;
+        $userrecord->userid = $data->sender->id;
         $userrecord->role = self::ROLE_FROM;
         $userrecord->unread = 0;
         $userrecord->starred = 0;
         $userrecord->deleted = self::NOT_DELETED;
         $DB->insert_record('local_mail_message_users', $userrecord);
 
-        $transaction->allow_commit();
+        // References.
+        if ($data->reference) {
+            $records = [['messageid' => $message->id, 'reference' => $data->reference->id]];
+            foreach ($data->reference->fetch_references() as $reference) {
+                $records[] = ['messageid' => $message->id, 'reference' => $reference->id];
+            }
+            $DB->insert_records('local_mail_message_refs', $records);
+        }
 
-        $message = new self($messagerecord, $course);
-        $message->users[$user->id] = $user;
-        $message->roles[$user->id] = self::ROLE_FROM;
-        $message->unread[$user->id] = false;
-        $message->starred[$user->id] = false;
-        $message->deleted[$user->id] = self::NOT_DELETED;
-        $message->labels[$user->id] = [];
+        // Labels.
+        if ($data->reference) {
+            $message->set_labels($data->sender, $data->reference->labels[$data->sender->id]);
+        }
+
+        $message->update($data);
+
+        $transaction->allow_commit();
 
         return $message;
     }
@@ -258,7 +238,9 @@ class message {
         $allcourses = course::fetch_many($courseids);
         $courses = [];
         foreach ($messagerecords as $r) {
-            $courses[$r->id] = $allcourses[$r->courseid];
+            if (isset($allcourses[$r->courseid])) {
+                $courses[$r->id] = $allcourses[$r->courseid];
+            }
         }
 
         // Fetch users.
@@ -271,11 +253,13 @@ class message {
         $starred = [];
         $deleted = [];
         foreach ($messageuserrecords as $r) {
-            $users[$r->messageid][$r->userid] = $allusers[$r->userid];
-            $roles[$r->messageid][$r->userid] = (int) $r->role;
-            $unread[$r->messageid][$r->userid] = (bool) $r->unread;
-            $starred[$r->messageid][$r->userid] = (bool) $r->starred;
-            $deleted[$r->messageid][$r->userid] = (int) $r->deleted;
+            if (isset($allusers[$r->userid])) {
+                $users[$r->messageid][$r->userid] = $allusers[$r->userid];
+                $roles[$r->messageid][$r->userid] = (int) $r->role;
+                $unread[$r->messageid][$r->userid] = (bool) $r->unread;
+                $starred[$r->messageid][$r->userid] = (bool) $r->starred;
+                $deleted[$r->messageid][$r->userid] = (int) $r->deleted;
+            }
         }
 
         // Fetch labels.
@@ -331,43 +315,6 @@ class message {
     }
 
     /**
-     * Creates a new draft that containts this message as a forwarded reference.
-     *
-     * @param user $user User who forwards the message.
-     * @param int $time Timestamp.
-     * @return self The new message draft.
-     */
-    public function forward(user $user, int $time): self {
-        global $DB;
-
-        assert(!$this->draft);
-        assert(isset($this->users[$user->id]));
-
-        $transaction = $DB->start_delegated_transaction();
-
-        $message = self::create($this->course, $user, $time);
-
-        $prefix = 'FW:';
-        if (\core_text::strpos($this->subject, $prefix) === 0) {
-            $message->update($this->subject, '', FORMAT_HTML, $time);
-        } else {
-            $message->update($prefix . ' ' . $this->subject, '', FORMAT_HTML, $time);
-        }
-
-        $records = [['messageid' => $message->id, 'reference' => $this->id]];
-        foreach ($this->fetch_references() as $reference) {
-            $records[] = ['messageid' => $message->id, 'reference' => $reference->id];
-        }
-        $DB->insert_records('local_mail_message_refs', $records);
-
-        $message->set_labels($user, $this->labels[$user->id]);
-
-        $transaction->allow_commit();
-
-        return $message;
-    }
-
-    /**
      * Returns whether the given user is a recipient of a message.
      *
      * @param user $user User.
@@ -409,87 +356,6 @@ class message {
             }
         }
         return $result;
-    }
-
-    /**
-     * Removes a recipient from the message.
-     *
-     * @param user $user Recipient user.
-     */
-    public function remove_recipient(user $user): void {
-        global $DB;
-
-        assert($this->draft);
-        assert(isset($this->users[$user->id]));
-        assert($this->roles[$user->id] != self::ROLE_FROM);
-
-        $DB->delete_records('local_mail_message_users', ['messageid' => $this->id, 'userid' => $user->id]);
-
-        unset($this->users[$user->id]);
-        unset($this->roles[$user->id]);
-        unset($this->unread[$user->id]);
-        unset($this->starred[$user->id]);
-        unset($this->deleted[$user->id]);
-        unset($this->labels[$user->id]);
-    }
-
-    /**
-     * Creates a new draft that containts this message as a replied reference.
-     *
-     * @param user $user User who replies the message.
-     * @param int $time Timestamp.
-     * @param bool $all Reply to all users.
-     * @return self The new message draft.
-     */
-    public function reply(user $user, bool $all, int $time): self {
-        global $DB;
-
-        assert(!$this->draft);
-        assert(isset($this->users[$user->id]));
-        assert(!$all || $this->roles[$user->id] != self::ROLE_BCC);
-
-        $transaction = $DB->start_delegated_transaction();
-
-        $message = self::create($this->course, $user, $time);
-
-        $prefix = 'RE:';
-        if (\core_text::strpos($this->subject, $prefix) === 0) {
-            $message->update($this->subject, '', FORMAT_HTML, $time);
-        } else {
-            $message->update($prefix . ' ' . $this->subject, '', FORMAT_HTML, $time);
-        }
-
-        $records = [['messageid' => $message->id, 'reference' => $this->id]];
-        foreach ($this->fetch_references() as $reference) {
-            $records[] = ['messageid' => $message->id, 'reference' => $reference->id];
-        }
-        $DB->insert_records('local_mail_message_refs', $records);
-
-        $message->set_labels($user, $this->labels[$user->id]);
-
-        foreach (array_keys($this->users) as $id) {
-            if ($id == $user->id || $this->roles[$id] == self::ROLE_BCC) {
-                // Ignore user who replies and BCC recipients.
-                continue;
-            }
-            if ($this->roles[$user->id] == self::ROLE_FROM) {
-                if ($this->roles[$id] == self::ROLE_TO) {
-                    $message->add_recipient($this->users[$id], self::ROLE_TO);
-                } else if ($all) {
-                    $message->add_recipient($this->users[$id], self::ROLE_CC);
-                }
-            } else {
-                if ($this->roles[$id] == self::ROLE_FROM) {
-                    $message->add_recipient($this->users[$id], self::ROLE_TO);
-                } else if ($all) {
-                    $message->add_recipient($this->users[$id], self::ROLE_CC);
-                }
-            }
-        }
-
-        $transaction->allow_commit();
-
-        return $message;
     }
 
     /**
@@ -618,8 +484,6 @@ class message {
 
         foreach ($labels as $label) {
             if (!isset($this->labels[$user->id][$label->id])) {
-                $DB->delete_records('local_mail_message_labels', ['messageid' => $this->id, 'labelid' => $label->id]);
-
                 $record = new \stdClass;
                 $record->messageid = $this->id;
                 $record->courseid = $this->course->id;
@@ -701,68 +565,151 @@ class message {
     /**
      * Updates the message.
      *
-     * @param string $subject New subject.
-     * @param string $content New content.
-     * @param int $format New content format.
-     * @param int $time New timestamp.
+     * @param message_data $data Message data.
      */
-    public function update(string $subject, string $content, int $format, int $time): void {
+    public function update(message_data $data): void {
         global $DB;
 
         assert($this->draft);
 
-        // Trim and truncate subject.
-        $subject = trim($subject);
-        if (\core_text::strlen($subject) > 100) {
-            $subject = \core_text::substr($subject, 0, 97) . '...';
-        }
-
-        // Number of attachments.
-        $fs = get_file_storage();
-        $context = $this->course->context();
-        $files = $fs->get_area_files($context->id, 'local_mail', 'message', $this->id, '', false);
-        $attachments = count($files);
-
-        // Normalized content.
-        $content = file_rewrite_pluginfile_urls(
-            $content,
-            'pluginfile.php',
-            $context->id,
-            'local_mail',
-            'message',
-            $this->id
-        );
-        $content = format_text($content, $format, ['filter' => false, 'nocache' => true]);
-        $normalizedsubject = self::normalize_text($subject);
-        $normalizedcontent = self::normalize_text(html_to_text($content, 0, false));
-
         $transaction = $DB->start_delegated_transaction();
 
-        $record = new \stdClass;
-        $record->id = $this->id;
-        $record->subject = $subject;
-        $record->content = $content;
-        $record->format = $format;
-        $record->attachments = $attachments;
-        $record->time = $time;
-        $record->normalizedsubject = $normalizedsubject;
-        $record->normalizedcontent = $normalizedcontent;
-        $DB->update_record('local_mail_messages', $record);
+        $fs = get_file_storage();
 
-        $DB->set_field('local_mail_message_users', 'time', $time, ['messageid' => $this->id]);
-        $DB->set_field('local_mail_message_labels', 'time', $time, ['messageid' => $this->id]);
-        $DB->set_field('local_mail_message_users', 'deleted', self::NOT_DELETED, ['messageid' => $this->id]);
-        $DB->set_field('local_mail_message_labels', 'deleted', self::NOT_DELETED, ['messageid' => $this->id]);
+        $oldcontext = $this->course->context();
+        $newcontext = $data->course->context();
 
-        $transaction->allow_commit();
+        // Course.
+        $this->course = $data->course;
 
-        $this->subject = $subject;
-        $this->content = $content;
-        $this->format = $format;
-        $this->attachments = $attachments;
-        $this->time = $time;
+        // Subject.
+        $this->subject = trim($data->subject);
+        if (\core_text::strlen($this->subject) > 100) {
+            $this->subject = \core_text::substr($this->subject, 0, 97) . '...';
+        }
+
+        // Content and attachments.
+        $this->content = file_save_draft_area_files(
+            $data->draftitemid,
+            $newcontext->id,
+            'local_mail',
+            'message',
+            $this->id,
+            message_data::file_options(),
+            $data->content
+        );
+        $this->format = $data->format;
+        $this->attachments = count($fs->get_area_files($newcontext->id, 'local_mail', 'message', $this->id, '', false));
+
+        // Time.
+        $this->time = (int) $data->time;
+
+        // Message record.
+        $messagerecord = new \stdClass;
+        $messagerecord->id = $this->id;
+        $messagerecord->courseid = $this->course->id;
+        $messagerecord->subject = $this->subject;
+        $messagerecord->content = $this->content;
+        $messagerecord->format = $this->format;
+        $messagerecord->attachments = $this->attachments;
+        $messagerecord->time = $this->time;
+        $messagerecord->normalizedsubject = self::normalize_text($this->subject);
+        $messagerecord->normalizedcontent = self::normalize_text($this->content);
+        $DB->update_record('local_mail_messages', $messagerecord);
+
+        // User records.
         foreach ($this->users as $user) {
             $this->deleted[$user->id] = self::NOT_DELETED;
         }
+        $sql = 'UPDATE {local_mail_message_users}'
+            . ' SET courseid = :courseid, deleted = :deleted, time = :time'
+            . ' WHERE messageid = :messageid';
+        $params = [
+            'messageid' => $this->id,
+            'courseid' => $this->course->id,
+            'deleted' => self::NOT_DELETED,
+            'time' => $this->time,
+        ];
+        $DB->execute($sql, $params);
+
+        // Label records.
+        $sql = 'UPDATE {local_mail_message_labels}'
+            . ' SET courseid = :courseid, deleted = :deleted, time = :time'
+            . ' WHERE messageid = :messageid';
+        $params = [
+            'messageid' => $this->id,
+            'courseid' => $this->course->id,
+            'deleted' => self::NOT_DELETED,
+            'time' => $this->time,
+        ];
+        $DB->execute($sql, $params);
+
+        // Added and modified recipients.
+        $isrecipient = [];
+        foreach (['to', 'cc', 'bcc'] as $rolename) {
+            $role = $rolename == 'to' ? self::ROLE_TO : ($rolename == 'cc' ? self::ROLE_CC : self::ROLE_BCC);
+
+            foreach ($data->$rolename as $user) {
+                if (!empty($isrecipient[$user->id])) {
+                    // Ignore duplicated user.
+                    continue;
+                }
+
+                $isrecipient[$user->id] = true;
+
+                if (!isset($this->users[$user->id])) {
+                    $this->users[$user->id] = $user;
+                    $this->roles[$user->id] = $role;
+                    $this->unread[$user->id] = true;
+                    $this->starred[$user->id] = false;
+                    $this->deleted[$user->id] = self::NOT_DELETED;
+                    $this->labels[$user->id] = [];
+
+                    $userrecord = new \stdClass;
+                    $userrecord->messageid = $this->id;
+                    $userrecord->courseid = $this->course->id;
+                    $userrecord->draft = 1;
+                    $userrecord->time = $this->time;
+                    $userrecord->userid = $user->id;
+                    $userrecord->role = $role;
+                    $userrecord->unread = 1;
+                    $userrecord->starred = 0;
+                    $userrecord->deleted = self::NOT_DELETED;
+                    $DB->insert_record('local_mail_message_users', $userrecord);
+                } else if ($role != $this->roles[$user->id]) {
+                    $this->roles[$user->id] = $role;
+
+                    $sql = 'UPDATE {local_mail_message_users}'
+                        . ' SET role = :role'
+                        . ' WHERE messageid = :messageid AND userid = :userid';
+                    $params = [
+                        'messageid' => $this->id,
+                        'userid' => $user->id,
+                        'role' => $role,
+                    ];
+                    $DB->execute($sql, $params);
+                }
+            }
+        }
+
+        // Removed recipients.
+        foreach ($this->users as $user) {
+            if ($this->roles[$user->id] != self::ROLE_FROM && empty($isrecipient[$user->id])) {
+                unset($this->users[$user->id]);
+                unset($this->roles[$user->id]);
+                unset($this->unread[$user->id]);
+                unset($this->starred[$user->id]);
+                unset($this->deleted[$user->id]);
+                unset($this->labels[$user->id]);
+                $DB->delete_records('local_mail_message_users', ['messageid' => $this->id, 'userid' => $user->id]);
+            }
+        }
+
+        // Delete old files.
+        if ($newcontext->id != $oldcontext->id) {
+            $fs->delete_area_files($oldcontext->id, 'local_mail', 'message', $this->id);
+        }
+
+        $transaction->allow_commit();
     }
 }

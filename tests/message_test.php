@@ -23,85 +23,102 @@
 
 namespace local_mail;
 
+defined('MOODLE_INTERNAL') || die;
+
+require_once(__DIR__ . '/testcase.php');
+
 /**
  * @covers \local_mail\message
  */
 class message_test extends testcase {
 
-    public function test_add_recipient() {
+    public function test_create() {
         $generator = self::getDataGenerator();
-        $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
         $user3 = new user($generator->create_user());
         $user4 = new user($generator->create_user());
+        $user5 = new user($generator->create_user());
+        $course = new course($generator->create_course());
+        $label1 = label::create($user1, 'Label', 'blue');
+        $label2 = label::create($user2, 'Label', 'blue');
         $time = make_timestamp(2021, 10, 11, 12, 0);
-        $message = message::create($course, $user1, $time);
 
-        $message->add_recipient($user2, message::ROLE_TO);
-        $message->add_recipient($user3, message::ROLE_CC);
-        $message->add_recipient($user4, message::ROLE_BCC);
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2, $user3];
+        $data->cc = [$user4];
+        $data->bcc = [$user5];
+        $data->subject = 'Subject';
+        $data->content = 'Content';
+        $data->format = (int) FORMAT_PLAIN;
+        $data->time = $time;
+        self::create_draft_file($data->draftitemid, 'file1.txt', 'File 1');
+        self::create_draft_file($data->draftitemid, 'file2.txt', 'File 2');
 
+        $message = message::create($data);
+
+        self::assertGreaterThan(0, $message->id);
+        self::assertEquals($data->course, $message->course);
+        self::assertEquals($data->subject, $message->subject);
+        self::assertEquals($data->content, $message->content);
+        self::assertEquals($data->format, $message->format);
+        self::assertEquals(2, $message->attachments);
+        self::assertEquals($data->time, $message->time);
         self::assertEquals([
             $user1->id => message::ROLE_FROM,
             $user2->id => message::ROLE_TO,
-            $user3->id => message::ROLE_CC,
-            $user4->id => message::ROLE_BCC,
+            $user3->id => message::ROLE_TO,
+            $user4->id => message::ROLE_CC,
+            $user5->id => message::ROLE_BCC,
         ], $message->roles);
-
         self::assertEquals([
             $user1->id => false,
             $user2->id => true,
             $user3->id => true,
             $user4->id => true,
+            $user5->id => true,
         ], $message->unread);
-
         self::assertEquals([
             $user1->id => false,
             $user2->id => false,
             $user3->id => false,
             $user4->id => false,
+            $user5->id => false,
         ], $message->starred);
-
         self::assertEquals([
             $user1->id => message::NOT_DELETED,
             $user2->id => message::NOT_DELETED,
             $user3->id => message::NOT_DELETED,
             $user4->id => message::NOT_DELETED,
+            $user5->id => message::NOT_DELETED,
         ], $message->deleted);
-
         self::assertEquals([
             $user1->id => [],
             $user2->id => [],
             $user3->id => [],
             $user4->id => [],
+            $user5->id => [],
         ], $message->labels);
-
         self::assert_message($message);
-    }
-
-    public function test_create() {
-        $generator = self::getDataGenerator();
-        $course = new course($generator->create_course());
-        $user = new user($generator->create_user());
-        $time = make_timestamp(2021, 10, 11, 12, 0);
-
-        $message = message::create($course, $user, $time);
-
-        self::assertGreaterThan(0, $message->id);
-        self::assertEquals($course, $message->course);
-        self::assertEquals('', $message->subject);
-        self::assertEquals('', $message->content);
-        self::assertEquals(FORMAT_HTML, $message->format);
-        self::assertEquals(0, $message->attachments);
-        self::assertEquals($time, $message->time);
-        self::assertEquals([$user->id => message::ROLE_FROM], $message->roles);
-        self::assertEquals([$user->id => false], $message->unread);
-        self::assertEquals([$user->id => false], $message->starred);
-        self::assertEquals([$user->id => message::NOT_DELETED], $message->deleted);
-        self::assertEquals([$user->id => []], $message->labels);
-        self::assert_message($message);
+        self::assert_attachments(['file1.txt' => 'File 1', 'file2.txt' => 'File 2'], $message);
         self::assertEquals([], $message->fetch_references());
+
+        // Reference.
+
+        $message->send($time);
+        $message->set_labels($user1, [$label1]);
+        $message->set_labels($user2, [$label2]);
+        $data = message_data::new($message->course, $user2);
+        $data->reference = $message;
+        $data->to = [$user1];
+        $data->time = make_timestamp(2021, 10, 11, 13, 0);
+
+        $message = message::create($data);
+        self::assertEquals([
+            $user1->id => [],
+            $user2->id => [$label2->id => $label2],
+        ], $message->labels);
+        self::assertEquals([$data->reference->id => $data->reference], $message->fetch_references());
     }
 
 
@@ -116,39 +133,45 @@ class message_test extends testcase {
         $generator->enrol_user($user2->id, $course1->id);
         $time = make_timestamp(2021, 10, 11, 12, 0);
 
-        $message1 = message::create($course1, $user1, $time);
-        $message1->update('Subject 1', 'Content 1', FORMAT_HTML, $time);
-        $message1->add_recipient($user2, message::ROLE_TO);
+        $data1 = message_data::new($course1, $user1);
+        $data1->subject = 'Subject 1';
+        $data1->to = [$user2];
+        $message1 = message::create($data1);
         $message1->send($time);
         $message1->set_deleted($user1, message::DELETED);
         $message1->set_deleted($user2, message::DELETED);
 
-        $message2 = message::create($course1, $user2, $time);
-        $message2->update('Subject 2', 'Content 2', FORMAT_HTML, $time);
-        $message2->add_recipient($user1, message::ROLE_TO);
+        $data2 = message_data::new($course1, $user2);
+        $data2->subject = 'Subject 2';
+        $data2->to = [$user1];
+        $message2 = message::create($data2);
         $message2->send($time);
         $message2->set_deleted($user1, message::DELETED);
 
-        $message3 = message::create($course1, $user2, $time);
-        $message3->update('Subject 3', 'Content 3', FORMAT_HTML, $time);
-        $message3->add_recipient($user1, message::ROLE_TO);
+        $data3 = message_data::new($course1, $user2);
+        $data3->subject = 'Subject 3';
+        $data3->to = [$user1];
+        $message3 = message::create($data3);
         $message3->send($time);
 
-        $message4 = message::create($course1, $user2, $time);
-        $message4->update('Subject 4', 'Content 4', FORMAT_HTML, $time);
-        $message4->add_recipient($user1, message::ROLE_TO);
+        $data4 = message_data::new($course1, $user2);
+        $data4->subject = 'Subject 4';
+        $data4->to = [$user1];
+        $message4 = message::create($data4);
         $message4->send($time);
         $message4->set_deleted($user1, message::DELETED_FOREVER);
 
-        $message5 = message::create($course2, $user2, $time);
-        $message5->update('Subject 5', 'Content 5', FORMAT_HTML, $time);
-        $message5->add_recipient($user1, message::ROLE_TO);
+        $data5 = message_data::new($course2, $user2);
+        $data5->subject = 'Subject 5';
+        $data5->to = [$user1];
+        $message5 = message::create($data5);
         $message5->send($time);
         $message5->set_deleted($user1, message::DELETED);
 
-        $message6 = message::create($course3, $user2, $time);
-        $message6->update('Subject 6', 'Content 6', FORMAT_HTML, $time);
-        $message6->add_recipient($user1, message::ROLE_TO);
+        $data6 = message_data::new($course3, $user2);
+        $data6->subject = 'Subject 5';
+        $data6->to = [$user1];
+        $message6 = message::create($data6);
         $message6->send($time);
         $message6->set_deleted($user1, message::DELETED);
 
@@ -179,18 +202,26 @@ class message_test extends testcase {
         $user3 = new user($generator->create_user());
         $time1 = make_timestamp(2021, 10, 11, 12, 0);
         $time2 = make_timestamp(2021, 10, 11, 13, 0);
+        $time3 = make_timestamp(2021, 10, 11, 14, 0);
         $label1 = label::create($user1, 'label1');
         $label2 = label::create($user2, 'label2');
-        $message1 = message::create($course, $user1, $time1);
-        $message1->update('Subject 1', 'Content 1', FORMAT_PLAIN, $time1);
-        $message1->add_recipient($user2, message::ROLE_TO);
-        $message1->add_recipient($user3, message::ROLE_CC);
+        $data1 = message_data::new($course, $user1);
+        $data1->subject = 'Subject 1';
+        $data1->content = 'Content 1';
+        $data1->format = FORMAT_PLAIN;
+        $data1->to = [$user2];
+        $data1->cc = [$user3];
+        $message1 = message::create($data1);
         $message1->send($time1);
-        $message2 = $message1->reply($user2, true, $time2);
-        $message2->update('Subject 2', 'Content 2', FORMAT_PLAIN, $time2);
+        $data2 = message_data::reply($message1, $user2, true);
+        $data2->subject = 'Subject 2';
+        $data2->content = 'Content 2';
+        $data2->format = FORMAT_MOODLE;
+        $message2 = message::create($data2);
         $message2->send($time2);
         $message2->set_labels($user1, [$label1]);
         $message2->set_labels($user2, [$label2]);
+        $message2 = message::create($data2);
 
         self::assertEquals($message1, message::fetch($message1->id));
         self::assertEquals($message2, message::fetch($message2->id));
@@ -199,7 +230,8 @@ class message_test extends testcase {
 
     public function test_fetch_many() {
         $generator = self::getDataGenerator();
-        $course = new course($generator->create_course());
+        $course1 = new course($generator->create_course());
+        $course2 = new course($generator->create_course());
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
         $user3 = new user($generator->create_user());
@@ -209,18 +241,32 @@ class message_test extends testcase {
         $time4 = make_timestamp(2021, 10, 11, 15, 0);
         $label1 = label::create($user1, 'label1');
         $label2 = label::create($user2, 'label2');
-        $message1 = message::create($course, $user1, $time1);
-        $message1->update('Subject 1', 'Content 1', FORMAT_PLAIN, $time1);
-        $message1->add_recipient($user2, message::ROLE_TO);
-        $message1->add_recipient($user3, message::ROLE_CC);
+        $data1 = message_data::new($course1, $user1);
+        $data1->subject = 'Subject 1';
+        $data1->content = 'Content 1';
+        $data1->format = FORMAT_PLAIN;
+        $data1->to = [$user2];
+        $data1->cc = [$user3];
+        $message1 = message::create($data1);
         $message1->send($time1);
-        $message2 = $message1->reply($user2, true, $time2);
-        $message2->update('Subject 2', 'Content 2', FORMAT_PLAIN, $time2);
+        $data2 = message_data::reply($message1, $user2, true);
+        $data2->subject = 'Subject 2';
+        $data2->content = 'Content 2';
+        $data2->format = FORMAT_MOODLE;
+        $message2 = message::create($data2);
         $message2->send($time2);
         $message2->set_labels($user1, [$label1]);
         $message2->set_labels($user2, [$label2]);
-        $message3 = message::create($course, $user2, $time3);
-        $message4 = message::create($course, $user3, $time4);
+        $data3 = message_data::new($course2, $user2);
+        $data3->subject = 'Subject 3';
+        $data3->content = 'Content 3';
+        $data3->time = $time3;
+        $message3 = message::create($data3);
+        $data4 = message_data::new($course2, $user3);
+        $data4->subject = 'Subject 4';
+        $data4->content = 'Content 4';
+        $data4->time = $time4;
+        $message4 = message::create($data4);
 
         $messages = message::fetch_many([$message1->id, $message2->id, $message1->id, 0, $message4->id]);
 
@@ -242,16 +288,23 @@ class message_test extends testcase {
         $time1 = make_timestamp(2021, 10, 11, 12, 0);
         $time2 = make_timestamp(2021, 10, 11, 13, 0);
         $time3 = make_timestamp(2021, 10, 11, 14, 0);
-        $time4 = make_timestamp(2021, 10, 11, 15, 0);
-        $message1 = message::create($course, $user1, $time1);
-        $message1->update('Subject 1', 'Content 1', FORMAT_PLAIN, $time1);
-        $message1->add_recipient($user2, message::ROLE_TO);
+
+        $data1 = message_data::new($course, $user1);
+        $data1->subject = 'Subject 1';
+        $data1->content = 'Content 1';
+        $data1->to = [$user2];
+        $message1 = message::create($data1);
         $message1->send($time1);
-        $message2 = $message1->reply($user2, true, $time2);
-        $message2->update('Subject 2', 'Content 2', FORMAT_PLAIN, $time2);
+
+        $data2 = message_data::reply($message1, $user2, true);
+        $data2->subject = 'Subject 2';
+        $data2->content = 'Content 2';
+        $message2 = message::create($data2);
         $message2->send($time2);
-        $message3 = $message2->forward($user2, $time3);
-        $message3->add_recipient($user3, message::ROLE_TO);
+
+        $data3 = message_data::forward($message2, $user2);
+        $data3->to = [$user3];
+        $message3 = message::create($data3);
         $message3->send($time3);
 
         $this->assertEquals(message::fetch_many([]), $message1->fetch_references());
@@ -260,53 +313,6 @@ class message_test extends testcase {
         $this->assertEquals(message::fetch_many([$message3->id, $message2->id]), $message1->fetch_references(true));
         $this->assertEquals(message::fetch_many([$message3->id]), $message2->fetch_references(true));
         $this->assertEquals(message::fetch_many([]), $message3->fetch_references(true));
-    }
-
-    public function test_forward() {
-        $generator = self::getDataGenerator();
-        $course = new course($generator->create_course());
-        $user1 = new user($generator->create_user());
-        $user2 = new user($generator->create_user());
-        $user3 = new user($generator->create_user());
-        $time1 = make_timestamp(2021, 10, 11, 12, 0);
-        $time2 = make_timestamp(2021, 10, 11, 13, 0);
-        $time3 = make_timestamp(2021, 10, 11, 14, 0);
-        $label1 = label::create($user1, 'Label', 'blue');
-        $label2 = label::create($user2, 'Label', 'blue');
-        $message1 = message::create($course, $user1, $time1);
-        $message1->update('subject', 'content', FORMAT_PLAIN, $time1);
-        $message1->add_recipient($user2, message::ROLE_TO);
-        $message1->send($time1);
-        $message1->set_labels($user1, [$label1]);
-        $message1->set_labels($user2, [$label2]);
-
-        $message2 = $message1->forward($user2, $time2);
-
-        self::assertGreaterThan(0, $message2->id);
-        self::assertEquals($course, $message2->course);
-        self::assertEquals('FW: subject', $message2->subject);
-        self::assertEquals('', $message2->content);
-        self::assertEquals(FORMAT_HTML, $message2->format);
-        self::assertEquals(0, $message2->attachments);
-        self::assertEquals($time2, $message2->time);
-        self::assertEquals([$user2->id => message::ROLE_FROM], $message2->roles);
-        self::assertEquals([$user2->id => false], $message2->unread);
-        self::assertEquals([$user2->id => false], $message2->starred);
-        self::assertEquals([$user2->id => message::NOT_DELETED], $message2->deleted);
-        self::assertEquals([$user2->id => [$label2->id => $label2]], $message2->labels);
-        self::assert_message($message2);
-        self::assertEquals(message::fetch_many([$message1->id]), $message2->fetch_references());
-
-        // Forward forwarded message.
-
-        $message2->add_recipient($user3, message::ROLE_TO);
-        $message2->send($time2);
-
-        $message3 = $message2->forward($user3, $time3);
-
-        self::assertEquals('FW: subject', $message3->subject);
-        self::assert_message($message3);
-        self::assertEquals(message::fetch_many([$message2->id, $message1->id]), $message3->fetch_references());
     }
 
     public function test_has_recipient() {
@@ -318,12 +324,11 @@ class message_test extends testcase {
         $user4 = new user($generator->create_user());
         $user5 = new user($generator->create_user());
 
-        $time = make_timestamp(2021, 10, 11, 12, 0);
-
-        $message = message::create($course, $user1, $time);
-        $message->add_recipient($user2, message::ROLE_TO);
-        $message->add_recipient($user3, message::ROLE_CC);
-        $message->add_recipient($user4, message::ROLE_BCC);
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->cc = [$user3];
+        $data->bcc = [$user4];
+        $message = message::create($data);
 
         $this->assertFalse($message->has_recipient($user1));
         $this->assertTrue($message->has_recipient($user2));
@@ -350,258 +355,17 @@ class message_test extends testcase {
 
         $time = make_timestamp(2021, 10, 11, 12, 0);
 
-        $message = message::create($course, $user1, $time);
-        $message->add_recipient($user2, message::ROLE_TO);
-        $message->add_recipient($user3, message::ROLE_TO);
-        $message->add_recipient($user4, message::ROLE_CC);
-        $message->add_recipient($user5, message::ROLE_BCC);
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2, $user3];
+        $data->cc = [$user4];
+        $data->bcc = [$user5];
+        $message = message::create($data);
 
         $this->assertEquals([$user2, $user3, $user4, $user5], $message->recipients());
         $this->assertEquals([$user2, $user3], $message->recipients(message::ROLE_TO));
         $this->assertEquals([$user4], $message->recipients(message::ROLE_CC));
         $this->assertEquals([$user5], $message->recipients(message::ROLE_BCC));
         $this->assertEquals([$user2, $user3, $user4], $message->recipients(message::ROLE_TO, message::ROLE_CC));
-    }
-
-    public function test_remove_recipient() {
-        $generator = self::getDataGenerator();
-        $course = new course($generator->create_course());
-        $user1 = new user($generator->create_user());
-        $user2 = new user($generator->create_user());
-        $user3 = new user($generator->create_user());
-        $user4 = new user($generator->create_user());
-        $time = make_timestamp(2021, 10, 11, 12, 0);
-        $message = message::create($course, $user1, $time);
-        $message->add_recipient($user2, message::ROLE_TO);
-        $message->add_recipient($user3, message::ROLE_CC);
-        $message->add_recipient($user4, message::ROLE_BCC);
-
-        $message->remove_recipient($user2);
-        $message->remove_recipient($user4);
-
-        self::assertEquals([
-            $user1->id => message::ROLE_FROM,
-            $user3->id => message::ROLE_CC,
-        ], $message->roles);
-
-        self::assertEquals([
-            $user1->id => false,
-            $user3->id => true,
-        ], $message->unread);
-
-        self::assertEquals([
-            $user1->id => false,
-            $user3->id => false,
-        ], $message->starred);
-
-        self::assertEquals([
-            $user1->id => message::NOT_DELETED,
-            $user3->id => message::NOT_DELETED,
-        ], $message->deleted);
-
-        self::assertEquals([
-            $user1->id => [],
-            $user3->id => [],
-        ], $message->labels);
-
-        self::assert_message($message);
-    }
-
-    public function test_reply() {
-        $generator = self::getDataGenerator();
-        $course = new course($generator->create_course());
-        $user1 = new user($generator->create_user());
-        $user2 = new user($generator->create_user());
-        $user3 = new user($generator->create_user());
-        $user4 = new user($generator->create_user());
-        $user5 = new user($generator->create_user());
-        $time1 = make_timestamp(2021, 10, 11, 12, 0);
-        $time2 = make_timestamp(2021, 10, 11, 13, 0);
-        $time3 = make_timestamp(2021, 10, 11, 14, 0);
-        $time4 = make_timestamp(2021, 10, 11, 15, 0);
-        $time5 = make_timestamp(2021, 10, 11, 16, 0);
-        $time6 = make_timestamp(2021, 10, 11, 17, 0);
-        $label1 = label::create($user1, 'Label 1', 'blue');
-        $label2 = label::create($user2, 'Label 2', 'red');
-        $label3 = label::create($user3, 'Label 3', 'green');
-        $label4 = label::create($user4, 'Label 4', 'yellow');
-        $message1 = message::create($course, $user1, $time1);
-        $message1->update('subject', 'content', FORMAT_PLAIN, $time1);
-        $message1->add_recipient($user2, message::ROLE_TO);
-        $message1->add_recipient($user3, message::ROLE_TO);
-        $message1->add_recipient($user4, message::ROLE_CC);
-        $message1->add_recipient($user5, message::ROLE_BCC);
-        $message1->send($time1);
-        $message1->set_labels($user1, [$label1]);
-        $message1->set_labels($user2, [$label2]);
-        $message1->set_labels($user3, [$label3]);
-        $message1->set_labels($user4, [$label4]);
-
-        // Reply to sender.
-
-        $message2 = $message1->reply($user2, false, $time2);
-
-        self::assertGreaterThan(0, $message2->id);
-        self::assertEquals($course, $message2->course);
-        self::assertEquals('RE: subject', $message2->subject);
-        self::assertEquals('', $message2->content);
-        self::assertEquals(FORMAT_HTML, $message2->format);
-        self::assertEquals(0, $message2->attachments);
-        self::assertEquals($time2, $message2->time);
-        self::assertEquals([
-            $user1->id => message::ROLE_TO,
-            $user2->id => message::ROLE_FROM,
-        ], $message2->roles);
-        self::assertEquals([
-            $user1->id => true,
-            $user2->id => false,
-        ], $message2->unread);
-        self::assertEquals([
-            $user1->id => false,
-            $user2->id => false,
-        ], $message2->starred);
-        self::assertEquals([
-            $user1->id => message::NOT_DELETED,
-            $user2->id => message::NOT_DELETED,
-        ], $message2->deleted);
-        self::assertEquals([
-            $user1->id => [],
-            $user2->id => [$label2->id => $label2],
-        ], $message2->labels);
-        self::assert_message($message2);
-        self::assertEquals(message::fetch_many([$message1->id]), $message2->fetch_references());
-
-        // Reply to sender (all).
-
-        $message3 = $message1->reply($user2, true, $time3);
-
-        self::assertEquals([
-            $user1->id => message::ROLE_TO,
-            $user2->id => message::ROLE_FROM,
-            $user3->id => message::ROLE_CC,
-            $user4->id => message::ROLE_CC,
-        ], $message3->roles);
-        self::assertEquals([
-            $user1->id => true,
-            $user2->id => false,
-            $user3->id => true,
-            $user4->id => true,
-        ], $message3->unread);
-        self::assertEquals([
-            $user1->id => false,
-            $user2->id => false,
-            $user3->id => false,
-            $user4->id => false,
-        ], $message3->starred);
-        self::assertEquals([
-            $user1->id => message::NOT_DELETED,
-            $user2->id => message::NOT_DELETED,
-            $user3->id => message::NOT_DELETED,
-            $user4->id => message::NOT_DELETED,
-        ], $message3->deleted);
-        self::assertEquals([
-            $user1->id => [],
-            $user2->id => [$label2->id => $label2],
-            $user3->id => [],
-            $user4->id => [],
-        ], $message3->labels);
-        self::assert_message($message3);
-
-        // Reply to self.
-
-        $message4 = $message1->reply($user1, false, $time4);
-
-        self::assertEquals([
-            $user1->id => message::ROLE_FROM,
-            $user2->id => message::ROLE_TO,
-            $user3->id => message::ROLE_TO,
-        ], $message4->roles);
-        self::assertEquals([
-            $user1->id => false,
-            $user2->id => true,
-            $user3->id => true,
-        ], $message4->unread);
-        self::assertEquals([
-            $user1->id => false,
-            $user2->id => false,
-            $user3->id => false,
-        ], $message4->starred);
-        self::assertEquals([
-            $user1->id => message::NOT_DELETED,
-            $user2->id => message::NOT_DELETED,
-            $user3->id => message::NOT_DELETED,
-        ], $message4->deleted);
-        self::assertEquals([
-            $user1->id => [$label1->id => $label1],
-            $user2->id => [],
-            $user3->id => [],
-        ], $message4->labels);
-        self::assert_message($message4);
-
-        // Reply to self (all).
-
-        $message5 = $message1->reply($user1, true, $time5);
-
-        self::assertEquals([
-            $user1->id => message::ROLE_FROM,
-            $user2->id => message::ROLE_TO,
-            $user3->id => message::ROLE_TO,
-            $user4->id => message::ROLE_CC,
-        ], $message5->roles);
-        self::assertEquals([
-            $user1->id => false,
-            $user2->id => true,
-            $user3->id => true,
-            $user4->id => true,
-        ], $message5->unread);
-        self::assertEquals([
-            $user1->id => false,
-            $user2->id => false,
-            $user3->id => false,
-            $user4->id => false,
-        ], $message5->starred);
-        self::assertEquals([
-            $user1->id => message::NOT_DELETED,
-            $user2->id => message::NOT_DELETED,
-            $user3->id => message::NOT_DELETED,
-            $user4->id => message::NOT_DELETED,
-        ], $message5->deleted);
-        self::assertEquals([
-            $user1->id => [$label1->id => $label1],
-            $user2->id => [],
-            $user3->id => [],
-            $user4->id => [],
-        ], $message5->labels);
-        self::assert_message($message5);
-
-        // Reply to replied message.
-
-        $message2->send($time2);
-        $message6 = $message2->reply($user1, false, $time6);
-
-        self::assertEquals('RE: subject', $message6->subject);
-        self::assertEquals([
-            $user1->id => message::ROLE_FROM,
-            $user2->id => message::ROLE_TO,
-        ], $message6->roles);
-        self::assertEquals([
-            $user1->id => false,
-            $user2->id => true,
-        ], $message6->unread);
-        self::assertEquals([
-            $user1->id => false,
-            $user2->id => false,
-        ], $message6->starred);
-        self::assertEquals([
-            $user1->id => message::NOT_DELETED,
-            $user2->id => message::NOT_DELETED,
-        ], $message6->deleted);
-        self::assertEquals([
-            $user1->id => [$label1->id => $label1],
-            $user2->id => [],
-        ], $message6->labels);
-        self::assert_message($message6);
-        self::assertEquals(message::fetch_many([$message2->id, $message1->id]), $message6->fetch_references());
     }
 
     public function test_send() {
@@ -616,11 +380,15 @@ class message_test extends testcase {
         $time2 = make_timestamp(2021, 10, 11, 13, 0);
         $time3 = make_timestamp(2021, 10, 11, 14, 0);
         $time4 = make_timestamp(2021, 10, 11, 15, 0);
-        $message1 = message::create($course, $user1, $time1);
-        $message1->update('subject', 'content', FORMAT_PLAIN, $time1);
-        $message1->add_recipient($user2, message::ROLE_TO);
-        $message1->add_recipient($user3, message::ROLE_CC);
-        $message1->add_recipient($user4, message::ROLE_BCC);
+        $data1 = message_data::new($course, $user1);
+        $data1->subject = 'subject';
+        $data1->content = 'content';
+        $data1->format = FORMAT_PLAIN;
+        $data1->time = $time1;
+        $data1->to = [$user2];
+        $data1->cc = [$user3];
+        $data1->bcc = [$user4];
+        $message1 = message::create($data1);
 
         // Send message without references.
 
@@ -633,7 +401,8 @@ class message_test extends testcase {
         // Send message with references.
 
         $message1->set_labels($user1, [$label1]);
-        $message2 = $message1->reply($user2, false, $time3);
+        $data2 = message_data::reply($message1, $user2, false);
+        $message2 = message::create($data2);
         $message2->send($time4);
 
         self::assertFalse($message2->draft);
@@ -651,16 +420,15 @@ class message_test extends testcase {
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
 
-        $time = make_timestamp(2021, 10, 11, 12, 0);
-
-        $message = message::create($course, $user1, $time);
-        $message->add_recipient($user2, message::ROLE_TO);
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $message = message::create($data);
 
         $this->assertEquals($user1, $message->sender());
     }
 
     public function test_set_deleted() {
-        $fs = \get_file_storage();
+        $fs = get_file_storage();
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -668,13 +436,14 @@ class message_test extends testcase {
         $label1 = label::create($user1, 'Label 1');
         $label2 = label::create($user2, 'Label 2');
         $time = make_timestamp(2021, 10, 11, 12, 0);
-        $message = message::create($course, $user1, $time);
-        $message->update('subject', 'content', FORMAT_PLAIN, $time);
-        $message->add_recipient($user2, message::ROLE_TO);
+
+        $data = message_data::new($course, $user1);
+        $data->subject = 'subject';
+        $data->to = [$user2];
+        $message = message::create($data);
         $message->send($time);
         $message->set_labels($user2, [$label2]);
-        $draft = message::create($course, $user1, $time);
-        $draft->add_recipient($user2, message::ROLE_TO);
+        $draft = message::create($data);
         $draft->set_labels($user1, [$label1]);
 
         // Delete draft forever.
@@ -721,9 +490,10 @@ class message_test extends testcase {
         $label2 = label::create($user1, 'Label 2', 'red');
         $label3 = label::create($user1, 'Label 3', 'green');
         $label4 = label::create($user2, 'Label 4', 'purple');
-        $message = message::create($course, $user1, $time);
-        $message->update('subject', 'content', FORMAT_PLAIN, $time);
-        $message->add_recipient($user2, message::ROLE_TO);
+        $data = message_data::new($course, $user1);
+        $data->subject = 'subject';
+        $data->to = [$user2];
+        $message = message::create($data);
         $message->send($time);
 
         $message->set_labels($user1, [$label1, $label2]);
@@ -770,9 +540,10 @@ class message_test extends testcase {
         $user2 = new user($generator->create_user());
         $label = label::create($user2, 'label');
         $time = make_timestamp(2021, 10, 11, 12, 0);
-        $message = message::create($course, $user1, $time);
-        $message->update('subject', 'content', FORMAT_PLAIN, $time);
-        $message->add_recipient($user2, message::ROLE_TO);
+        $data = message_data::new($course, $user1);
+        $data->subject = 'subject';
+        $data->to = [$user2];
+        $message = message::create($data);
         $message->send($time);
         $message->set_labels($user2, [$label]);
 
@@ -798,9 +569,10 @@ class message_test extends testcase {
         $user2 = new user($generator->create_user());
         $label = label::create($user2, 'label');
         $time = make_timestamp(2021, 10, 11, 12, 0);
-        $message = message::create($course, $user1, $time);
-        $message->update('subject', 'content', FORMAT_PLAIN, $time);
-        $message->add_recipient($user2, message::ROLE_TO);
+        $data = message_data::new($course, $user1);
+        $data->subject = 'subject';
+        $data->to = [$user2];
+        $message = message::create($data);
         $message->send($time);
         $message->set_labels($user2, [$label]);
 
@@ -821,32 +593,84 @@ class message_test extends testcase {
 
     public function test_update() {
         $generator = self::getDataGenerator();
-        $course = new course($generator->create_course());
-        $user = new user($generator->create_user());
-        $time1 = make_timestamp(2021, 10, 11, 12, 0);
-        $time2 = make_timestamp(2021, 10, 11, 13, 0);
-        $message = message::create($course, $user, $time1);
-        self::create_attachment($course->id, $message->id, 'file1.txt', 'File 1');
-        self::create_attachment($course->id, $message->id, 'file2.txt', 'File 2');
-        self::create_attachment($course->id, $message->id, 'file3.txt', 'File 3');
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $user4 = new user($generator->create_user());
+        $user5 = new user($generator->create_user());
+        $course1 = new course($generator->create_course());
+        $course2 = new course($generator->create_course());
+        $label1 = label::create($user1, 'Label 1');
+        $label2 = label::create($user1, 'Label 2');
 
-        $message->update('updated_subject', 'updated_content', FORMAT_PLAIN, $time2);
+        $data = message_data::new($course1, $user1);
+        $data->to = [$user2, $user3];
+        $data->cc = [$user4];
+        $data->subject = 'Subject';
+        $data->content = 'Content';
+        $data->format = (int) FORMAT_PLAIN;
+        $data->time = make_timestamp(2021, 10, 11, 12, 0);
+        self::create_draft_file($data->draftitemid, 'file1.txt', 'File 1');
+        self::create_draft_file($data->draftitemid, 'file2.txt', 'File 2');
+        $message = message::create($data);
+        $message->set_labels($user1, [$label1, $label2]);
+        $message->set_deleted($user1, message::DELETED);
 
-        self::assertEquals('updated_subject', $message->subject);
-        self::assertEquals('updated_content', $message->content);
-        self::assertEquals(FORMAT_PLAIN, $message->format);
-        self::assertEquals(3, $message->attachments);
-        self::assertEquals($time2, $message->time);
+        $data = message_data::draft($message);
+        $data->course = $course2;
+        $data->to = [$user2];
+        $data->cc = [$user3];
+        $data->bcc = [$user5, $user2, $user3];
+        $data->subject = 'Updated subject';
+        $data->content = 'Updated content';
+        $data->format = (int) FORMAT_PLAIN;
+        $data->time = make_timestamp(2021, 10, 11, 13, 0);
+
+        self::delete_draft_files($data->draftitemid);
+        self::create_draft_file($data->draftitemid, 'file3.txt', 'File 3');
+
+        $message->update($data);
+
+        self::assertGreaterThan(0, $message->id);
+        self::assertEquals($data->course, $message->course);
+        self::assertEquals($data->subject, $message->subject);
+        self::assertEquals($data->content, $message->content);
+        self::assertEquals($data->format, $message->format);
+        self::assertEquals(1, $message->attachments);
+        self::assertEquals($data->time, $message->time);
+        self::assertEquals([
+            $user1->id => message::ROLE_FROM,
+            $user2->id => message::ROLE_TO,
+            $user3->id => message::ROLE_CC,
+            $user5->id => message::ROLE_BCC,
+        ], $message->roles);
+        self::assertEquals([
+            $user1->id => false,
+            $user2->id => true,
+            $user3->id => true,
+            $user5->id => true,
+        ], $message->unread);
+        self::assertEquals([
+            $user1->id => false,
+            $user2->id => false,
+            $user3->id => false,
+            $user5->id => false,
+        ], $message->starred);
+        self::assertEquals([
+            $user1->id => message::NOT_DELETED,
+            $user2->id => message::NOT_DELETED,
+            $user3->id => message::NOT_DELETED,
+            $user5->id => message::NOT_DELETED,
+        ], $message->deleted);
+        self::assertEquals([
+            $user1->id => [$label1->id => $label1, $label2->id => $label2],
+            $user2->id => [],
+            $user3->id => [],
+            $user5->id => [],
+        ], $message->labels);
         self::assert_message($message);
-
-        // Deleted message.
-
-        $message->set_deleted($user, message::DELETED);
-
-        $message->update('updated_subject', 'updated_content', FORMAT_PLAIN, $time2);
-
-        self::assertEquals($message->deleted[$user->id], message::NOT_DELETED);
-        self::assert_message($message);
+        self::assert_attachments(['file3.txt' => 'File 3'], $message);
+        self::assertEquals([], $message->fetch_references());
     }
 
     /**
@@ -859,7 +683,7 @@ class message_test extends testcase {
         self::assert_record_data('messages', [
             'id' => $message->id,
         ], [
-            'courseid' => $message->course->id,
+            'courseid' => $message->course->id ?? 0,
             'subject' => $message->subject,
             'content' => $message->content,
             'format' => $message->format,
@@ -878,7 +702,7 @@ class message_test extends testcase {
 
         foreach ($message->users as $user) {
             $data = [
-                'courseid' => $message->course->id,
+                'courseid' => $message->course->id ?? 0,
                 'draft' => (int) $message->draft,
                 'time' => $message->time,
                 'role' => $message->roles[$user->id],

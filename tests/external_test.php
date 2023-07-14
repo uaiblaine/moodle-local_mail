@@ -18,6 +18,12 @@ namespace local_mail;
 
 use invalid_parameter_exception;
 
+defined('MOODLE_INTERNAL') || die;
+
+require_once(__DIR__ . '/testcase.php');
+require_once(__DIR__ . '/message_search_test.php');
+require_once(__DIR__ . '/user_search_test.php');
+
 /**
  * @covers \local_mail\external
  */
@@ -190,13 +196,13 @@ class external_test extends testcase {
 
     public function test_get_courses() {
         $generator = $this->getDataGenerator();
-        list($users) = self::generate_search_data();
+        list($users) = message_search_test::generate_data();
 
         foreach ($users as $user) {
             $this->setUser($user->id);
             $expected = [];
             foreach ($user->get_courses() as $course) {
-                $search = new search($user);
+                $search = new message_search($user);
                 $search->course = $course;
                 $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
                 $search->unread = true;
@@ -222,14 +228,14 @@ class external_test extends testcase {
 
     public function test_get_labels() {
         $generator = $this->getDataGenerator();
-        list($users) = self::generate_search_data();
+        list($users) = message_search_test::generate_data();
 
         foreach ($users as $user) {
             $this->setUser($user->id);
 
             $expected = [];
             foreach (label::fetch_by_user($user) as $label) {
-                $search = new search($user);
+                $search = new message_search($user);
                 $search->label = $label;
                 $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
                 $search->unread = true;
@@ -255,9 +261,9 @@ class external_test extends testcase {
     public function test_count_messages() {
         $generator = self::getDataGenerator();
 
-        list($users, $messages) = self::generate_search_data();
+        list($users, $messages) = message_search_test::generate_data();
 
-        foreach (self::search_cases($users, $messages) as $search) {
+        foreach (message_search_test::cases($users, $messages) as $search) {
             $this->setUser($search->user->id);
             $query = [];
             if ($search->course) {
@@ -370,9 +376,9 @@ class external_test extends testcase {
     public function test_search_messages() {
         $generator = self::getDataGenerator();
 
-        list($users, $messages) = self::generate_search_data();
+        list($users, $messages) = message_search_test::generate_data();
 
-        foreach (self::search_cases($users, $messages) as $search) {
+        foreach (message_search_test::cases($users, $messages) as $search) {
             $this->setUser($search->user->id);
             $query = [];
             if ($search->course) {
@@ -433,7 +439,7 @@ class external_test extends testcase {
             $expected = external::search_messages_response($search->user->id, $search->fetch(5, 10));
             $result = external::search_messages($query, 5, 10);
             \external_api::validate_parameters(external::search_messages_returns(), $result);
-            $this->assertEquals($expected, $result, $search . "\nOffset: 5\n Limit: 10");
+            $this->assertEquals($expected, $result, $search . "\noffset: 5\n limit: 10");
         }
 
         // Invalid course.
@@ -480,7 +486,7 @@ class external_test extends testcase {
     }
 
     public function test_get_message() {
-        list($users, $messages) = self::generate_search_data();
+        list($users, $messages) = message_search_test::generate_data();
 
         $user = $users[0];
         $this->setUser($user->id);
@@ -489,7 +495,7 @@ class external_test extends testcase {
             if ($user->can_view_message($message)) {
                 $result = external::get_message($message->id);
                 \external_api::validate_parameters(external::get_message_returns(), $result);
-                $this->assertEquals(external::get_message_response($user->id, $message), $result);
+                $this->assertEquals(external::get_message_response($user, $message), $result);
             } else {
                 try {
                     external::get_message($message->id);
@@ -521,9 +527,10 @@ class external_test extends testcase {
 
         // Message from the user.
 
-        $message = message::create($course, $user1, $time);
-        $message->update('Subject 1', 'Content 1', FORMAT_HTML, $time);
-        $message->add_recipient($user2, message::ROLE_TO);
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $message = message::create($data);
         $message->send($time);
 
         $result = external::set_unread($message->id, '1');
@@ -552,8 +559,9 @@ class external_test extends testcase {
 
         // Draft to the user (no permission).
 
-        $draft = message::create($course, $user1, $time);
-        $draft->add_recipient($user2, message::ROLE_TO);
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $draft = message::create($data);
 
         try {
             external::set_unread($draft->id, '0');
@@ -584,9 +592,10 @@ class external_test extends testcase {
 
         // Message from the user.
 
-        $message = message::create($course, $user1, $time);
-        $message->update('Subject 1', 'Content 1', FORMAT_HTML, $time);
-        $message->add_recipient($user2, message::ROLE_TO);
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $message = message::create($data);
         $message->send($time);
 
         $result = external::set_starred($message->id, '1');
@@ -615,8 +624,9 @@ class external_test extends testcase {
 
         // Draft to the user (no permission).
 
-        $draft = message::create($course, $user1, $time);
-        $draft->add_recipient($user2, message::ROLE_TO);
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $draft = message::create($data);
 
         try {
             external::set_starred($draft->id, '1');
@@ -647,9 +657,10 @@ class external_test extends testcase {
 
         // Message from the user.
 
-        $message = message::create($course, $user1, $time);
-        $message->update('Subject 1', 'Content 1', FORMAT_HTML, $time);
-        $message->add_recipient($user2, message::ROLE_TO);
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $message = message::create($data);
         $message->send($time);
 
         $result = external::set_deleted($message->id, '1');
@@ -698,8 +709,9 @@ class external_test extends testcase {
 
         $this->setUser($user2->id);
 
-        $draft = message::create($course, $user1, $time);
-        $draft->add_recipient($user2, message::ROLE_TO);
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $draft = message::create($data);
 
         try {
             external::set_deleted($message->id, '1');
@@ -745,46 +757,53 @@ class external_test extends testcase {
         $generator->enrol_user($user1->id, $course2->id);
         $time = make_timestamp(2021, 10, 11, 12, 0);
 
-        $message1 = message::create($course1, $user1, $time);
-        $message1->update('Subject 1', 'Content 1', FORMAT_HTML, $time);
-        $message1->add_recipient($user2, message::ROLE_TO);
+        $data1 = message_data::new($course1, $user1);
+        $data1->subject = 'Subject 1';
+        $data1->to = [$user2];
+        $message1 = message::create($data1);
         $message1->send($time);
         $message1->set_deleted($user1, message::DELETED);
+        $message1->set_deleted($user2, message::DELETED);
 
-        $message2 = message::create($course1, $user2, $time);
-        $message2->update('Subject 2', 'Content 2', FORMAT_HTML, $time);
-        $message2->add_recipient($user1, message::ROLE_TO);
+        $data2 = message_data::new($course1, $user2);
+        $data2->subject = 'Subject 2';
+        $data2->to = [$user1];
+        $message2 = message::create($data2);
         $message2->send($time);
         $message2->set_deleted($user1, message::DELETED);
 
-        $message3 = message::create($course1, $user2, $time);
-        $message3->update('Subject 3', 'Content 3', FORMAT_HTML, $time);
-        $message3->add_recipient($user1, message::ROLE_TO);
+        $data3 = message_data::new($course1, $user2);
+        $data3->subject = 'Subject 3';
+        $data3->to = [$user1];
+        $message3 = message::create($data3);
         $message3->send($time);
 
-        $message4 = message::create($course1, $user2, $time);
-        $message4->update('Subject 4', 'Content 4', FORMAT_HTML, $time);
-        $message4->add_recipient($user1, message::ROLE_TO);
+        $data4 = message_data::new($course1, $user2);
+        $data4->subject = 'Subject 4';
+        $data4->to = [$user1];
+        $message4 = message::create($data4);
         $message4->send($time);
         $message4->set_deleted($user1, message::DELETED_FOREVER);
 
-        $message5 = message::create($course2, $user2, $time);
-        $message5->update('Subject 5', 'Content 5', FORMAT_HTML, $time);
-        $message5->add_recipient($user1, message::ROLE_TO);
+        $data5 = message_data::new($course2, $user2);
+        $data5->subject = 'Subject 5';
+        $data5->to = [$user1];
+        $message5 = message::create($data5);
         $message5->send($time);
         $message5->set_deleted($user1, message::DELETED);
 
-        $message6 = message::create($course3, $user2, $time);
-        $message6->update('Subject 6', 'Content 6', FORMAT_HTML, $time);
-        $message6->add_recipient($user1, message::ROLE_TO);
+        $data6 = message_data::new($course3, $user2);
+        $data6->subject = 'Subject 5';
+        $data6->to = [$user1];
+        $message6 = message::create($data6);
         $message6->send($time);
         $message6->set_deleted($user1, message::DELETED);
 
         $this->setUser($user1->id);
 
         $result = external::empty_trash();
-        $this->assertNull($result);
 
+        $this->assertNull($result);
         $this->assertEquals(message::DELETED_FOREVER, message::fetch($message1->id)->deleted[$user1->id]);
         $this->assertEquals(message::DELETED_FOREVER, message::fetch($message2->id)->deleted[$user1->id]);
         $this->assertEquals(message::NOT_DELETED, message::fetch($message3->id)->deleted[$user1->id]);
@@ -978,9 +997,10 @@ class external_test extends testcase {
 
         // Message from the user.
 
-        $message = message::create($course, $user1, $time);
-        $message->update('Subject 1', 'Content 1', FORMAT_HTML, $time);
-        $message->add_recipient($user2, message::ROLE_TO);
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $message = message::create($data);
         $message->send($time);
 
         $result = external::set_labels($message->id, [$label1->id, $label2->id]);
@@ -995,9 +1015,10 @@ class external_test extends testcase {
 
         // Message sent to the user.
 
-        $message = message::create($course, $user2, $time);
-        $message->update('Subject 2', 'Content 2', FORMAT_HTML, $time);
-        $message->add_recipient($user1, message::ROLE_TO);
+        $data = message_data::new($course, $user2);
+        $data->to = [$user1];
+        $data->subject = 'Subject';
+        $message = message::create($data);
         $message->send($time);
 
         $result = external::set_labels($message->id, [$label1->id, $label2->id]);
@@ -1012,9 +1033,9 @@ class external_test extends testcase {
 
         // Draft from the user.
 
-        $message = message::create($course, $user1, $time);
-        $message->update('Subject 1', 'Content 1', FORMAT_HTML, $time);
-        $message->add_recipient($user2, message::ROLE_TO);
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $message = message::create($data);
 
         $result = external::set_labels($message->id, [$label1->id, $label2->id]);
         $this->assertNull($result);
@@ -1028,9 +1049,10 @@ class external_test extends testcase {
 
         // Draft to the user (no permission).
 
-        $message = message::create($course, $user2, $time);
-        $message->update('Subject 2', 'Content 2', FORMAT_HTML, $time);
-        $message->add_recipient($user1, message::ROLE_TO);
+        $data = message_data::new($course, $user2);
+        $data->to = [$user1];
+        $data->subject = 'Subject';
+        $message = message::create($data);
 
         try {
             $result = external::set_labels($message->id, [$label1->id, $label2->id]);
@@ -1041,9 +1063,10 @@ class external_test extends testcase {
 
         // Label of another user.
 
-        $message = message::create($course, $user2, $time);
-        $message->update('Subject 2', 'Content 2', FORMAT_HTML, $time);
-        $message->add_recipient($user1, message::ROLE_TO);
+        $data = message_data::new($course, $user2);
+        $data->to = [$user1];
+        $data->subject = 'Subject';
+        $message = message::create($data);
         $message->send($time);
         try {
             external::set_labels($message->id, [$label4->id]);
@@ -1054,9 +1077,10 @@ class external_test extends testcase {
 
         // Invalid label.
 
-        $message = message::create($course, $user2, $time);
-        $message->update('Subject 2', 'Content 2', FORMAT_HTML, $time);
-        $message->add_recipient($user1, message::ROLE_TO);
+        $data = message_data::new($course, $user2);
+        $data->to = [$user1];
+        $data->subject = 'Subject';
+        $message = message::create($data);
         $message->send($time);
         try {
             external::set_labels($message->id, ['-1']);
@@ -1072,6 +1096,589 @@ class external_test extends testcase {
             $this->fail();
         } catch (exception $e) {
             $this->assertEquals('errormessagenotfound', $e->errorcode);
+        }
+    }
+
+    public function test_get_roles() {
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user = new user($generator->create_user());
+        $generator->enrol_user($user->id, $course->id);
+        $this->setUser($user->id);
+
+        $expected = [];
+        foreach ($course->get_viewable_roles($user) as $id => $name) {
+            $expected[] = ['id' => $id, 'name' => $name];
+        }
+        $result = external::get_roles($course->id);
+        \external_api::validate_parameters(external::get_roles_returns(), $result);
+        self::assertEquals($expected, $result);
+
+        // User not enrolled in course.
+
+        $course = new course($generator->create_course());
+        try {
+            external::get_roles($course->id);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errorcoursenotfound', $e->errorcode);
+        }
+
+        // Inexistent course.
+
+        try {
+            external::get_roles(0);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errorcoursenotfound', $e->errorcode);
+        }
+    }
+
+    public function test_get_groups() {
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course(['groupmode' => SEPARATEGROUPS]));
+        $group1 = $generator->create_group(['courseid' => $course->id]);
+        $group2 = $generator->create_group(['courseid' => $course->id]);
+        $group3 = $generator->create_group(['courseid' => $course->id]);
+        $user = new user($generator->create_user());
+        $generator->enrol_user($user->id, $course->id);
+        $generator->create_group_member(['userid' => $user->id, 'groupid' => $group1->id]);
+        $generator->create_group_member(['userid' => $user->id, 'groupid' => $group2->id]);
+        self::setUser($user->id);
+
+        $expected = [
+            ['id' => $group1->id, 'name' => $group1->name],
+            ['id' => $group2->id, 'name' => $group2->name],
+        ];
+        $result = external::get_groups($course->id);
+        \external_api::validate_parameters(external::get_groups_returns(), $result);
+        self::assertEquals($expected, $result);
+
+        // User not enrolled in course.
+
+        $course = new course($generator->create_course());
+        try {
+            external::get_groups($course->id);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errorcoursenotfound', $e->errorcode);
+        }
+
+        // Inexistent course.
+
+        try {
+            external::get_groups(0);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errorcoursenotfound', $e->errorcode);
+        }
+    }
+
+    public function test_search_users() {
+        $generator = self::getDataGenerator();
+        $users = user_search_test::generate_data();
+
+        foreach (user_search_test::cases($users) as $search) {
+            $this->setUser($search->user->id);
+            $query = ['courseid' => $search->course->id];
+            if ($search->roleid) {
+                $query['roleid'] = $search->roleid;
+            }
+            if ($search->groupid) {
+                $query['groupid'] = $search->groupid;
+            }
+            if (\core_text::strlen($search->fullname)) {
+                $query['fullname'] = $search->fullname;
+            }
+            if ($search->include) {
+                $query['include'] = $search->include;
+            }
+
+            $expected = external::search_users_response($search->fetch());
+            $result = external::search_users($query);
+            \external_api::validate_parameters(external::search_users_returns(), $result);
+            self::assertEquals($expected, $result, $search);
+
+            // Offset and limit.
+
+            $expected = external::search_users_response($search->fetch(5, 10));
+            $result = external::search_users($query, 5, 10);
+            \external_api::validate_parameters(external::search_users_returns(), $result);
+            $this->assertEquals($expected, $result, $search . "\noffset: 5\n limit: 10");
+        }
+
+        // User not enrolled in course.
+
+        $course = new course($generator->create_course());
+        $query = ['courseid' => $course->id];
+        try {
+            external::search_users($query);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errorcoursenotfound', $e->errorcode);
+        }
+
+        // Inexistent course.
+
+        $query = ['courseid' => 0];
+        try {
+            external::search_users($query);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errorcoursenotfound', $e->errorcode);
+        }
+    }
+
+    public function test_get_message_form() {
+        $generator = $this->getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $user4 = new user($generator->create_user());
+        $user5 = new user($generator->create_user());
+        $generator->enrol_user($user1->id, $course->id);
+        $time = make_timestamp(2021, 10, 11, 12, 0);
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2, $user3];
+        $data->cc = [$user4];
+        $data->bcc = [$user5];
+        $data->subject = 'Subject';
+        $data->content = 'Message content';
+        $data->format = FORMAT_PLAIN;
+        $data->time = $time;
+        self::create_draft_file($data->draftitemid, 'file.txt', 'File content');
+        $message = message::create($data);
+        self::setUser($user1->id);
+
+        $editortextpattern = '/.*<textarea[^>]* name="content\[text\]"[^>]*>([^<]*)<\/textarea>.*/';
+        $editorformatpattern = '/.*<input[^>]* name="content\[format\]"[^>]* value="(\d+)".*/';
+        $editoritemidpattern = '/.*<input[^>]* name="content\[itemid\]"[^>]* value="(\d+)".*/';
+        $filemanagerpattern = '/.*<input[^>]* value="(\d+)"[^>]* name="attachments".*/';
+
+        $result = external::get_message_form($message->id);
+
+        \external_api::validate_parameters(external::get_message_form_returns(), $result);
+        $html = format_text($data->content, $data->format, ['filter' => false, 'para' => false]);
+        self::assertGreaterThan(0, $result['draftitemid']);
+        self::assert_draft_files(['file.txt' => 'File content'], $result['draftitemid']);
+        preg_match($editortextpattern, $result['editorhtml'], $matches);
+        self::assertCount(2, $matches);
+        self::assertEquals($html, $matches[1]);
+        preg_match($editorformatpattern, $result['editorhtml'], $matches);
+        self::assertCount(2, $matches);
+        self::assertEquals(FORMAT_HTML, $matches[1]);
+        preg_match($editoritemidpattern, $result['editorhtml'], $matches);
+        self::assertCount(2, $matches);
+        self::assertEquals($result['draftitemid'], $matches[1]);
+        preg_match($filemanagerpattern, $result['filemanagerhtml'], $matches);
+        self::assertCount(2, $matches);
+        self::assertEquals($result['draftitemid'], $matches[1]);
+        self::assertStringContainsString('<script', $result['javascript']);
+
+        // Inexistent message.
+
+        try {
+            external::get_message_form(0);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+        }
+
+        // Non-editable message.
+
+        $message->send($time);
+        try {
+            external::get_message_form($message->id);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+        }
+    }
+
+    public function test_create_message() {
+        $generator = $this->getDataGenerator();
+        $course = new course($generator->create_course());
+        $user = new user($generator->create_user());
+        $generator->enrol_user($user->id, $course->id);
+        $now = time();
+        self::setUser($user->id);
+
+        $result = external::create_message($course->id);
+
+        \external_api::validate_parameters(external::create_message_returns(), $result);
+        $draft = message::fetch($result);
+        self::assertNotNull($draft);
+        self::assertTrue($draft->draft);
+        self::assertEquals($course, $draft->course);
+        self::assertEquals('', $draft->subject);
+        self::assertEquals('', $draft->content);
+        self::assertEquals(FORMAT_HTML, $draft->format);
+        self::assertEquals([$user->id => message::ROLE_FROM], $draft->roles);
+        self::assertGreaterThanOrEqual($now, $draft->time);
+
+        // User not enrolled in course.
+
+        $course = new course($generator->create_course());
+        try {
+            external::create_message($course->id);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errorcoursenotfound', $e->errorcode);
+        }
+
+        // Inexistent course.
+
+        try {
+            external::create_message(0);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errorcoursenotfound', $e->errorcode);
+        }
+    }
+
+    public function test_reply_message() {
+        $generator = $this->getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $user4 = new user($generator->create_user());
+        $user5 = new user($generator->create_user());
+        $generator->enrol_user($user1->id, $course->id);
+        $generator->enrol_user($user2->id, $course->id);
+        $time = make_timestamp(2021, 10, 11, 12, 0);
+        $now = time();
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2, $user3];
+        $data->cc = [$user4];
+        $data->bcc = [$user5];
+        $data->subject = 'Subject';
+        $data->content = 'Message content';
+        $data->format = FORMAT_PLAIN;
+        $data->time = $time;
+        $message = message::create($data);
+        $message->send($time);
+        self::setUser($user2->id);
+
+        // Reply to sender.
+
+        $result = external::reply_message($message->id, false);
+
+        \external_api::validate_parameters(external::reply_message_returns(), $result);
+        $draft = message::fetch($result);
+        self::assertNotNull($draft);
+        self::assertTrue($draft->draft);
+        self::assertEquals($data->course, $draft->course);
+        self::assertEquals('RE: ' . $data->subject, $draft->subject);
+        self::assertEquals('', $draft->content);
+        self::assertEquals(FORMAT_HTML, $draft->format);
+        self::assertEquals([
+            $user1->id => message::ROLE_TO,
+            $user2->id => message::ROLE_FROM,
+        ], $draft->roles);
+        self::assertGreaterThanOrEqual($now, $draft->time);
+
+        // Reply to all.
+
+        $result = external::reply_message($message->id, true);
+
+        \external_api::validate_parameters(external::reply_message_returns(), $result);
+        $draft = message::fetch($result);
+        self::assertNotNull($draft);
+        self::assertEquals([
+            $user1->id => message::ROLE_TO,
+            $user2->id => message::ROLE_FROM,
+            $user3->id => message::ROLE_CC,
+            $user4->id => message::ROLE_CC,
+        ], $draft->roles);
+
+        // User cannot view message.
+
+        $course = new course($generator->create_course());
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $message = message::create($data);
+        $message->send($data->time);
+        try {
+            external::reply_message($message->id, false);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+        }
+
+        // Inexistent message.
+
+        try {
+            external::reply_message(0, false);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+        }
+
+        // User not enrolled in course.
+
+        $course = new course($generator->create_course());
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $message = message::create($data);
+        $message->send($data->time);
+        try {
+            external::reply_message($message->id, false);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+        }
+    }
+
+    public function test_forward_message() {
+        $generator = $this->getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $generator->enrol_user($user1->id, $course->id);
+        $generator->enrol_user($user2->id, $course->id);
+        $time = make_timestamp(2021, 10, 11, 12, 0);
+        $now = time();
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $data->content = 'Message content';
+        $data->format = FORMAT_PLAIN;
+        $data->time = $time;
+        $message = message::create($data);
+        $message->send($time);
+        self::setUser($user2->id);
+
+        $result = external::forward_message($message->id);
+
+        \external_api::validate_parameters(external::forward_message_returns(), $result);
+        $draft = message::fetch($result);
+        self::assertNotNull($draft);
+        self::assertTrue($draft->draft);
+        self::assertEquals($data->course, $draft->course);
+        self::assertEquals('FW: ' . $data->subject, $draft->subject);
+        self::assertEquals('', $draft->content);
+        self::assertEquals(FORMAT_HTML, $draft->format);
+        self::assertEquals([$user2->id => message::ROLE_FROM], $draft->roles);
+        self::assertGreaterThanOrEqual($now, $draft->time);
+
+        // User cannot view message.
+
+        $course = new course($generator->create_course());
+        $data = message_data::new($course, $user1);
+        $data->to = [$user3];
+        $data->subject = 'Subject';
+        $message = message::create($data);
+        $message->send($data->time);
+        try {
+            external::forward_message($message->id);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+        }
+
+        // Inexistent message.
+
+        try {
+            external::forward_message(0);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+        }
+
+        // User not enrolled in course.
+
+        $course = new course($generator->create_course());
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $message = message::create($data);
+        $message->send($data->time);
+        try {
+            external::forward_message($message->id, false);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+        }
+    }
+
+    public function test_update_message() {
+        $generator = $this->getDataGenerator();
+        $course1 = new course($generator->create_course());
+        $course2 = new course($generator->create_course());
+        $course3 = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $user4 = new user($generator->create_user());
+        $user5 = new user($generator->create_user());
+        $generator->enrol_user($user1->id, $course1->id);
+        $generator->enrol_user($user1->id, $course2->id);
+        $time = make_timestamp(2021, 10, 11, 12, 0);
+        $now = time();
+        self::setUser($user1->id);
+
+        $data = message_data::new($course1, $user1);
+        $data->time = $time;
+        $message = message::create($data);
+
+        $data = [
+            'courseid' => $course2->id,
+            'to' => [$user2->id, $user3->id],
+            'cc' => [$user4->id],
+            'bcc' => [$user5->id],
+            'subject' => 'Message subject',
+            'content' => 'Message content',
+            'format' => FORMAT_HTML,
+            'draftitemid' => file_get_unused_draft_itemid(),
+        ];
+        self::create_draft_file($data['draftitemid'], 'file1.txt', 'File 1');
+        self::create_draft_file($data['draftitemid'], 'file2.txt', 'File 2');
+
+        $result = external::update_message($message->id, $data);
+        self::assertNull($result);
+
+        $message = message::fetch($message->id);
+        self::assertEquals($course2, $message->course);
+        self::assertEquals('Message subject', $message->subject);
+        self::assertEquals('Message content', $message->content);
+        self::assertEquals(FORMAT_HTML, $message->format);
+        self::assertGreaterThanOrEqual($now, $message->time);
+        self::assertEquals([
+            $user1->id => message::ROLE_FROM,
+            $user2->id => message::ROLE_TO,
+            $user3->id => message::ROLE_TO,
+            $user4->id => message::ROLE_CC,
+            $user5->id => message::ROLE_BCC,
+        ], $message->roles);
+        self::assert_attachments([
+            'file1.txt' => 'File 1',
+            'file2.txt' => 'File 2'
+        ], $message);
+
+        // User cannot view message.
+
+        $message = message::create(message_data::new($course3, $user1));
+        try {
+            external::update_message($message->id, $data);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+        }
+
+        // Inexistent message.
+
+        try {
+            external::update_message(0, $data);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+        }
+
+        // User not enrolled in course.
+
+        $message = message::create(message_data::new($course1, $user1));
+        $data['courseid'] = $course3->id;
+        try {
+            external::update_message($message->id, $data);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errorcoursenotfound', $e->errorcode);
+        }
+    }
+
+    public function test_send_message() {
+        $generator = $this->getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $user4 = new user($generator->create_user());
+        $user5 = new user($generator->create_user());
+        $user6 = new user($generator->create_user());
+        $generator->enrol_user($user1->id, $course->id);
+        $generator->enrol_user($user2->id, $course->id);
+        $generator->enrol_user($user3->id, $course->id);
+        $generator->enrol_user($user4->id, $course->id);
+        $generator->enrol_user($user5->id, $course->id);
+        $time = make_timestamp(2021, 10, 11, 12, 0);
+        $now = time();
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2, $user3];
+        $data->cc = [$user4];
+        $data->bcc = [$user5];
+        $data->subject = 'Subject';
+        $data->content = 'Message content';
+        $data->format = FORMAT_PLAIN;
+        $data->time = $time;
+        self::create_draft_file($data->draftitemid, 'file.txt', 'File content');
+        $message = message::create($data);
+        self::setUser($user1->id);
+
+        $result = external::send_message($message->id);
+
+        self::assertNull($result);
+        $message = message::fetch($message->id);
+        self::assertFalse($message->draft);
+        self::assertGreaterThanOrEqual($now, $message->time);
+
+        // User cannot edit message.
+
+        try {
+            external::send_message($message->id);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+        }
+
+        // Inexistent message.
+
+        try {
+            external::send_message(0);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+        }
+
+        // Empty subject.
+
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $message = message::create($data);
+        try {
+            external::send_message($message->id);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('erroremptysubject', $e->errorcode);
+        }
+
+        // No recipients.
+
+        $data = message_data::new($course, $user1);
+        $data->subject = 'Subject';
+        $message = message::create($data);
+        try {
+            external::send_message($message->id);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('erroremptyrecipients', $e->errorcode);
+        }
+
+        // Invalid recipients.
+
+        $data = message_data::new($course, $user1);
+        $data->subject = 'Subject';
+        $data->to = [$user6];
+        $message = message::create($data);
+        try {
+            external::send_message($message->id);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errorinvalidrecipients', $e->errorcode);
         }
     }
 }

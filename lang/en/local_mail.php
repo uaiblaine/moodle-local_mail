@@ -94,6 +94,7 @@ $string['errorduplicaterecipient'] = 'Duplicate message recipient';
 $string['erroremptycourse'] = 'Please specifiy a course.';
 $string['erroremptylabelname'] = 'Please specify a label name.';
 $string['erroremptyrecipients'] = 'Please specifiy at least one recipient.';
+$string['errorinvalidrecipients'] = 'One or more of the specified recipients are not valid.';
 $string['erroremptysubject'] = 'Please specify a subject.';
 $string['errorlabelnotfound'] = 'Label not found';
 $string['errormessagenotfound'] = 'Message not found';

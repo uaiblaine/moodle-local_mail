@@ -66,11 +66,11 @@ class user {
         $this->lastname = $record->lastname;
         $this->email = $record->email;
         $this->picture = (int) $record->picture;
-        $this->imagealt = $record->imagealt;
-        $this->firstnamephonetic = $record->firstnamephonetic;
-        $this->lastnamephonetic = $record->lastnamephonetic;
-        $this->middlename = $record->middlename;
-        $this->alternatename = $record->alternatename;
+        $this->imagealt = $record->imagealt ?? '';
+        $this->firstnamephonetic = $record->firstnamephonetic ?? '';
+        $this->lastnamephonetic = $record->lastnamephonetic ?? '';
+        $this->middlename = $record->middlename ?? '';
+        $this->alternatename = $record->alternatename ?? '';
     }
 
     /**
@@ -87,6 +87,16 @@ class user {
     }
 
     /**
+     * Returns whether the user can send mail to a user in a course.
+     *
+     * @param course $course Course.
+     * @return bool
+     */
+    public function can_send_mail(course $course, user $user) {
+        return $this->can_use_mail($course) && $user->can_use_mail($course);
+    }
+
+    /**
      * Returns whether the user can use mail in a course.
      *
      * @param course $course Course.
@@ -94,7 +104,7 @@ class user {
      */
     public function can_use_mail(course $course) {
         return is_enrolled($course->context(), $this->id, 'local/mail:usemail', true) &&
-            ($course->visible || has_capability('moodle/course:viewhiddencourses', $course->context()));
+            ($course->visible || has_capability('moodle/course:viewhiddencourses', $course->context(), $this->id, false));
     }
 
     /**
@@ -167,7 +177,10 @@ class user {
         $select = "id $sqlid AND id <> :guestid AND deleted = 0";
         $params['guestid'] = $CFG->siteguest;
         $fields = implode(',', \core_user\fields::get_picture_fields());
-        $sort = 'lastname, firstname';
+
+        list($sort, $sortparams) = users_order_by_sql();
+        $params = array_merge($params, $sortparams);
+
         $records = $DB->get_records_select('user', $select, $params, $sort, $fields);
 
         $users = [];
@@ -197,12 +210,29 @@ class user {
 
         foreach (enrol_get_users_courses($this->id, true) as $record) {
             $context = \context_course::instance($record->id);
-            if (has_capability('local/mail:usemail', $context, $this->id)) {
+            if (has_capability('local/mail:usemail', $context, $this->id, false)) {
                 $courses[$record->id] = new course($record);
             }
         }
 
         return $courses;
+    }
+
+    /**
+     * Returns the roles of a user in the course.
+     *
+     * @param course $course Course.
+     * @return string[] Array of role names, indexed by ID.
+     */
+    public function get_roles(course $course): array {
+        $result = [];
+        $courseroles = get_viewable_roles($course->context(), $this->id);
+        foreach (get_user_roles($course->context(), $this->id, false) as $ra) {
+            if (isset($courseroles[$ra->roleid])) {
+                $result[$ra->roleid] = $courseroles[$ra->roleid];
+            }
+        }
+        return $result;
     }
 
     /**

@@ -95,6 +95,7 @@ $string['erroremptylabelname'] = 'Indiqueu un nom d\'etiqueta.';
 $string['erroremptyrecipients'] = 'Indiqueu un destinatari com a mínim.';
 $string['erroremptysubject'] = 'Indiqueu l\'assumpte.';
 $string['errorinvalidcolor'] = 'Color no vàlid';
+$string['errorinvalidrecipients'] = 'Un o diversos dels destinataris indicats no són vàlids.';
 $string['errorlabelnotfound'] = 'No s\'ha trobat l\'etiqueta';
 $string['errormessagenotfound'] = 'No s\'ha trobat el missatge';
 $string['errorrepeatedlabelname'] = 'El nom d\'etiqueta ja existeix';

@@ -63,9 +63,12 @@ const MESSAGE_LABEL_SD = 1;
 set_debugging(DEBUG_DEVELOPER, true);
 
 function main() {
-    global $DB;
+    global $CFG, $DB;
 
     raise_memory_limit(MEMORY_HUGE);
+
+    // Run script as an admin user, to be able to use file draft areas.
+    cron_setup_user();
 
     $countperuser = MESSAGES_PER_USER_PER_COURSE;
     $countperuser = (int) cli_input("Messages per user per course? [$countperuser]", $countperuser);
@@ -117,8 +120,10 @@ function delete_messages(array $courses) {
     }
 }
 
-function add_random_attachments(\file_storage $fs, message $message) {
-    $context = $message->course->context();
+function add_random_attachments(\file_storage $fs, message_data $data) {
+    global $USER;
+
+    $context = \context_user::instance($USER->id);
 
     $filenames = [];
 
@@ -132,34 +137,42 @@ function add_random_attachments(\file_storage $fs, message $message) {
         $filenames[] = $filename;
         $filerecord = [
             'contextid' => $context->id,
-            'component' => 'local_mail',
-            'filearea' => 'message',
-            'itemid' => $message->id,
+            'component' => 'user',
+            'filearea' => 'draft',
+            'itemid' => $data->draftitemid,
             'filepath' => '/',
             'filename' => $filename,
-            'timecreated' => (int) $message->time,
-            'timemodified' => (int) $message->time,
-            'userid' => $message->sender()->id,
+            'timecreated' => (int) $data->time,
+            'timemodified' => (int) $data->time,
+            'userid' => $data->sender->id,
             'mimetype' => 'text/html',
         ];
         $fs->create_file_from_string($filerecord, random_content());
     }
 }
 
-function add_random_recipients(message $message, array $users): void {
-    $counts = [];
+function add_random_recipients(message_data $data, array $users): void {
+    $counts = new \stdClass;
     $maxcount = count($users) - 1;
-    $counts[message::ROLE_TO] = min($maxcount, random_count(1, TO_RECIPIENTS_EX, TO_RECIPIENTS_SD));
-    $maxcount -= $counts[message::ROLE_TO];
-    $counts[message::ROLE_CC] = min($maxcount, random_count(0, CC_RECIPIENTS_EX, CC_RECIPIENTS_SD));
-    $maxcount -= $counts[message::ROLE_CC];
-    $counts[message::ROLE_BCC] = min($maxcount, random_count(0, BCC_RECIPIENTS_EX, BCC_RECIPIENTS_SD));
+    $counts->to = min($maxcount, random_count(1, TO_RECIPIENTS_EX, TO_RECIPIENTS_SD));
+    $maxcount -= $counts->to;
+    $counts->cc = min($maxcount, random_count(0, CC_RECIPIENTS_EX, CC_RECIPIENTS_SD));
+    $maxcount -= $counts->cc;
+    $counts->bcc = min($maxcount, random_count(0, BCC_RECIPIENTS_EX, BCC_RECIPIENTS_SD));
 
-    foreach ($counts as $role => $count) {
+    $isparticipant = [$data->sender->id => true];
+    foreach ($counts as $rolename => $count) {
+        foreach ($data->$rolename as $recipient) {
+            $isparticipant[$recipient->id] = true;
+        }
+    }
+
+    foreach ($counts as $rolename => $count) {
         while ($count > 0) {
             $user = random_item($users);
-            if ($user->id != $message->sender()->id && !$message->has_recipient($user)) {
-                $message->add_recipient($user, $role);
+            if (empty($isparticipant[$user->id])) {
+                $data->{$rolename}[] = $user;
+                $isparticipant[$user->id] = true;
                 $count--;
             }
         }
@@ -188,16 +201,17 @@ function generate_course_messages(\file_storage $fs, course $course, ?user $admi
         }
         $time = (int) (($endtime - $starttime) * $i / $count + $starttime);
         if ($i > 0 && random_bool(REPLY_FREQ)) {
-            $message = generate_random_reply($fs, random_item($sentmessages), $time);
+            $data = generate_random_reply($fs, random_item($sentmessages), $time);
         } else if ($i > 0 && random_bool(FORWARD_FREQ / (1 - REPLY_FREQ))) {
-            $message = generate_random_forward($fs, random_item($sentmessages), $users, $time);
+            $data = generate_random_forward($fs, random_item($sentmessages), $users, $time);
         } else {
-            $message = generate_random_message($fs, $course, $users, $time);
+            $data = generate_random_message($fs, $course, $users, $time);
         }
+        if ($admin && $data->sender->id != $admin->id) {
+            $data->bcc[] = $admin;
+        }
+        $message = message::create($data);
         if ($i == 0 || !random_bool(DRAFT_FREQ)) {
-            if ($admin && $message->sender()->id != $admin->id && !$message->has_recipient($admin)) {
-                $message->add_recipient($admin, message::ROLE_BCC);
-            }
             $message->send($time);
             $sentmessages[] = $message;
             // Only reply and forward recent messages.
@@ -215,30 +229,41 @@ function generate_course_messages(\file_storage $fs, course $course, ?user $admi
     $transaction?->allow_commit();
 }
 
-function generate_random_forward(\file_storage $fs, message $message, array $users, int $time): message {
+function generate_random_forward(\file_storage $fs, message $message, array $users, int $time): message_data {
     $sender = random_item($message->recipients(message::ROLE_TO, message::ROLE_CC));
-    $forward = $message->forward($sender, $time);
-    add_random_attachments($fs, $message);
-    add_random_recipients($forward, $users);
-    $forward->update($forward->subject, random_content(), FORMAT_HTML, $time);
-    return $forward;
+    $data = message_data::forward($message, $sender);
+    $data->content = random_content();
+    $data->time = $time;
+
+    add_random_attachments($fs, $data);
+    add_random_recipients($data, $users);
+
+    return $data;
 }
 
-function generate_random_message(\file_storage $fs, course $course, array $users, int $time): message {
-    $message = message::create($course, random_item($users), $time);
-    add_random_attachments($fs, $message);
-    add_random_recipients($message, $users);
-    $message->update(random_sentence(), random_content(), FORMAT_HTML, $time);
-    return $message;
+function generate_random_message(\file_storage $fs, course $course, array $users, int $time): message_data {
+    $sender = random_item($users);
+    $data = message_data::new($course, $sender);
+    $data->subject = random_sentence();
+    $data->content = random_content();
+    $data->time = $time;
+
+    add_random_attachments($fs, $data);
+    add_random_recipients($data, $users);
+
+    return $data;
 }
 
-function generate_random_reply(\file_storage $fs, message $message, int $time): message {
+function generate_random_reply(\file_storage $fs, message $message, int $time): message_data {
+    $sender = random_item($message->recipients(message::ROLE_TO, message::ROLE_CC));
     $all = random_bool(REPLY_ALL_FREQ);
-    $user = random_item($message->recipients(message::ROLE_TO, message::ROLE_CC));
-    $reply = $message->reply($user, $all, $time);
-    add_random_attachments($fs, $reply);
-    $reply->update($reply->subject, random_content(), FORMAT_HTML, $time);
-    return $reply;
+    $data = message_data::reply($message, $sender, $all);
+    $data->content = random_content();
+    $data->time = $time;
+
+    add_random_attachments($fs, $data);
+
+    return $data;
 }
 
 function generate_user_labels() {

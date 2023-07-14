@@ -23,6 +23,10 @@
 
 namespace local_mail;
 
+defined('MOODLE_INTERNAL') || die;
+
+require_once(__DIR__ . '/testcase.php');
+
 /**
  * @covers \local_mail\label
  */

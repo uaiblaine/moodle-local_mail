@@ -16,6 +16,10 @@
 
 namespace local_mail;
 
+defined('MOODLE_INTERNAL') || die;
+
+require_once(__DIR__ . '/testcase.php');
+
 /**
  * @covers \local_mail\user
  */
@@ -36,9 +40,11 @@ class user_test extends testcase {
 
         // Draft.
 
-        $message1 = message::create($course, $user1, $time1);
-        $message1->add_recipient($user2, message::ROLE_TO);
-        $message1->add_recipient($user3, message::ROLE_TO);
+        $data1 = message_data::new($course, $user1);
+        $data1->subject = 'Subject 1';
+        $data1->to = [$user2];
+        $data1->cc = [$user3];
+        $message1 = message::create($data1);
 
         self::assertTrue($user1->can_view_files($message1));
         self::assertFalse($user2->can_view_files($message1));
@@ -47,7 +53,9 @@ class user_test extends testcase {
 
         // Sent message.
 
-        $message1->update('Subject', 'Content', FORMAT_HTML, $time1);
+        $data1 = message_data::draft($message1);
+        $data1->course = $course;
+        $message1->update($data1);
         $message1->send($time1);
 
         self::assertTrue($user1->can_view_files($message1));
@@ -65,8 +73,10 @@ class user_test extends testcase {
 
         // Reference of a draft.
 
-        $message2 = $message1->forward($user2, $time2);
-        $message2->add_recipient($user4, message::ROLE_TO);
+        $data2 = message_data::forward($message1, $user2);
+        $data2->to = [$user4];
+        $data2->time = $time2;
+        $message2 = message::create($data2);
 
         self::assertFalse($user4->can_view_files($message1));
 
@@ -90,22 +100,26 @@ class user_test extends testcase {
 
         // Draft.
 
-        $message1 = message::create($course1, $user1, $time1);
-        $message1->add_recipient($user2, message::ROLE_TO);
+        $data1 = message_data::new($course1, $user1);
+        $data1->subject = 'Subject 1';
+        $data1->to = [$user2];
+        $message1 = message::create($data1);
         self::assertTrue($user1->can_edit_message($message1));
         self::assertFalse($user2->can_edit_message($message1));
 
         // Sent message.
 
-        $message1->update('Subject', 'Content', FORMAT_HTML, $time1);
         $message1->send($time1);
         self::assertFalse($user1->can_edit_message($message1));
         self::assertFalse($user2->can_edit_message($message1));
 
         // Draft of a course the sender is not enrolled in.
 
-        $message2 = message::create($course2, $user1, $time2);
-        $message2->add_recipient($user2, message::ROLE_TO);
+        $data2 = message_data::new($course2, $user1);
+        $data2->subject = 'Subject 2';
+        $data2->to = [$user2];
+        $data2->time = $time2;
+        $message2 = message::create($data2);
         self::assertFalse($user1->can_edit_message($message2));
         self::assertFalse($user2->can_edit_message($message2));
     }
@@ -142,9 +156,11 @@ class user_test extends testcase {
 
         // Draft.
 
-        $message = message::create($course, $user1, $time);
-        $message->add_recipient($user2, message::ROLE_TO);
-        $message->add_recipient($user3, message::ROLE_TO);
+        $data = message_data::new($course, $user1);
+        $data->subject = 'Subject';
+        $data->to = [$user2, $user3];
+        $data->time = $time;
+        $message = message::create($data);
         self::assertTrue($user1->can_view_message($message));
         self::assertFalse($user2->can_view_message($message));
         self::assertFalse($user3->can_view_message($message));
@@ -152,7 +168,6 @@ class user_test extends testcase {
 
         // Sent message.
 
-        $message->update('Subject', 'Content', FORMAT_HTML, $time);
         $message->send($time);
         self::assertTrue($user1->can_view_message($message));
         self::assertTrue($user2->can_view_message($message));
@@ -211,29 +226,6 @@ class user_test extends testcase {
         $user = user::fetch($record->id);
 
         self::assertEquals(fullname($record), $user->fullname());
-    }
-
-    public function test_get_courses() {
-        $generator = self::getDataGenerator();
-        $record1 = $generator->create_course();
-        $record2 = $generator->create_course();
-        $record3 = $generator->create_course();
-        $record4 = $generator->create_course();
-        $record5 = $generator->create_course(['visible' => false]);
-        $record6 = $generator->create_course();
-        $user1 = new user($generator->create_user());
-        $user2 = new user($generator->create_user());
-
-        $generator->enrol_user($user1->id, $record1->id);
-        $generator->enrol_user($user1->id, $record2->id);
-        $generator->enrol_user($user2->id, $record3->id);
-        $generator->enrol_user($user1->id, $record4->id);
-        $generator->enrol_user($user1->id, $record5->id);
-        $generator->enrol_user($user1->id, $record6->id, 'guest');
-
-        $courses = $user1->get_courses();
-
-        self::assertEquals(course::fetch_many([$record4->id, $record2->id, $record1->id]), $courses);
     }
 
     public function test_picture_url() {

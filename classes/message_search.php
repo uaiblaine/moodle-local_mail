@@ -16,7 +16,7 @@
 
 namespace local_mail;
 
-class search {
+class message_search {
 
     /** @var user Search messages sent or received by this user. */
     public user $user;
@@ -67,7 +67,7 @@ class search {
     public bool $reverse = false;
 
     /**
-     * Constructs the criteria for fetch and count functions.
+     * Constructs the criteria for searching messages.
      *
      * @param user $user Search messages sent or received by this user.
      */
