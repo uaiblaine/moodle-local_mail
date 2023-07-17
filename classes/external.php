@@ -1331,15 +1331,18 @@ class external extends \external_api {
         $editor->setValue(['text' => $data->content, 'format' => $data->format, 'itemid' => $data->draftitemid]);
         $filemanager = new \MoodleQuickForm_filemanager('attachments', null, ['id' => 'local_mail_compose_filemanager'], $options);
         $filemanager->setValue($data->draftitemid);
+
         $PAGE->initialise_theme_and_output();
         $PAGE->start_collecting_javascript_requirements();
+        $editorhtml = $editor->toHtml();
+        $filemanagerhtml = $filemanager->toHtml();
         $javascript = $PAGE->requires->get_end_code();
         $PAGE->end_collecting_javascript_requirements();
 
         return [
             'draftitemid' => $data->draftitemid,
-            'editorhtml' => $editor->toHtml(),
-            'filemanagerhtml' => $filemanager->toHtml(),
+            'editorhtml' => $editorhtml,
+            'filemanagerhtml' => $filemanagerhtml,
             'javascript' => $javascript,
         ];
     }

@@ -8,6 +8,13 @@
     import type { Store } from '../lib/store';
 
     export let store: Store;
+    export let label: string;
+    export let selected: number | undefined;
+    export let required = false;
+    export let readonly = false;
+    export let primary = false;
+    export let align: 'left' | 'right' = 'left';
+    export let onChange: (id?: number) => void;
 
     let inputNode: HTMLInputElement;
     let inputText = '';
@@ -16,7 +23,7 @@
     let nameField: 'shortname' | 'fullname';
 
     $: nameField = $store.settings.filterbycourse == 'shortname' ? 'shortname' : 'fullname';
-    $: currentCourse = $store.courses.find((course) => course.id == $store.params.courseid);
+    $: currentCourse = $store.courses.find((course) => course.id == selected);
     $: inputPattern = new RegExp(escape(inputText.trim()).replaceAll(/\s+/gu, '\\s+'), 'giu');
     $: dropdownCourses = $store.courses.filter((course) => course[nameField].match(inputPattern));
     $: dropdownIconClass = !entering ? 'fa-caret-down' : inputText ? 'fa-times' : 'fa-caret-up';
@@ -48,13 +55,15 @@
     };
 
     const selectAllCourses = async () => {
-        await store.selectCourse();
+        await onChange();
+        selected = undefined;
         entering = false;
         inputText = '';
     };
 
     const selectCourse = async (course: Course) => {
-        await store.selectCourse(course.id);
+        await onChange(course.id);
+        selected = course.id;
         entering = false;
         inputText = '';
     };
@@ -68,10 +77,7 @@
     };
 </script>
 
-<div
-    class="local-mail-course-filter position-relative d-flex ml-auto mr-0 ml-md-0 mr-md-auto"
-    use:blur={closeDropdown}
->
+<div class="local-mail-course-select position-relative d-flex" use:blur={closeDropdown}>
     <div
         class="position-absolute h-100 d-flex align-items-center px-2 flex-shrink-1"
         style="top: 0; left: 0"
@@ -79,9 +85,9 @@
         <i class="fa fa-fw fa-filter" aria-hidden="true" />
     </div>
 
-    {#if $store.params.tray == 'course'}
+    {#if readonly}
         <div
-            class="local-mail-course-filter-input alert-secondary form-control pl-5 pr-2 text-left"
+            class="alert-secondary form-control pl-5 pr-2 text-left"
             use:truncate={currentCourse?.[nameField] || ''}
         >
             {currentCourse?.[nameField]}
@@ -89,9 +95,9 @@
     {:else if entering || !currentCourse}
         <input
             type="text"
-            class="local-mail-course-filter-input form-control px-5 text-truncate"
-            placeholder={$store.strings.filterbycourse}
-            aria-label={$store.strings.filterbycourse}
+            class="form-control px-5 text-truncate"
+            placeholder={label}
+            aria-label={label}
             bind:value={inputText}
             bind:this={inputNode}
             on:focus={openDropdown}
@@ -99,15 +105,18 @@
         />
     {:else}
         <button
-            class="local-mail-course-filter-input alert-primary form-control px-5 text-left"
+            type="button"
+            class="form-control px-5 text-left"
+            class:alert-primary={primary}
             use:truncate={currentCourse?.[nameField] || ''}
             on:click={toggleDropdown}
         >
             {currentCourse?.[nameField]}
         </button>
     {/if}
-    {#if $store.params.tray != 'course'}
+    {#if !readonly}
         <button
+            type="button"
             aria-expanded={entering}
             class="btn position-absolute h-100 d-flex align-items-center px-2"
             style="top: 0; right: 0"
@@ -119,16 +128,18 @@
     {/if}
 
     {#if entering}
-        <div class="dropdown-menu dropdown-menu-right dropdown-menu-md-left show">
-            <button
-                type="button"
-                class="dropdown-item text-truncate"
-                on:click={() => selectAllCourses()}
-            >
-                {$store.strings.allcourses}
-            </button>
+        <div class="dropdown-menu dropdown-menu-{align} show">
+            {#if !required}
+                <button
+                    type="button"
+                    class="dropdown-item text-truncate"
+                    on:click={() => selectAllCourses()}
+                >
+                    {$store.strings.allcourses}
+                </button>
 
-            <div class="dropdown-divider" />
+                <div class="dropdown-divider" />
+            {/if}
             {#each dropdownCourses as course (course.id)}
                 <button
                     type="button"
@@ -148,17 +159,17 @@
 </div>
 
 <style>
-    .local-mail-course-filter {
+    .local-mail-course-select {
         min-width: 0;
         flex-grow: 1;
-        max-width: 20rem;
+        width: 100%;
     }
 
-    .local-mail-course-filter .dropdown-menu {
+    .local-mail-course-select .dropdown-menu {
         max-width: 90vw;
     }
 
-    .local-mail-course-filter .dropdown-item :global(mark) {
+    .local-mail-course-select .dropdown-item :global(mark) {
         padding-left: 0;
         padding-right: 0;
         background-color: rgba(255, 255, 0, 0.2);

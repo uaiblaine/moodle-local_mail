@@ -4,15 +4,16 @@
     import { onDestroy } from 'svelte';
     import {
         callServices,
-        type Query,
+        type MessageQuery,
         type MessageSummary,
         type ServiceError,
         type SearchMessagesRequest,
+        RecipientType,
     } from '../lib/services';
     import type { Store, ViewParams } from '../lib/store';
     import ListMessageSubject from './ListMessageSubject.svelte';
     import ListMessageUsers from './ListMessageUsers.svelte';
-    import { composeUrl, viewUrl } from '../lib/url';
+    import { viewUrl } from '../lib/url';
 
     export let store: Store;
     export let enabled: boolean;
@@ -41,13 +42,13 @@
 
         timeoutId = window.setTimeout(async () => {
             const params = $store.params;
-            const query: Query = {
+            const query: MessageQuery = {
                 courseid: params.courseid,
                 labelid: params.tray == 'label' ? params.labelid : undefined,
                 draft: params.tray == 'drafts' ? true : params.tray == 'sent' ? false : undefined,
                 roles:
                     params.tray == 'inbox'
-                        ? ['to', 'cc', 'bcc']
+                        ? Object.values(RecipientType)
                         : params.tray == 'sent'
                         ? ['from']
                         : undefined,
@@ -119,7 +120,7 @@
             <a
                 class="dropdown-item local-mail-incremental-search-item"
                 class:font-weight-bold={message.unread}
-                href={message.draft ? composeUrl(message.id) : viewUrl(messageParams(message, i))}
+                href={viewUrl(messageParams(message, i))}
                 on:click={clickHandler(message, i)}
             >
                 <ListMessageSubject {store} {message} />

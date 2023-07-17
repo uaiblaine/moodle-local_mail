@@ -1,7 +1,7 @@
 import Navbar from './components/Navbar.svelte';
 import View from './components/View.svelte';
 import type { Preferences, Settings, Strings } from './lib/services';
-import { createStore, type ViewParams } from './lib/store';
+import { createStore } from './lib/store';
 
 import './global.css';
 
@@ -38,7 +38,8 @@ async function init() {
                 drafts: store.get().drafts,
                 courses: store.get().courses,
                 labels: store.get().labels,
-                onClick: (params: ViewParams) => store.navigate(params),
+                onClick: store.navigate,
+                onError: store.setError,
             },
         });
 
@@ -52,7 +53,6 @@ async function init() {
                 courses: state.courses,
                 labels: state.labels,
                 params: state.params,
-                onClick: (params: ViewParams) => store.navigate(params),
             });
         });
     }

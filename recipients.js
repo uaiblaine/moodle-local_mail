@@ -104,7 +104,6 @@ YUI(M.yui.loader).use('io-base', 'node', 'json-parse', 'panel', 'datatable-base'
     // Failure call.
     var handleFailure = function (transactionid, response, args) {
         clearInterval(timeout);
-        console.log(response);
     };
 
     // Update screen data and async call.

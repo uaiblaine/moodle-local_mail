@@ -22,8 +22,8 @@
             : null;
 
     $: messages = Array.from($store.selectedMessages.values());
-    $: someRead = messages.some((message) => !message.unread);
-    $: someUnread = messages.some((message) => message.unread);
+    $: someRead = messages.some((message) => !message.draft && !message.unread);
+    $: someUnread = messages.some((message) => !message.draft && message.unread);
     $: someStarred = messages.some((message) => message.starred);
     $: someUnstarred = messages.some((message) => !message.starred);
     $: disabled =
@@ -42,7 +42,7 @@
     const setUnread = (unread: boolean) => {
         expanded = false;
         store.setUnread(
-            messages.map((message) => message.id),
+            messages.filter((message) => !message.draft).map((message) => message.id),
             unread,
         );
     };

@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { Message } from '../lib/services';
+    import { RecipientType, type Message } from '../lib/services';
     import { type Store } from '../lib/store';
 
     export let store: Store;
@@ -29,7 +29,7 @@
                 {message.sender.fullname}
             </a>
         </div>
-        {#each ['to', 'cc', 'bcc'] as type}
+        {#each Object.values(RecipientType) as type}
             {#if recipients(type).length > 0}
                 <div class="mb-2">
                     <span> {$store.strings[type]}: </span>

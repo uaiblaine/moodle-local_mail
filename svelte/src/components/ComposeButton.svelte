@@ -1,14 +1,54 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { Strings } from '../lib/services';
-    import { createUrl } from '../lib/url';
+    import {
+        callServices,
+        type Course,
+        type CreateMessageRequest,
+        type ServiceError,
+        type Strings,
+    } from '../lib/services';
+    import type { ViewParams } from '../lib/store';
+    import { viewUrl } from '../lib/url';
 
     export let strings: Strings;
     export let courseid: number | undefined = undefined;
+    export let courses: ReadonlyArray<Course>;
+    export let onClick: ((params: ViewParams) => void) | undefined;
+    export let onError: ((error: ServiceError) => void) | undefined;
+
+    const handleClick = async (event: Event) => {
+        const request: CreateMessageRequest = {
+            methodname: 'create_message',
+            courseid: courseid || courses[0].id,
+        };
+
+        let responses: unknown[];
+        try {
+            responses = await callServices([request]);
+        } catch (error) {
+            if (onError) {
+                onError(error as ServiceError);
+            } else {
+                alert((error as ServiceError).message);
+            }
+            return;
+        }
+        const params: ViewParams = {
+            tray: 'drafts',
+            messageid: responses.pop() as number,
+            courseid: request.courseid,
+        };
+        if (onClick) {
+            event.preventDefault();
+            onClick(params);
+        } else {
+            window.location.href = viewUrl(params);
+        }
+    };
 </script>
 
-<a class="btn btn-primary text-truncate px-3" role="button" href={createUrl(courseid)}>
+<button type="button" class="btn btn-primary text-truncate px-3" on:click={handleClick}>
     <i class="icon fa fa-fw fa-edit mr-1" />
     {strings.compose}
-</a>
+</button>

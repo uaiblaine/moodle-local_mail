@@ -29,6 +29,7 @@
                 <div class="px-1 mr-auto">{toast.text}</div>
                 {#if toast.undo}
                     <button
+                        type="button"
                         class="local-mail-toast-undo btn font-weight-bold px-2 py-0 ml-3"
                         on:click={() => store.undo(toast)}
                     >
@@ -37,6 +38,7 @@
                 {/if}
 
                 <button
+                    type="button"
                     class="btn px-2 py-0 ml-2 text-white-50"
                     title={$store.strings.close}
                     on:click={() => store.hideToast(toast)}

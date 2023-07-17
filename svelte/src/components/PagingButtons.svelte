@@ -87,6 +87,7 @@
 
     <div class="btn-group d-flex flex-shrink-1" class:btn-group={!compact} role="group">
         <button
+            type="button"
             class="btn btn-secondary"
             class:btn-secondary={!transparent}
             disabled={!prevParams}
@@ -101,6 +102,7 @@
             </div>
         {/if}
         <button
+            type="button"
             class="btn"
             class:btn-secondary={!transparent}
             disabled={!nextParams}

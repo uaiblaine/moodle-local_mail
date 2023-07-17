@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import { blur } from '../actions/blur';
-    import type { Course, Label, Settings, Strings } from '../lib/services';
+    import type { Course, Label, ServiceError, Settings, Strings } from '../lib/services';
     import type { ViewParams } from '../lib/store';
     import ComposeButton from './ComposeButton.svelte';
     import MenuComponent from './Menu.svelte';
@@ -17,6 +17,7 @@
     export let labels: ReadonlyArray<Label>;
     export let params: ViewParams | undefined = undefined;
     export let onClick: ((params: ViewParams) => void) | undefined = undefined;
+    export let onError: ((error: ServiceError) => void) | undefined = undefined;
 
     let expanded = false;
     let viewportWidth: number;
@@ -65,7 +66,7 @@
             class="local-mail-navbar-dropdown dropdown-menu dropdown-menu-right show p-0 overflow-auto"
         >
             <div class="d-flex justify-content-between pl-3 pr-2 py-2">
-                <ComposeButton {strings} />
+                <ComposeButton {strings} {courses} {onClick} {onError} />
                 <PreferencesButton {strings} />
             </div>
             <hr class="m-0" />

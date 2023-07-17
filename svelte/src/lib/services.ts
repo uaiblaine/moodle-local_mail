@@ -1,4 +1,4 @@
-import { require } from './amd';
+import { require, type CoreAjax } from './amd';
 
 export type ServiceRequest =
     | SetPreferencesRequest
@@ -14,7 +14,16 @@ export type ServiceRequest =
     | CreateLabelRequest
     | UpdateLabelRequest
     | DeleteLabelRequest
-    | SetLabelsRequest;
+    | SetLabelsRequest
+    | GetRolesRequest
+    | GetGroupsRequest
+    | SearchUsersRequest
+    | GetMessageFormRequest
+    | CreateMessageRequest
+    | ReplyMessageRequest
+    | ForwardMessageRequest
+    | UpdateMessageRequest
+    | SendMessageRequest;
 
 export interface SetPreferencesRequest {
     readonly methodname: 'set_preferences';
@@ -25,11 +34,15 @@ export interface GetCoursesRequest {
     readonly methodname: 'get_courses';
 }
 
+export type GetCoursesResponse = ReadonlyArray<Course>;
+
 export interface GetLabelsRequest {
     readonly methodname: 'get_labels';
 }
 
-export interface Query {
+export type GetLabelsResponse = ReadonlyArray<Label>;
+
+export interface MessageQuery {
     readonly courseid?: number;
     readonly labelid?: number;
     readonly draft?: boolean;
@@ -49,20 +62,26 @@ export interface Query {
 
 export interface CountMessagesRequest {
     readonly methodname: 'count_messages';
-    readonly query: Query;
+    readonly query: MessageQuery;
 }
+
+export type CountMessagesResponse = number;
 
 export interface SearchMessagesRequest {
     readonly methodname: 'search_messages';
-    readonly query: Query;
+    readonly query: MessageQuery;
     readonly offset?: number;
     readonly limit?: number;
 }
+
+export type SearchMessagesResponse = ReadonlyArray<MessageSummary>;
 
 export interface GetMessageRequest {
     readonly methodname: 'get_message';
     readonly messageid: number;
 }
+
+export type GetMessageResponse = Message;
 
 export interface SetUnreadRequest {
     readonly methodname: 'set_unread';
@@ -116,35 +135,87 @@ export interface SetLabelsRequest {
     readonly labelids: ReadonlyArray<number>;
 }
 
-export type ServiceResponse<T> = T extends SetPreferencesRequest
-    ? void
-    : T extends GetCoursesRequest
-    ? ReadonlyArray<Course>
-    : T extends GetLabelsRequest
-    ? ReadonlyArray<Label>
-    : T extends CountMessagesRequest
-    ? number
-    : T extends SearchMessagesRequest
-    ? ReadonlyArray<MessageSummary>
-    : T extends GetMessageRequest
-    ? Message
-    : T extends SetUnreadRequest
-    ? void
-    : T extends SetStarredRequest
-    ? void
-    : T extends SetDeletedRequest
-    ? void
-    : T extends EmptyTrashRequest
-    ? void
-    : T extends CreateLabelRequest
-    ? number
-    : T extends UpdateLabelRequest
-    ? void
-    : T extends DeleteLabelRequest
-    ? void
-    : T extends SetLabelsRequest
-    ? void
-    : unknown;
+export interface GetRolesRequest {
+    readonly methodname: 'get_roles';
+    readonly courseid: number;
+}
+
+export type GetRolesResponse = ReadonlyArray<Role>;
+
+export interface GetGroupsRequest {
+    readonly methodname: 'get_groups';
+    readonly courseid: number;
+}
+
+export type GetGroupsResponse = ReadonlyArray<Group>;
+
+export interface UserQuery {
+    readonly courseid: number;
+    readonly roleid?: number;
+    readonly groupid?: number;
+    readonly fullname?: string;
+    readonly include?: number[];
+}
+
+export interface SearchUsersRequest {
+    readonly methodname: 'search_users';
+    readonly query: UserQuery;
+    readonly offset?: number;
+    readonly limit?: number;
+}
+
+export type SearchUsersResponse = ReadonlyArray<User>;
+
+export interface GetMessageFormRequest {
+    readonly methodname: 'get_message_form';
+    readonly messageid: number;
+}
+
+export type GetMessageFormeResponse = MessageForm;
+
+export interface CreateMessageRequest {
+    readonly methodname: 'create_message';
+    readonly courseid: number;
+}
+
+export type CreateMessageResponse = number;
+
+export interface ReplyMessageRequest {
+    readonly methodname: 'reply_message';
+    readonly messageid: number;
+    readonly all: boolean;
+}
+
+export type ReplyMessageResponse = number;
+
+export interface ForwardMessageRequest {
+    readonly methodname: 'forward_message';
+    readonly messageid: number;
+}
+
+export type ForwardMessageResponse = number;
+
+export interface MessageData {
+    readonly courseid: number;
+    readonly to: number[];
+    readonly cc: number[];
+    readonly bcc: number[];
+    readonly subject: string;
+    readonly content: string;
+    readonly format: number;
+    readonly draftitemid: number;
+}
+
+export interface UpdateMessageRequest {
+    readonly methodname: 'update_message';
+    readonly messageid: number;
+    readonly data: MessageData;
+}
+
+export interface SendMessageRequest {
+    readonly methodname: 'send_message';
+    readonly messageid: number;
+}
 
 export interface Settings {
     globaltrays: ReadonlyArray<string>;
@@ -190,7 +261,7 @@ export interface MessageSummary {
     readonly starred: boolean;
     readonly deleted: boolean;
     readonly course: MessageCourse;
-    readonly sender: Sender;
+    readonly sender: User;
     readonly recipients: ReadonlyArray<Recipient>;
     readonly labels: ReadonlyArray<MessageLabel>;
 }
@@ -201,19 +272,22 @@ export interface MessageCourse {
     readonly fullname: string;
 }
 
-export interface Sender {
+export interface User {
     readonly id: number;
     readonly fullname: string;
     readonly pictureurl: string;
     readonly profileurl: string;
 }
 
-export interface Recipient {
-    readonly type: 'to' | 'cc' | 'bcc';
-    readonly id: number;
-    readonly fullname: string;
-    readonly pictureurl: string;
-    readonly profileurl: string;
+export enum RecipientType {
+    TO = 'to',
+    CC = 'cc',
+    BCC = 'bcc',
+}
+
+export interface Recipient extends User {
+    readonly type: RecipientType;
+    readonly isvalid?: boolean;
 }
 
 export interface MessageLabel {
@@ -237,7 +311,7 @@ export interface Reference {
     readonly time: number;
     readonly shorttime: string;
     readonly fulltime: string;
-    readonly sender: Sender;
+    readonly sender: User;
     readonly attachments: ReadonlyArray<Attachment>;
 }
 
@@ -250,15 +324,27 @@ export interface Attachment {
     readonly iconurl: string;
 }
 
+export interface Role {
+    readonly id: number;
+    readonly name: string;
+}
+
+export interface Group {
+    readonly id: number;
+    readonly name: string;
+}
+
+export interface MessageForm {
+    readonly editorhtml: string;
+    readonly filemanagerhtml: string;
+    readonly javascript: string;
+}
+
 export interface ServiceError {
     readonly message: string;
     readonly errorcode: string;
     readonly debuginfo?: string;
     readonly stacktrace?: string;
-}
-
-interface CoreAjax {
-    call: (requests: object[]) => Promise<unknown>[];
 }
 
 /**
@@ -267,9 +353,7 @@ interface CoreAjax {
  * @param requests List of request with method name and arguments.
  * @returns A promise to the web service responses.
  */
-export async function callServices<T extends ServiceRequest[] | []>(
-    requests: T,
-): Promise<{ [P in keyof T]: ServiceResponse<T[P]> }> {
+export async function callServices(requests: ServiceRequest[]): Promise<unknown[]> {
     const ajax = (await require('core/ajax')) as CoreAjax;
     const responses = await Promise.all(
         ajax.call(
@@ -279,5 +363,5 @@ export async function callServices<T extends ServiceRequest[] | []>(
             })),
         ),
     );
-    return responses as { [P in keyof T]: ServiceResponse<T[P]> };
+    return responses;
 }

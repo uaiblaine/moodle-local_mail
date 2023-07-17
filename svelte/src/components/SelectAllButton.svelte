@@ -40,22 +40,22 @@
     </button>
     {#if expanded}
         <div class="dropdown-menu show">
-            <button class="dropdown-item" on:click={() => selectAll('all')}>
+            <button type="button" class="dropdown-item" on:click={() => selectAll('all')}>
                 {$store.strings.all}
             </button>
-            <button class="dropdown-item" on:click={() => selectAll('none')}>
+            <button type="button" class="dropdown-item" on:click={() => selectAll('none')}>
                 {$store.strings.none}
             </button>
-            <button class="dropdown-item" on:click={() => selectAll('read')}>
+            <button type="button" class="dropdown-item" on:click={() => selectAll('read')}>
                 {$store.strings.read}
             </button>
-            <button class="dropdown-item" on:click={() => selectAll('unread')}>
+            <button type="button" class="dropdown-item" on:click={() => selectAll('unread')}>
                 {$store.strings.unread}
             </button>
-            <button class="dropdown-item" on:click={() => selectAll('starred')}>
+            <button type="button" class="dropdown-item" on:click={() => selectAll('starred')}>
                 {$store.strings.starred}
             </button>
-            <button class="dropdown-item" on:click={() => selectAll('unstarred')}>
+            <button type="button" class="dropdown-item" on:click={() => selectAll('unstarred')}>
                 {$store.strings.unstarred}
             </button>
         </div>

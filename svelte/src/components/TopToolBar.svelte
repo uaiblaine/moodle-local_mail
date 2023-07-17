@@ -2,6 +2,7 @@
 
 <script lang="ts">
     import BackButton from './BackButton.svelte';
+    import CourseSelect from './CourseSelect.svelte';
     import DeleteButton from './DeleteButton.svelte';
     import DeleteForeverButton from './DeleteForeverButton.svelte';
     import LabelsButton from './LabelsButton.svelte';
@@ -9,8 +10,8 @@
     import PagingButtons from './PagingButtons.svelte';
     import RestoreButton from './RestoreButton.svelte';
     import SelectAllButton from './SelectAllButton.svelte';
+    import SendButton from './SendButton.svelte';
     import { ViewSize, type Store } from '../lib/store';
-    import FilterByCourseInput from './FilterByCourseInput.svelte';
 
     export let store: Store;
 </script>
@@ -21,6 +22,7 @@
     {:else}
         <SelectAllButton {store} />
     {/if}
+
     {#if $store.viewSize >= ViewSize.MD}
         <div class="btn-group" role="group">
             {#if $store.params.tray == 'trash'}
@@ -33,11 +35,27 @@
             <MoreActionsButton {store} />
         </div>
     {/if}
-    {#if ['shortname', 'fullname'].includes($store.settings.filterbycourse)}
-        <FilterByCourseInput {store} />
-    {/if}
-    {#if $store.viewSize >= ViewSize.MD}
-        <PagingButtons {store} />
+    {#if $store.message?.draft}
+        <div class="ml-auto">
+            <SendButton {store} />
+        </div>
+    {:else}
+        {#if ['shortname', 'fullname'].includes($store.settings.filterbycourse)}
+            <div class="flex-grow-1 ml-auto mr-0 ml-md-0 mr-md-auto" style="max-width: 20rem">
+                <CourseSelect
+                    {store}
+                    label={$store.strings.filterbycourse}
+                    selected={$store.params.courseid}
+                    readonly={$store.params.tray == 'course'}
+                    onChange={(id) => store.selectCourse(id)}
+                    primary={true}
+                    align={$store.viewSize >= ViewSize.MD ? 'left' : 'right'}
+                />
+            </div>
+        {/if}
+        {#if $store.viewSize >= ViewSize.MD}
+            <PagingButtons {store} />
+        {/if}
     {/if}
 </div>
 

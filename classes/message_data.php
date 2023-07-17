@@ -120,7 +120,8 @@ class message_data {
             'maxbytes' => $maxbytes,
             'maxfiles' => $maxfiles,
             'return_types' => FILE_INTERNAL | FILE_EXTERNAL,
-            'subdirs' => false
+            'subdirs' => false,
+            'autosave' => false,
         ];
     }
 

@@ -11,6 +11,7 @@
 </script>
 
 <button
+    type="button"
     class="btn px-2"
     role="checkbox"
     aria-checked={Boolean($store.selectedMessages.has(message.id))}
