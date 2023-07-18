@@ -1,6 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+    import { fade } from 'svelte/transition';
+
     import { truncate } from '../actions/truncate';
     import { type Store } from '../lib/store';
     import { RecipientType, type Recipient, type User } from '../lib/services';
@@ -13,7 +15,7 @@
 {#each Object.values(RecipientType) as type}
     {@const users = Array.from(recipients.values()).filter((user) => user.type == type)}
     {#if users.length}
-        <div class=" d-flex mb-2">
+        <div transition:fade class=" d-flex mb-2">
             <div
                 class="local-mail-message-form-recipients-type flex-grow-0 flex-shrink-0 py-2 mr-2"
             >
@@ -22,6 +24,7 @@
             <div class="d-flex flex-wrap flex-shrink-1" style="min-width: 0">
                 {#each users as user (user.id)}
                     <div
+                        transition:fade
                         use:truncate={user.fullname}
                         class="local-mail-message-form-recipients-user d-flex flex-shrink align-items-center mr-2 mb-2"
                         class:alert-danger={!user.isvalid}

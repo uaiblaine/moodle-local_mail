@@ -224,7 +224,15 @@ class message_test extends testcase {
         $message2 = message::create($data2);
 
         self::assertEquals($message1, message::fetch($message1->id));
+        self::assertEquals(
+            array_keys(user::fetch_many(array_keys($message1->users))),
+            array_keys(message::fetch($message1->id)->users),
+        );
         self::assertEquals($message2, message::fetch($message2->id));
+        self::assertEquals(
+            array_keys(user::fetch_many(array_keys($message2->users))),
+            array_keys(message::fetch($message2->id)->users),
+        );
         self::assertNull(message::fetch(0));
     }
 

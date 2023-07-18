@@ -262,6 +262,11 @@ class message {
             }
         }
 
+        // Sort users.
+        foreach (array_keys($users) as $messageid) {
+            $users[$messageid] = array_intersect_key($allusers, $users[$messageid]);
+        }
+
         // Fetch labels.
         $messagelabelrecords = $DB->get_records_select('local_mail_message_labels', "messageid $sqlid", $params);
         $labelids = array_column($messagelabelrecords, 'labelid');

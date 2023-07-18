@@ -138,7 +138,7 @@
             </div>
         {/if}
         <div class="local-mail-view-main-column">
-            {#if $store.message && $store.draftForm}
+            {#if $store.message?.draft && $store.draftForm}
                 <MessageForm {store} message={$store.message} form={$store.draftForm} />
             {:else if $store.message}
                 <Message {store} message={$store.message} />
