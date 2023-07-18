@@ -16,7 +16,7 @@ export function viewUrl(params: ViewParams): string {
     if (params.messageid) {
         url += '&m=' + params.messageid;
     }
-    if (params.offset) {
+    if (params.search && params.offset) {
         url += '&o=' + params.offset;
     }
     if (params.search?.content) {

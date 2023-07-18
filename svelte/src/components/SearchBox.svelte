@@ -97,7 +97,11 @@
         entering = true;
         advancedExpanded = false;
         updateFields();
-        await store.navigate({ ...$store.params, offset: 0, search: undefined });
+        await store.navigate({
+            ...$store.params,
+            offset: undefined,
+            search: undefined,
+        });
         await tick();
         inputNode.focus();
     };

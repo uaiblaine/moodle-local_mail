@@ -13,7 +13,7 @@
         (!$store.params.search &&
             ($store.params.offset || 0) + $store.preferences.perpage < $store.totalCount);
 
-    $: hasPrev = $store.prevMessageId || (!$store.params.search && ($store.params.offset || 0) > 0);
+    $: hasPrev = $store.prevMessageId || ($store.params.search && ($store.params.offset || 0));
 
     $: nextParams = hasNext
         ? $store.message

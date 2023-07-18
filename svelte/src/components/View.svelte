@@ -39,7 +39,7 @@
             ? $store.courses.find((c) => c.id == $store.params.courseid)?.fullname || ''
             : '';
 
-    $: title = $store.message ? $store.message.subject : heading;
+    $: title = $store.message ? $store.message.subject.trim() || $store.strings.nosubject : heading;
 
     onMount(() => {
         store.setViewportSize(window.innerWidth);
@@ -53,9 +53,9 @@
     });
 
     const handleBeforeUnload = (event: Event) => {
-        if ($store.pendingDraftData) {
+        if ($store.draftData) {
             event.preventDefault();
-            store.updateDraft($store.pendingDraftData, true);
+            store.updateDraft($store.draftData, true);
             return '';
         }
     };
@@ -139,9 +139,7 @@
         {/if}
         <div class="local-mail-view-main-column">
             {#if $store.message && $store.draftForm}
-                {#key $store.message.id}
-                    <MessageForm {store} message={$store.message} form={$store.draftForm} />
-                {/key}
+                <MessageForm {store} message={$store.message} form={$store.draftForm} />
             {:else if $store.message}
                 <Message {store} message={$store.message} />
             {:else}

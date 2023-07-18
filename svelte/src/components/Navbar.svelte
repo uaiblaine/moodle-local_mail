@@ -96,5 +96,10 @@
     .local-mail-navbar-dropdown {
         width: 100vw;
         max-width: 20rem;
+        background-color: var(--light);
+        box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .local-mail-navbar-dropdown :global(.list-group-item) {
+        background-color: var(--light);
     }
 </style>

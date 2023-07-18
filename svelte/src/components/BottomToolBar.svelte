@@ -8,7 +8,6 @@
     import MoreActionsButton from './MoreActionsButton.svelte';
     import PagingButtons from './PagingButtons.svelte';
     import RestoreButton from './RestoreButton.svelte';
-    import SendButton from './SendButton.svelte';
     import { type Store } from '../lib/store';
 
     export let store: Store;
@@ -55,11 +54,7 @@
                 <DeleteButton {store} transparent={true} />
             {/if}
             <MoreActionsButton {store} transparent={true} dropup={true} />
-            {#if $store.message?.draft}
-                <SendButton {store} />
-            {:else}
-                <PagingButtons {store} transparent={true} compact={true} />
-            {/if}
+            <PagingButtons {store} transparent={true} compact={true} />
         </div>
     </div>
 </div>

@@ -8,7 +8,7 @@
 
 <button
     type="button"
-    class="local-mail-action-send btn btn-primary flex-grow-0"
+    class="local-mail-action-send btn btn-primary flex-shrink-0 text-nowrap text-truncate ml-auto"
     title={$store.strings.send}
     on:click={() => store.sendMessage()}
 >

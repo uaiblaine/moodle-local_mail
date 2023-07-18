@@ -10,14 +10,7 @@
     type="button"
     class="local-mail-back-button btn btn-secondary"
     title={$store.strings.messagelist}
-    on:click={() =>
-        store.navigate({
-            ...$store.params,
-            messageid: undefined,
-            offset:
-                Math.floor(($store.messageOffset || 0) / $store.preferences.perpage) *
-                $store.preferences.perpage,
-        })}
+    on:click={() => store.navigateToList()}
 >
     <i class="fa fa fa-fw fa-arrow-left" />
 </button>

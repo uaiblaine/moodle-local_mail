@@ -1,13 +1,12 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { onDestroy, onMount } from 'svelte';
+    import { onDestroy, onMount, tick } from 'svelte';
     import { require, type CoreFragment } from '../lib/amd';
     import {
         type Message,
         type MessageData,
         type MessageForm,
-        type Recipient,
         type RecipientType,
         type User,
     } from '../lib/services';
@@ -15,6 +14,7 @@
     import CourseSelect from './CourseSelect.svelte';
     import MessageFormRecipients from './MessageFormRecipients.svelte';
     import MessageFormUserSearch from './MessageFormUserSearch.svelte';
+    import SendButton from './SendButton.svelte';
 
     export let store: Store;
     export let message: Message;
@@ -22,23 +22,30 @@
 
     let jsNode: Element | undefined;
     let formNode: HTMLFormElement | undefined;
-    let recipients: ReadonlyMap<number, Recipient> = new Map();
 
     $: courseid = message.course.id;
     $: subject = message.subject;
     $: recipients = new Map(message.recipients.map((user) => [user.id, user]));
 
-    onMount(async () => {
-        const fragment = (await require('core/fragment')) as CoreFragment;
-        jsNode = document.createElement('script');
-        jsNode.setAttribute('type', 'text/javascript');
-        jsNode.innerHTML = fragment.processCollectedJavascript(form?.javascript || '');
-        document.head.append(jsNode);
+    $: updateJavascript(form.javascript);
+
+    onMount(() => {
+        formNode?.addEventListener('core_form/uploadChanged', () => save(false));
     });
 
     onDestroy(() => {
         jsNode?.remove();
     });
+
+    const updateJavascript = async (javascript: string) => {
+        const fragment = (await require('core/fragment')) as CoreFragment;
+        jsNode?.remove();
+        await tick();
+        jsNode = document.createElement('script');
+        jsNode.setAttribute('type', 'text/javascript');
+        jsNode.innerHTML = fragment.processCollectedJavascript(javascript);
+        document.head.append(jsNode);
+    };
 
     const handleCourseChange = (id?: number) => {
         courseid = id || $store.courses[0].id;
@@ -134,12 +141,15 @@
         />
     </div>
 
-    <div class="form-group" on:input={() => save(false)}>
+    <div class="form-group" on:change={() => save(false)}>
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {@html form.editorhtml}
     </div>
     <div class="form-group">
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {@html form.filemanagerhtml}
+    </div>
+    <div class="d-flex justify-content-end align-items-center">
+        <SendButton {store} />
     </div>
 </form>

@@ -10,8 +10,9 @@
     import PagingButtons from './PagingButtons.svelte';
     import RestoreButton from './RestoreButton.svelte';
     import SelectAllButton from './SelectAllButton.svelte';
-    import SendButton from './SendButton.svelte';
     import { ViewSize, type Store } from '../lib/store';
+    import SendButton from './SendButton.svelte';
+    import { truncate } from '../actions/truncate';
 
     export let store: Store;
 </script>
@@ -35,27 +36,29 @@
             <MoreActionsButton {store} />
         </div>
     {/if}
-    {#if $store.message?.draft}
-        <div class="ml-auto">
-            <SendButton {store} />
+    {#if !$store.message?.draft && ['shortname', 'fullname'].includes($store.settings.filterbycourse)}
+        <div class="flex-grow-1 ml-auto mr-0 ml-md-0 mr-md-auto" style="max-width: 20rem">
+            <CourseSelect
+                {store}
+                label={$store.strings.filterbycourse}
+                selected={$store.params.courseid}
+                readonly={$store.params.tray == 'course'}
+                onChange={(id) => store.selectCourse(id)}
+                primary={true}
+                align={$store.viewSize >= ViewSize.MD ? 'left' : 'right'}
+            />
         </div>
-    {:else}
-        {#if ['shortname', 'fullname'].includes($store.settings.filterbycourse)}
-            <div class="flex-grow-1 ml-auto mr-0 ml-md-0 mr-md-auto" style="max-width: 20rem">
-                <CourseSelect
-                    {store}
-                    label={$store.strings.filterbycourse}
-                    selected={$store.params.courseid}
-                    readonly={$store.params.tray == 'course'}
-                    onChange={(id) => store.selectCourse(id)}
-                    primary={true}
-                    align={$store.viewSize >= ViewSize.MD ? 'left' : 'right'}
-                />
-            </div>
-        {/if}
-        {#if $store.viewSize >= ViewSize.MD}
-            <PagingButtons {store} />
-        {/if}
+    {/if}
+    {#if $store.message?.draft && $store.draftSaved}
+        <div class="align-self-center" use:truncate={$store.strings.draftsaved}>
+            {$store.strings.draftsaved}
+        </div>
+    {/if}
+
+    {#if $store.viewSize >= ViewSize.MD}
+        <PagingButtons {store} />
+    {:else if $store.message?.draft}
+        <SendButton {store} />
     {/if}
 </div>
 
