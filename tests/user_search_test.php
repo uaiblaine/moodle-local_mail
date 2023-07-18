@@ -139,6 +139,8 @@ class user_search_test extends testcase {
             $excludedroleids = array_column(get_user_roles($context, $search->user->id, false), 'roleid');
         }
 
+        $usergroups = $search->course->get_viewable_groups($search->user);
+
         $fullnamematches = [];
         if ($search->fullname) {
             $select = $DB->sql_like($DB->sql_fullname(), '?', false, false);
@@ -156,6 +158,8 @@ class user_search_test extends testcase {
                     $excludedroleids,
                     array_column(get_user_roles($context, $user->id, false), 'roleid')
                 ) ||
+                $search->course->groupmode == SEPARATEGROUPS &&
+                !array_intersect_key($usergroups, $search->course->get_viewable_groups($user)) ||
                 $search->roleid && !user_has_role_assignment($user->id, $search->roleid, $context->id) ||
                 $search->groupid && !groups_is_member($search->groupid, $user->id) ||
                 $search->fullname && !isset($fullnamematches[$user->id]) ||
@@ -163,6 +167,7 @@ class user_search_test extends testcase {
             ) {
                 continue;
             }
+
             $result[$user->id] = $user;
         }
 

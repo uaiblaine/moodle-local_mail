@@ -234,7 +234,7 @@ class message_search {
         $params = [];
 
         $conditions = [
-            'courseid' => $this->course->id ?? array_keys($this->user->get_courses()),
+            'courseid' => $this->course->id ?? array_keys(course::fetch_by_user(($this->user))),
             'draft' => $this->draft ?? [0, 1],
             'role' => $this->roles ?: [message::ROLE_FROM, message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC],
             'unread' => $this->unread ?? [0, 1],

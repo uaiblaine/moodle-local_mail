@@ -87,16 +87,6 @@ class user {
     }
 
     /**
-     * Returns whether the user can send mail to a user in a course.
-     *
-     * @param course $course Course.
-     * @return bool
-     */
-    public function can_send_mail(course $course, user $user) {
-        return $this->can_use_mail($course) && $user->can_use_mail($course);
-    }
-
-    /**
      * Returns whether the user can use mail in a course.
      *
      * @param course $course Course.
@@ -198,41 +188,6 @@ class user {
      */
     public function fullname(): string {
         return fullname((object) $this);
-    }
-
-    /**
-     * Fetches courses where the user can use mail.
-     *
-     * @return course[] The fetched courses.
-     */
-    public function get_courses(): array {
-        $courses = [];
-
-        foreach (enrol_get_users_courses($this->id, true) as $record) {
-            $context = \context_course::instance($record->id);
-            if (has_capability('local/mail:usemail', $context, $this->id, false)) {
-                $courses[$record->id] = new course($record);
-            }
-        }
-
-        return $courses;
-    }
-
-    /**
-     * Returns the roles of a user in the course.
-     *
-     * @param course $course Course.
-     * @return string[] Array of role names, indexed by ID.
-     */
-    public function get_roles(course $course): array {
-        $result = [];
-        $courseroles = get_viewable_roles($course->context(), $this->id);
-        foreach (get_user_roles($course->context(), $this->id, false) as $ra) {
-            if (isset($courseroles[$ra->roleid])) {
-                $result[$ra->roleid] = $courseroles[$ra->roleid];
-            }
-        }
-        return $result;
     }
 
     /**

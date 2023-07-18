@@ -162,8 +162,7 @@ class course {
             return [];
         }
 
-        $accessall = has_capability('moodle/site:accessallgroups', $this->context(), $user->id);
-        $userid = $accessall || $this->groupmode == VISIBLEGROUPS ? 0 : $user->id;
+        $userid =  $this->groupmode == VISIBLEGROUPS ? 0 : $user->id;
         $groups = groups_get_all_groups($this->id, $userid, $this->defaultgroupingid);
 
         $result = [];

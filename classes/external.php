@@ -237,7 +237,7 @@ class external extends \external_api {
 
     public static function get_courses_raw() {
         $user = user::current();
-        $courses = $user->get_courses();
+        $courses = course::fetch_by_user($user);
 
         if (!$courses) {
             return [];
@@ -255,6 +255,7 @@ class external extends \external_api {
                 'shortname' => $course->shortname,
                 'fullname' => $course->fullname,
                 'visible' => $course->visible,
+                'groupmode' => $course->groupmode,
                 'unread' => $unread[$course->id] ?? 0,
             ];
         }
@@ -270,6 +271,7 @@ class external extends \external_api {
                 'fullname' => new \external_value(PARAM_TEXT, 'Full name of the course'),
                 'unread' => new \external_value(PARAM_INT, 'Number of unread messages'),
                 'visible' => new \external_value(PARAM_BOOL, 'Course visibility'),
+                'groupmode' => new \external_value(PARAM_INT, 'Group mode: 0 (no), 1 (separate) or 2 (visible)'),
             ])
         );
     }
@@ -288,7 +290,7 @@ class external extends \external_api {
         $result = [];
 
         $user = user::current();
-        $courses = $user->get_courses();
+        $courses = course::fetch_by_user($user);
 
         $search = new message_search($user);
         $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
@@ -565,6 +567,8 @@ class external extends \external_api {
                     'id' => $message->course->id,
                     'shortname' => $message->course->shortname,
                     'fullname' => $message->course->fullname,
+                    'visible' => $message->course->visible,
+                    'groupmode' => $message->course->groupmode,
                 ],
                 'sender' => [
                     'id' => $sender->id,
@@ -597,6 +601,8 @@ class external extends \external_api {
                     'id' => new \external_value(PARAM_INT, 'Id of the course'),
                     'shortname' => new \external_value(PARAM_TEXT, 'Short name of the course'),
                     'fullname' => new \external_value(PARAM_TEXT, 'Full name of the course'),
+                    'visible' => new \external_value(PARAM_BOOL, 'Course visibility'),
+                    'groupmode' => new \external_value(PARAM_INT, 'Group mode: 0 (no), 1 (separate) or 2 (visible)'),
                 ], '', VALUE_OPTIONAL),
                 'sender' => new \external_single_structure([
                     'id' => new \external_value(PARAM_INT, 'Id of the user'),
@@ -678,6 +684,8 @@ class external extends \external_api {
                 'id' => $message->course->id,
                 'shortname' => $message->course->shortname,
                 'fullname' => $message->course->fullname,
+                'visible' => $message->course->visible,
+                'groupmode' => $message->course->groupmode,
             ],
             'sender' => [
                 'id' => $sender->id,
@@ -797,6 +805,8 @@ class external extends \external_api {
                 'id' => new \external_value(PARAM_INT, 'Id of the course'),
                 'shortname' => new \external_value(PARAM_TEXT, 'Short name of the course'),
                 'fullname' => new \external_value(PARAM_TEXT, 'Full name of the course'),
+                'visible' => new \external_value(PARAM_BOOL, 'Course visibility'),
+                'groupmode' => new \external_value(PARAM_INT, 'Group mode: 0 (no), 1 (separate) or 2 (visible)'),
             ]),
             'sender' => new \external_single_structure([
                 'id' => new \external_value(PARAM_INT, 'Id of the user'),
@@ -961,7 +971,7 @@ class external extends \external_api {
 
         $user = user::current();
 
-        message::empty_trash($user, $user->get_courses());
+        message::empty_trash($user, course::fetch_by_user($user));
 
         return null;
     }

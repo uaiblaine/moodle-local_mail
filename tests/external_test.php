@@ -205,7 +205,7 @@ class external_test extends testcase {
         foreach ($users as $user) {
             $this->setUser($user->id);
             $expected = [];
-            foreach ($user->get_courses() as $course) {
+            foreach (course::fetch_by_user($user) as $course) {
                 $search = new message_search($user);
                 $search->course = $course;
                 $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
@@ -215,6 +215,7 @@ class external_test extends testcase {
                     'shortname' => $course->shortname,
                     'fullname' => $course->fullname,
                     'visible' => $course->visible,
+                    'groupmode' => $course->groupmode,
                     'unread' => $search->count(),
                 ];
             }

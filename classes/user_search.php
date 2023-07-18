@@ -126,7 +126,7 @@ class user_search {
 
         // Enrolled.
         $context = $this->course->context();
-        list($esql, $eparams) = get_enrolled_sql($context, 'local/mail:usemail', $this->groupid, true);
+        list($esql, $eparams) = get_enrolled_sql($context, 'local/mail:usemail', 0, true);
         $from[] = '{user} u';
         $from[] = "($esql) je ON je.id = u.id";
         $params = array_merge($params, $eparams);
@@ -155,6 +155,26 @@ class user_search {
             $where[] = 'ra.contextid = :contextid AND ra.roleid = :roleid';
             $params['contextid'] = $context->id;
             $params['roleid'] = $this->roleid;
+        }
+
+        // Group.
+        if ($this->groupid || $this->course->groupmode == SEPARATEGROUPS) {
+            if ($this->course->groupmode == SEPARATEGROUPS) {
+                $groupids = array_keys($this->course->get_viewable_groups($this->user));
+                if ($this->groupid) {
+                    $groupids = array_intersect($groupids, [$this->groupid]);
+                }
+            } else {
+                $groupids = [$this->groupid];
+            }
+            if ($groupids) {
+                list($groupsql, $groupparams) = $DB->get_in_or_equal($groupids, SQL_PARAMS_NAMED, 'group');
+                $where[] = "u.id IN (SELECT gm.userid FROM {groups_members} gm WHERE gm.groupid $groupsql)";
+                $params = array_merge($params, $groupparams);
+            } else {
+                // No groups, return an empty result.
+                $where[] = '1 = 0';
+            }
         }
 
         // Full name.

@@ -180,9 +180,11 @@ class course_test extends testcase {
         $generator->enrol_user($user2->id, $course1->id, 'editingteacher');
         $generator->enrol_user($user2->id, $course2->id, 'editingteacher');
         $generator->enrol_user($user2->id, $course3->id, 'editingteacher');
+        $generator->create_group_member(['userid' => $user1->id, 'groupid' => $group1->id]);
+        $generator->create_group_member(['userid' => $user2->id, 'groupid' => $group1->id]);
         $generator->create_group_member(['userid' => $user1->id, 'groupid' => $group2->id]);
         $generator->create_group_member(['userid' => $user1->id, 'groupid' => $group4->id]);
-        $generator->create_group_member(['userid' => $user2->id, 'groupid' => $group4->id]);
+        $generator->create_group_member(['userid' => $user2->id, 'groupid' => $group5->id]);
 
         // Student in course with no groups.
         self::assertEquals([], $course1->get_viewable_groups($user1));
@@ -202,8 +204,8 @@ class course_test extends testcase {
         $expected = [$group4->id => $group4->name];
         self::assertEquals($expected, $course3->get_viewable_groups($user1));
 
-        // Teacher in course with separate groups.
-        $expected = [$group4->id => $group4->name, $group5->id => $group5->name];
+        // Teacher in course with separate groups, ignoring access all groups capability.
+        $expected = [$group5->id => $group5->name];
         self::assertEquals($expected, $course3->get_viewable_groups($user2));
     }
 

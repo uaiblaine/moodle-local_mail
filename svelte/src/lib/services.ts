@@ -235,19 +235,27 @@ export interface Preferences {
     readonly perpage: number;
     readonly markasread: boolean;
 }
+
+export enum GroupMode {
+    No = 0,
+    Separate = 1,
+    Visible = 2,
+}
+
 export interface Course {
     readonly id: number;
     readonly shortname: string;
     readonly fullname: string;
     readonly visible: boolean;
-    readonly unread: number;
+    readonly groupmode: GroupMode;
+    readonly unread?: number;
 }
 
 export interface Label {
     readonly id: number;
     readonly name: string;
     readonly color: string;
-    readonly unread: number;
+    readonly unread?: number;
 }
 
 export interface MessageSummary {
@@ -261,16 +269,10 @@ export interface MessageSummary {
     readonly unread: boolean;
     readonly starred: boolean;
     readonly deleted: boolean;
-    readonly course: MessageCourse;
+    readonly course: Course;
     readonly sender: User;
     readonly recipients: ReadonlyArray<Recipient>;
-    readonly labels: ReadonlyArray<MessageLabel>;
-}
-
-export interface MessageCourse {
-    readonly id: number;
-    readonly shortname: string;
-    readonly fullname: string;
+    readonly labels: ReadonlyArray<Label>;
 }
 
 export interface User {
@@ -289,12 +291,6 @@ export enum RecipientType {
 export interface Recipient extends User {
     readonly type: RecipientType;
     readonly isvalid?: boolean;
-}
-
-export interface MessageLabel {
-    readonly id: number;
-    readonly name: string;
-    readonly color: string;
 }
 
 export interface Message extends MessageSummary {

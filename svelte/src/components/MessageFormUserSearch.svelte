@@ -5,18 +5,20 @@
     import {
         callServices,
         RecipientType,
+        type Course,
         type Group,
         type Recipient,
         type Role,
         type ServiceError,
         type ServiceRequest,
         type User,
+        GroupMode,
     } from '../lib/services';
     import type { Store } from '../lib/store';
     import { truncate } from '../actions/truncate';
 
     export let store: Store;
-    export let courseid: number;
+    export let course: Course;
     export let recipients: ReadonlyMap<number, Recipient>;
     export let onChange: (users: ReadonlyArray<User>, type: RecipientType | null) => unknown;
 
@@ -38,8 +40,6 @@
     const handleToggleClick = async () => {
         if (expanded) {
             text = '';
-            roleid = 0;
-            groupid = 0;
             expanded = false;
             window.clearTimeout(timeoutId);
         } else {
@@ -57,16 +57,16 @@
                 const requests: ServiceRequest[] = [
                     {
                         methodname: 'get_roles',
-                        courseid,
+                        courseid: course.id,
                     },
                     {
                         methodname: 'get_groups',
-                        courseid,
+                        courseid: course.id,
                     },
                     {
                         methodname: 'search_users',
                         query: {
-                            courseid,
+                            courseid: course.id,
                             fullname: text,
                             roleid,
                             groupid,
@@ -89,7 +89,11 @@
                 moreUsers = users.length > LIMIT;
                 users = users.slice(0, LIMIT);
                 groups = responses.pop() as ReadonlyArray<Group>;
-                groupid = groups.find((group) => group.id == groupid) ? groupid : 0;
+                groupid = groups.find((group) => group.id == groupid)
+                    ? groupid
+                    : course.groupmode == GroupMode.Separate
+                    ? groups[0]?.id || 0
+                    : 0;
                 roles = responses.pop() as ReadonlyArray<Role>;
                 roleid = roles.find((role) => role.id == roleid) ? roleid : 0;
                 loading = false;
@@ -172,7 +176,7 @@
                         {/each}
                     </select>
                 </div>
-                {#if groups.length}
+                {#if groups.length > 0}
                     <div class="flex-grow-1 mx-2">
                         <select
                             class="form-control text-truncate"
@@ -180,7 +184,9 @@
                             bind:value={groupid}
                             on:change={() => search(false)}
                         >
-                            <option value={0}>{$store.strings.allgroups}</option>
+                            {#if course.groupmode != GroupMode.Separate}
+                                <option value={0}>{$store.strings.allgroups}</option>
+                            {/if}
                             {#each groups as group (group.id)}
                                 <option value={group.id} class="text-truncate">
                                     {group.name}

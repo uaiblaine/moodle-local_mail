@@ -25,7 +25,7 @@
     let jsNode: Element | undefined;
     let formNode: HTMLFormElement | undefined;
 
-    $: courseid = message.course.id;
+    $: course = message.course;
     $: subject = message.subject;
     $: recipients = new Map(message.recipients.map((user) => [user.id, user]));
 
@@ -50,7 +50,7 @@
     };
 
     const handleCourseChange = (id?: number) => {
-        courseid = id || $store.courses[0].id;
+        course = $store.courses.find((course) => course.id == id) || $store.courses[0];
         save(true);
     };
 
@@ -79,7 +79,7 @@
         const formData = new FormData(formNode);
 
         const data: MessageData = {
-            courseid,
+            courseid: course.id,
             to: Array.from(recipients.values())
                 .filter((user) => user.type == 'to')
                 .map((user) => user.id),
@@ -111,19 +111,14 @@
             <CourseSelect
                 {store}
                 label={$store.strings.course}
-                selected={courseid}
+                selected={course.id}
                 required={true}
                 readonly={message.references.length > 0}
                 onChange={handleCourseChange}
             />
         </div>
         <div class="col-12 col-xl-7">
-            <MessageFormUserSearch
-                {store}
-                {courseid}
-                {recipients}
-                onChange={handleRecipientChange}
-            />
+            <MessageFormUserSearch {store} {course} {recipients} onChange={handleRecipientChange} />
         </div>
     </div>
     <MessageFormRecipients {store} {recipients} onDelete={handleRecipientDelete} />

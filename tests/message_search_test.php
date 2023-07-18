@@ -151,7 +151,7 @@ class message_search_test extends testcase {
             $result[] = $search;
 
             // Course.
-            foreach ($user->get_courses() as $course) {
+            foreach (course::fetch_by_user($user) as $course) {
                 $search = new message_search($user);
                 $search->course = $course;
                 $result[] = $search;
@@ -331,7 +331,7 @@ class message_search_test extends testcase {
      * @return message[] Found messages, ordered from newer to older and indexed by ID.
      */
     protected static function search_result(array $messages, message_search $search, int $offset = 0, int $limit = 0): array {
-        $courseids = $search->course ? [$search->course->id] : array_keys($search->user->get_courses());
+        $courseids = $search->course ? [$search->course->id] : array_keys(course::fetch_by_user($search->user));
 
         $result = [];
 
