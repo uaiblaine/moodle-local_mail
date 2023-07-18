@@ -15,6 +15,7 @@
     import CourseSelect from './CourseSelect.svelte';
     import MessageFormRecipients from './MessageFormRecipients.svelte';
     import MessageFormUserSearch from './MessageFormUserSearch.svelte';
+    import MessageReference from './MessageReference.svelte';
     import SendButton from './SendButton.svelte';
 
     export let store: Store;
@@ -181,3 +182,12 @@
         <SendButton {store} />
     </div>
 </form>
+
+{#if message.references.length > 0}
+    <div class="alert alert-secondary mt-4 mb-4 text-center">
+        {$store.strings.references}
+    </div>
+    {#each message.references as reference (reference.id)}
+        <MessageReference {reference} />
+    {/each}
+{/if}
