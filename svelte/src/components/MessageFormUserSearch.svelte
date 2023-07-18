@@ -200,7 +200,7 @@
                 </div>
             {:else}
                 <div class="list-group-item d-flex align-items-center px-3 py-2">
-                    <div use:truncate={$store.strings.allusers} class="flex-shrink-1">
+                    <div use:truncate={$store.strings.allusers}>
                         {$store.strings.allusers}
                     </div>
                     <div class="d-flex ml-auto">

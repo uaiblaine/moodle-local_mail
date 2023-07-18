@@ -72,7 +72,7 @@
                 {:else}
                     <div class="d-flex align-items-start pt-1 pb-2 pl-1 pr-2">
                         <ListMessageCheckbox {store} {message} />
-                        <div class="flex-shrink-1 w-100 ml-1" style="min-width: 0">
+                        <div class="w-100 ml-1" style="min-width: 0">
                             <div class="d-flex mt-2">
                                 <ListMessageUsers {store} {message} />
                                 <ListMessageAttachments {store} {message} />
@@ -81,7 +81,7 @@
                                 </div>
                             </div>
                             <div class="d-flex">
-                                <div class="d-flex w-100 d-shrink-1 my-2 mr-2" style="min-width: 0">
+                                <div class="d-flex w-100 my-2 mr-2" style="min-width: 0">
                                     <ListMessageSubject {store} {message} />
                                 </div>
                                 <ListMessageStar {store} {message} />

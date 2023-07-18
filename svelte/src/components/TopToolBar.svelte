@@ -37,7 +37,10 @@
         </div>
     {/if}
     {#if !$store.message?.draft && ['shortname', 'fullname'].includes($store.settings.filterbycourse)}
-        <div class="flex-grow-1 ml-auto mr-0 ml-md-0 mr-md-auto" style="max-width: 20rem">
+        <div
+            class="d-flex flex-grow-1 ml-auto mr-0 ml-md-0 mr-md-auto"
+            style="max-width: 20rem; min-width: 0"
+        >
             <CourseSelect
                 {store}
                 label={$store.strings.filterbycourse}

@@ -13,7 +13,7 @@
         (!$store.params.search &&
             ($store.params.offset || 0) + $store.preferences.perpage < $store.totalCount);
 
-    $: hasPrev = $store.prevMessageId || ($store.params.search && ($store.params.offset || 0));
+    $: hasPrev = $store.prevMessageId || (!$store.params.search && ($store.params.offset || 0));
 
     $: nextParams = hasNext
         ? $store.message
@@ -85,7 +85,7 @@
         </div>
     {/if}
 
-    <div class="btn-group d-flex flex-shrink-1" class:btn-group={!compact} role="group">
+    <div class="btn-group d-flex" class:btn-group={!compact} role="group">
         <button
             type="button"
             class="btn btn-secondary"

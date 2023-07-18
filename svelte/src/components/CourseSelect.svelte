@@ -78,10 +78,7 @@
 </script>
 
 <div class="local-mail-course-select position-relative d-flex" use:blur={closeDropdown}>
-    <div
-        class="position-absolute h-100 d-flex align-items-center px-2 flex-shrink-1"
-        style="top: 0; left: 0"
-    >
+    <div class="position-absolute h-100 d-flex align-items-center px-2" style="top: 0; left: 0">
         <i class="fa fa-fw fa-filter" aria-hidden="true" />
     </div>
 

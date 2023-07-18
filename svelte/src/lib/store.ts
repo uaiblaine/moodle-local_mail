@@ -560,7 +560,7 @@ export async function createStore(data: InitialData) {
             };
 
             const newParams: ViewParams = {
-                tray: 'sent',
+                tray: 'inbox',
                 courseid: params.courseid ? message.course.id : undefined,
             };
 

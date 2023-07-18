@@ -86,11 +86,11 @@
         </h1>
 
         <div class="local-mail-view-main-column d-flex mb-4">
-            <div class="local-mail-view-search flex-shrink-1">
+            <div class="local-mail-view-search">
                 <SearchBox {store} />
             </div>
             {#if $store.viewSize < ViewSize.LG}
-                <div class="flex-shrink-1 text-truncate d-flex">
+                <div class="text-truncate d-flex">
                     <ComposeButton
                         strings={$store.strings}
                         courseid={$store.params.courseid}

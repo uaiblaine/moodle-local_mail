@@ -72,7 +72,7 @@
     </div>
 
     <div class="d-flex flex-wrap align-items-center" style="column-gap: 2rem; row-gap: 1rem">
-        <div class="form-check flex-grow-1">
+        <div class="form-check">
             <input
                 class="form-check-input"
                 type="checkbox"
@@ -83,7 +83,7 @@
                 {$store.strings.searchbyunread}
             </label>
         </div>
-        <div class="form-check flex-grow-1">
+        <div class="form-check">
             <input
                 class="form-check-input"
                 type="checkbox"

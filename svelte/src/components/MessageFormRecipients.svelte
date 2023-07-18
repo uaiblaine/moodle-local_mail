@@ -16,12 +16,10 @@
     {@const users = Array.from(recipients.values()).filter((user) => user.type == type)}
     {#if users.length}
         <div transition:fade class=" d-flex mb-2">
-            <div
-                class="local-mail-message-form-recipients-type flex-grow-0 flex-shrink-0 py-2 mr-2"
-            >
+            <div class="local-mail-message-form-recipients-type flex-shrink-0 py-2 mr-2">
                 {$store.strings[type]}:
             </div>
-            <div class="d-flex flex-wrap flex-shrink-1" style="min-width: 0">
+            <div class="d-flex flex-wrap" style="min-width: 0">
                 {#each users as user (user.id)}
                     <div
                         transition:fade
@@ -49,7 +47,7 @@
                                 </div>
                             {/if}
                         </div>
-                        <div class="py-2 flex-shrink-1" use:truncate={user.fullname}>
+                        <div class="py-2" use:truncate={user.fullname}>
                             {user.fullname}
                         </div>
                         <button

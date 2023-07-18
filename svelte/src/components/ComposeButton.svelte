@@ -48,7 +48,14 @@
     };
 </script>
 
-<button type="button" class="btn btn-primary text-truncate px-3" on:click={handleClick}>
-    <i class="icon fa fa-fw fa-edit mr-1" />
-    {strings.compose}
+<button
+    type="button"
+    class="btn btn-primary text-truncate px-2 px-sm-3"
+    aria-label={strings.compose}
+    on:click={handleClick}
+>
+    <i class="icon fa fa-edit mr-0 mr-sm-1" />
+    <span class="d-none d-sm-inline">
+        {strings.compose}
+    </span>
 </button>

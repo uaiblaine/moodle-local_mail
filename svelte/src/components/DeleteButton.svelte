@@ -10,7 +10,7 @@
 
 <button
     type="button"
-    class="local-mail-action-delete btn flex-grow-0"
+    class="local-mail-action-delete btn"
     class:btn-secondary={!transparent}
     class:disabled={!$store.selectedMessages.size}
     disabled={!$store.selectedMessages.size}
