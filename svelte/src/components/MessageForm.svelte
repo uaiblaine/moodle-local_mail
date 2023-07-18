@@ -11,6 +11,7 @@
         type User,
     } from '../lib/services';
     import { ViewSize, type Store } from '../lib/store';
+    import { replaceStringParams } from '../lib/utils';
     import CourseSelect from './CourseSelect.svelte';
     import MessageFormRecipients from './MessageFormRecipients.svelte';
     import MessageFormUserSearch from './MessageFormUserSearch.svelte';
@@ -149,6 +150,33 @@
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {@html form.filemanagerhtml}
     </div>
+
+    {#if Array.from(recipients.values()).some((user) => !user.isvalid)}
+        <div class="alert alert-danger">
+            <i class="fa fa-exclamation-circle mr-2" />
+            {$store.strings.errorinvalidrecipients}
+        </div>
+    {/if}
+    {#if recipients.size == 0}
+        <div class="alert alert-danger">
+            <i class="fa fa-exclamation-circle mr-2" />
+            {$store.strings.erroremptyrecipients}
+        </div>
+    {:else if recipients.size > $store.settings.maxrecipients}
+        <div class="alert alert-danger">
+            <i class="fa fa-exclamation-circle mr-2" />
+            {replaceStringParams(
+                $store.strings.errortoomanyrecipients,
+                $store.settings.maxrecipients,
+            )}
+        </div>
+    {/if}
+    {#if !subject.trim()}
+        <div class="alert alert-danger">
+            <i class="fa fa-exclamation-circle mr-2" />
+            {$store.strings.erroremptysubject}
+        </div>
+    {/if}
     <div class="d-flex justify-content-end align-items-center">
         <SendButton {store} />
     </div>

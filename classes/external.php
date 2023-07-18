@@ -51,6 +51,7 @@ class external extends \external_api {
         }
 
         return [
+            'maxrecipients' => (int) get_config('local_mail', 'maxrecipients') ?: 100,
             'globaltrays' => $globaltrays,
             'coursetrays' => get_config('local_mail', 'coursetrays') ?: 'all',
             'coursetraysname' => get_config('local_mail', 'coursetraysname') ?: 'fullname',
@@ -64,6 +65,10 @@ class external extends \external_api {
 
     public static function get_settings_returns() {
         return new \external_single_structure([
+            'maxrecipients' => new \external_value(
+                PARAM_INT,
+                'Maximum number of recipients'
+            ),
             'globaltrays' => new \external_multiple_structure(
                 new \external_value(PARAM_ALPHA, 'Type of tray: "starred", "sent", "drafts" or "trash"'),
                 'Global trays to display'
@@ -82,7 +87,7 @@ class external extends \external_api {
             ),
             'coursebadgeslength' => new \external_value(
                 PARAM_INT,
-                'Trunate course badges to this length in characters.'
+                'Trunate course badges to this length in characters'
             ),
             'filterbycourse' => new \external_value(
                 PARAM_ALPHA,
@@ -1517,6 +1522,11 @@ class external extends \external_api {
             if (!isset($validrecipients[$recipient->id])) {
                 throw new exception('errorinvalidrecipients');
             }
+        }
+
+        $maxrecipients = (int) get_config('local_mail', 'maxrecipients') ?: 100;
+        if (count($recipients) > $maxrecipients) {
+            throw new exception('errortoomanyrecipients', $maxrecipients);
         }
 
         if (!\core_text::strlen(trim($message->subject))) {

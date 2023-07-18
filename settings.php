@@ -37,8 +37,16 @@ if ($hassiteconfig) {
     $defaultsetting = 1;
     $settings->add(new admin_setting_configcheckbox($name, $visiblename, $description, $defaultsetting));
 
-    // Attachments.
-    $settings->add(new admin_setting_heading('local_mail_attachments', get_string('attachments', 'local_mail'), ''));
+    // New mail.
+    $settings->add(new admin_setting_heading('local_mail_newmail', get_string('newmail', 'local_mail'), ''));
+
+    // Number of recipients.
+    $name = 'local_mail/maxrecipients';
+    $visiblename = get_string('configmaxrecipients', 'local_mail');
+    $description = '';
+    $defaultsetting = 100;
+    $paramtype = PARAM_INT;
+    $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
 
     // Number of attachments.
     $name = 'local_mail/maxfiles';

@@ -32,6 +32,7 @@ class external_test extends testcase {
     public function test_get_settings() {
         $generator = $this->getDataGenerator();
         $user = $generator->create_user();
+        set_config('maxrecipients', '20', 'local_mail');
         set_config('globaltrays', 'drafts,trash', 'local_mail');
         set_config('coursetrays', 'unread', 'local_mail');
         set_config('coursetraysname', 'shortname', 'local_mail');
@@ -47,6 +48,7 @@ class external_test extends testcase {
         \external_api::validate_parameters(external::get_settings_returns(), $result);
 
         $expected = [
+            'maxrecipients' => 20,
             'globaltrays' => ['drafts', 'trash'],
             'coursetrays' => 'unread',
             'coursetraysname' => 'shortname',
@@ -60,6 +62,7 @@ class external_test extends testcase {
 
         // Default settings.
 
+        unset_config('maxrecipients', 'local_mail');
         unset_config('globaltrays', 'local_mail');
         unset_config('coursetrays', 'local_mail');
         unset_config('coursetraysname', 'local_mail');
@@ -74,6 +77,7 @@ class external_test extends testcase {
         \external_api::validate_parameters(external::get_settings_returns(), $result);
 
         $expected = [
+            'maxrecipients' => 100,
             'globaltrays' => ['starred', 'sent', 'drafts', 'trash'],
             'coursetrays' => 'all',
             'coursetraysname' => 'fullname',
@@ -1679,6 +1683,21 @@ class external_test extends testcase {
             self::fail();
         } catch (exception $e) {
             self::assertEquals('errorinvalidrecipients', $e->errorcode);
+        }
+
+        // Too many recipients.
+
+        set_config('maxrecipients', '3', 'local_mail');
+        $data = message_data::new($course, $user1);
+        $data->subject = 'Subject';
+        $data->to = [$user2, $user3, $user4, $user5];
+        $message = message::create($data);
+        try {
+            external::send_message($message->id);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errortoomanyrecipients', $e->errorcode);
+            self::assertEquals(3, $e->a);
         }
     }
 }

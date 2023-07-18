@@ -8,10 +8,10 @@
 
 <button
     type="button"
-    class="local-mail-action-send btn btn-primary flex-shrink-0 text-nowrap text-truncate ml-auto"
+    class="local-mail-action-send btn btn-primary flex-shrink-0 text-nowrap px-3 text-truncate ml-auto"
     title={$store.strings.send}
     on:click={() => store.sendMessage()}
 >
-    <i class="fa fa-fw fa-send mr-2" />
+    <i class="fa fa-send mr-2" />
     {$store.strings.send}
 </button>

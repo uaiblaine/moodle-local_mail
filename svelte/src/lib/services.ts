@@ -218,6 +218,7 @@ export interface SendMessageRequest {
 }
 
 export interface Settings {
+    maxrecipients: number;
     globaltrays: ReadonlyArray<string>;
     coursetrays: 'none' | 'unread' | 'all';
     coursetraysname: 'shortname' | 'fullname';
