@@ -90,14 +90,11 @@ class user_search {
     public function fetch(int $offset = 0, int $limit = 0): array {
         global $DB;
 
-        $fields = [];
-        foreach (\core_user\fields::get_picture_fields() as $field) {
-            $fields[] = 'u.' . $field;
-        }
+        $fields = \core_user\fields::get_picture_fields();
 
         list($sql, $params) = $this->get_base_sql(implode(',', $fields));
 
-        list($sort, $sortparams) = users_order_by_sql('u');
+        list($sort, $sortparams) = users_order_by_sql();
         $sql .= ' ORDER BY ' . $sort;
         $params = array_merge($params, $sortparams);
 
@@ -120,19 +117,21 @@ class user_search {
     private function get_base_sql(string $fields): array {
         global $DB;
 
-        $from = [];
-        $where = [];
-        $params = [];
-
         // Enrolled.
         $context = $this->course->context();
-        list($esql, $eparams) = get_enrolled_sql($context, 'local/mail:usemail', 0, true);
-        $from[] = '{user} u';
-        $from[] = "($esql) je ON je.id = u.id";
-        $params = array_merge($params, $eparams);
+        $ejoin = get_enrolled_join($context, 'u.id', true);
+        $joins = $ejoin->joins;
+        $wheres = $ejoin->wheres;
+        $params = $ejoin->params;
+
+        // Capability.
+        $capjoin = get_with_capability_join($context, 'local/mail:usemail', 'u.id');
+        $joins .= ' ' . $capjoin->joins;
+        $wheres .= ' AND ' . $capjoin->wheres;
+        $params = array_merge($params, $capjoin->params);
 
         // Exclude user.
-        $where[] = 'u.id <> :userid';
+        $wheres .= ' AND u.id <> :userid';
         $params['userid'] = $this->user->id;
 
         // Exclude users with same role.
@@ -143,7 +142,7 @@ class user_search {
                 . ' WHERE ra1.userid = :sameroleurserid'
                 . ' AND ra1.contextid = :samerolecontextid1'
                 . ' AND ra2.contextid = :samerolecontextid2';
-            $where[] = "u.id NOT IN ($samerolesql)";
+            $wheres .= " AND u.id NOT IN ($samerolesql)";
             $params['sameroleurserid'] = $this->user->id;
             $params['samerolecontextid1'] = $context->id;
             $params['samerolecontextid2'] = $context->id;
@@ -151,8 +150,8 @@ class user_search {
 
         // Role.
         if ($this->roleid) {
-            $from[] = '{role_assignments} ra ON ra.userid = u.id';
-            $where[] = 'ra.contextid = :contextid AND ra.roleid = :roleid';
+            $joins .= ' JOIN {role_assignments} ra3 ON ra3.userid = u.id';
+            $wheres .= ' AND ra3.contextid = :contextid AND ra3.roleid = :roleid';
             $params['contextid'] = $context->id;
             $params['roleid'] = $this->roleid;
         }
@@ -169,31 +168,29 @@ class user_search {
             }
             if ($groupids) {
                 list($groupsql, $groupparams) = $DB->get_in_or_equal($groupids, SQL_PARAMS_NAMED, 'group');
-                $where[] = "u.id IN (SELECT gm.userid FROM {groups_members} gm WHERE gm.groupid $groupsql)";
+                $wheres .= " AND u.id IN (SELECT gm.userid FROM {groups_members} gm WHERE gm.groupid $groupsql)";
                 $params = array_merge($params, $groupparams);
             } else {
                 // No groups, return an empty result.
-                $where[] = '1 = 0';
+                $wheres .= ' AND 1 = 2';
             }
         }
 
         // Full name.
         if ($this->fullname) {
             $fullnamefield = $DB->sql_fullname('u.firstname', 'u.lastname');
-            $where[] = $DB->sql_like($fullnamefield, ':fullname', false, false);;
+            $wheres .= ' AND ' . $DB->sql_like($fullnamefield, ':fullname', false, false);;
             $params['fullname'] = '%' . $DB->sql_like_escape($this->fullname) . '%';
         }
 
         // IDs.
         if ($this->include) {
             list($includesql, $includeparams) = $DB->get_in_or_equal($this->include, SQL_PARAMS_NAMED, 'id');
-            $where[] = 'u.id ' . $includesql;
+            $wheres .= ' AND u.id ' . $includesql;
             $params = array_merge($params, $includeparams);
         }
 
-        $sql = 'SELECT ' . $fields
-            . ' FROM ' . implode(' JOIN ', $from)
-            . ' WHERE ' . implode(' AND ', $where);
+        $sql = "SELECT $fields FROM {user} WHERE id IN (SELECT DISTINCT u.id FROM {user} u $joins WHERE $wheres)";
 
         return [$sql, $params];
     }
