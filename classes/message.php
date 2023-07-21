@@ -216,11 +216,12 @@ class message {
             . ' AND deleted = :deleted';
         $DB->execute($sql, $params);
 
-        $sql = 'UPDATE {local_mail_message_labels} ml'
-            . ' JOIN {local_mail_labels} l ON l.id = ml.labelid'
-            . ' SET ml.deleted = :deletedforever'
-            . ' WHERE l.userid = :userid AND ml.courseid ' . $sqlcourseid
-            . ' AND ml.deleted = :deleted';
+        $labelsql = 'SELECT l.id FROM {local_mail_labels} l WHERE l.userid = :userid';
+        $sql = 'UPDATE {local_mail_message_labels}'
+            . ' SET deleted = :deletedforever'
+            . ' WHERE courseid ' . $sqlcourseid
+            . ' AND deleted = :deleted'
+            . ' AND labelid IN (' . $labelsql . ')';
         $DB->execute($sql, $params);
 
         $transaction->allow_commit();
