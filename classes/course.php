@@ -67,32 +67,6 @@ class course {
     }
 
     /**
-     * Deletes all messages from a course.
-     *
-     * @param int $courseid ID of the course.
-     */
-    public static function delete_messages(int $courseid): void {
-        global $DB;
-
-        $transaction = $DB->start_delegated_transaction();
-
-        $DB->delete_records('local_mail_message_labels', ['courseid' => $courseid]);
-
-        $DB->delete_records('local_mail_message_users', ['courseid' => $courseid]);
-
-        $select = 'messageid IN (SELECT id FROM {local_mail_messages} WHERE courseid = :courseid)';
-        $DB->delete_records_select('local_mail_message_refs', $select, ['courseid' => $courseid]);
-
-        $DB->delete_records('local_mail_messages', ['courseid' => $courseid]);
-
-        $transaction->allow_commit();
-
-        $context = \context_course::instance($courseid);
-        $fs = get_file_storage();
-        $fs->delete_area_files($context->id, 'local_mail');
-    }
-
-    /**
      * Fetches a course from the database
      *
      * @param int $id ID of the course to fetch.
@@ -162,7 +136,7 @@ class course {
             return [];
         }
 
-        $userid =  $this->groupmode == VISIBLEGROUPS ? 0 : $user->id;
+        $userid = $this->groupmode == VISIBLEGROUPS ? 0 : $user->id;
         $groups = groups_get_all_groups($this->id, $userid, $this->defaultgroupingid);
 
         $result = [];

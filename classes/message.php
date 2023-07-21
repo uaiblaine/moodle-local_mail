@@ -165,6 +165,31 @@ class message {
     }
 
     /**
+     * Deletes all messages from a course.
+     *
+     * @param \context_course $context Context of the course.
+     */
+    public static function delete_course(\context_course $context): void {
+        global $DB;
+
+        $transaction = $DB->start_delegated_transaction();
+
+        $DB->delete_records('local_mail_message_labels', ['courseid' => $context->instanceid]);
+
+        $DB->delete_records('local_mail_message_users', ['courseid' => $context->instanceid]);
+
+        $select = 'messageid IN (SELECT id FROM {local_mail_messages} WHERE courseid = :courseid)';
+        $DB->delete_records_select('local_mail_message_refs', $select, ['courseid' => $context->instanceid]);
+
+        $DB->delete_records('local_mail_messages', ['courseid' => $context->instanceid]);
+
+        $transaction->allow_commit();
+
+        $fs = get_file_storage();
+        $fs->delete_area_files($context->id, 'local_mail');
+    }
+
+    /**
      * Empties the trash of a user.
      *
      * @param user $user User.

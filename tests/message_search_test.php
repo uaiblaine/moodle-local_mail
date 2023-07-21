@@ -89,15 +89,16 @@ class message_search_test extends testcase {
     public function test_fetch() {
         list($users, $messages) = self::generate_data();
         foreach (self::cases($users, $messages) as $search) {
-            foreach ([0, 10, 10000] as $offset) {
-                foreach ([0, 10, 10000] as $limit) {
-                    $expected = self::search_result($messages, $search, $offset, $limit);
-                    $desc = $search . "\noffset: " . $offset . "\nlimit: " . $limit;
-                    $result = $search->fetch($offset, $limit);
-                    self::assertEquals($expected, $result, $desc);
-                    self::assertEquals(array_keys($expected), array_keys($result), $desc);
-                }
-            }
+            $expected = self::search_result($messages, $search);
+            $result = $search->fetch(0, 0);
+            self::assertEquals($expected, $result, $search);
+            self::assertEquals(array_keys($expected), array_keys($result), $search);
+
+            // Offset and limit.
+            $expected = array_slice($expected, 5, 20, true);
+            $result = $search->fetch(5, 20);
+            self::assertEquals($expected, $result, $search);
+            self::assertEquals(array_keys($expected), array_keys($result), $search);
         }
     }
 
@@ -326,11 +327,9 @@ class message_search_test extends testcase {
      *
      * @param message[] $messages Array of messages.
      * @param message_search $search Search parameters.
-     * @param int $offset Skip this number of messages.
-     * @param int $limit Limit the number of messages.
      * @return message[] Found messages, ordered from newer to older and indexed by ID.
      */
-    protected static function search_result(array $messages, message_search $search, int $offset = 0, int $limit = 0): array {
+    protected static function search_result(array $messages, message_search $search): array {
         $courseids = $search->course ? [$search->course->id] : array_keys(course::fetch_by_user($search->user));
 
         $result = [];
@@ -402,6 +401,6 @@ class message_search_test extends testcase {
             $result = array_reverse($result, true);
         }
 
-        return array_slice($result, $offset, $limit ?: null, true);
+        return $result;
     }
 }

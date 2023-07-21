@@ -26,6 +26,7 @@ namespace local_mail;
 defined('MOODLE_INTERNAL') || die;
 
 require_once(__DIR__ . '/testcase.php');
+require_once(__DIR__ . '/message_search_test.php');
 
 /**
  * @covers \local_mail\message
@@ -121,6 +122,28 @@ class message_test extends testcase {
         self::assertEquals([$data->reference->id => $data->reference], $message->fetch_references());
     }
 
+    public function test_delete_course() {
+        list($users, $messages) = message_search_test::generate_data();
+        $course = $messages[0]->course;
+        $context = $course->context();
+
+        $fs = get_file_storage();
+
+        message::delete_course($context);
+
+        self::assert_record_count(0, 'messages', ['courseid' => $course->id]);
+        self::assert_record_count(0, 'message_users', ['courseid' => $course->id]);
+        self::assert_record_count(0, 'message_labels', ['courseid' => $course->id]);
+        foreach ($messages as $message) {
+            if ($message->course->id == $course->id) {
+                self::assert_record_count(0, 'message_refs', ['messageid' => $message->id]);
+                self::assert_record_count(0, 'message_refs', ['reference' => $message->id]);
+            } else {
+                self::assert_message($message);
+            }
+        }
+        self::assertEmpty($fs->get_area_files($context->id, 'local_mail', 'message'));
+    }
 
     public function test_empty_trash() {
         $generator = self::getDataGenerator();
@@ -679,55 +702,14 @@ class message_test extends testcase {
         self::assert_message($message);
         self::assert_attachments(['file3.txt' => 'File 3'], $message);
         self::assertEquals([], $message->fetch_references());
-    }
 
-    /**
-     * Asserts that a message is stored correctly in the database.
-     *
-     * @param message $message Message.
-     * @throws ExpectationFailedException
-     */
-    protected static function assert_message(message $message): void {
-        self::assert_record_data('messages', [
-            'id' => $message->id,
-        ], [
-            'courseid' => $message->course->id ?? 0,
-            'subject' => $message->subject,
-            'content' => $message->content,
-            'format' => $message->format,
-            'attachments' => $message->attachments,
-            'draft' => (int) $message->draft,
-            'time' => $message->time,
-            'normalizedsubject' => message::normalize_text($message->subject),
-            'normalizedcontent' => message::normalize_text($message->content),
-        ]);
+        // Subject longer than 100 characters.
 
-        $numusers = count($message->users);
-        self::assert_record_count($numusers, 'message_users', ['messageid' => $message->id]);
+        $data->subject = str_repeat('X', 95) . 'ABCDEF';
 
-        $numlabels = array_sum(array_map('count', $message->labels));
-        self::assert_record_count($numlabels, 'message_labels', ['messageid' => $message->id]);
+        $message->update($data);
 
-        foreach ($message->users as $user) {
-            $data = [
-                'courseid' => $message->course->id ?? 0,
-                'draft' => (int) $message->draft,
-                'time' => $message->time,
-                'role' => $message->roles[$user->id],
-                'unread' => (int) $message->unread[$user->id],
-                'starred' => (int) $message->starred[$user->id],
-                'deleted' => $message->deleted[$user->id],
-            ];
-            self::assert_record_data('message_users', [
-                'messageid' => $message->id,
-                'userid' => $user->id
-            ], $data);
-            foreach ($message->labels[$user->id] as $label) {
-                self::assert_record_data('message_labels', [
-                    'messageid' => $message->id,
-                    'labelid' => $label->id,
-                ], $data);
-            }
-        }
+        self::assertEquals(str_repeat('X', 95) . 'AB...', $message->subject);
+        self::assert_message($message);
     }
 }

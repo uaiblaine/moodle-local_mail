@@ -70,6 +70,57 @@ abstract class testcase extends \advanced_testcase {
         self::assertEquals($expected, $actual);
     }
 
+
+    /**
+     * Asserts that a message is stored correctly in the database.
+     *
+     * @param message $message Message.
+     * @throws ExpectationFailedException
+     */
+    protected static function assert_message(message $message): void {
+        self::assert_record_data('messages', [
+            'id' => $message->id,
+        ], [
+            'courseid' => $message->course->id ?? 0,
+            'subject' => $message->subject,
+            'content' => $message->content,
+            'format' => $message->format,
+            'attachments' => $message->attachments,
+            'draft' => (int) $message->draft,
+            'time' => $message->time,
+            'normalizedsubject' => message::normalize_text($message->subject),
+            'normalizedcontent' => message::normalize_text($message->content),
+        ]);
+
+        $numusers = count($message->users);
+        self::assert_record_count($numusers, 'message_users', ['messageid' => $message->id]);
+
+        $numlabels = array_sum(array_map('count', $message->labels));
+        self::assert_record_count($numlabels, 'message_labels', ['messageid' => $message->id]);
+
+        foreach ($message->users as $user) {
+            $data = [
+                'courseid' => $message->course->id ?? 0,
+                'draft' => (int) $message->draft,
+                'time' => $message->time,
+                'role' => $message->roles[$user->id],
+                'unread' => (int) $message->unread[$user->id],
+                'starred' => (int) $message->starred[$user->id],
+                'deleted' => $message->deleted[$user->id],
+            ];
+            self::assert_record_data('message_users', [
+                'messageid' => $message->id,
+                'userid' => $user->id
+            ], $data);
+            foreach ($message->labels[$user->id] as $label) {
+                self::assert_record_data('message_labels', [
+                    'messageid' => $message->id,
+                    'labelid' => $label->id,
+                ], $data);
+            }
+        }
+    }
+
     /**
      * Asserts that the table contains this number of records matching the conditions.
      *
@@ -106,32 +157,6 @@ abstract class testcase extends \advanced_testcase {
                 self::assertEquals($value, $record->$field);
             }
         }
-    }
-
-    /**
-     * Creates a stored file of an attachment.
-     *
-     * @param int $courseid Course ID.
-     * @param int $messageid Message ID..
-     * @param string $filename File name.
-     * @param string $content Content of the file.
-     * @return stored_file
-     */
-    protected static function create_attachment(int $courseid, int $messageid, string $filename, string $content): \stored_file {
-        $fs = get_file_storage();
-
-        $context = \context_course::instance($courseid);
-
-        $record = [
-            'contextid' => $context->id,
-            'component' => 'local_mail',
-            'filearea' => 'message',
-            'itemid' => $messageid,
-            'filepath' => '/',
-            'filename' => $filename,
-        ];
-
-        return $fs->create_file_from_string($record, $content);
     }
 
     /**
@@ -177,27 +202,6 @@ abstract class testcase extends \advanced_testcase {
     }
 
     /**
-     * Insert multiple records to the table and return its IDs.
-     *
-     * @param string $table Table name without the "local_mail_" prefix.
-     * @param string[] $fields Fields to insert.
-     * @param mixed[] $records,... Records to insert.
-     * @return int[] Record IDs.
-     */
-    protected static function insert_records(string $table, array $fields, array ...$records): array {
-        global $DB;
-
-        $ids = [];
-
-        foreach ($records as $record) {
-            $record = array_combine($fields, $record);
-            $ids[] = $DB->insert_record('local_mail_' . $table, (object) $record);
-        }
-
-        return $ids;
-    }
-
-    /**
      * Returns a random item of an array.
      *
      * @param mixed[] $items Array of items
@@ -217,10 +221,11 @@ abstract class testcase extends \advanced_testcase {
      * @return mixed[]
      */
     protected static function random_items(array $items, int $min = 0, int $max = 0): array {
-        assert($min >= 0 && (!$max || $max >= $min));
+        assert($min >= 0 && $max >= 0 && (!$max || $max >= $min));
         $items = array_values($items);
         shuffle($items);
-        $max = min($max ?: $min, count($items) - 1);
+        $min = min($min, count($items) - 1);
+        $max = $max ?: count($items) - 1;
         return $items ? array_slice($items, 0, rand($min, $max)) : [];
     }
 

@@ -35,7 +35,7 @@ class external extends \external_api {
     }
 
     public static function get_settings() {
-        self::validate_context(\context_system::instance());
+        self::validate_call(self::get_settings_parameters(), func_get_args());
 
         return self::get_settings_raw();
     }
@@ -109,7 +109,7 @@ class external extends \external_api {
     }
 
     public static function get_strings() {
-        self::validate_context(\context_system::instance());
+        self::validate_call(self::get_strings_parameters(), func_get_args());
 
         return self::get_strings_raw();
     }
@@ -136,7 +136,7 @@ class external extends \external_api {
 
             // Local customisations.
             if (file_exists("$CFG->langlocalroot/{$lang}_local/local_mail.php")) {
-                include("$CFG->langlocalroot/{$lang}_local/local_mail/file.php");
+                include("$CFG->langlocalroot/{$lang}_local/local_mail.php");
             }
 
             return $string;
@@ -158,7 +158,7 @@ class external extends \external_api {
     }
 
     public static function get_preferences() {
-        self::validate_context(\context_system::instance());
+        self::validate_call(self::get_preferences_parameters(), func_get_args());
 
         return self::get_preferences_raw();
     }
@@ -194,11 +194,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function set_preferences($preferences) {
-        self::validate_context(\context_system::instance());
-
-        $params = ['preferences' => $preferences];
-        $params = self::validate_parameters(self::set_preferences_parameters(), $params);
+    public static function set_preferences() {
+        $params = self::validate_call(self::set_preferences_parameters(), func_get_args());
 
         if (isset($params['preferences']['perpage'])) {
             if ($params['preferences']['perpage'] < 5 || $params['preferences']['perpage'] > 100) {
@@ -230,7 +227,7 @@ class external extends \external_api {
     }
 
     public static function get_courses() {
-        self::validate_context(\context_system::instance());
+        self::validate_call(self::get_courses_parameters(), func_get_args());
 
         return self::get_courses_raw();
     }
@@ -281,7 +278,7 @@ class external extends \external_api {
     }
 
     public static function get_labels() {
-        self::validate_context(\context_system::instance());
+        self::validate_call(self::get_labels_parameters(), func_get_args());
 
         return self::get_labels_raw();
     }
@@ -412,7 +409,7 @@ class external extends \external_api {
         ]);
     }
 
-    private static function validate_query_parameter($query): message_search {
+    private static function validate_query_parameter(array $query): message_search {
         $user = user::current();
 
         $search = new message_search($user);
@@ -483,11 +480,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function count_messages($query) {
-        self::validate_context(\context_system::instance());
-
-        $params = ['query' => $query];
-        $params = self::validate_parameters(self::count_messages_parameters(), $params);
+    public static function count_messages() {
+        $params = self::validate_call(self::count_messages_parameters(), func_get_args());
 
         $search = self::validate_query_parameter($params['query']);
 
@@ -516,11 +510,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function search_messages($query, $offset = 0, $limit = 0) {
-        self::validate_context(\context_system::instance());
-
-        $params = ['query' => $query, 'offset' => $offset, 'limit' => $limit];
-        $params = self::validate_parameters(self::search_messages_parameters(), $params);
+    public static function search_messages() {
+        $params = self::validate_call(self::search_messages_parameters(), func_get_args());
 
         $search = self::validate_query_parameter($params['query']);
 
@@ -636,11 +627,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function get_message($messageid) {
-        self::validate_context(\context_system::instance());
-
-        $params = ['messageid' => $messageid];
-        $params = self::validate_parameters(self::get_message_parameters(), $params);
+    public static function get_message() {
+        $params = self::validate_call(self::get_message_parameters(), func_get_args());
 
         $user = user::current();
 
@@ -879,11 +867,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function set_unread($messageid, $unread) {
-        self::validate_context(\context_system::instance());
-
-        $params = ['messageid' => $messageid, 'unread' => $unread];
-        $params = self::validate_parameters(self::set_unread_parameters(), $params);
+    public static function set_unread() {
+        $params = self::validate_call(self::set_unread_parameters(), func_get_args());
 
         $user = user::current();
         $message = message::fetch($params['messageid']);
@@ -908,11 +893,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function set_starred($messageid, $starred) {
-        self::validate_context(\context_system::instance());
-
-        $params = ['messageid' => $messageid, 'starred' => $starred];
-        $params = self::validate_parameters(self::set_starred_parameters(), $params);
+    public static function set_starred() {
+        $params = self::validate_call(self::set_starred_parameters(), func_get_args());
 
         $user = user::current();
         $message = message::fetch($params['messageid']);
@@ -940,11 +922,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function set_deleted($messageid, $deleted) {
-        self::validate_context(\context_system::instance());
-
-        $params = ['messageid' => $messageid, 'deleted' => $deleted];
-        $params = self::validate_parameters(self::set_deleted_parameters(), $params);
+    public static function set_deleted() {
+        $params = self::validate_call(self::set_deleted_parameters(), func_get_args());
 
         $user = user::current();
         $message = message::fetch($params['messageid']);
@@ -967,7 +946,7 @@ class external extends \external_api {
     }
 
     public static function empty_trash() {
-        self::validate_context(\context_system::instance());
+        self::validate_call(self::empty_trash_parameters(), func_get_args());
 
         $user = user::current();
 
@@ -988,11 +967,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function create_label($name, $color = '') {
-        self::validate_context(\context_system::instance());
-
-        $params = ['name' => $name, 'color' => $color];
-        $params = self::validate_parameters(self::create_label_parameters(), $params);
+    public static function create_label() {
+        $params = self::validate_call(self::create_label_parameters(), func_get_args());
 
         $user = user::current();
 
@@ -1029,11 +1005,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function update_label($labelid, $name, $color = '') {
-        self::validate_context(\context_system::instance());
-
-        $params = ['labelid' => $labelid, 'name' => $name, 'color' => $color];
-        $params = self::validate_parameters(self::update_label_parameters(), $params);
+    public static function update_label() {
+        $params = self::validate_call(self::update_label_parameters(), func_get_args());
 
         $user = user::current();
 
@@ -1072,11 +1045,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function delete_label($labelid) {
-        self::validate_context(\context_system::instance());
-
-        $params = ['labelid' => $labelid];
-        $params = self::validate_parameters(self::delete_label_parameters(), $params);
+    public static function delete_label() {
+        $params = self::validate_call(self::delete_label_parameters(), func_get_args());
 
         $user = user::current();
 
@@ -1106,11 +1076,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function set_labels($messageid, $labelids) {
-        self::validate_context(\context_system::instance());
-
-        $params = ['messageid' => $messageid, 'labelids' => $labelids];
-        $params = self::validate_parameters(self::set_labels_parameters(), $params);
+    public static function set_labels() {
+        $params = self::validate_call(self::set_labels_parameters(), func_get_args());
 
         $user = user::current();
         $message = message::fetch($params['messageid']);
@@ -1141,10 +1108,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function get_roles($courseid) {
-        self::validate_context(\context_system::instance());
-
-        $params = self::validate_parameters(self::get_groups_parameters(), ['courseid' => $courseid]);
+    public static function get_roles() {
+        $params = self::validate_call(self::get_roles_parameters(), func_get_args());
 
         $user = user::current();
         $course = course::fetch($params['courseid']);
@@ -1175,10 +1140,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function get_groups($courseid) {
-        self::validate_context(\context_system::instance());
-
-        $params = self::validate_parameters(self::get_groups_parameters(), ['courseid' => $courseid]);
+    public static function get_groups() {
+        $params = self::validate_call(self::get_groups_parameters(), func_get_args());
 
         $user = user::current();
         $course = course::fetch($params['courseid']);
@@ -1251,9 +1214,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function search_users($query, $offset = 0, $limit = 0) {
-        $params = ['query' => $query, 'offset' => $offset, 'limit' => $limit];
-        $params = self::validate_parameters(self::search_users_parameters(), $params);
+    public static function search_users() {
+        $params = self::validate_call(self::search_users_parameters(), func_get_args());
 
         $user = user::current();
         $course = course::fetch($params['query']['courseid']);
@@ -1278,8 +1240,6 @@ class external extends \external_api {
         if ($params['query']['include']) {
             $search->include = $params['query']['include'];
         }
-
-        self::validate_context(\context_system::instance());
 
         $users = $search->fetch($params['offset'], $params['limit']);
 
@@ -1318,15 +1278,13 @@ class external extends \external_api {
         ]);
     }
 
-    public static function get_message_form($messageid) {
+    public static function get_message_form() {
         global $CFG, $PAGE;
 
         require_once("$CFG->libdir/form/editor.php");
         require_once("$CFG->libdir/form/filemanager.php");
 
-        self::validate_context(\context_system::instance());
-
-        $params = self::validate_parameters(self::get_message_form_parameters(), ['messageid' => $messageid]);
+        $params = self::validate_call(self::get_message_form_parameters(), func_get_args());
 
         $user = user::current();
         $message = message::fetch($params['messageid']);
@@ -1377,10 +1335,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function create_message($courseid) {
-        self::validate_context(\context_system::instance());
-
-        $params = self::validate_parameters(self::create_message_parameters(), ['courseid' => $courseid]);
+    public static function create_message() {
+        $params = self::validate_call(self::create_message_parameters(), func_get_args());
 
         $user = user::current();
         $course = course::fetch($params['courseid']);
@@ -1404,10 +1360,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function reply_message($messageid, $all) {
-        self::validate_context(\context_system::instance());
-
-        $params = self::validate_parameters(self::reply_message_parameters(), ['messageid' => $messageid, 'all' => $all]);
+    public static function reply_message() {
+        $params = self::validate_call(self::reply_message_parameters(), func_get_args());
 
         $user = user::current();
         $message = message::fetch($params['messageid']);
@@ -1430,10 +1384,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function forward_message(int $messageid) {
-        self::validate_context(\context_system::instance());
-
-        $params = self::validate_parameters(self::forward_message_parameters(), ['messageid' => $messageid]);
+    public static function forward_message() {
+        $params = self::validate_call(self::forward_message_parameters(), func_get_args());
 
         $user = user::current();
         $message = message::fetch($params['messageid']);
@@ -1466,10 +1418,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function update_message($messageid, $data) {
-        self::validate_context(\context_system::instance());
-
-        $params = self::validate_parameters(self::update_message_parameters(), ['messageid' => $messageid, 'data' => $data]);
+    public static function update_message() {
+        $params = self::validate_call(self::update_message_parameters(), func_get_args());
 
         $user = user::current();
 
@@ -1506,10 +1456,8 @@ class external extends \external_api {
         ]);
     }
 
-    public static function send_message($messageid) {
-        self::validate_context(\context_system::instance());
-
-        $params = self::validate_parameters(self::send_message_parameters(), ['messageid' => $messageid]);
+    public static function send_message() {
+        $params = self::validate_call(self::send_message_parameters(), func_get_args());
 
         $user = user::current();
 
@@ -1567,7 +1515,7 @@ class external extends \external_api {
         return $fileurl->out(false);
     }
 
-    public static function format_time(int $timestamp, $forcefull = false): string {
+    private static function format_time(int $timestamp, $forcefull = false): string {
         $tz = \core_date::get_user_timezone();
         $date = new \DateTime('now', new \DateTimeZone($tz));
         $offset = ($date->getOffset() - dst_offset_on(time(), $tz)) / (3600.0);
@@ -1585,5 +1533,20 @@ class external extends \external_api {
         } else {
             return userdate($time, get_string('strftimedatefullshort', 'langconfig'));
         }
+    }
+
+    /**
+     * Validates user and parameters.
+     *
+     * @param \external_function_parameters $description Description of function parameters.
+     * @param array $args Argument list of function obtanied by calling func_get_args().
+     * @return mixed[] Validated parameters.
+     */
+    private static function validate_call(\external_function_parameters $description, array $args): array {
+        self::validate_context(\context_system::instance());
+        $keys = array_slice(array_keys($description->keys), 0, count($args));
+        $values = array_slice($args, 0, count($description->keys));
+        $params = array_combine($keys, $values);
+        return self::validate_parameters($description, $params);
     }
 }

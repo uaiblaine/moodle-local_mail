@@ -14,18 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * @package    local-mail
- * @copyright  Albert Gasset <albert.gasset@gmail.com>
- * @copyright  Marc Català <reskit@gmail.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
+namespace local_mail;
 
 defined('MOODLE_INTERNAL') || die;
 
-$observers = array(
-    array(
-        'eventname' => 'core\event\course_deleted',
-        'callback'  => 'local_mail\observer::course_deleted',
-    ),
-);
+require_once(__DIR__ . '/testcase.php');
+
+/**
+ * @covers \local_mail\exception
+ */
+class exception_test extends testcase {
+
+    public function test_construct() {
+        $exception = new exception('errortoomanyrecipients', 123, 'debug info');
+
+        self::assertEquals('errortoomanyrecipients', $exception->errorcode);
+        self::assertEquals('local_mail', $exception->module);
+        self::assertEquals(123, $exception->a);
+        self::assertEquals('', $exception->link);
+        self::assertEquals('debug info', $exception->debuginfo);
+    }
+}

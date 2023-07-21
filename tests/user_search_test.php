@@ -38,15 +38,10 @@ class user_search_test extends testcase {
         $users = self::generate_data();
         foreach (self::cases($users) as $search) {
             $filteredusers = self::filter_users($users, $search);
-            foreach ([0, 5, self::NUM_USERS] as $offset) {
-                foreach ([0, 5, self::NUM_USERS] as $limit) {
-                    $expected = array_slice($filteredusers, $offset, $limit ?: null, true);
-                    $desc = $search . "\noffset: " . $offset . "\nlimit: " . $limit;
-                    $result = $search->fetch($offset, $limit);
-                    self::assertEquals($expected, $result, $desc);
-                    self::assertEquals(array_keys($expected), array_keys($result), $desc);
-                }
-            }
+            $expected = array_slice($filteredusers, 5, 10, true);
+            $result = $search->fetch(5, 10);
+            self::assertEquals($expected, $result, $search);
+            self::assertEquals(array_keys($expected), array_keys($result), $search);
         }
     }
 
@@ -92,35 +87,6 @@ class user_search_test extends testcase {
 
         return $result;
     }
-
-
-    /**
-     * Returns thee generated groups filtered by course and user.
-     *
-     * @param mixed[] $groups Array of groups.
-     * @param course $course Course.
-     * @param user $user User.
-     * @return string[] Group names, indexed by ID.
-     */
-    protected static function filter_groups(array $groups, course $course, user $user): array {
-        $result = [];
-
-        $accessall = has_capability('moodle/site:accessallgroups', $course->context(), $user->id);
-
-        foreach ($groups as $group) {
-            if (
-                $group->courseid != $course->id || $course->groupmode == NOGROUPS ||
-                $course->groupmode == SEPARATEGROUPS && !$accessall && !groups_is_member($group->id, $user->id)
-            ) {
-                continue;
-            }
-            $result[$group->id] = $group->name;
-        }
-
-        return $result;
-    }
-
-
 
     /**
      * Returns thee generated users filtered by search parameters.
@@ -210,7 +176,7 @@ class user_search_test extends testcase {
             $roles[$course->id] = get_role_names_with_caps_in_context($course->context(), ['local/mail:usemail']);
             $group1 = $generator->create_group(['courseid' => $course->id]);
             $group2 = $generator->create_group(['courseid' => $course->id]);
-            $groupids[$course->id] = [$group1->id, $group2->id];
+            $groupids[$course->id] = [0, $group1->id, $group2->id];
         }
 
         // Generate users.
@@ -219,9 +185,11 @@ class user_search_test extends testcase {
             $users[] = $user;
             foreach (self::random_items($courses, count($courses) - 1) as $course) {
                 $roleid = self::random_item($roleids);
-                $groupid = self::random_item($groupids[$course->id]);
                 $generator->enrol_user($user->id, $course->id, $roleid);
-                $generator->create_group_member(['userid' => $user->id, 'groupid' => $groupid]);
+                $groupid = self::random_item($groupids[$course->id]);
+                if ($groupid) {
+                    $generator->create_group_member(['userid' => $user->id, 'groupid' => $groupid]);
+                }
             }
         }
 

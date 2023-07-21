@@ -115,7 +115,7 @@ function delete_messages(array $courses) {
         print_progress("Deleting course mail", count($courses));
 
         $transaction = $DB->start_delegated_transaction();
-        course::delete_messages($course->id);
+        message::delete_course($course->context());
         $transaction->allow_commit();
     }
 }

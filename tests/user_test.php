@@ -182,6 +182,19 @@ class user_test extends testcase {
         self::assertFalse($user2->can_view_message($message));
     }
 
+    public function test_current() {
+        $generator = self::getDataGenerator();
+        $record = $generator->create_user();
+
+        self::setUser($record->id);
+        self::assertEquals(new user($record), user::current());
+
+        // Not logged in.
+
+        self::setUser(null);
+        self::assertNull(user::current());
+    }
+
     public function test_fetch() {
         $generator = self::getDataGenerator();
         $record = $generator->create_user();

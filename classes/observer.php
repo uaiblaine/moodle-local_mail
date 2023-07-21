@@ -23,10 +23,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+ namespace local_mail;
+
 /**
  * Event observer for local_mail.
  */
-class local_mail_observer {
+class observer {
 
     /**
      * Triggered via course_deleted event.
@@ -34,6 +36,6 @@ class local_mail_observer {
      * @param \core\event\course_deleted $event
      */
     public static function course_deleted(\core\event\course_deleted $event) {
-        local_mail\course::delete_messages($event->objectid);
+        message::delete_course($event->get_context());
     }
 }

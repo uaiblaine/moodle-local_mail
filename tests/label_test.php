@@ -49,24 +49,19 @@ class label_test extends testcase {
     public function test_delete() {
         $generator = self::getDataGenerator();
         $user = new user($generator->create_user());
-
+        $course = new course($generator->create_course());
         $label1 = label::create($user, 'name 1', 'red');
         $label2 = label::create($user, 'name 2');
-
-        self::insert_records(
-            'message_labels',
-            ['messageid', 'courseid', 'draft', 'time', 'labelid',   'role', 'unread', 'starred', 'deleted'],
-            [0,            0,          0,       0,      $label1->id, 0,      0,        0,         0],
-            [0,            0,          0,       0,      $label2->id, 0,      0,        0,         0],
-            [0,            0,          0,       0,      $label2->id, 0,      0,        0,         0],
-        );
+        $data = message_data::new($course, $user);
+        $message = message::create($data);
+        $message->set_labels($user, [$label1, $label2]);
 
         $label1->delete();
 
-        self::assert_record_count(0, 'labels', ['id' => $label1->id]);
-        self::assert_record_count(0, 'message_labels', ['labelid' => $label1->id]);
-        self::assert_record_count(1, 'labels');
-        self::assert_record_count(2, 'message_labels');
+        self::assertNull(label::fetch($label1->id));
+        self::assertEquals($label2, label::fetch($label2->id));
+        $message = message::fetch($message->id);
+        self::assertEquals([$user->id => [$label2->id => $label2]], $message->labels);
     }
 
     public function test_fetch() {
