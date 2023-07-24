@@ -43,7 +43,15 @@ if ($hassiteconfig) {
     // Number of recipients.
     $name = 'local_mail/maxrecipients';
     $visiblename = get_string('configmaxrecipients', 'local_mail');
-    $description = '';
+    $description = get_string('configmaxrecipientsdesc', 'local_mail');
+    $defaultsetting = 100;
+    $paramtype = PARAM_INT;
+    $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
+
+    // User search limit.
+    $name = 'local_mail/usersearchlimit';
+    $visiblename = get_string('configusersearchlimit', 'local_mail');
+    $description = get_string('configusersearchlimitdesc', 'local_mail');
     $defaultsetting = 100;
     $paramtype = PARAM_INT;
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
@@ -51,7 +59,7 @@ if ($hassiteconfig) {
     // Number of attachments.
     $name = 'local_mail/maxfiles';
     $visiblename = get_string('configmaxattachments', 'local_mail');
-    $description = '';
+    $description = get_string('configmaxattachmentsdesc', 'local_mail');
     $defaultsetting = 20;
     $paramtype = PARAM_INT;
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
@@ -59,7 +67,7 @@ if ($hassiteconfig) {
     // Attachment size.
     $name = 'local_mail/maxbytes';
     $visiblename = get_string('configmaxattachmentsize', 'local_mail');
-    $description = '';
+    $description = get_string('configmaxattachmentsizedesc', 'local_mail');
     $defaultsetting = get_max_upload_file_size($CFG->maxbytes ?? 0);
     $paramtype = PARAM_INT;
     $choices = get_max_upload_sizes($CFG->maxbytes ?? 0, 0, 0, get_config('local_mail', 'maxbytes'));

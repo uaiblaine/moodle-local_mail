@@ -22,7 +22,6 @@
     export let recipients: ReadonlyMap<number, Recipient>;
     export let onChange: (users: ReadonlyArray<User>, type: RecipientType | null) => unknown;
 
-    const LIMIT = 100;
     const DELAY = 500;
 
     let expanded = false;
@@ -33,7 +32,7 @@
     let roles: ReadonlyArray<Role> = [];
     let groups: ReadonlyArray<Group> = [];
     let users: ReadonlyArray<User> = [];
-    let moreUsers = false;
+    let tooManyUsers = false;
     let roleid = 0;
     let groupid = 0;
 
@@ -49,6 +48,8 @@
     };
 
     const search = async (throttle: boolean) => {
+        const limit = $store.settings.usersearchlimit;
+
         loading = true;
         window.clearTimeout(timeoutId);
 
@@ -71,7 +72,7 @@
                             roleid,
                             groupid,
                         },
-                        limit: LIMIT + 1,
+                        limit: limit + 1,
                     },
                 ];
                 let responses: unknown[];
@@ -81,13 +82,13 @@
                     store.setError(error as ServiceError);
                     loading = false;
                     expanded = false;
-                    moreUsers = false;
+                    tooManyUsers = false;
                     users = [];
                     return;
                 }
                 users = responses.pop() as ReadonlyArray<User>;
-                moreUsers = users.length > LIMIT;
-                users = users.slice(0, LIMIT);
+                tooManyUsers = users.length > limit;
+                users = users.slice(0, limit);
                 groups = responses.pop() as ReadonlyArray<Group>;
                 groupid = groups.find((group) => group.id == groupid)
                     ? groupid
@@ -200,7 +201,7 @@
                 <div class="list-group-item text-danger">
                     {$store.strings.nousersfound}
                 </div>
-            {:else if moreUsers}
+            {:else if tooManyUsers}
                 <div class="list-group-item text-danger">
                     {$store.strings.toomanyusersfound}
                 </div>

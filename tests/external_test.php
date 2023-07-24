@@ -33,6 +33,7 @@ class external_test extends testcase {
         $generator = $this->getDataGenerator();
         $user = $generator->create_user();
         set_config('maxrecipients', '20', 'local_mail');
+        set_config('usersearchlimit', '50', 'local_mail');
         set_config('globaltrays', 'drafts,trash', 'local_mail');
         set_config('coursetrays', 'unread', 'local_mail');
         set_config('coursetraysname', 'shortname', 'local_mail');
@@ -48,6 +49,7 @@ class external_test extends testcase {
         external::validate_parameters(external::get_settings_returns(), $result);
         $expected = [
             'maxrecipients' => 20,
+            'usersearchlimit' => 50,
             'globaltrays' => ['drafts', 'trash'],
             'coursetrays' => 'unread',
             'coursetraysname' => 'shortname',
@@ -62,6 +64,7 @@ class external_test extends testcase {
         // Default settings.
 
         unset_config('maxrecipients', 'local_mail');
+        unset_config('usersearchlimit', 'local_mail');
         unset_config('globaltrays', 'local_mail');
         unset_config('coursetrays', 'local_mail');
         unset_config('coursetraysname', 'local_mail');
@@ -76,6 +79,7 @@ class external_test extends testcase {
         external::validate_parameters(external::get_settings_returns(), $result);
         $expected = [
             'maxrecipients' => 100,
+            'usersearchlimit' => 100,
             'globaltrays' => ['starred', 'sent', 'drafts', 'trash'],
             'coursetrays' => 'all',
             'coursetraysname' => 'fullname',

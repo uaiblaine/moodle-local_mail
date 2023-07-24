@@ -52,6 +52,7 @@ class external extends \external_api {
 
         return [
             'maxrecipients' => (int) get_config('local_mail', 'maxrecipients') ?: 100,
+            'usersearchlimit' => (int) get_config('local_mail', 'usersearchlimit') ?: 100,
             'globaltrays' => $globaltrays,
             'coursetrays' => get_config('local_mail', 'coursetrays') ?: 'all',
             'coursetraysname' => get_config('local_mail', 'coursetraysname') ?: 'fullname',
@@ -68,6 +69,10 @@ class external extends \external_api {
             'maxrecipients' => new \external_value(
                 PARAM_INT,
                 'Maximum number of recipients'
+            ),
+            'usersearchlimit' => new \external_value(
+                PARAM_INT,
+                'Maximum number of results displayed in the user search'
             ),
             'globaltrays' => new \external_multiple_structure(
                 new \external_value(PARAM_ALPHA, 'Type of tray: "starred", "sent", "drafts" or "trash"'),
