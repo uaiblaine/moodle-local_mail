@@ -168,14 +168,13 @@ class user {
         $params['guestid'] = $CFG->siteguest;
         $fields = implode(',', \core_user\fields::get_picture_fields());
 
-        list($sort, $sortparams) = users_order_by_sql();
-        $params = array_merge($params, $sortparams);
-
-        $records = $DB->get_records_select('user', $select, $params, $sort, $fields);
+        $records = $DB->get_records_select('user', $select, $params, '', $fields);
 
         $users = [];
-        foreach ($records as $record) {
-            $users[$record->id] = new self($record);
+        foreach ($ids as $id) {
+            if (isset($records[$id])) {
+                $users[$id] = new self($records[$id]);
+            }
         }
 
         return $users;
@@ -209,5 +208,14 @@ class user {
     public function profile_url(): string {
         $url = new \moodle_url('/user/profile.php', ['id' => $this->id]);
         return $url->out(false);
+    }
+
+    /**
+     * Sort order of the user.
+     *
+     * @return string
+     */
+    public function sortorder(): string {
+        return sprintf("%s\n%s\n%010d", $this->lastname, $this->firstname, $this->id);
     }
 }

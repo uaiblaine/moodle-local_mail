@@ -109,7 +109,6 @@ class course {
             return [];
         }
 
-        $ids = array_unique($ids);
         list($sqlid, $params) = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'courseid');
         $select = "id $sqlid AND id <> :siteid";
         $params['siteid'] = SITEID;

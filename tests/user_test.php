@@ -218,16 +218,16 @@ class user_test extends testcase {
 
     public function test_fetch_many() {
         $generator = self::getDataGenerator();
-        $record1 = $generator->create_user(['firstname' => 'Pau', 'lastname' => 'Rossell']);
-        $record2 = $generator->create_user(['firstname' => 'Anna', 'lastname' => 'Garcia']);
-        $record3 = $generator->create_user(['firstname' => 'Manel', 'lastname' => 'Porta']);
+        $record1 = $generator->create_user();
+        $record2 = $generator->create_user();
+        $record3 = $generator->create_user();
 
         self::assertEquals([], user::fetch_many([]));
 
-        $users = user::fetch_many([$record1->id, 0, $record2->id, $record1->id, $record3->id]);
+        $users = user::fetch_many([$record3->id, 0, $record1->id, $record3->id, $record2->id, $record3->id]);
 
         self::assertIsArray($users);
-        self::assertEquals([$record2->id, $record3->id, $record1->id], array_keys($users));
+        self::assertEquals([$record3->id, $record1->id, $record2->id], array_keys($users));
         self::assertEquals(user::fetch($record1->id), $users[$record1->id]);
         self::assertEquals(user::fetch($record2->id), $users[$record2->id]);
         self::assertEquals(user::fetch($record3->id), $users[$record3->id]);
@@ -259,5 +259,12 @@ class user_test extends testcase {
 
         $url = new \moodle_url('/user/profile.php', ['id' => $record->id]);
         self::assertEquals($url->out(false), $user->profile_url());
+    }
+
+    public function test_sortorder() {
+        $generator = self::getDataGenerator();
+        $user = new user($generator->create_user(['firstname' => 'Lena', 'lastname' => 'Becker']));
+
+        self::assertEquals(sprintf("Becker\nLena\n%010d", $user->id), $user->sortorder());
     }
 }

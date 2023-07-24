@@ -194,7 +194,7 @@ class user_search_test extends testcase {
         }
 
         // Sort users.
-        $users = array_values(user::fetch_many(array_column($users, 'id')));
+        \core_collator::asort_objects_by_method($users, 'sortorder');
 
         return $users;
     }

@@ -538,6 +538,7 @@ class external extends \external_api {
                     'fullname' => $user->fullname(),
                     'pictureurl' => $user->picture_url(),
                     'profileurl' => $user->profile_url(),
+                    'sortorder' => $user->sortorder(),
                 ];
             }
             $labels = [];
@@ -571,6 +572,7 @@ class external extends \external_api {
                     'fullname' => $sender->fullname(),
                     'pictureurl' => $sender->picture_url(),
                     'profileurl' => $sender->profile_url(),
+                    'sortorder' => $sender->sortorder(),
                 ],
                 'recipients' => $recipients,
                 'labels' => $labels,
@@ -605,6 +607,7 @@ class external extends \external_api {
                     'fullname' => new \external_value(PARAM_RAW, 'Full name of the user'),
                     'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
                     'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
+                    'sortorder' => new \external_value(PARAM_RAW, 'User sort order'),
                 ]),
                 'recipients' => new \external_multiple_structure(
                     new \external_single_structure([
@@ -613,6 +616,7 @@ class external extends \external_api {
                         'fullname' => new \external_value(PARAM_RAW, 'Full name of the user'),
                         'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
                         'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
+                        'sortorder' => new \external_value(PARAM_RAW, 'User sort order'),
                     ])
                 ),
                 'labels' => new \external_multiple_structure(
@@ -685,6 +689,7 @@ class external extends \external_api {
                 'fullname' => $sender->fullname(),
                 'pictureurl' => $sender->picture_url(),
                 'profileurl' => $sender->profile_url(),
+                'sortorder' => $sender->sortorder(),
             ],
             'recipients' => [],
             'attachments' => [],
@@ -720,6 +725,7 @@ class external extends \external_api {
                 'fullname' => $recipient->fullname(),
                 'pictureurl' => $recipient->picture_url(),
                 'profileurl' => $recipient->profile_url(),
+                'sortorder' => $recipient->sortorder(),
                 'isvalid' => isset($validrecipients[$recipient->id]),
             ];
         }
@@ -763,6 +769,7 @@ class external extends \external_api {
                     'fullname' => $refsender->fullname(),
                     'pictureurl' => $refsender->picture_url(),
                     'profileurl' => $refsender->profile_url(),
+                    'sortorder' => $sender->sortorder(),
                 ],
                 'attachments' => $attachments,
             ];
@@ -806,6 +813,7 @@ class external extends \external_api {
                 'fullname' => new \external_value(PARAM_RAW, 'Full name of the user'),
                 'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
                 'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
+                'sortorder' => new \external_value(PARAM_RAW, 'User sort order'),
             ]),
             'recipients' => new \external_multiple_structure(
                 new \external_single_structure([
@@ -814,6 +822,7 @@ class external extends \external_api {
                     'fullname' => new \external_value(PARAM_RAW, 'Full name of the user'),
                     'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
                     'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
+                    'sortorder' => new \external_value(PARAM_RAW, 'User sort order'),
                     'isvalid' => new \external_value(PARAM_BOOL, 'This user can receive messages.'),
                 ])
             ),
@@ -841,6 +850,7 @@ class external extends \external_api {
                         'fullname' => new \external_value(PARAM_RAW, 'Full name of the user'),
                         'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
                         'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
+                        'sortorder' => new \external_value(PARAM_RAW, 'User sort order'),
                     ]),
                     'attachments' => new \external_multiple_structure(
                         new \external_single_structure([
@@ -1260,6 +1270,7 @@ class external extends \external_api {
                 'fullname' => $user->fullname(),
                 'pictureurl' => $user->picture_url(),
                 'profileurl' => $user->profile_url(),
+                'sortorder' => $user->sortorder(),
             ];
         }
 
@@ -1273,6 +1284,7 @@ class external extends \external_api {
                 'fullname' => new \external_value(PARAM_RAW, 'Full name of the user'),
                 'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
                 'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
+                'sortorder' => new \external_value(PARAM_RAW, 'User sort order'),
             ])
         );
     }

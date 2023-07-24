@@ -384,19 +384,36 @@ class message_test extends testcase {
         $user4 = new user($generator->create_user());
         $user5 = new user($generator->create_user());
 
-        $time = make_timestamp(2021, 10, 11, 12, 0);
-
         $data = message_data::new($course, $user1);
         $data->to = [$user2, $user3];
         $data->cc = [$user4];
         $data->bcc = [$user5];
         $message = message::create($data);
 
-        $this->assertEquals([$user2, $user3, $user4, $user5], $message->recipients());
-        $this->assertEquals([$user2, $user3], $message->recipients(message::ROLE_TO));
-        $this->assertEquals([$user4], $message->recipients(message::ROLE_CC));
-        $this->assertEquals([$user5], $message->recipients(message::ROLE_BCC));
-        $this->assertEquals([$user2, $user3, $user4], $message->recipients(message::ROLE_TO, message::ROLE_CC));
+        // All recipients.
+        $recipients = [$user2, $user3, $user4, $user5];
+        \core_collator::asort_objects_by_method($recipients, 'sortorder');
+        $this->assertEquals(array_values($recipients), $message->recipients());
+
+        // To recipients.
+        $recipients = [$user2, $user3];
+        \core_collator::asort_objects_by_method($recipients, 'sortorder');
+        $this->assertEquals(array_values($recipients), $message->recipients(message::ROLE_TO));
+
+        // Cc recipients.
+        $recipients = [$user4];
+        \core_collator::asort_objects_by_method($recipients, 'sortorder');
+        $this->assertEquals(array_values($recipients), $message->recipients(message::ROLE_CC));
+
+        // Bcc recipients.
+        $recipients = [$user5];
+        \core_collator::asort_objects_by_method($recipients, 'sortorder');
+        $this->assertEquals(array_values($recipients), $message->recipients(message::ROLE_BCC));
+
+        // To and Bcc recipients.
+        $recipients = [$user2, $user3, $user4];
+        \core_collator::asort_objects_by_method($recipients, 'sortorder');
+        $this->assertEquals(array_values($recipients), $message->recipients(message::ROLE_TO, message::ROLE_CC));
     }
 
     public function test_send() {

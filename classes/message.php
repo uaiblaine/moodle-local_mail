@@ -251,8 +251,6 @@ class message {
             return [];
         }
 
-        $ids = array_unique($ids);
-
         // Fetch records.
         list($sqlid, $params) = $DB->get_in_or_equal($ids);
         $fields = 'id, courseid, subject, content, format, attachments, draft, time';
@@ -286,11 +284,6 @@ class message {
                 $starred[$r->messageid][$r->userid] = (bool) $r->starred;
                 $deleted[$r->messageid][$r->userid] = (int) $r->deleted;
             }
-        }
-
-        // Sort users.
-        foreach (array_keys($users) as $messageid) {
-            $users[$messageid] = array_intersect_key($allusers, $users[$messageid]);
         }
 
         // Fetch labels.
@@ -373,20 +366,23 @@ class message {
      * Returns the recipients of the message.
      *
      * @param int $roles Roles to include or all if empty.
-     * @return user[]
+     * @return user[] Sorted users.
      */
     public function recipients(int ...$roles): array {
         foreach ($roles as $role) {
             assert(in_array($role, [self::ROLE_TO, self::ROLE_CC, self::ROLE_BCC]));
         }
-        $result = [];
+        $recipients = [];
         foreach ($this->users as $user) {
             $role = $this->roles[$user->id];
             if ($role != self::ROLE_FROM && (!$roles || in_array($role, $roles))) {
-                $result[] = $user;
+                $recipients[] = $user;
             }
         }
-        return $result;
+
+        \core_collator::asort_objects_by_method($recipients, 'sortorder');
+
+        return array_values($recipients);
     }
 
     /**
