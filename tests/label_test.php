@@ -61,7 +61,7 @@ class label_test extends testcase {
         self::assertNull(label::fetch($label1->id));
         self::assertEquals($label2, label::fetch($label2->id));
         $message = message::fetch($message->id);
-        self::assertEquals([$user->id => [$label2->id => $label2]], $message->labels);
+        self::assertEquals([$label2], $message->labels($user));
     }
 
     public function test_fetch() {

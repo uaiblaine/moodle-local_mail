@@ -51,7 +51,7 @@ class message_data_test extends testcase {
         self::assertEquals($message->sender(), $data->sender);
         self::assertNull($data->reference);
         self::assertEquals($message->course, $data->course);
-        self::assertEquals([$user2, $user3], $data->to);
+        self::assertEqualsCanonicalizing([$user2, $user3], $data->to);
         self::assertEquals([$user4], $data->cc);
         self::assertEquals([$user5], $data->bcc);
         self::assertEquals('Subject', $data->subject);

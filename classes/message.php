@@ -339,6 +339,18 @@ class message {
     }
 
     /**
+     * Returns whether the given label is set for the message.
+     *
+     * @param label $label Label.
+     * @return bool
+     */
+    public function has_label(label $label): bool {
+        assert(isset($this->users[$label->user->id]));
+
+        return isset($this->labels[$label->user->id][$label->id]);
+    }
+
+    /**
      * Returns whether the given user is a recipient of a message.
      *
      * @param user $user User.
@@ -347,6 +359,22 @@ class message {
     public function has_recipient(user $user): bool {
         $recipientroles = [self::ROLE_TO, self::ROLE_CC, self::ROLE_BCC];
         return isset($this->roles[$user->id]) && in_array($this->roles[$user->id], $recipientroles);
+    }
+
+    /**
+     * Returns the labels of the message.
+     *
+     * @param user $user User.
+     * @return label[] Labels sorted by name.
+     */
+    public function labels(user $user): array {
+        assert(isset($this->users[$user->id]));
+
+        $labels = $this->labels[$user->id];
+
+        \core_collator::asort_objects_by_property($labels, 'name', \core_collator::SORT_NATURAL);
+
+        return array_values($labels);
     }
 
     /**

@@ -475,13 +475,13 @@ class external_test extends testcase {
                 $query['reverse'] = true;
             }
 
-            $expected = external::search_messages_response($search->user->id, $search->fetch());
+            $expected = external::search_messages_response($search->user, $search->fetch());
             $result = external::search_messages($query);
             external::validate_parameters(external::search_messages_returns(), $result);
             self::assertEquals($expected, $result, $search);
 
             // Offset and limit.
-            $expected = external::search_messages_response($search->user->id, $search->fetch(5, 10));
+            $expected = external::search_messages_response($search->user, $search->fetch(5, 10));
             $result = external::search_messages($query, 5, 10);
             external::validate_parameters(external::search_messages_returns(), $result);
             $this->assertEquals($expected, $result, $search . "\noffset: 5\n limit: 10");
@@ -1095,12 +1095,12 @@ class external_test extends testcase {
         $this->assertNull(external::set_labels_returns());
         $this->assertNull($result);
         $message = message::fetch($message->id);
-        $this->assertEquals([$label1->id, $label2->id], array_keys($message->labels[$user1->id]));
+        $this->assertEquals([$label1, $label2], $message->labels($user1));
 
         $result = external::set_labels($message->id, [$label2->id, $label3->id]);
         $this->assertNull($result);
         $message = message::fetch($message->id);
-        $this->assertEquals([$label2->id, $label3->id], array_keys($message->labels[$user1->id]));
+        $this->assertEquals([$label2, $label3], $message->labels($user1));
 
         // Message sent to the user.
 
@@ -1113,12 +1113,12 @@ class external_test extends testcase {
         $result = external::set_labels($message->id, [$label1->id, $label2->id]);
         $this->assertNull($result);
         $message = message::fetch($message->id);
-        $this->assertEquals([$label1->id, $label2->id], array_keys($message->labels[$user1->id]));
+        $this->assertEquals([$label1, $label2], $message->labels($user1));
 
         $result = external::set_labels($message->id, [$label2->id, $label3->id]);
         $this->assertNull($result);
         $message = message::fetch($message->id);
-        $this->assertEquals([$label2->id, $label3->id], array_keys($message->labels[$user1->id]));
+        $this->assertEquals([$label2, $label3], $message->labels($user1));
 
         // Draft from the user.
 
@@ -1129,12 +1129,12 @@ class external_test extends testcase {
         $result = external::set_labels($message->id, [$label1->id, $label2->id]);
         $this->assertNull($result);
         $message = message::fetch($message->id);
-        $this->assertEquals([$label1->id, $label2->id], array_keys($message->labels[$user1->id]));
+        $this->assertEquals([$label1, $label2], $message->labels($user1));
 
         $result = external::set_labels($message->id, [$label2->id, $label3->id]);
         $this->assertNull($result);
         $message = message::fetch($message->id);
-        $this->assertEquals([$label2->id, $label3->id], array_keys($message->labels[$user1->id]));
+        $this->assertEquals([$label2, $label3], $message->labels($user1));
 
         // Draft to the user (no permission).
 

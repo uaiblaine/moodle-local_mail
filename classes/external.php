@@ -522,27 +522,27 @@ class external extends \external_api {
 
         $messages = $search->fetch($params['offset'], $params['limit']);
 
-        return self::search_messages_response($search->user->id, $messages);
+        return self::search_messages_response($search->user, $messages);
     }
 
-    public static function search_messages_response(int $userid, array $messages) {
+    public static function search_messages_response(user $user, array $messages) {
         $result = [];
 
         foreach ($messages as $message) {
             $sender = $message->sender();
             $recipients = [];
-            foreach ($message->recipients(message::ROLE_TO, message::ROLE_CC) as $user) {
+            foreach ($message->recipients(message::ROLE_TO, message::ROLE_CC) as $recipient) {
                 $recipients[] = [
-                    'type' => self::ROLES[$message->roles[$user->id]],
-                    'id' => $user->id,
-                    'fullname' => $user->fullname(),
-                    'pictureurl' => $user->picture_url(),
-                    'profileurl' => $user->profile_url(),
-                    'sortorder' => $user->sortorder(),
+                    'type' => self::ROLES[$message->roles[$recipient->id]],
+                    'id' => $recipient->id,
+                    'fullname' => $recipient->fullname(),
+                    'pictureurl' => $recipient->picture_url(),
+                    'profileurl' => $recipient->profile_url(),
+                    'sortorder' => $recipient->sortorder(),
                 ];
             }
             $labels = [];
-            foreach ($message->labels[$userid] as $label) {
+            foreach ($message->labels($user) as $label) {
                 $labels[] = [
                     'id' => $label->id,
                     'name' => $label->name,
@@ -557,9 +557,9 @@ class external extends \external_api {
                 'time' => $message->time,
                 'shorttime' => self::format_time($message->time),
                 'fulltime' => self::format_time($message->time, true),
-                'unread' => $message->unread[$userid],
-                'starred' => $message->starred[$userid],
-                'deleted' => $message->deleted[$userid] != message::NOT_DELETED,
+                'unread' => $message->unread[$user->id],
+                'starred' => $message->starred[$user->id],
+                'deleted' => $message->deleted[$user->id] != message::NOT_DELETED,
                 'course' => [
                     'id' => $message->course->id,
                     'shortname' => $message->course->shortname,
@@ -775,7 +775,7 @@ class external extends \external_api {
             ];
         }
 
-        foreach ($message->labels[$user->id] as $label) {
+        foreach ($message->labels($user) as $label) {
             $result['labels'][] = [
                 'id' => $label->id,
                 'name' => $label->name,

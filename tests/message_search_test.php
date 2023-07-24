@@ -76,7 +76,7 @@ class message_search_test extends testcase {
         foreach (self::cases($users, $messages) as $search) {
             $expected = [];
             foreach (self::search_result($messages, $search) as $message) {
-                foreach ($message->labels[$search->user->id] as $label) {
+                foreach ($message->labels($search->user) as $label) {
                     if (!$search->label || $search->label->id == $label->id) {
                         $expected[$label->id] = ($expected[$label->id] ?? 0) + 1;
                     }
@@ -339,7 +339,7 @@ class message_search_test extends testcase {
                 !in_array($message->course->id, $courseids) ||
                 $search->user->id != $message->sender()->id && !$message->has_recipient($search->user) ||
                 $search->user->id != $message->sender()->id && $message->draft ||
-                $search->label && !isset($message->labels[$search->label->user->id][$search->label->id]) ||
+                $search->label && !$message->has_label($search->label) ||
                 $search->draft !== null && $search->draft != $message->draft ||
                 $search->roles && !in_array($message->roles[$search->user->id], $search->roles) ||
                 $search->unread !== null && $message->unread[$search->user->id] != $search->unread ||

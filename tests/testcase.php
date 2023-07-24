@@ -95,7 +95,10 @@ abstract class testcase extends \advanced_testcase {
         $numusers = count($message->users);
         self::assert_record_count($numusers, 'message_users', ['messageid' => $message->id]);
 
-        $numlabels = array_sum(array_map('count', $message->labels));
+        $numlabels = count($message->labels($message->sender()));
+        foreach ($message->recipients() as $user) {
+            $numlabels += count($message->labels($user));
+        }
         self::assert_record_count($numlabels, 'message_labels', ['messageid' => $message->id]);
 
         foreach ($message->users as $user) {
@@ -112,7 +115,7 @@ abstract class testcase extends \advanced_testcase {
                 'messageid' => $message->id,
                 'userid' => $user->id
             ], $data);
-            foreach ($message->labels[$user->id] as $label) {
+            foreach ($message->labels($user) as $label) {
                 self::assert_record_data('message_labels', [
                     'messageid' => $message->id,
                     'labelid' => $label->id,
