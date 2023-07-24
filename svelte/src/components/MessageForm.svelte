@@ -63,7 +63,10 @@
                 newRecipients.delete(user.id);
             }
         }
-        recipients = newRecipients;
+        const recipientsList = Array.from(newRecipients.values());
+        recipientsList.sort((a, b) => a.sortorder.localeCompare(b.sortorder));
+        recipients = new Map(recipientsList.map((recipient) => [recipient.id, recipient]));
+
         save(false);
     };
 

@@ -281,6 +281,7 @@ export interface User {
     readonly fullname: string;
     readonly pictureurl: string;
     readonly profileurl: string;
+    readonly sortorder: string;
 }
 
 export enum RecipientType {
