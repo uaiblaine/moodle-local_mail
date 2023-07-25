@@ -65,34 +65,25 @@ class message_test extends testcase {
         self::assertEquals($data->format, $message->format);
         self::assertEquals(2, $message->attachments);
         self::assertEquals($data->time, $message->time);
-        self::assertEquals([
-            $user1->id => message::ROLE_FROM,
-            $user2->id => message::ROLE_TO,
-            $user3->id => message::ROLE_TO,
-            $user4->id => message::ROLE_CC,
-            $user5->id => message::ROLE_BCC,
-        ], $message->roles);
-        self::assertEquals([
-            $user1->id => false,
-            $user2->id => true,
-            $user3->id => true,
-            $user4->id => true,
-            $user5->id => true,
-        ], $message->unread);
-        self::assertEquals([
-            $user1->id => false,
-            $user2->id => false,
-            $user3->id => false,
-            $user4->id => false,
-            $user5->id => false,
-        ], $message->starred);
-        self::assertEquals([
-            $user1->id => message::NOT_DELETED,
-            $user2->id => message::NOT_DELETED,
-            $user3->id => message::NOT_DELETED,
-            $user4->id => message::NOT_DELETED,
-            $user5->id => message::NOT_DELETED,
-        ], $message->deleted);
+        self::assertEquals($user1, $message->sender());
+        self::assertEqualsCanonicalizing([$user2, $user3], $message->recipients(message::ROLE_TO));
+        self::assertEqualsCanonicalizing([$user4], $message->recipients(message::ROLE_CC));
+        self::assertEqualsCanonicalizing([$user5], $message->recipients(message::ROLE_BCC));
+        self::assertFalse($message->unread($user1));
+        self::assertTrue($message->unread($user2));
+        self::assertTrue($message->unread($user3));
+        self::assertTrue($message->unread($user4));
+        self::assertTrue($message->unread($user5));
+        self::assertFalse($message->starred($user1));
+        self::assertFalse($message->starred($user2));
+        self::assertFalse($message->starred($user3));
+        self::assertFalse($message->starred($user4));
+        self::assertFalse($message->starred($user5));
+        self::assertEquals(message::NOT_DELETED, $message->deleted($user1));
+        self::assertEquals(message::NOT_DELETED, $message->deleted($user2));
+        self::assertEquals(message::NOT_DELETED, $message->deleted($user3));
+        self::assertEquals(message::NOT_DELETED, $message->deleted($user4));
+        self::assertEquals(message::NOT_DELETED, $message->deleted($user5));
         self::assertEquals([], $message->labels($user1));
         self::assertEquals([], $message->labels($user2));
         self::assertEquals([], $message->labels($user3));
@@ -197,21 +188,21 @@ class message_test extends testcase {
 
         message::empty_trash($user1, [$course1, $course2]);
 
-        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message1->id)->deleted[$user1->id]);
-        $this->assertEquals(message::DELETED, message::fetch($message1->id)->deleted[$user2->id]);
-        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message2->id)->deleted[$user1->id]);
-        $this->assertEquals(message::NOT_DELETED, message::fetch($message2->id)->deleted[$user2->id]);
-        $this->assertEquals(message::NOT_DELETED, message::fetch($message3->id)->deleted[$user1->id]);
-        $this->assertEquals(message::NOT_DELETED, message::fetch($message3->id)->deleted[$user2->id]);
-        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message4->id)->deleted[$user1->id]);
-        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message5->id)->deleted[$user1->id]);
-        $this->assertEquals(message::DELETED, message::fetch($message6->id)->deleted[$user1->id]);
+        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message1->id)->deleted($user1));
+        $this->assertEquals(message::DELETED, message::fetch($message1->id)->deleted($user2));
+        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message2->id)->deleted($user1));
+        $this->assertEquals(message::NOT_DELETED, message::fetch($message2->id)->deleted($user2));
+        $this->assertEquals(message::NOT_DELETED, message::fetch($message3->id)->deleted($user1));
+        $this->assertEquals(message::NOT_DELETED, message::fetch($message3->id)->deleted($user2));
+        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message4->id)->deleted($user1));
+        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message5->id)->deleted($user1));
+        $this->assertEquals(message::DELETED, message::fetch($message6->id)->deleted($user1));
 
         // No courses.
 
         message::empty_trash($user1, []);
 
-        $this->assertEquals(message::DELETED, message::fetch($message6->id)->deleted[$user1->id]);
+        $this->assertEquals(message::DELETED, message::fetch($message6->id)->deleted($user1));
     }
 
     public function test_fetch() {
@@ -244,15 +235,6 @@ class message_test extends testcase {
         $message2 = message::create($data2);
 
         self::assertEquals($message1, message::fetch($message1->id));
-        self::assertEquals(
-            array_keys(user::fetch_many(array_keys($message1->users))),
-            array_keys(message::fetch($message1->id)->users),
-        );
-        self::assertEquals($message2, message::fetch($message2->id));
-        self::assertEquals(
-            array_keys(user::fetch_many(array_keys($message2->users))),
-            array_keys(message::fetch($message2->id)->users),
-        );
         self::assertNull(message::fetch(0));
     }
 
@@ -453,6 +435,28 @@ class message_test extends testcase {
         $this->assertEquals(array_values($recipients), $message->recipients(message::ROLE_TO, message::ROLE_CC));
     }
 
+    public function test_role() {
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $user4 = new user($generator->create_user());
+        $user5 = new user($generator->create_user());
+
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2, $user3];
+        $data->cc = [$user4];
+        $data->bcc = [$user5];
+        $message = message::create($data);
+
+        $this->assertEquals(message::ROLE_FROM, $message->role($user1));
+        $this->assertEquals(message::ROLE_TO, $message->role($user2));
+        $this->assertEquals(message::ROLE_TO, $message->role($user3));
+        $this->assertEquals(message::ROLE_CC, $message->role($user4));
+        $this->assertEquals(message::ROLE_BCC, $message->role($user5));
+    }
+
     public function test_send() {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
@@ -538,28 +542,28 @@ class message_test extends testcase {
         self::assert_record_count(0, 'message_users', ['messageid' => $draft->id]);
         self::assert_record_count(0, 'message_labels', ['messageid' => $draft->id]);
         self::assertEquals([], $fs->get_area_files($course->context()->id, 'local_mail', 'message', $draft->id));
-        self::assertEquals(message::DELETED_FOREVER, $draft->deleted[$user1->id]);
+        self::assertEquals(message::DELETED_FOREVER, $draft->deleted($user1));
         self::assertEquals([], $draft->labels($user1));
 
         // Delete sent message.
 
         $message->set_deleted($user2, message::DELETED);
 
-        self::assertEquals(message::DELETED, $message->deleted[$user2->id]);
+        self::assertEquals(message::DELETED, $message->deleted($user2));
         self::assert_message($message);
 
         // Restore deleted message.
 
         $message->set_deleted($user2, message::NOT_DELETED);
 
-        self::assertEquals(message::NOT_DELETED, $message->deleted[$user2->id]);
+        self::assertEquals(message::NOT_DELETED, $message->deleted($user2));
         self::assert_message($message);
 
         // Delete sent message forever.
 
         $message->set_deleted($user2, message::DELETED_FOREVER);
 
-        self::assertEquals(message::DELETED_FOREVER, $message->deleted[$user2->id]);
+        self::assertEquals(message::DELETED_FOREVER, $message->deleted($user2));
         self::assert_message($message);
     }
 
@@ -624,14 +628,14 @@ class message_test extends testcase {
 
         $message->set_starred($user2, true);
 
-        self::assertTrue($message->starred[$user2->id]);
+        self::assertTrue($message->starred($user2));
         self::assert_message($message);
 
         // Set unstarred.
 
         $message->set_starred($user2, false);
 
-        self::assertFalse($message->starred[$user2->id]);
+        self::assertFalse($message->starred($user2));
         self::assert_message($message);
     }
 
@@ -653,14 +657,14 @@ class message_test extends testcase {
 
         $message->set_unread($user2, false);
 
-        self::assertFalse($message->unread[$user2->id]);
+        self::assertFalse($message->unread($user2));
         self::assert_message($message);
 
         // Set read.
 
         $message->set_unread($user2, true);
 
-        self::assertTrue($message->unread[$user2->id]);
+        self::assertTrue($message->unread($user2));
         self::assert_message($message);
     }
 
@@ -711,30 +715,22 @@ class message_test extends testcase {
         self::assertEquals($data->format, $message->format);
         self::assertEquals(1, $message->attachments);
         self::assertEquals($data->time, $message->time);
-        self::assertEquals([
-            $user1->id => message::ROLE_FROM,
-            $user2->id => message::ROLE_TO,
-            $user3->id => message::ROLE_CC,
-            $user5->id => message::ROLE_BCC,
-        ], $message->roles);
-        self::assertEquals([
-            $user1->id => false,
-            $user2->id => true,
-            $user3->id => true,
-            $user5->id => true,
-        ], $message->unread);
-        self::assertEquals([
-            $user1->id => false,
-            $user2->id => false,
-            $user3->id => false,
-            $user5->id => false,
-        ], $message->starred);
-        self::assertEquals([
-            $user1->id => message::NOT_DELETED,
-            $user2->id => message::NOT_DELETED,
-            $user3->id => message::NOT_DELETED,
-            $user5->id => message::NOT_DELETED,
-        ], $message->deleted);
+        self::assertEquals($user1, $message->sender());
+        self::assertEqualsCanonicalizing([$user2], $message->recipients(message::ROLE_TO));
+        self::assertEqualsCanonicalizing([$user3], $message->recipients(message::ROLE_CC));
+        self::assertEqualsCanonicalizing([$user5], $message->recipients(message::ROLE_BCC));
+        self::assertFalse($message->unread($user1));
+        self::assertTrue($message->unread($user2));
+        self::assertTrue($message->unread($user3));
+        self::assertTrue($message->unread($user5));
+        self::assertFalse($message->starred($user1));
+        self::assertFalse($message->starred($user2));
+        self::assertFalse($message->starred($user3));
+        self::assertFalse($message->starred($user5));
+        self::assertEquals(message::NOT_DELETED, $message->deleted($user1));
+        self::assertEquals(message::NOT_DELETED, $message->deleted($user2));
+        self::assertEquals(message::NOT_DELETED, $message->deleted($user3));
+        self::assertEquals(message::NOT_DELETED, $message->deleted($user5));
         self::assertEquals([$label1, $label2], $message->labels($user1));
         self::assertEquals([], $message->labels($user2));
         self::assertEquals([], $message->labels($user3));

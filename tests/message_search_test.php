@@ -268,7 +268,7 @@ class message_search_test extends testcase {
 
             if (self::random_bool(self::FORWARD_FREQ) && count($sentmessages) > 0) {
                 $ref = self::random_item($sentmessages);
-                $data = message_data::forward($ref, self::random_item($ref->users));
+                $data = message_data::forward($ref, self::random_item($ref->recipients()));
             } else {
                 $data = message_data::new(self::random_item($courses), self::random_item($users));
             }
@@ -297,14 +297,16 @@ class message_search_test extends testcase {
 
             $messages[] = $message;
 
-            if (self::random_bool(self::DRAFT_FREQ) || count($message->users) == 1) {
+            if (self::random_bool(self::DRAFT_FREQ) || !$message->recipients()) {
                 continue;
             }
 
             $message->send($time);
             $sentmessages[] = $message;
 
-            foreach ($message->users as $user) {
+            $message->set_unread($data->sender, self::random_bool(self::UNREAD_FREQ));
+
+            foreach ([$data->sender, ...$message->recipients()] as $user) {
                 $message->set_unread($user, self::random_bool(self::UNREAD_FREQ));
                 if ($user->id != $data->sender->id) {
                     $message->set_starred($user, self::random_bool(self::STARRED_FREQ));
@@ -341,11 +343,11 @@ class message_search_test extends testcase {
                 $search->user->id != $message->sender()->id && $message->draft ||
                 $search->label && !$message->has_label($search->label) ||
                 $search->draft !== null && $search->draft != $message->draft ||
-                $search->roles && !in_array($message->roles[$search->user->id], $search->roles) ||
-                $search->unread !== null && $message->unread[$search->user->id] != $search->unread ||
-                $search->starred !== null && $message->starred[$search->user->id] != $search->starred ||
-                !$search->deleted && $message->deleted[$search->user->id] != message::NOT_DELETED ||
-                $search->deleted && $message->deleted[$search->user->id] != message::DELETED ||
+                $search->roles && !in_array($message->role($search->user), $search->roles) ||
+                $search->unread !== null && $message->unread($search->user) != $search->unread ||
+                $search->starred !== null && $message->starred($search->user) != $search->starred ||
+                !$search->deleted && $message->deleted($search->user) != message::NOT_DELETED ||
+                $search->deleted && $message->deleted($search->user) != message::DELETED ||
                 $search->withfilesonly && $message->attachments == 0 ||
                 $search->maxtime && $message->time > $search->maxtime ||
                 $search->start && !$search->reverse && $message->id >= $search->start->id ||
@@ -364,11 +366,9 @@ class message_search_test extends testcase {
                 if (\core_text::strpos(message::normalize_text($message->content), $pattern) !== false) {
                     $found = true;
                 }
-                foreach ($message->users as $user) {
-                    if ($message->roles[$user->id] != message::ROLE_BCC) {
-                        if (\core_text::strpos($user->fullname(), $pattern) !== false) {
-                            $found = true;
-                        }
+                foreach ([$message->sender(), ...$message->recipients(message::ROLE_TO, message::ROLE_CC)] as $user) {
+                    if (\core_text::strpos($user->fullname(), $pattern) !== false) {
+                        $found = true;
                     }
                 }
                 if (!$found) {

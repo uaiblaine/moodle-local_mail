@@ -23,8 +23,6 @@
 
 namespace local_mail;
 
-use context_system;
-
 class message {
 
     // Deleted stataus constants.
@@ -63,22 +61,22 @@ class message {
     public int $time;
 
     /** @var user[] Message users, indexed by user ID. */
-    public array $users = [];
+    private array $users = [];
 
     /** @var int[] Roles, indexed by user ID. */
-    public array $roles = [];
+    private array $roles = [];
 
     /** @var bool[] Unread status, indexed by user ID. */
-    public array $unread = [];
+    private array $unread = [];
 
     /** @var bool[] Starred status, indexed by user ID. */
-    public array $starred = [];
+    private array $starred = [];
 
     /** @var int[] Deleted status, indexed by user ID. */
-    public array $deleted = [];
+    private array $deleted = [];
 
     /** @var label[][] Labels, indexed by user ID and label ID. */
-    public array $labels = [];
+    private array $labels = [];
 
     /**
      * Constructs a message instance from a database record.
@@ -187,6 +185,18 @@ class message {
 
         $fs = get_file_storage();
         $fs->delete_area_files($context->id, 'local_mail');
+    }
+
+    /**
+     * Returns the deleted status of the message.
+     *
+     * @param user $user User.
+     * @return int
+     */
+    public function deleted(user $user): int {
+        assert(isset($this->users[$user->id]));
+
+        return $this->deleted[$user->id];
     }
 
     /**
@@ -310,6 +320,9 @@ class message {
                     $message->labels[$user->id] = $labels[$id][$user->id] ?? [];
                 }
                 $messages[$id] = $message;
+
+                // Sort roles so sender method has constant time complexity.
+                asort($message->roles);
             }
         }
 
@@ -411,6 +424,18 @@ class message {
         \core_collator::asort_objects_by_method($recipients, 'sortorder');
 
         return array_values($recipients);
+    }
+
+    /**
+     * Returns the role of a user.
+     *
+     * @param user $user User.
+     * @return int message::ROLE_FROM, message::ROLE_TO, message::ROLE_CC or message::ROLE_BCC
+     */
+    public function role(user $user): int {
+        assert(isset($this->users[$user->id]));
+
+        return $this->roles[$user->id];
     }
 
     /**
@@ -615,6 +640,30 @@ class message {
         $transaction->allow_commit();
 
         $this->unread[$user->id] = $status;
+    }
+
+    /**
+     * Returns the starred status of the message.
+     *
+     * @param user $user User.
+     * @return bool
+     */
+    public function starred(user $user): bool {
+        assert(isset($this->users[$user->id]));
+
+        return $this->starred[$user->id];
+    }
+
+    /**
+     * Returns the unread status of the message.
+     *
+     * @param user $user User.
+     * @return bool
+     */
+    public function unread(user $user): bool {
+        assert(isset($this->users[$user->id]));
+
+        return $this->unread[$user->id];
     }
 
     /**

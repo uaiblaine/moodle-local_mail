@@ -92,7 +92,7 @@ abstract class testcase extends \advanced_testcase {
             'normalizedcontent' => message::normalize_text($message->content),
         ]);
 
-        $numusers = count($message->users);
+        $numusers = count($message->recipients()) + 1;
         self::assert_record_count($numusers, 'message_users', ['messageid' => $message->id]);
 
         $numlabels = count($message->labels($message->sender()));
@@ -101,15 +101,15 @@ abstract class testcase extends \advanced_testcase {
         }
         self::assert_record_count($numlabels, 'message_labels', ['messageid' => $message->id]);
 
-        foreach ($message->users as $user) {
+        foreach ([$message->sender(), ...$message->recipients()] as $user) {
             $data = [
                 'courseid' => $message->course->id ?? 0,
                 'draft' => (int) $message->draft,
                 'time' => $message->time,
-                'role' => $message->roles[$user->id],
-                'unread' => (int) $message->unread[$user->id],
-                'starred' => (int) $message->starred[$user->id],
-                'deleted' => $message->deleted[$user->id],
+                'role' => $message->role($user),
+                'unread' => (int) $message->unread($user),
+                'starred' => (int) $message->starred($user),
+                'deleted' => $message->deleted($user),
             ];
             self::assert_record_data('message_users', [
                 'messageid' => $message->id,

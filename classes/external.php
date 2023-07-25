@@ -533,7 +533,7 @@ class external extends \external_api {
             $recipients = [];
             foreach ($message->recipients(message::ROLE_TO, message::ROLE_CC) as $recipient) {
                 $recipients[] = [
-                    'type' => self::ROLES[$message->roles[$recipient->id]],
+                    'type' => self::ROLES[$message->role($recipient)],
                     'id' => $recipient->id,
                     'fullname' => $recipient->fullname(),
                     'pictureurl' => $recipient->picture_url(),
@@ -557,9 +557,9 @@ class external extends \external_api {
                 'time' => $message->time,
                 'shorttime' => self::format_time($message->time),
                 'fulltime' => self::format_time($message->time, true),
-                'unread' => $message->unread[$user->id],
-                'starred' => $message->starred[$user->id],
-                'deleted' => $message->deleted[$user->id] != message::NOT_DELETED,
+                'unread' => $message->unread($user),
+                'starred' => $message->starred($user),
+                'deleted' => $message->deleted($user) != message::NOT_DELETED,
                 'course' => [
                     'id' => $message->course->id,
                     'shortname' => $message->course->shortname,
@@ -674,9 +674,9 @@ class external extends \external_api {
             'time' => $message->time,
             'shorttime' => self::format_time($message->time),
             'fulltime' => self::format_time($message->time, true),
-            'unread' => $message->unread[$user->id],
-            'starred' => $message->starred[$user->id],
-            'deleted' => (bool) $message->deleted[$user->id],
+            'unread' => $message->unread($user),
+            'starred' => $message->starred($user),
+            'deleted' => (bool) $message->deleted($user),
             'course' => [
                 'id' => $message->course->id,
                 'shortname' => $message->course->shortname,
@@ -711,11 +711,11 @@ class external extends \external_api {
         }
 
         $search = new user_search($user, $message->course);
-        $search->include = array_keys($message->users);
+        $search->include = array_column($message->recipients(), 'id');
         $validrecipients = $search->fetch();
 
         foreach ($message->recipients() as $recipient) {
-            $role = $message->roles[$recipient->id];
+            $role = $message->role($recipient);
             if ($role == message::ROLE_BCC && $user->id != $recipient->id && $user->id != $sender->id) {
                 continue;
             }

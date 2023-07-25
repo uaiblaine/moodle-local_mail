@@ -52,8 +52,8 @@ class message_data_test extends testcase {
         self::assertNull($data->reference);
         self::assertEquals($message->course, $data->course);
         self::assertEqualsCanonicalizing([$user2, $user3], $data->to);
-        self::assertEquals([$user4], $data->cc);
-        self::assertEquals([$user5], $data->bcc);
+        self::assertEqualsCanonicalizing([$user4], $data->cc);
+        self::assertEqualsCanonicalizing([$user5], $data->bcc);
         self::assertEquals('Subject', $data->subject);
         self::assertEquals('Content', $data->content);
         self::assertEquals((int) FORMAT_PLAIN, $data->format);
@@ -83,9 +83,9 @@ class message_data_test extends testcase {
         self::assertEquals($user2, $data->sender);
         self::assertEquals($message, $data->reference);
         self::assertEquals($message->course, $data->course);
-        self::assertEquals([], $data->to);
-        self::assertEquals([], $data->cc);
-        self::assertEquals([], $data->bcc);
+        self::assertEqualsCanonicalizing([], $data->to);
+        self::assertEqualsCanonicalizing([], $data->cc);
+        self::assertEqualsCanonicalizing([], $data->bcc);
         self::assertEquals('FW: Subject', $data->subject);
         self::assertEquals('', $data->content);
         self::assertEquals((int) FORMAT_HTML, $data->format);
@@ -129,9 +129,9 @@ class message_data_test extends testcase {
         self::assertEquals($user2, $data->sender);
         self::assertEquals($message, $data->reference);
         self::assertEquals($message->course, $data->course);
-        self::assertEquals([$user1], $data->to);
-        self::assertEquals([], $data->cc);
-        self::assertEquals([], $data->bcc);
+        self::assertEqualsCanonicalizing([$user1], $data->to);
+        self::assertEqualsCanonicalizing([], $data->cc);
+        self::assertEqualsCanonicalizing([], $data->bcc);
         self::assertEquals('RE: Subject', $data->subject);
         self::assertEquals('', $data->content);
         self::assertEquals((int) FORMAT_HTML, $data->format);
@@ -144,27 +144,27 @@ class message_data_test extends testcase {
         $data = message_data::reply($message, $user2, true);
 
         self::assertEquals($user2, $data->sender);
-        self::assertEquals([$user1], $data->to);
-        self::assertEquals([$user3, $user4], $data->cc);
-        self::assertEquals([], $data->bcc);
+        self::assertEqualsCanonicalizing([$user1], $data->to);
+        self::assertEqualsCanonicalizing([$user3, $user4], $data->cc);
+        self::assertEqualsCanonicalizing([], $data->bcc);
 
         // Reply to self.
 
         $data = message_data::reply($message, $user1, false);
 
         self::assertEquals($user1, $data->sender);
-        self::assertEquals([$user2, $user3], $data->to);
-        self::assertEquals([], $data->cc);
-        self::assertEquals([], $data->bcc);
+        self::assertEqualsCanonicalizing([$user2, $user3], $data->to);
+        self::assertEqualsCanonicalizing([], $data->cc);
+        self::assertEqualsCanonicalizing([], $data->bcc);
 
         // Reply to self (all).
 
         $data = message_data::reply($message, $user1, true);
 
         self::assertEquals($user1, $data->sender);
-        self::assertEquals([$user2, $user3], $data->to);
-        self::assertEquals([$user4], $data->cc);
-        self::assertEquals([], $data->bcc);
+        self::assertEqualsCanonicalizing([$user2, $user3], $data->to);
+        self::assertEqualsCanonicalizing([$user4], $data->cc);
+        self::assertEqualsCanonicalizing([], $data->bcc);
 
         // Reply to replied message.
 
@@ -175,9 +175,9 @@ class message_data_test extends testcase {
         $data = message_data::reply($message, $user1, false);
 
         self::assertEquals($user1, $data->sender);
-        self::assertEquals([$user2], $data->to);
-        self::assertEquals([], $data->cc);
-        self::assertEquals([], $data->bcc);
+        self::assertEqualsCanonicalizing([$user2], $data->to);
+        self::assertEqualsCanonicalizing([], $data->cc);
+        self::assertEqualsCanonicalizing([], $data->bcc);
         self::assertEquals('RE: Subject', $data->subject);
     }
 

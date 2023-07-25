@@ -618,11 +618,11 @@ class external_test extends testcase {
         $result = external::set_unread($message->id, '1');
         self::assertNull(external::set_unread_returns());
         $this->assertNull($result);
-        $this->assertTrue(message::fetch($message->id)->unread[$user1->id]);
+        $this->assertTrue(message::fetch($message->id)->unread($user1));
 
         $result = external::set_unread($message->id, '0');
         $this->assertNull($result);
-        $this->assertFalse(message::fetch($message->id)->unread[$user1->id]);
+        $this->assertFalse(message::fetch($message->id)->unread($user1));
 
         // Message sent to the user.
 
@@ -630,15 +630,15 @@ class external_test extends testcase {
 
         $result = external::set_unread($message->id, '0');
         $this->assertNull($result);
-        $this->assertFalse(message::fetch($message->id)->unread[$user2->id]);
+        $this->assertFalse(message::fetch($message->id)->unread($user2));
 
         $result = external::set_unread($message->id, '1');
         $this->assertNull($result);
-        $this->assertTrue(message::fetch($message->id)->unread[$user2->id]);
+        $this->assertTrue(message::fetch($message->id)->unread($user2));
 
         $result = external::set_unread($message->id, '0');
         $this->assertNull($result);
-        $this->assertFalse(message::fetch($message->id)->unread[$user2->id]);
+        $this->assertFalse(message::fetch($message->id)->unread($user2));
 
         // Draft to the user (no permission).
 
@@ -684,11 +684,11 @@ class external_test extends testcase {
         $result = external::set_starred($message->id, '1');
         $this->assertNull(external::set_starred_returns());
         $this->assertNull($result);
-        $this->assertTrue(message::fetch($message->id)->starred[$user1->id]);
+        $this->assertTrue(message::fetch($message->id)->starred($user1));
 
         $result = external::set_starred($message->id, '0');
         $this->assertNull($result);
-        $this->assertFalse(message::fetch($message->id)->starred[$user1->id]);
+        $this->assertFalse(message::fetch($message->id)->starred($user1));
 
         // Message sent to the user.
 
@@ -696,15 +696,15 @@ class external_test extends testcase {
 
         $result = external::set_starred($message->id, '1');
         $this->assertNull($result);
-        $this->assertTrue(message::fetch($message->id)->starred[$user2->id]);
+        $this->assertTrue(message::fetch($message->id)->starred($user2));
 
         $result = external::set_starred($message->id, '0');
         $this->assertNull($result);
-        $this->assertFalse(message::fetch($message->id)->starred[$user2->id]);
+        $this->assertFalse(message::fetch($message->id)->starred($user2));
 
         $result = external::set_starred($message->id, '1');
         $this->assertNull($result);
-        $this->assertTrue(message::fetch($message->id)->starred[$user2->id]);
+        $this->assertTrue(message::fetch($message->id)->starred($user2));
 
         // Draft to the user (no permission).
 
@@ -750,15 +750,15 @@ class external_test extends testcase {
         $result = external::set_deleted($message->id, '1');
         $this->assertNull(external::set_deleted_returns());
         $this->assertNull($result);
-        $this->assertEquals(message::DELETED, message::fetch($message->id)->deleted[$user1->id]);
+        $this->assertEquals(message::DELETED, message::fetch($message->id)->deleted($user1));
 
         $result = external::set_deleted($message->id, '0');
         $this->assertNull($result);
-        $this->assertEquals(message::NOT_DELETED, message::fetch($message->id)->deleted[$user1->id]);
+        $this->assertEquals(message::NOT_DELETED, message::fetch($message->id)->deleted($user1));
 
         $result = external::set_deleted($message->id, '2');
         $this->assertNull($result);
-        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message->id)->deleted[$user1->id]);
+        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message->id)->deleted($user1));
 
         try {
             external::set_deleted($message->id, '0');
@@ -773,15 +773,15 @@ class external_test extends testcase {
 
         $result = external::set_deleted($message->id, '1');
         $this->assertNull($result);
-        $this->assertEquals(message::DELETED, message::fetch($message->id)->deleted[$user2->id]);
+        $this->assertEquals(message::DELETED, message::fetch($message->id)->deleted($user2));
 
         $result = external::set_deleted($message->id, '0');
         $this->assertNull($result);
-        $this->assertEquals(message::NOT_DELETED, message::fetch($message->id)->deleted[$user2->id]);
+        $this->assertEquals(message::NOT_DELETED, message::fetch($message->id)->deleted($user2));
 
         $result = external::set_deleted($message->id, '2');
         $this->assertNull($result);
-        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message->id)->deleted[$user2->id]);
+        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message->id)->deleted($user2));
 
         try {
             external::set_deleted($message->id, '0');
@@ -811,11 +811,11 @@ class external_test extends testcase {
 
         $result = external::set_deleted($draft->id, '1');
         $this->assertNull($result);
-        $this->assertEquals(message::DELETED, message::fetch($draft->id)->deleted[$user1->id]);
+        $this->assertEquals(message::DELETED, message::fetch($draft->id)->deleted($user1));
 
         $result = external::set_deleted($draft->id, '0');
         $this->assertNull($result);
-        $this->assertEquals(message::NOT_DELETED, message::fetch($draft->id)->deleted[$user1->id]);
+        $this->assertEquals(message::NOT_DELETED, message::fetch($draft->id)->deleted($user1));
 
         $result = external::set_deleted($draft->id, '2');
         $this->assertNull($result);
@@ -890,12 +890,12 @@ class external_test extends testcase {
 
         $this->assertNull(external::empty_trash_returns());
         $this->assertNull($result);
-        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message1->id)->deleted[$user1->id]);
-        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message2->id)->deleted[$user1->id]);
-        $this->assertEquals(message::NOT_DELETED, message::fetch($message3->id)->deleted[$user1->id]);
-        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message4->id)->deleted[$user1->id]);
-        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message5->id)->deleted[$user1->id]);
-        $this->assertEquals(message::DELETED, message::fetch($message6->id)->deleted[$user1->id]);
+        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message1->id)->deleted($user1));
+        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message2->id)->deleted($user1));
+        $this->assertEquals(message::NOT_DELETED, message::fetch($message3->id)->deleted($user1));
+        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message4->id)->deleted($user1));
+        $this->assertEquals(message::DELETED_FOREVER, message::fetch($message5->id)->deleted($user1));
+        $this->assertEquals(message::DELETED, message::fetch($message6->id)->deleted($user1));
     }
 
     public function test_create_label() {
@@ -1403,7 +1403,7 @@ class external_test extends testcase {
         self::assertEquals('', $draft->subject);
         self::assertEquals('', $draft->content);
         self::assertEquals(FORMAT_HTML, $draft->format);
-        self::assertEquals([$user->id => message::ROLE_FROM], $draft->roles);
+        self::assertEquals($user->id, $draft->sender()->id);
         self::assertGreaterThanOrEqual($now, $draft->time);
 
         // User not enrolled in course.
@@ -1462,10 +1462,10 @@ class external_test extends testcase {
         self::assertEquals('RE: ' . $data->subject, $draft->subject);
         self::assertEquals('', $draft->content);
         self::assertEquals(FORMAT_HTML, $draft->format);
-        self::assertEquals([
-            $user1->id => message::ROLE_TO,
-            $user2->id => message::ROLE_FROM,
-        ], $draft->roles);
+        self::assertEquals($user2, $draft->sender());
+        self::assertEqualsCanonicalizing([$user1], $draft->recipients(message::ROLE_TO));
+        self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_CC));
+        self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_BCC));
         self::assertGreaterThanOrEqual($now, $draft->time);
 
         // Reply to all.
@@ -1475,12 +1475,10 @@ class external_test extends testcase {
         external::validate_parameters(external::reply_message_returns(), $result);
         $draft = message::fetch($result);
         self::assertNotNull($draft);
-        self::assertEquals([
-            $user1->id => message::ROLE_TO,
-            $user2->id => message::ROLE_FROM,
-            $user3->id => message::ROLE_CC,
-            $user4->id => message::ROLE_CC,
-        ], $draft->roles);
+        self::assertEquals($user2, $draft->sender());
+        self::assertEqualsCanonicalizing([$user1], $draft->recipients(message::ROLE_TO));
+        self::assertEqualsCanonicalizing([$user3, $user4], $draft->recipients(message::ROLE_CC));
+        self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_BCC));
 
         // User cannot view message.
 
@@ -1552,7 +1550,10 @@ class external_test extends testcase {
         self::assertEquals('FW: ' . $data->subject, $draft->subject);
         self::assertEquals('', $draft->content);
         self::assertEquals(FORMAT_HTML, $draft->format);
-        self::assertEquals([$user2->id => message::ROLE_FROM], $draft->roles);
+        self::assertEquals($user2, $draft->sender());
+        self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_TO));
+        self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_CC));
+        self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_BCC));
         self::assertGreaterThanOrEqual($now, $draft->time);
 
         // User cannot view message.
@@ -1638,13 +1639,10 @@ class external_test extends testcase {
         self::assertEquals('Message content', $message->content);
         self::assertEquals(FORMAT_HTML, $message->format);
         self::assertGreaterThanOrEqual($now, $message->time);
-        self::assertEquals([
-            $user1->id => message::ROLE_FROM,
-            $user2->id => message::ROLE_TO,
-            $user3->id => message::ROLE_TO,
-            $user4->id => message::ROLE_CC,
-            $user5->id => message::ROLE_BCC,
-        ], $message->roles);
+        self::assertEquals($user1, $message->sender());
+        self::assertEqualsCanonicalizing([$user2, $user3], $message->recipients(message::ROLE_TO));
+        self::assertEqualsCanonicalizing([$user4], $message->recipients(message::ROLE_CC));
+        self::assertEqualsCanonicalizing([$user5], $message->recipients(message::ROLE_BCC));
         self::assert_attachments([
             'file1.txt' => 'File 1',
             'file2.txt' => 'File 2'
