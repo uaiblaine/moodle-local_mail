@@ -365,7 +365,7 @@ export async function createStore(data: InitialData) {
                     prevMessageId,
                     draftForm: message?.id != messageid ? draftForm : state.draftForm,
                     draftData: undefined,
-                    draftSaved: message?.id == messageid ? draftData != null : false,
+                    draftSaved: message?.id == messageid ? draftData == null : false,
                     selectedMessages: new Map(
                         message
                             ? [[message.id, message]]

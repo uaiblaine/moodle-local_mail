@@ -13,8 +13,9 @@
     import { ViewSize, type Store } from '../lib/store';
     import { replaceStringParams } from '../lib/utils';
     import CourseSelect from './CourseSelect.svelte';
-    import MessageFormRecipients from './MessageFormRecipients.svelte';
-    import MessageFormUserSearch from './MessageFormUserSearch.svelte';
+    import DraftFormRecipients from './DraftFormRecipients.svelte';
+    import DraftFormTimeAndLabels from './DraftFormTimeAndLabels.svelte';
+    import DraftFormUserSearch from './DraftFormUserSearch.svelte';
     import MessageReference from './MessageReference.svelte';
     import SendButton from './SendButton.svelte';
 
@@ -102,13 +103,14 @@
     };
 </script>
 
-<hr class="d-lg-none my-2" />
+<hr class="d-lg-none mt-0 mb-3 mb-sm-2" />
 <form
     bind:this={formNode}
     on:submit|preventDefault={() => save(true)}
-    class="py-2 py-3 px-lg-4"
+    class="pt-lg-2 pb-3 px-lg-4"
     class:card={$store.viewSize >= ViewSize.LG}
 >
+    <DraftFormTimeAndLabels {store} {message} />
     <div class="row">
         <div class="form-group col-12 col-xl-5">
             <CourseSelect
@@ -121,10 +123,10 @@
             />
         </div>
         <div class="col-12 col-xl-7">
-            <MessageFormUserSearch {store} {course} {recipients} onChange={handleRecipientChange} />
+            <DraftFormUserSearch {store} {course} {recipients} onChange={handleRecipientChange} />
         </div>
     </div>
-    <MessageFormRecipients {store} {recipients} onDelete={handleRecipientDelete} />
+    <DraftFormRecipients {store} {recipients} onDelete={handleRecipientDelete} />
 
     <div class="form-group">
         <input

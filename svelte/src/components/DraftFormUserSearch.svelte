@@ -121,17 +121,16 @@
     use:blur={handleBlur}
 >
     <div
-        class="position-absolute h-100 d-flex justify-content-center align-items-center px-0"
-        style="top: 0; left: 0; width: 2.5rem"
+        class="position-absolute h-100 d-flex justify-content-center align-items-center px-2"
+        style="top: 0; left: 0;"
     >
         <i class="fa fa-fw {loading ? 'fa-spinner fa-pulse' : 'fa-user'}" aria-hidden="true" />
     </div>
 
     <input
         type="text"
-        class="form-control"
+        class="form-control px-5"
         class:is-invalid={!recipients.size}
-        style="padding-left: 2.5rem; padding-right: 2.5"
         placeholder={$store.strings.addrecipients}
         aria-label={$store.strings.addrecipients}
         autocomplete="off"
@@ -145,9 +144,8 @@
         <button
             type="button"
             aria-expanded={expanded}
-            class="btn px-0"
+            class="btn px-2"
             title={$store.strings.cancel}
-            style="width: 2.5rem"
             on:click|preventDefault={handleToggleClick}
         >
             <i

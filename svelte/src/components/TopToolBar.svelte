@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+    import { ViewSize, type Store } from '../lib/store';
     import BackButton from './BackButton.svelte';
     import CourseSelect from './CourseSelect.svelte';
     import DeleteButton from './DeleteButton.svelte';
@@ -10,9 +11,7 @@
     import PagingButtons from './PagingButtons.svelte';
     import RestoreButton from './RestoreButton.svelte';
     import SelectAllButton from './SelectAllButton.svelte';
-    import { ViewSize, type Store } from '../lib/store';
     import SendButton from './SendButton.svelte';
-    import { truncate } from '../actions/truncate';
 
     export let store: Store;
 </script>
@@ -50,11 +49,6 @@
                 primary={true}
                 align={$store.viewSize >= ViewSize.MD ? 'left' : 'right'}
             />
-        </div>
-    {/if}
-    {#if $store.message?.draft && $store.draftSaved}
-        <div class="align-self-center" use:truncate={$store.strings.draftsaved}>
-            {$store.strings.draftsaved}
         </div>
     {/if}
 

@@ -9,7 +9,7 @@
     import List from './List.svelte';
     import Menu from './Menu.svelte';
     import Message from './Message.svelte';
-    import MessageForm from './MessageForm.svelte';
+    import DraftForm from './DraftForm.svelte';
     import PerPageSelect from './PerPageSelect.svelte';
     import SearchBox from './SearchBox.svelte';
     import Toasts from './Toasts.svelte';
@@ -139,7 +139,7 @@
         {/if}
         <div class="local-mail-view-main-column">
             {#if $store.message?.draft && $store.draftForm}
-                <MessageForm {store} message={$store.message} form={$store.draftForm} />
+                <DraftForm {store} message={$store.message} form={$store.draftForm} />
             {:else if $store.message}
                 <Message {store} message={$store.message} />
             {:else}

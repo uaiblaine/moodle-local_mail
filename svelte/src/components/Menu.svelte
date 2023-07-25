@@ -22,7 +22,7 @@
     $: courseVisible = (course: Course): boolean => {
         return (
             settings.coursetrays == 'all' ||
-            (settings.coursetrays == 'unread' && course.unread > 0) ||
+            (settings.coursetrays == 'unread' && (course.unread || 0) > 0) ||
             (params?.tray == 'course' && params?.courseid == course.id)
         );
     };
