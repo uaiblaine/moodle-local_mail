@@ -135,8 +135,10 @@ class message_data {
         assert(!$message->draft);
         assert($sender->id == $message->sender()->id || $message->has_recipient($sender));
 
-        $data = self::new($message->course, $sender);
-        $data->reference = $message;
+        $data = new self();
+        $data->sender = $sender;
+        $data->course = $message->course;
+        $data->time = time();
 
         // Subject.
         $data->subject = $message->subject;
@@ -144,6 +146,30 @@ class message_data {
         if (\core_text::strpos($data->subject, $prefix) !== 0) {
             $data->subject = $prefix . ' ' . $data->subject;
         }
+
+        // Content.
+        $data->draftitemid = 0;
+        $originalcontent = file_prepare_draft_area(
+            $data->draftitemid,
+            $message->course->context()->id,
+            'local_mail',
+            'message',
+            $message->id,
+            self::file_options(),
+            $message->content
+        );
+        $data->content = '<p><br></p>'
+            . '<p>'
+            . '--------- ' . get_string('forwardedmessage', 'local_mail') . ' ---------<br>'
+            . get_string('from', 'local_mail') . ': '
+            . $message->sender()->fullname() . '<br>'
+            . get_string('date', 'local_mail') . ': '
+            . userdate($message->time, get_string('strftimedatetime', 'langconfig')) . '<br>'
+            . get_string('subject', 'local_mail') . ': '
+            . format_text($message->subject, FORMAT_PLAIN, ['filter' => false])
+            . '</p>'
+            . format_text($originalcontent, $message->format, ['filter' => false]);
+        $data->format = FORMAT_HTML;
 
         return $data;
     }

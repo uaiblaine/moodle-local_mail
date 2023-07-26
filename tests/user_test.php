@@ -73,7 +73,7 @@ class user_test extends testcase {
 
         // Reference of a draft.
 
-        $data2 = message_data::forward($message1, $user2);
+        $data2 = message_data::reply($message1, $user2, false);
         $data2->to = [$user4];
         $data2->time = $time2;
         $message2 = message::create($data2);

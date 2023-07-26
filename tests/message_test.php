@@ -312,7 +312,7 @@ class message_test extends testcase {
         $message2 = message::create($data2);
         $message2->send($time2);
 
-        $data3 = message_data::forward($message2, $user2);
+        $data3 = message_data::reply($message2, $user2, false);
         $data3->to = [$user3];
         $message3 = message::create($data3);
         $message3->send($time3);

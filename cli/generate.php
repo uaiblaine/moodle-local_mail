@@ -232,10 +232,8 @@ function generate_course_messages(\file_storage $fs, course $course, ?user $admi
 function generate_random_forward(\file_storage $fs, message $message, array $users, int $time): message_data {
     $sender = random_item($message->recipients(message::ROLE_TO, message::ROLE_CC));
     $data = message_data::forward($message, $sender);
-    $data->content = random_content();
     $data->time = $time;
 
-    add_random_attachments($fs, $data);
     add_random_recipients($data, $users);
 
     return $data;

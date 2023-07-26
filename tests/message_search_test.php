@@ -38,7 +38,6 @@ class message_search_test extends testcase {
     private const NUM_COURSES_PER_USER = 4;
     private const NUM_LABELS_PER_USER = 3;
     private const NUM_MESSAGES = 1000;
-    private const FORWARD_FREQ = 0.2;
     private const DRAFT_FREQ = 0.2;
     private const RECIPIENT_FREQ = 0.2;
     private const UNREAD_FREQ = 0.2;
@@ -266,12 +265,7 @@ class message_search_test extends testcase {
                 $time++;
             }
 
-            if (self::random_bool(self::FORWARD_FREQ) && count($sentmessages) > 0) {
-                $ref = self::random_item($sentmessages);
-                $data = message_data::forward($ref, self::random_item($ref->recipients()));
-            } else {
-                $data = message_data::new(self::random_item($courses), self::random_item($users));
-            }
+            $data = message_data::new(self::random_item($courses), self::random_item($users));
 
             if (self::random_bool(self::ATTACHMENT_FREQ)) {
                 self::create_draft_file($data->draftitemid, 'file.txt', 'text');

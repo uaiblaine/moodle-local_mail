@@ -81,16 +81,27 @@ class message_data_test extends testcase {
 
         $data = message_data::forward($message, $user2);
         self::assertEquals($user2, $data->sender);
-        self::assertEquals($message, $data->reference);
+        self::assertNull($data->reference);
         self::assertEquals($message->course, $data->course);
         self::assertEqualsCanonicalizing([], $data->to);
         self::assertEqualsCanonicalizing([], $data->cc);
         self::assertEqualsCanonicalizing([], $data->bcc);
         self::assertEquals('FW: Subject', $data->subject);
-        self::assertEquals('', $data->content);
+        $expected = '<p><br></p>'
+            . '<p>'
+            . '--------- ' . get_string('forwardedmessage', 'local_mail') . ' ---------<br>'
+            . get_string('from', 'local_mail') . ': '
+            . $message->sender()->fullname() . '<br>'
+            . get_string('date', 'local_mail') . ': '
+            . userdate($message->time, get_string('strftimedatetime', 'langconfig')) . '<br>'
+            . get_string('subject', 'local_mail') . ': '
+            . format_text($message->subject, FORMAT_PLAIN, ['filter' => false])
+            . '</p>'
+            . format_text($message->content, $message->format, ['filter' => false]);
+        self::assertEquals($expected, $data->content);
         self::assertEquals((int) FORMAT_HTML, $data->format);
         self::assertGreaterThan(0, $data->draftitemid);
-        self::assert_draft_files([], $data->draftitemid);
+        self::assert_draft_files(['file1.txt' => 'File 1', 'file2.txt' => 'File 2'], $data->draftitemid);
         self::assertGreaterThanOrEqual($now, $data->time);
 
         // Forward forwarded message.

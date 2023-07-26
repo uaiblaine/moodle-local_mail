@@ -1446,6 +1446,8 @@ class external_test extends testcase {
         $data->content = 'Message content';
         $data->format = FORMAT_PLAIN;
         $data->time = $time;
+        self::create_draft_file($data->draftitemid, 'file1.txt', 'File 1');
+        self::create_draft_file($data->draftitemid, 'file2.txt', 'File 2');
         $message = message::create($data);
         $message->send($time);
         self::setUser($user2->id);
@@ -1467,6 +1469,8 @@ class external_test extends testcase {
         self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_CC));
         self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_BCC));
         self::assertGreaterThanOrEqual($now, $draft->time);
+        self::assertEquals([$message->id => $message], $draft->fetch_references());
+        self::assert_attachments([], $draft);
 
         // Reply to all.
 
@@ -1536,6 +1540,8 @@ class external_test extends testcase {
         $data->content = 'Message content';
         $data->format = FORMAT_PLAIN;
         $data->time = $time;
+        self::create_draft_file($data->draftitemid, 'file1.txt', 'File 1');
+        self::create_draft_file($data->draftitemid, 'file2.txt', 'File 2');
         $message = message::create($data);
         $message->send($time);
         self::setUser($user2->id);
@@ -1548,13 +1554,26 @@ class external_test extends testcase {
         self::assertTrue($draft->draft);
         self::assertEquals($data->course, $draft->course);
         self::assertEquals('FW: ' . $data->subject, $draft->subject);
-        self::assertEquals('', $draft->content);
+        $expected = '<p><br></p>'
+            . '<p>'
+            . '--------- ' . get_string('forwardedmessage', 'local_mail') . ' ---------<br>'
+            . get_string('from', 'local_mail') . ': '
+            . $message->sender()->fullname() . '<br>'
+            . get_string('date', 'local_mail') . ': '
+            . userdate($message->time, get_string('strftimedatetime', 'langconfig')) . '<br>'
+            . get_string('subject', 'local_mail') . ': '
+            . format_text($message->subject, FORMAT_PLAIN, ['filter' => false])
+            . '</p>'
+            . format_text($message->content, $message->format, ['filter' => false]);
+        self::assertEquals($expected, $draft->content);
         self::assertEquals(FORMAT_HTML, $draft->format);
         self::assertEquals($user2, $draft->sender());
         self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_TO));
         self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_CC));
         self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_BCC));
         self::assertGreaterThanOrEqual($now, $draft->time);
+        self::assertEquals([], $draft->fetch_references());
+        self::assert_attachments(['file1.txt' => 'File 1', 'file2.txt' => 'File 2'], $draft);
 
         // User cannot view message.
 
