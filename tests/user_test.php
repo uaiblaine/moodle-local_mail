@@ -254,11 +254,11 @@ class user_test extends testcase {
 
     public function test_profile_url() {
         $generator = self::getDataGenerator();
-        $record = $generator->create_user();
-        $user = user::fetch($record->id);
+        $user = new user($generator->create_user());
+        $course = new course($generator->create_course());
 
-        $url = new \moodle_url('/user/profile.php', ['id' => $record->id]);
-        self::assertEquals($url->out(false), $user->profile_url());
+        $url = new \moodle_url('/user/view.php', ['id' => $user->id, 'course' => $course->id]);
+        self::assertEquals($url->out(false), $user->profile_url($course));
     }
 
     public function test_sortorder() {

@@ -201,12 +201,17 @@ class user {
     }
 
     /**
-     * URL of the profile of the user.
+     * URL of the profile of the user in a course.
      *
+     * @param course $course Course.
      * @return string
      */
-    public function profile_url(): string {
-        $url = new \moodle_url('/user/profile.php', ['id' => $this->id]);
+    public function profile_url(course $course): string {
+        $params = ['id' => $this->id];
+        if ($course) {
+            $params['course'] = $course->id;
+        }
+        $url = new \moodle_url('/user/view.php', $params);
         return $url->out(false);
     }
 

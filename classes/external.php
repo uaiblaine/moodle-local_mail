@@ -537,7 +537,7 @@ class external extends \external_api {
                     'id' => $recipient->id,
                     'fullname' => $recipient->fullname(),
                     'pictureurl' => $recipient->picture_url(),
-                    'profileurl' => $recipient->profile_url(),
+                    'profileurl' => $recipient->profile_url($message->course),
                     'sortorder' => $recipient->sortorder(),
                 ];
             }
@@ -571,7 +571,7 @@ class external extends \external_api {
                     'id' => $sender->id,
                     'fullname' => $sender->fullname(),
                     'pictureurl' => $sender->picture_url(),
-                    'profileurl' => $sender->profile_url(),
+                    'profileurl' => $sender->profile_url($message->course),
                     'sortorder' => $sender->sortorder(),
                 ],
                 'recipients' => $recipients,
@@ -688,7 +688,7 @@ class external extends \external_api {
                 'id' => $sender->id,
                 'fullname' => $sender->fullname(),
                 'pictureurl' => $sender->picture_url(),
-                'profileurl' => $sender->profile_url(),
+                'profileurl' => $sender->profile_url($message->course),
                 'sortorder' => $sender->sortorder(),
             ],
             'recipients' => [],
@@ -724,7 +724,7 @@ class external extends \external_api {
                 'id' => $recipient->id,
                 'fullname' => $recipient->fullname(),
                 'pictureurl' => $recipient->picture_url(),
-                'profileurl' => $recipient->profile_url(),
+                'profileurl' => $recipient->profile_url($message->course),
                 'sortorder' => $recipient->sortorder(),
                 'isvalid' => isset($validrecipients[$recipient->id]),
             ];
@@ -768,7 +768,7 @@ class external extends \external_api {
                     'id' => $refsender->id,
                     'fullname' => $refsender->fullname(),
                     'pictureurl' => $refsender->picture_url(),
-                    'profileurl' => $refsender->profile_url(),
+                    'profileurl' => $refsender->profile_url($message->course),
                     'sortorder' => $sender->sortorder(),
                 ],
                 'attachments' => $attachments,
@@ -1258,10 +1258,10 @@ class external extends \external_api {
 
         $users = $search->fetch($params['offset'], $params['limit']);
 
-        return self::search_users_response($users);
+        return self::search_users_response($course, $users);
     }
 
-    public static function search_users_response(array $users) {
+    public static function search_users_response(course $course, array $users) {
         $result = [];
 
         foreach ($users as $user) {
@@ -1269,7 +1269,7 @@ class external extends \external_api {
                 'id' => $user->id,
                 'fullname' => $user->fullname(),
                 'pictureurl' => $user->picture_url(),
-                'profileurl' => $user->profile_url(),
+                'profileurl' => $user->profile_url($course),
                 'sortorder' => $user->sortorder(),
             ];
         }

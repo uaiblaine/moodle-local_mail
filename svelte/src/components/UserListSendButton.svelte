@@ -1,0 +1,64 @@
+<svelte:options immutable={true} />
+
+<script lang="ts">
+    import { onDestroy, onMount } from 'svelte';
+    import type { Course, Strings } from '../lib/services';
+    import { createUrl } from '../lib/url';
+    import { require, type CorePubSub } from '../lib/amd';
+
+    export let strings: Strings;
+    export let courses: ReadonlyArray<Course>;
+    export let userid: number;
+    export let courseid: number;
+    export let form: HTMLFormElement;
+
+    $: course = courses.find((course) => course.id == courseid);
+    let recipients: number[] = [];
+
+    onMount(async () => {
+        const pubsub = (await require('core/pubsub')) as CorePubSub;
+        pubsub.subscribe('core/checkbox-toggleall:checkboxToggled', updateRecipients);
+        updateRecipients();
+    });
+
+    onDestroy(async () => {
+        const pubsub = (await require('core/pubsub')) as CorePubSub;
+        pubsub.unsubscribe('core/checkbox-toggleall:checkboxToggled', updateRecipients);
+    });
+
+    async function updateRecipients() {
+        recipients = [];
+        const formData = new FormData(form);
+        for (const name of formData.keys()) {
+            const match = /^user(\d+)$/.exec(name);
+            if (match) {
+                const id = parseInt(match[1]);
+                if (id != userid) {
+                    recipients.push(id);
+                }
+            }
+        }
+    }
+</script>
+
+{#if course}
+    <div class="btn-group ml-3">
+        <button
+            type="button"
+            class="btn btn-outline-secondary text-dark bg-white dropdown-toggle"
+            data-toggle="dropdown"
+            aria-expanded="false"
+            disabled={!recipients.length}
+        >
+            <i class="fa fa-icon fa-envelope-o mr-1" aria-hidden="true" />
+            {strings.sendmail}
+        </button>
+        <div class="dropdown-menu">
+            {#each ['to', 'cc', 'bcc'] as role (role)}
+                <a class="dropdown-item" href={createUrl(course.id, recipients, role)}>
+                    {strings[role]}
+                </a>
+            {/each}
+        </div>
+    </div>
+{/if}

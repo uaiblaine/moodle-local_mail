@@ -23,58 +23,38 @@
 
 use local_mail\course;
 use local_mail\message;
+use local_mail\message_data;
 use local_mail\user;
 
-
 require_once('../../config.php');
-require_once('locallib.php');
-require_once('create_form.php');
+require_once("$CFG->dirroot/local/mail/locallib.php");
 
-global $SITE;
+$courseid = required_param('course', PARAM_INT);
+$recipients = optional_param('recipients', '', PARAM_SEQUENCE);
+$role = optional_param('role', 'to', PARAM_ALPHA);
 
-$courseid = optional_param('c', $SITE->id, PARAM_INT);
-$recipient = optional_param('r', false, PARAM_INT);
-$recipients = optional_param('rs', '', PARAM_SEQUENCE);
-$role = optional_param('local_mail_role', 0, PARAM_INT);
+require_login($courseid, false);
+require_sesskey();
 
 // Setup page.
-
-if (!$course = $DB->get_record('course', array('id' => $courseid))) {
-    throw new moodle_exception('invalidcourse', 'error');
-}
 $url = new moodle_url('/local/mail/create.php');
-require_login($course, false);
-local_mail_setup_page($course, $url);
-$context = context_course::instance($course->id);
+$PAGE->set_url($url);
+$PAGE->set_pagelayout('base');
+
+// Check permission.
+$user = user::current();
+$course = course::fetch($courseid);
+if (!$course  || !$user->can_use_mail($course)) {
+    throw new exception('coursenotfound');
+}
 
 // Create message.
-
-if ($course->id != $SITE->id && has_capability('local/mail:usemail', $context)) {
-    require_sesskey();
-    $message = message::create(course::fetch($course->id), user::current(), time());
-    if ($recipients) {
-        local_mail_add_recipients($message, explode(',', $recipients), $role);
-    } else if (local_mail_valid_recipient($recipient)) {
-        $message->add_recipient(user::fetch($recipient), message::ROLE_TO);
-    }
-    $params = array('m' => $message->id);
-    $url = new moodle_url('/local/mail/compose.php', $params);
-    redirect($url);
+$data = message_data::new($course, $user);
+if ($recipients) {
+    $role = in_array($role, ['to', 'cc', 'bcc']) ? $role : 'to';
+    $data->$role = user::fetch_many(explode(',', $recipients));
 }
+$message = message::create($data);
 
-// Setup form.
-
-$courses = local_mail_get_my_courses();
-$customdata = array('courses' => $courses);
-$mform = new local_mail_create_form($url, $customdata);
-$mform->get_data();
-
-// Display page.
-
-echo $OUTPUT->header();
-if ($courses) {
-    $mform->display();
-} else {
-    echo $OUTPUT->notification(get_string('cannotcompose', 'local_mail'));
-}
-echo $OUTPUT->footer();
+// Redirect to message form.
+redirect(new moodle_url('/local/mail/view.php', ['t' => 'drafts', 'c' => $course->id, 'm' => $message->id]));

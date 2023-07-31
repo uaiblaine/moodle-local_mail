@@ -1,5 +1,21 @@
 import type { SearchParams, ViewParams, ViewTray } from './store';
 
+export function createUrl(courseid: number, recipients: number[] = [], role?: string): string {
+    let url = baseUrl() + 'create.php?course=' + courseid;
+
+    if (recipients.length) {
+        url += '&recipients=' + recipients.join(',');
+    }
+
+    if (role) {
+        url += '&role=' + role;
+    }
+
+    url += '&sesskey=' + window.M.cfg.sesskey;
+
+    return url;
+}
+
 export function preferencesUrl(): string {
     return baseUrl() + 'preferences.php';
 }

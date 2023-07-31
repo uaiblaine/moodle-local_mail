@@ -1283,14 +1283,14 @@ class external_test extends testcase {
                 $query['include'] = $search->include;
             }
 
-            $expected = external::search_users_response($search->fetch());
+            $expected = external::search_users_response($search->course, $search->fetch());
             $result = external::search_users($query);
             external::validate_parameters(external::search_users_returns(), $result);
             self::assertEquals($expected, $result, $search);
 
             // Offset and limit.
 
-            $expected = external::search_users_response($search->fetch(5, 10));
+            $expected = external::search_users_response($search->course, $search->fetch(5, 10));
             $result = external::search_users($query, 5, 10);
             external::validate_parameters(external::search_users_returns(), $result);
             $this->assertEquals($expected, $result, $search . "\noffset: 5\n limit: 10");

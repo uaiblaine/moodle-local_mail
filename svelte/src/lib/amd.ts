@@ -24,6 +24,11 @@ export interface CoreFragment {
     processCollectedJavascript: (html: string) => string;
 }
 
+export interface CorePubSub {
+    subscribe: (eventName: string, callback: () => void) => void;
+    unsubscribe: (eventName: string, callback: () => void) => void;
+}
+
 const modules: Record<string, unknown> = {};
 
 /**
