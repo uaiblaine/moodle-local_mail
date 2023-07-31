@@ -15,8 +15,6 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 use local_mail\external;
-use local_mail\message;
-use local_mail\user;
 
 require_once('../../config.php');
 require_once('locallib.php');
@@ -28,39 +26,8 @@ $messageid = optional_param('m', 0, PARAM_INT);
 $courseid = optional_param('c', SITEID, PARAM_INT);
 $labelid = optional_param('l', 0, PARAM_INT);
 
-$reply = optional_param('reply', false, PARAM_BOOL);
-$replyall = optional_param('replyall', false, PARAM_BOOL);
-$forward = optional_param('forward', false, PARAM_BOOL);
-
 if (!local_mail_is_installed()) {
     throw new moodle_exception('pluginnotinstalled', 'local_mail');
-}
-
-if ($reply || $replyall || $forward) {
-    $messageid = required_param('m', PARAM_INT);
-
-    $message = message::fetch($messageid);
-    $user = user::current();
-    if (!$message || !$user->can_view_message($message)) {
-        throw new \moodle_exception('errormessagenotfound', 'local_mail');
-    }
-
-    require_login($message->course->id, false);
-    require_sesskey();
-    require_capability('local/mail:usemail', $PAGE->context);
-
-    if (!$user->can_view_message($message)) {
-        throw new \moodle_exception('errormessagenotfound', 'local_mail');
-    }
-
-    if ($forward) {
-        $newmessage = $message->forward($user, time());
-    } else {
-        $newmessage = $message->reply($user, $replyall, time());
-    }
-
-    $url = new moodle_url('/local/mail/compose.php', array('m' => $newmessage->id));
-    redirect($url);
 }
 
 require_login(null, false);

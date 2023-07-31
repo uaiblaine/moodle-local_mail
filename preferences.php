@@ -26,13 +26,17 @@ require_once($CFG->dirroot . '/local/mail/preferences_form.php');
 
 $url = new moodle_url('/local/mail/preferences.php');
 $viewurl = new moodle_url('/local/mail/view.php', array('t' => 'inbox'));
+$title = get_string('preferences', 'local_mail');
 
-require_login($SITE, false);
-local_mail_setup_page($SITE, new moodle_url($url));
-$title = get_string('preferences');
+require_login(null, false);
+
+$PAGE->set_url($url);
+$PAGE->set_context(context_system::instance());
+$PAGE->set_pagelayout('base');
+$PAGE->set_title($title);
 
 $prefs = new stdClass;
-$prefs->markasread  = get_user_preferences('local_mail_markasread', 0);
+$prefs->markasread = get_user_preferences('local_mail_markasread', 0);
 
 $form = new local_mail_preferences_form($url);
 $form->set_data($prefs);
@@ -47,7 +51,7 @@ if ($form->is_cancelled()) {
     }
     set_user_preference('local_mail_markasread', $data->markasread);
 
-    redirect($viewurl, get_string('changessaved'), 1);
+    redirect($viewurl);
 }
 
 echo $OUTPUT->header();

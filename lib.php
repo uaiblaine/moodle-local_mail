@@ -141,20 +141,3 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
         return  $container . $datascript . $sveltescript;
     }
 }
-
-/**
- * Get icon mapping for font-awesome.
- */
-function local_mail_get_fontawesome_icon_map() {
-    return [
-        'local_mail:compose' => 'fa-pencil-square-o',
-        'local_mail:course' => 'fa-university',
-        'local_mail:drafts' => 'fa-file',
-        'local_mail:icon' => 'fa-envelope',
-        'local_mail:inbox' => 'fa-inbox',
-        'local_mail:label' => 'fa-tag',
-        'local_mail:sent' => 'fa-paper-plane',
-        'local_mail:starred' => 'fa-star',
-        'local_mail:trash' => 'fa-trash',
-    ];
-}
