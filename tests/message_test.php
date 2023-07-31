@@ -697,7 +697,7 @@ class message_test extends testcase {
         $data->course = $course2;
         $data->to = [$user2];
         $data->cc = [$user3];
-        $data->bcc = [$user5, $user2, $user3];
+        $data->bcc = [$user5, $user2, $user3, $user1];
         $data->subject = 'Updated subject';
         $data->content = 'Updated content';
         $data->format = (int) FORMAT_PLAIN;

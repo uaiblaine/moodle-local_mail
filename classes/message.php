@@ -749,17 +749,17 @@ class message {
         $DB->execute($sql, $params);
 
         // Added and modified recipients.
-        $isrecipient = [];
+        $ignored = [$this->sender()->id => true];
         foreach (['to', 'cc', 'bcc'] as $rolename) {
             $role = $rolename == 'to' ? self::ROLE_TO : ($rolename == 'cc' ? self::ROLE_CC : self::ROLE_BCC);
 
             foreach ($data->$rolename as $user) {
-                if (!empty($isrecipient[$user->id])) {
+                if (!empty($ignored[$user->id])) {
                     // Ignore duplicated user.
                     continue;
                 }
 
-                $isrecipient[$user->id] = true;
+                $ignored[$user->id] = true;
 
                 if (!isset($this->users[$user->id])) {
                     $this->users[$user->id] = $user;
@@ -798,7 +798,7 @@ class message {
 
         // Removed recipients.
         foreach ($this->users as $user) {
-            if ($this->roles[$user->id] != self::ROLE_FROM && empty($isrecipient[$user->id])) {
+            if ($this->roles[$user->id] != self::ROLE_FROM && empty($ignored[$user->id])) {
                 unset($this->users[$user->id]);
                 unset($this->roles[$user->id]);
                 unset($this->unread[$user->id]);
