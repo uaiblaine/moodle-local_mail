@@ -23,8 +23,9 @@
 
 use local_mail\external;
 use local_mail\message;
-use local_mail\user;
 use local_mail\message_search;
+use local_mail\settings;
+use local_mail\user;
 
 defined('MOODLE_INTERNAL') || die;
 
@@ -75,7 +76,7 @@ function local_mail_pluginfile(
 function local_mail_render_navbar_output(\renderer_base $renderer) {
     global $PAGE;
 
-    if (!local_mail_is_installed()) {
+    if (!settings::is_installed()) {
         return '';
     }
 
@@ -116,7 +117,7 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
 
         $data = [
             'userid' => $user->id,
-            'settings' => external::get_settings_raw(),
+            'settings' => (array) settings::fetch(),
             'strings' => [
                 'togglemailmenu' => $strings['togglemailmenu'],
                 'compose' => $strings['compose'],

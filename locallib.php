@@ -27,17 +27,6 @@ defined('MOODLE_INTERNAL') || die;
 
 require_once($CFG->libdir . '/filelib.php');
 
-function local_mail_is_installed() {
-    global $CFG;
-
-    $plugin = new stdClass;
-    include("$CFG->dirroot/local/mail/version.php");
-
-    $version = get_config('local_mail', 'version');
-
-    return $version == $plugin->version;
-}
-
 function local_mail_send_notifications($message) {
     global $CFG, $SITE;
 

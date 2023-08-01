@@ -21,10 +21,14 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_mail\settings;
+
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
     require_once($CFG->dirroot . '/local/mail/locallib.php');
+
+    $defaults = settings::defaults();
 
     $settings = new admin_settingpage('local_mail', get_string('pluginname', 'local_mail'));
 
@@ -34,7 +38,7 @@ if ($hassiteconfig) {
     $name = 'local_mail/enablebackup';
     $visiblename = get_string('configenablebackup', 'local_mail');
     $description = get_string('configenablebackupdesc', 'local_mail');
-    $defaultsetting = 1;
+    $defaultsetting = $defaults->enablebackup;
     $settings->add(new admin_setting_configcheckbox($name, $visiblename, $description, $defaultsetting));
 
     // New mail.
@@ -44,7 +48,7 @@ if ($hassiteconfig) {
     $name = 'local_mail/maxrecipients';
     $visiblename = get_string('configmaxrecipients', 'local_mail');
     $description = get_string('configmaxrecipientsdesc', 'local_mail');
-    $defaultsetting = 100;
+    $defaultsetting = $defaults->maxrecipients;
     $paramtype = PARAM_INT;
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
 
@@ -52,7 +56,7 @@ if ($hassiteconfig) {
     $name = 'local_mail/usersearchlimit';
     $visiblename = get_string('configusersearchlimit', 'local_mail');
     $description = get_string('configusersearchlimitdesc', 'local_mail');
-    $defaultsetting = 100;
+    $defaultsetting = $defaults->usersearchlimit;
     $paramtype = PARAM_INT;
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
 
@@ -60,7 +64,7 @@ if ($hassiteconfig) {
     $name = 'local_mail/maxfiles';
     $visiblename = get_string('configmaxattachments', 'local_mail');
     $description = get_string('configmaxattachmentsdesc', 'local_mail');
-    $defaultsetting = 20;
+    $defaultsetting = $defaults->maxfiles;
     $paramtype = PARAM_INT;
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
 
@@ -68,9 +72,9 @@ if ($hassiteconfig) {
     $name = 'local_mail/maxbytes';
     $visiblename = get_string('configmaxattachmentsize', 'local_mail');
     $description = get_string('configmaxattachmentsizedesc', 'local_mail');
-    $defaultsetting = get_max_upload_file_size($CFG->maxbytes ?? 0);
+    $defaultsetting = $defaults->maxbytes;
     $paramtype = PARAM_INT;
-    $choices = get_max_upload_sizes($CFG->maxbytes ?? 0, 0, 0, get_config('local_mail', 'maxbytes'));
+    $choices = get_max_upload_sizes($CFG->maxbytes ?? 0, 0, 0, settings::fetch()->maxbytes);
     $settings->add(new admin_setting_configselect($name, $visiblename, $description, $defaultsetting, $choices));
 
     // Trays.
@@ -80,12 +84,10 @@ if ($hassiteconfig) {
     $name = 'local_mail/globaltrays';
     $visiblename = get_string('configglobaltrays', 'local_mail');
     $description = get_string('configglobaltraysdesc', 'local_mail');
-    $defaultsetting = [
-        'starred' => 1,
-        'sent' => 1,
-        'drafts' => 1,
-        'trash' => 1,
-    ];
+    $defaultsetting = [];
+    foreach ($defaults->globaltrays as $tray) {
+        $defaultsetting[$tray] = 1;
+    }
     $choices = [
         'starred' => get_string('starredmail', 'local_mail'),
         'sent' => get_string('sentmail', 'local_mail'),
@@ -98,7 +100,7 @@ if ($hassiteconfig) {
     $name = 'local_mail/coursetrays';
     $visiblename = get_string('configcoursetrays', 'local_mail');
     $description = get_string('configcoursetraysdesc', 'local_mail');
-    $defaultsetting = 'all';
+    $defaultsetting = $defaults->coursetrays;
     $choices = [
         'none' => get_string('none'),
         'unread' => get_string('courseswithunreadmessages', 'local_mail'),
@@ -110,7 +112,7 @@ if ($hassiteconfig) {
     $name = 'local_mail/coursetraysname';
     $visiblename = get_string('configcoursetraysname', 'local_mail');
     $description = get_string('configcoursetraysnamedesc', 'local_mail');
-    $defaultsetting = 'fullname';
+    $defaultsetting = $defaults->coursetraysname;
     $choices = [
         'shortname' => get_string('shortname'),
         'fullname' => get_string('fullname'),
@@ -124,7 +126,7 @@ if ($hassiteconfig) {
     $name = 'local_mail/coursebadges';
     $visiblename = get_string('configcoursebadges', 'local_mail');
     $description = get_string('configcoursebadgesdesc', 'local_mail');
-    $defaultsetting = 'fullname';
+    $defaultsetting = $defaults->coursebadges;
     $choices = [
         'hidden' => get_string('hide'),
         'shortname' => get_string('shortname'),
@@ -136,7 +138,7 @@ if ($hassiteconfig) {
     $name = 'local_mail/coursebadgeslength';
     $visiblename = get_string('configcoursebadgeslength', 'local_mail');
     $description = get_string('configcoursebadgeslengthdesc', 'local_mail');
-    $defaultsetting = 20;
+    $defaultsetting = $defaults->coursebadgeslength;
     $paramtype = PARAM_INT;
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
 
@@ -144,7 +146,7 @@ if ($hassiteconfig) {
     $name = 'local_mail/filterbycourse';
     $visiblename = get_string('configfilterbycourse', 'local_mail');
     $description = get_string('configfilterbycoursedesc', 'local_mail');
-    $defaultsetting = 'fullname';
+    $defaultsetting = $defaults->filterbycourse;
     $choices = [
         'hidden' => get_string('hide'),
         'shortname' => get_string('shortname'),
@@ -161,14 +163,14 @@ if ($hassiteconfig) {
     $name = 'local_mail/incrementalsearch';
     $visiblename = get_string('configincrementalsearch', 'local_mail');
     $description = get_string('configincrementalsearchdesc', 'local_mail');
-    $defaultsetting = '0';
+    $defaultsetting = $defaults->incrementalsearch;
     $settings->add(new admin_setting_configcheckbox($name, $visiblename, $description, $defaultsetting));
 
     // Incremental search limit.
     $name = 'local_mail/incrementalsearchlimit';
     $visiblename = get_string('configincrementalsearchlimit', 'local_mail');
     $description = get_string('configincrementalsearchlimitdesc', 'local_mail');
-    $defaultsetting = 1000;
+    $defaultsetting = $defaults->incrementalsearchlimit;
     $paramtype = PARAM_INT;
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
 }

@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 use local_mail\external;
+use local_mail\settings;
 
 require_once('../../config.php');
 require_once('locallib.php');
@@ -26,7 +27,7 @@ $messageid = optional_param('m', 0, PARAM_INT);
 $courseid = optional_param('c', SITEID, PARAM_INT);
 $labelid = optional_param('l', 0, PARAM_INT);
 
-if (!local_mail_is_installed()) {
+if (!settings::is_installed()) {
     throw new moodle_exception('pluginnotinstalled', 'local_mail');
 }
 
@@ -55,7 +56,7 @@ $PAGE->set_title(get_string('pluginname', 'local_mail'));
 // Initial data passed via a script tag.
 $data = [
     'userid' => $USER->id,
-    'settings' => external::get_settings_raw(),
+    'settings' => (array) settings::fetch(),
     'preferences' => external::get_preferences_raw(),
     'strings' => external::get_strings_raw(),
 ];

@@ -32,8 +32,11 @@ class external_test extends testcase {
     public function test_get_settings() {
         $generator = $this->getDataGenerator();
         $user = $generator->create_user();
+        set_config('enablebackup', '0', 'local_mail');
         set_config('maxrecipients', '20', 'local_mail');
         set_config('usersearchlimit', '50', 'local_mail');
+        set_config('maxfiles', '5', 'local_mail');
+        set_config('maxbytes', '45000', 'local_mail');
         set_config('globaltrays', 'drafts,trash', 'local_mail');
         set_config('coursetrays', 'unread', 'local_mail');
         set_config('coursetraysname', 'shortname', 'local_mail');
@@ -48,8 +51,11 @@ class external_test extends testcase {
 
         external::validate_parameters(external::get_settings_returns(), $result);
         $expected = [
+            'enablebackup' => false,
             'maxrecipients' => 20,
             'usersearchlimit' => 50,
+            'maxfiles' => 5,
+            'maxbytes' => 45000,
             'globaltrays' => ['drafts', 'trash'],
             'coursetrays' => 'unread',
             'coursetraysname' => 'shortname',
@@ -63,8 +69,12 @@ class external_test extends testcase {
 
         // Default settings.
 
+        set_config('maxbytes', 123000);
+        unset_config('enablebackup', 'local_mail');
         unset_config('maxrecipients', 'local_mail');
         unset_config('usersearchlimit', 'local_mail');
+        unset_config('maxfiles', 'local_mail');
+        unset_config('maxbytes', 'local_mail');
         unset_config('globaltrays', 'local_mail');
         unset_config('coursetrays', 'local_mail');
         unset_config('coursetraysname', 'local_mail');
@@ -78,8 +88,11 @@ class external_test extends testcase {
 
         external::validate_parameters(external::get_settings_returns(), $result);
         $expected = [
+            'enablebackup' => true,
             'maxrecipients' => 100,
             'usersearchlimit' => 100,
+            'maxfiles' => 20,
+            'maxbytes' => 123000,
             'globaltrays' => ['starred', 'sent', 'drafts', 'trash'],
             'coursetrays' => 'all',
             'coursetraysname' => 'fullname',
@@ -99,6 +112,16 @@ class external_test extends testcase {
 
         external::validate_parameters(external::get_settings_returns(), $result);
         $this->assertEquals([], $result['globaltrays']);
+
+        // Plugin not installed.
+
+        unset_config('version', 'local_mail');
+        try {
+            external::get_settings();
+            $this->fail();
+        } catch (exception $e) {
+            $this->assertEquals('pluginnotinstalled', $e->errorcode);
+        }
     }
 
     public function test_get_strings() {

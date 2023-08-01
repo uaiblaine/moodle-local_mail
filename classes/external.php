@@ -37,70 +37,58 @@ class external extends \external_api {
     public static function get_settings() {
         self::validate_call(self::get_settings_parameters(), func_get_args());
 
-        return self::get_settings_raw();
-    }
-
-    public static function get_settings_raw() {
-        $globaltrays = get_config('local_mail', 'globaltrays');
-        if ($globaltrays === false) {
-            $globaltrays = ['starred', 'sent', 'drafts', 'trash'];
-        } else if ($globaltrays == '') {
-            $globaltrays = [];
-        } else {
-            $globaltrays = explode(',', $globaltrays);
-        }
-
-        return [
-            'maxrecipients' => (int) get_config('local_mail', 'maxrecipients') ?: 100,
-            'usersearchlimit' => (int) get_config('local_mail', 'usersearchlimit') ?: 100,
-            'globaltrays' => $globaltrays,
-            'coursetrays' => get_config('local_mail', 'coursetrays') ?: 'all',
-            'coursetraysname' => get_config('local_mail', 'coursetraysname') ?: 'fullname',
-            'coursebadges' => get_config('local_mail', 'coursebadges') ?: 'fullname',
-            'coursebadgeslength' => (int) get_config('local_mail', 'coursebadgeslength') ?: 20,
-            'filterbycourse' => get_config('local_mail', 'filterbycourse') ?: 'fullname',
-            'incrementalsearch' => (bool) get_config('local_mail', 'incrementalsearch'),
-            'incrementalsearchlimit' => (int) get_config('local_mail', 'incrementalsearchlimit') ?: 1000,
-        ];
+        return (array) settings::fetch();
     }
 
     public static function get_settings_returns() {
         return new \external_single_structure([
+            'enablebackup' => new \external_value(
+                PARAM_BOOL,
+                'Backup and restore enabled'
+            ),
             'maxrecipients' => new \external_value(
                 PARAM_INT,
-                'Maximum number of recipients'
+                'Maximum number of recipients allowed per message'
             ),
             'usersearchlimit' => new \external_value(
                 PARAM_INT,
                 'Maximum number of results displayed in the user search'
             ),
+            'maxfiles' => new \external_value(
+                PARAM_INT,
+                'Maximum size of attachments allowed per message'
+            ),
+            'maxbytes' => new \external_value(
+                PARAM_INT,
+                'Maximum size of attachments allowed per message'
+            ),
             'globaltrays' => new \external_multiple_structure(
-                new \external_value(PARAM_ALPHA, 'Type of tray: "starred", "sent", "drafts" or "trash"'),
-                'Global trays to display'
+                new \external_value(PARAM_ALPHA, 'Type of ray: "starred", "sent", "drafts" or "trash"'),
+                'Global trays displayed in menus'
             ),
             'coursetrays' => new \external_value(
                 PARAM_ALPHA,
-                'Course trays to display: "none", "unread", or "all"'
+                'Course trays displayed in menus: "none", "unread", or "all"'
             ),
             'coursetraysname' => new \external_value(
                 PARAM_ALPHA,
-                'Name of course trays to display: "shortname" or "fullname"'
+                'Type of course name displayed in menus: "shortname" or "fullname"'
             ),
             'coursebadges' => new \external_value(
                 PARAM_ALPHA,
-                'Type of course badges: "hidden", "shortname", or "fullname"'
+                'Type of course name displayed in messagess: "hidden", "shortname", or "fullname"'
             ),
             'coursebadgeslength' => new \external_value(
                 PARAM_INT,
-                'Trunate course badges to this length in characters'
+                'Course badges are truncated to this approximate length'
             ),
             'filterbycourse' => new \external_value(
                 PARAM_ALPHA,
-                'Type of filter by course: "hidden", "shortname", or "fullname"'
+                'Type of course name used in the filter by course: "hidden", "shortname" or "fullname"'
             ),
             'incrementalsearch' => new \external_value(
                 PARAM_BOOL,
-                'Enables displaying results while the user is typing in the search box',
+                'Incremental search enabled',
             ),
             'incrementalsearchlimit' => new \external_value(
                 PARAM_INT,
@@ -1561,6 +1549,9 @@ class external extends \external_api {
      */
     private static function validate_call(\external_function_parameters $description, array $args): array {
         self::validate_context(\context_system::instance());
+        if (!settings::is_installed()) {
+            throw new exception('pluginnotinstalled');
+        }
         $keys = array_slice(array_keys($description->keys), 0, count($args));
         $values = array_slice($args, 0, count($description->keys));
         $params = array_combine($keys, $values);
