@@ -1722,6 +1722,9 @@ class external_test extends testcase {
     }
 
     public function test_send_message() {
+        global $PAGE;
+        $renderer = $PAGE->get_renderer('local_mail');
+
         $generator = $this->getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -1735,6 +1738,7 @@ class external_test extends testcase {
         $generator->enrol_user($user3->id, $course->id);
         $generator->enrol_user($user4->id, $course->id);
         $generator->enrol_user($user5->id, $course->id);
+        set_user_preference('local_mail_markasread', 1, $user3->id);
         $time = make_timestamp(2021, 10, 11, 12, 0);
         $now = time();
         $data = message_data::new($course, $user1);
@@ -1748,14 +1752,39 @@ class external_test extends testcase {
         self::create_draft_file($data->draftitemid, 'file.txt', 'File content');
         $message = message::create($data);
         self::setUser($user1->id);
+        $sink = $this->redirectMessages();
 
         $result = external::send_message($message->id);
 
         self::assertNull($result);
         $this->assertNull(external::send_message_returns());
+
         $message = message::fetch($message->id);
         self::assertFalse($message->draft);
         self::assertGreaterThanOrEqual($now, $message->time);
+        self::assertTrue($message->unread($user2));
+        self::assertFalse($message->unread($user3));
+        self::assertTrue($message->unread($user4));
+        self::assertTrue($message->unread($user5));
+
+        $notifications = $sink->get_messages();
+        $recipients = $message->recipients();
+        self::assertEquals(count($recipients), count($notifications));
+        foreach ($recipients as $i => $user) {
+            $expected = $renderer->notification($message, $user);
+            self::assertEquals($expected->notification, $notifications[$i]->notification);
+            self::assertEquals($expected->component, $notifications[$i]->component);
+            self::assertEquals($expected->name, $notifications[$i]->eventtype);
+            self::assertEquals($expected->userfrom, $notifications[$i]->useridfrom);
+            self::assertEquals($expected->userto, $notifications[$i]->useridto);
+            self::assertEquals($expected->subject, $notifications[$i]->subject);
+            self::assertEquals($expected->fullmessage, $notifications[$i]->fullmessage);
+            self::assertEquals($expected->fullmessageformat, $notifications[$i]->fullmessageformat);
+            self::assertEquals($expected->fullmessagehtml, $notifications[$i]->fullmessagehtml);
+            self::assertEquals($expected->smallmessage, $notifications[$i]->smallmessage);
+            self::assertEquals($expected->contexturl, $notifications[$i]->contexturl);
+            self::assertEquals($expected->contexturlname, $notifications[$i]->contexturlname);
+        }
 
         // User cannot edit message.
 

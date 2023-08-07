@@ -157,14 +157,9 @@ $string['none'] = 'Cap';
 $string['norecipient'] = '(sense destinataris)';
 $string['noselectedmessages'] = 'Cap missatge seleccionat';
 $string['nosubject'] = '(sense assumpte)';
-$string['notificationbody'] = '- De: {$a->user}
-
-- Assumpte: {$a->subject}
-
-{$a->content}';
-$string['notificationbodyhtml'] = '<p>De: {$a->user}</p><p>Assumpte: <a href="{$a->url}">{$a->subject}</a></p><p>{$a->content}</p>';
 $string['notificationpref'] = 'Notificacions d\'enviament';
-$string['notificationsubject'] = 'Missatge de correu electrònic nou a {$a}';
+$string['notificationsmallmessage'] = '{$a->user} us ha enviat un missatge de correu al curs {$a->course}';
+$string['notificationsubject'] = 'Nou missatge de correu a {$a}';
 $string['notingroup'] = 'No esteu a cap grup';
 $string['nousersfound'] = 'No s\'han trobat usuaris.';
 $string['pagingmultiple'] = '{$a->first}-{$a->last} de {$a->total}';
@@ -197,7 +192,6 @@ $string['shortaddcc'] = 'A/c';
 $string['shortaddto'] = 'Per a';
 $string['showlabelmessages'] = 'Mostra els missatges amb l\'etiqueta «{$a}»';
 $string['showrecentmessages'] = 'Mostra els missatges més nous';
-$string['smallmessage'] = '{$a->user} us ha enviat un missatge de correu';
 $string['starred'] = 'Destacat';
 $string['starredmail'] = 'Destacats';
 $string['subject'] = 'Assumpte';
@@ -215,3 +209,4 @@ $string['undorestoremany'] = 'S\'han restaurat {$a} missatges';
 $string['undorestoreone'] = 'S\'ha restaurat un missatge';
 $string['unread'] = 'Sense llegir';
 $string['unstarred'] = 'Sense destacar';
+$string['viewmessage'] = 'Visualitza el missatge';

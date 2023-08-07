@@ -160,13 +160,8 @@ $string['none'] = 'None';
 $string['norecipient'] = '(no recipient)';
 $string['noselectedmessages'] = 'No messages selected';
 $string['nosubject'] = '(no subject)';
-$string['notificationbody'] = '- From: {$a->user}
-
-- Subject: {$a->subject}
-
-{$a->content}';
-$string['notificationbodyhtml'] = '<p>From: {$a->user}</p><p>Subject: <a href="{$a->url}">{$a->subject}</a></p><p>{$a->content}</p>';
 $string['notificationpref'] = 'Send notifications';
+$string['notificationsmallmessage'] = '{$a->user} has sent you an email in course {$a->course}';
 $string['notificationsubject'] = 'New mail message in {$a}';
 $string['notingroup'] = 'You are not part of any group';
 $string['nousersfound'] = 'No users found.';
@@ -200,7 +195,6 @@ $string['shortaddcc'] = 'Cc';
 $string['shortaddto'] = 'To';
 $string['showlabelmessages'] = 'Show "{$a}" label messages';
 $string['showrecentmessages'] = 'Show recent messages';
-$string['smallmessage'] = '{$a->user} has sent you an email';
 $string['starred'] = 'Starred';
 $string['starredmail'] = 'Starred';
 $string['subject'] = 'Subject';
@@ -218,3 +212,4 @@ $string['undorestoremany'] = '{$a} messages have been restored';
 $string['undorestoreone'] = 'A message has been restored';
 $string['unread'] = 'Unread';
 $string['unstarred'] = 'Unstarred';
+$string['viewmessage'] = 'View message';

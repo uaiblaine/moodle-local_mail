@@ -162,4 +162,13 @@ class course_test extends testcase {
 
         self::assertEquals($expected, $course->get_viewable_roles($user));
     }
+
+    public function test_url() {
+        global $CFG;
+
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+
+        self::assertEquals("$CFG->wwwroot/course/view.php?id={$course->id}", $course->url());
+    }
 }

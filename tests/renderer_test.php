@@ -61,7 +61,7 @@ class renderer_test extends testcase {
         self::assertEquals("$CFG->wwwroot/theme/image.php/_s/boost/core/1/f/html-24", $renderer->file_icon_url($file2));
     }
 
-    public function test_time() {
+    public function test_formatted_time() {
         global $PAGE;
 
         $generator = self::getDataGenerator();
@@ -101,6 +101,63 @@ class renderer_test extends testcase {
         $fulltime = userdate($date->getTimestamp(), get_string('strftimedatetime', 'langconfig'));
         self::assertEquals($shorttime, $renderer->formatted_time($date->getTimestamp(), false, $now->getTimestamp()));
         self::assertEquals($fulltime, $renderer->formatted_time($date->getTimestamp(), true, $now->getTimestamp()));
+    }
+
+    public function test_notification() {
+        global $PAGE, $SITE;
+
+        $generator = self::getDataGenerator();
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $user4 = new user($generator->create_user());
+        $user5 = new user($generator->create_user());
+        $course = new course($generator->create_course());
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->cc = [$user3, $user4];
+        $data->bcc = [$user5];
+        $data->subject = 'Subject';
+        $data->content = '<p>Content</p>';
+        self::create_draft_file($data->draftitemid, 'file1.txt', 'File content');
+        self::create_draft_file($data->draftitemid, 'file2.html', 'File content');
+        $message = message::create($data);
+        $message->send(time());
+        $url = new \moodle_url('local/mail/view.php', ['t' => 'inbox', 'm' => $message->id]);
+
+        $renderer = $PAGE->get_renderer('local_mail');
+        $notification = $renderer->notification($message, $user2);
+
+        self::assertEquals($course->id, $notification->courseid);
+        self::assertEquals('local_mail', $notification->component);
+        self::assertEquals('mail', $notification->name);
+        self::assertEquals($user1->id, $notification->userfrom);
+        self::assertEquals($user2->id, $notification->userto);
+        self::assertEquals(get_string('notificationsubject', 'local_mail', $SITE->shortname), $notification->subject);
+        self::assertStringContainsString($url->out(false), $notification->fullmessage);
+        self::assertStringContainsString($course->fullname, $notification->fullmessage);
+        self::assertStringContainsString($user1->fullname(), $notification->fullmessage);
+        self::assertStringContainsString($renderer->formatted_time($message->time), $notification->fullmessage);
+        self::assertStringContainsString('Subject', $notification->fullmessage);
+        self::assertStringContainsString('Content', $notification->fullmessage);
+        self::assertStringNotContainsString('<p>', $notification->fullmessage);
+        self::assertStringContainsString('file1.txt', $notification->fullmessagehtml);
+        self::assertStringContainsString('file2.html', $notification->fullmessagehtml);
+        self::assertEquals(FORMAT_PLAIN, $notification->fullmessageformat);
+        self::assertStringContainsString($url->out(true), $notification->fullmessagehtml);
+        self::assertStringContainsString($course->fullname, $notification->fullmessagehtml);
+        self::assertStringContainsString($user1->fullname(), $notification->fullmessagehtml);
+        self::assertStringContainsString($renderer->formatted_time($message->time), $notification->fullmessagehtml);
+        self::assertStringContainsString('Subject', $notification->fullmessagehtml);
+        self::assertStringContainsString('<p>Content</p>', $notification->fullmessagehtml);
+        self::assertStringContainsString('file1.txt', $notification->fullmessagehtml);
+        self::assertStringContainsString('file2.html', $notification->fullmessagehtml);
+        self::assertEquals(1, $notification->notification);
+        $a = ['user' => $user1->fullname(), 'course' => $course->fullname];
+        self::assertEquals(get_string('notificationsmallmessage', 'local_mail', $a), $notification->smallmessage);
+        $contexturl = new \moodle_url('/local/mail/view.php', array('t' => 'inbox', 'm' => $message->id));
+        self::assertEquals($contexturl->out(false), $notification->contexturl);
+        self::assertEquals('Subject', $notification->contexturlname);
     }
 
     public function test_svelte_script() {

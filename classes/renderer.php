@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+use \local_mail\message;
+use \local_mail\user;
+
 class local_mail_renderer extends plugin_renderer_base {
 
     /**
@@ -83,6 +86,84 @@ class local_mail_renderer extends plugin_renderer_base {
         } else {
             return userdate($time, get_string('strftimedatefullshort', 'langconfig'));
         }
+    }
+
+    /**
+     * Returns the notification for a recipient of a message.
+     *
+     * @param message $message Message.
+     * @param user $recipient Recipient.
+     * @return \core\message\message
+     */
+    public function notification(message $message, user $recipient): \core\message\message {
+        global $CFG, $SITE;
+
+        assert(!$message->draft);
+        assert($message->has_recipient($recipient));
+
+        require_once("$CFG->libdir/filelib.php");
+
+        $url = new moodle_url('/local/mail/view.php', array('t' => 'inbox', 'm' => $message->id));
+        $context = $message->course->context();
+        $content = file_rewrite_pluginfile_urls(
+            $message->content,
+            'pluginfile.php',
+            $context->id,
+            'local_mail',
+            'message',
+            $message->id
+        );
+        $fs = get_file_storage();
+        $files = $fs->get_area_files($context->id, 'local_mail', 'message', $message->id, 'filepath, filename', false);
+        $attachments = [];
+        foreach ($files as $file) {
+            $attachments[] = [
+                'path' => ltrim($file->get_filepath() . $file->get_filename(), '/'),
+                'size' => display_size($file->get_filesize()),
+                'url' => $this->file_url($file),
+                'icon' => $this->file_icon_url($file),
+            ];
+        }
+
+        $notification = new \core\message\message();
+        $notification->courseid = $message->course->id;
+        $notification->component = 'local_mail';
+        $notification->name = 'mail';
+        $notification->userfrom = $message->sender()->id;
+        $notification->userto = $recipient->id;
+        $notification->subject = get_string('notificationsubject', 'local_mail', $SITE->shortname);
+        $notification->fullmessage = $this->render_from_template('local_mail/notification_text', [
+            'coursename' => $message->course->fullname,
+            'sendername' => $message->sender()->fullname(),
+            'date' => $this->formatted_time($message->time, true),
+            'subject' => $message->subject,
+            'content' => format_text_email($content, $message->format),
+            'hasattachments' => count($attachments) > 0,
+            'attachments' => $attachments,
+            'viewurl' => $url->out(false),
+        ]);
+        $notification->fullmessageformat = FORMAT_PLAIN;
+        $notification->fullmessagehtml = $this->render_from_template('local_mail/notification_html', [
+            'coursename' => $message->course->fullname,
+            'courseurl' => $message->course->url(),
+            'sendername' => $message->sender()->fullname(),
+            'senderurl' => $message->sender()->profile_url($message->course),
+            'date' => $this->formatted_time($message->time, true),
+            'subject' => $message->subject,
+            'content' => format_text($content, $message->format, ['filter' => false]),
+            'hasattachments' => count($attachments) > 0,
+            'attachments' => $attachments,
+            'viewurl' => $url->out(false),
+        ]);
+        $notification->smallmessage = get_string('notificationsmallmessage', 'local_mail', [
+            'user' => $message->sender()->fullname(),
+            'course' => $message->course->fullname,
+        ]);
+        $notification->notification = 1;
+        $notification->contexturl = $url->out(false);
+        $notification->contexturlname = $message->subject;
+
+        return $notification;
     }
 
     /**

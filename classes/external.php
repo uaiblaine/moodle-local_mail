@@ -1467,6 +1467,8 @@ class external extends \external_api {
     }
 
     public static function send_message() {
+        global $PAGE;
+
         $params = self::validate_call(self::send_message_parameters(), func_get_args());
 
         $user = user::current();
@@ -1502,6 +1504,14 @@ class external extends \external_api {
         }
 
         $message->send(time());
+
+        $renderer = $PAGE->get_renderer('local_mail');
+        foreach ($message->recipients() as $recipient) {
+            $notificationid = message_send($renderer->notification($message, $recipient));
+            if ($notificationid && get_user_preferences('local_mail_markasread', false, $recipient->id)) {
+                $message->set_unread($recipient, false);
+            }
+        }
     }
 
     public static function send_message_returns() {

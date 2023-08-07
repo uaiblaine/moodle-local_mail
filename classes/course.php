@@ -162,4 +162,14 @@ class course {
         }
         return $result;
     }
+
+    /**
+     * URL of the course.
+     *
+     * @return string
+     */
+    public function url(): string {
+        $url = new \moodle_url('/course/view.php', ['id' => $this->id]);
+        return $url->out(false);
+    }
 }

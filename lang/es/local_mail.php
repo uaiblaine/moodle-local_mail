@@ -157,13 +157,8 @@ $string['none'] = 'Ninguno';
 $string['norecipient'] = '(sin destinatarios)';
 $string['noselectedmessages'] = 'Ningún mensaje seleccionado';
 $string['nosubject'] = '(sin asunto)';
-$string['notificationbody'] = '- De: {$a->user}
-
-- Asunto: {$a->subject}
-
-{$a->content}';
-$string['notificationbodyhtml'] = '<p>De: {$a->user}</p><p>Asunto: <a href="{$a->url}">{$a->subject}</a></p><p>{$a->content}</p>';
 $string['notificationpref'] = 'Envío de notificaciones';
+$string['notificationsmallmessage'] = '{$a->user} os ha enviado un mensaje de correo en el curso {$a->course}';
 $string['notificationsubject'] = 'Nuevo mensaje de correo en {$a}';
 $string['notingroup'] = 'No está en ningún grupo';
 $string['nousersfound'] = 'No se encontraron usuarios.';
@@ -197,7 +192,6 @@ $string['shortaddcc'] = 'Cc';
 $string['shortaddto'] = 'Para';
 $string['showlabelmessages'] = 'Mostrar los mensajes con la etiqueta "{$a}"';
 $string['showrecentmessages'] = 'Mostrar los mensajes más nuevos';
-$string['smallmessage'] = '{$a->user} os ha enviado un mensaje de correo';
 $string['starred'] = 'Destacado';
 $string['starredmail'] = 'Destacados';
 $string['subject'] = 'Asunto';
@@ -215,3 +209,4 @@ $string['undorestoremany'] = '{$a} mensajes han sido restaurados';
 $string['undorestoreone'] = 'Un mensaje ha sido restaurado';
 $string['unread'] = 'Sin leer';
 $string['unstarred'] = 'Sin destacar';
+$string['viewmessage'] = 'Ver mensaje';
