@@ -18,7 +18,6 @@ use local_mail\external;
 use local_mail\settings;
 
 require_once('../../config.php');
-require_once('locallib.php');
 
 global $PAGE;
 
@@ -63,7 +62,8 @@ $data = [
 
 $datascript = html_writer::script('window.local_mail_view_data = ' . json_encode($data));
 
-$sveltescript = local_mail_svelte_script('src/view.ts');
+$renderer = $PAGE->get_renderer('local_mail');
+$sveltescript = $renderer->svelte_script('src/view.ts');
 
 // Print content.
 echo $OUTPUT->header();

@@ -27,10 +27,6 @@ use local_mail\message_search;
 use local_mail\settings;
 use local_mail\user;
 
-defined('MOODLE_INTERNAL') || die;
-
-require_once($CFG->dirroot . '/local/mail/locallib.php');
-
 function local_mail_pluginfile(
     $course,
     $cm,
@@ -138,7 +134,8 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
             'labels' => external::get_labels_raw(),
         ];
         $datascript = html_writer::script('window.local_mail_navbar_data = ' . json_encode($data));
-        $sveltescript = local_mail_svelte_script('src/navigation.ts');
+        $renderer = $PAGE->get_renderer('local_mail');
+        $sveltescript = $renderer->svelte_script('src/navigation.ts');
         return  $container . $datascript . $sveltescript;
     }
 }

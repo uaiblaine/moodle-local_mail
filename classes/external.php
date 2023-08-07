@@ -19,7 +19,6 @@ namespace local_mail;
 defined('MOODLE_INTERNAL') || die;
 
 require_once("$CFG->libdir/externallib.php");
-require_once("$CFG->dirroot/local/mail/locallib.php");
 
 class external extends \external_api {
 
@@ -514,6 +513,9 @@ class external extends \external_api {
     }
 
     public static function search_messages_response(user $user, array $messages) {
+        global $PAGE;
+        $renderer = $PAGE->get_renderer('local_mail');
+
         $result = [];
 
         foreach ($messages as $message) {
@@ -543,8 +545,8 @@ class external extends \external_api {
                 'numattachments' => $message->attachments,
                 'draft' => $message->draft,
                 'time' => $message->time,
-                'shorttime' => self::format_time($message->time),
-                'fulltime' => self::format_time($message->time, true),
+                'shorttime' => $renderer->formatted_time($message->time),
+                'fulltime' => $renderer->formatted_time($message->time, true),
                 'unread' => $message->unread($user),
                 'starred' => $message->starred($user),
                 'deleted' => $message->deleted($user) != message::NOT_DELETED,
@@ -639,6 +641,9 @@ class external extends \external_api {
     }
 
     public static function get_message_response(user $user, message $message) {
+        global $PAGE;
+        $renderer = $PAGE->get_renderer('local_mail');
+
         $contextid = $message->course->context()->id;
 
         list($content, $format) = \external_format_text(
@@ -660,8 +665,8 @@ class external extends \external_api {
             'numattachments' => $message->attachments,
             'draft' => $message->draft,
             'time' => $message->time,
-            'shorttime' => self::format_time($message->time),
-            'fulltime' => self::format_time($message->time, true),
+            'shorttime' => $renderer->formatted_time($message->time),
+            'fulltime' => $renderer->formatted_time($message->time, true),
             'unread' => $message->unread($user),
             'starred' => $message->starred($user),
             'deleted' => (bool) $message->deleted($user),
@@ -693,8 +698,8 @@ class external extends \external_api {
                 'filename' => $file->get_filename(),
                 'filesize' => (int) $file->get_filesize(),
                 'mimetype' => $file->get_mimetype(),
-                'fileurl' => self::file_url($file),
-                'iconurl' => self::file_icon_url($file),
+                'fileurl' => $renderer->file_url($file),
+                'iconurl' => $renderer->file_icon_url($file),
             ];
         }
 
@@ -737,8 +742,8 @@ class external extends \external_api {
                     'filename' => $file->get_filename(),
                     'filesize' => (int) $file->get_filesize(),
                     'mimetype' => $file->get_mimetype(),
-                    'fileurl' => self::file_url($file),
-                    'iconurl' => self::file_icon_url($file),
+                    'fileurl' => $renderer->file_url($file),
+                    'iconurl' => $renderer->file_icon_url($file),
                 ];
             }
 
@@ -750,8 +755,8 @@ class external extends \external_api {
                 'content' => $content,
                 'format' => $format,
                 'time' => $ref->time,
-                'shorttime' => self::format_time($ref->time),
-                'fulltime' => self::format_time($ref->time, true),
+                'shorttime' => $renderer->formatted_time($ref->time),
+                'fulltime' => $renderer->formatted_time($ref->time, true),
                 'sender' => [
                     'id' => $refsender->id,
                     'fullname' => $refsender->fullname(),
@@ -1501,43 +1506,6 @@ class external extends \external_api {
 
     public static function send_message_returns() {
         return null;
-    }
-
-    private static function file_icon_url(\stored_file $file) {
-        global $OUTPUT;
-        return $OUTPUT->image_url(file_file_icon($file, 24))->out(false);
-    }
-
-    private static function file_url(\stored_file $file) {
-        $fileurl = \moodle_url::make_pluginfile_url(
-            $file->get_contextid(),
-            $file->get_component(),
-            $file->get_filearea(),
-            $file->get_itemid(),
-            $file->get_filepath(),
-            $file->get_filename()
-        );
-        return $fileurl->out(false);
-    }
-
-    private static function format_time(int $timestamp, $forcefull = false): string {
-        $tz = \core_date::get_user_timezone();
-        $date = new \DateTime('now', new \DateTimeZone($tz));
-        $offset = ($date->getOffset() - dst_offset_on(time(), $tz)) / (3600.0);
-        $time = ($offset < 13) ? $timestamp + $offset : $timestamp;
-        $now = ($offset < 13) ? time() + $offset : time();
-        $daysago = floor($now / 86400) - floor($time / 86400);
-        $yearsago = (int) date('Y', $now) - (int) date('Y', $time);
-
-        if ($forcefull) {
-            return  userdate($time, get_string('strftimedatetime', 'langconfig'));
-        } else if ($daysago == 0) {
-            return userdate($time, get_string('strftimetime'));
-        } else if ($yearsago == 0) {
-            return userdate($time, get_string('strftimedateshortmonthabbr', 'langconfig'));
-        } else {
-            return userdate($time, get_string('strftimedatefullshort', 'langconfig'));
-        }
     }
 
     /**

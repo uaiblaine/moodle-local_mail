@@ -26,8 +26,6 @@ use local_mail\settings;
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
-    require_once($CFG->dirroot . '/local/mail/locallib.php');
-
     $defaults = settings::defaults();
 
     $settings = new admin_settingpage('local_mail', get_string('pluginname', 'local_mail'));

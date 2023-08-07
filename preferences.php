@@ -21,7 +21,6 @@
  */
 
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
-require_once($CFG->dirroot . '/local/mail/locallib.php');
 require_once($CFG->dirroot . '/local/mail/preferences_form.php');
 
 $url = new moodle_url('/local/mail/preferences.php');

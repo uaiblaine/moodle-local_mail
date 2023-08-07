@@ -27,7 +27,6 @@ use local_mail\message_data;
 use local_mail\user;
 
 require_once('../../config.php');
-require_once("$CFG->dirroot/local/mail/locallib.php");
 
 $courseid = required_param('course', PARAM_INT);
 $recipients = optional_param('recipients', '', PARAM_SEQUENCE);
