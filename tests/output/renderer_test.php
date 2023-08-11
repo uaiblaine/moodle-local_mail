@@ -20,7 +20,7 @@ use moodle_exception;
 
 defined('MOODLE_INTERNAL') || die;
 
-require_once(__DIR__ . '/testcase.php');
+require_once(__DIR__ . '/../testcase.php');
 
 /**
  * @covers \local_mail_renderer

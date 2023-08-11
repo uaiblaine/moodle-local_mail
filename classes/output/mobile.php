@@ -14,17 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * @package    local-mail
- * @author     Albert Gasset <albert.gasset@gmail.com>
- * @author     Marc Català <reskit@gmail.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
+namespace local_mail\output;
 
-defined('MOODLE_INTERNAL') || die();
+class mobile {
 
-$plugin->version = 2023081100;
-$plugin->requires = 2022112800;
-$plugin->component = 'local_mail';
-$plugin->maturity = MATURITY_ALPHA;
-$plugin->release = '2.0-alpha';
+    public static function view() {
+        global $CFG;
+
+        return [
+            'templates' => [
+                [
+                    'id' => 'main',
+                    'html' =>  "<core-iframe src=\"$CFG->wwwroot/local/mail/mobile.php\"></core-iframe>" 
+                ],
+            ],
+            'javascript' => file_get_contents("$CFG->dirroot/local/mail/mobile.js"),
+        ];
+    }
+
+}

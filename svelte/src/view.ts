@@ -20,10 +20,13 @@ async function init() {
         settings: data.settings as Settings,
         preferences: data.preferences as Preferences,
         strings: data.strings as Strings,
+        mobile: Boolean(data.mobile),
     });
+
     if (viewTarget) {
         new View({ target: viewTarget, props: { store } });
     }
+
     if (navbarTarget) {
         // Remove fallback link created in local_mail_render_navbar_output.
         navbarTarget.innerHTML = '';

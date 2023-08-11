@@ -21,8 +21,13 @@ export function preferencesUrl(): string {
 }
 
 export function viewUrl(params: ViewParams): string {
-    let url = baseUrl() + 'view.php?t=' + params.tray;
+    const mobileUrl = baseUrl() + 'mobile.php';
+    const currentUrl = window.location.origin + window.location.pathname;
+    let url = currentUrl == mobileUrl ? mobileUrl : baseUrl() + 'view.php';
 
+    if (params.tray) {
+        url += '?t=' + params.tray;
+    }
     if (params.courseid) {
         url += '&c=' + params.courseid;
     }
@@ -66,7 +71,7 @@ export function viewUrl(params: ViewParams): string {
 export function getViewParamsFromUrl(): ViewParams {
     const url = new URL(window.location.href);
     const params: ViewParams = {
-        tray: (url.searchParams.get('t') as ViewTray) || 'inbox',
+        tray: (url.searchParams.get('t') as ViewTray) || undefined,
         courseid: parseInt(url.searchParams.get('c') || '') || undefined,
         labelid: parseInt(url.searchParams.get('l') || '') || undefined,
         messageid: parseInt(url.searchParams.get('m') || '') || undefined,

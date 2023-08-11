@@ -14,10 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-use \local_mail\message;
-use \local_mail\user;
+namespace local_mail\output;
 
-class local_mail_renderer extends plugin_renderer_base {
+use local_mail\message;
+use local_mail\user;
+
+class renderer extends \plugin_renderer_base {
 
     /**
      * Returns the URL of the icon representing the format of a file.
@@ -25,7 +27,7 @@ class local_mail_renderer extends plugin_renderer_base {
      * @param stored_file $file File object.
      * @return string
      */
-    public function file_icon_url(stored_file $file): string {
+    public function file_icon_url(\stored_file $file): string {
         return $this->image_url(file_file_icon($file, 24))->out(false);
     }
 
@@ -35,8 +37,8 @@ class local_mail_renderer extends plugin_renderer_base {
      * @param stored_file $file File object.
      * @return string
      */
-    public function file_url(stored_file $file): string {
-        $fileurl = moodle_url::make_pluginfile_url(
+    public function file_url(\stored_file $file): string {
+        $fileurl = \moodle_url::make_pluginfile_url(
             $file->get_contextid(),
             $file->get_component(),
             $file->get_filearea(),
@@ -62,14 +64,14 @@ class local_mail_renderer extends plugin_renderer_base {
      */
     public function formatted_time(int $time, $full = false, $now = null): string {
         $now = $now ?? time();
-        $tz = new DateTimeZone(core_date::get_user_timezone());
+        $tz = new  \DateTimeZone(\core_date::get_user_timezone());
 
-        $today = new DateTime();
+        $today = new \DateTime();
         $today->setTimezone($tz);
         $today->setTimestamp($now);
         $today->setTime(0, 0, 0);
 
-        $year = new DateTime();
+        $year = new \DateTime();
         $year->setTimezone($tz);
         $year->setTimestamp($now);
         $year->setDate($year->format('Y'), 1, 1);
@@ -103,7 +105,7 @@ class local_mail_renderer extends plugin_renderer_base {
 
         require_once("$CFG->libdir/filelib.php");
 
-        $url = new moodle_url('/local/mail/view.php', array('t' => 'inbox', 'm' => $message->id));
+        $url = new \moodle_url('/local/mail/view.php', array('t' => 'inbox', 'm' => $message->id));
         $context = $message->course->context();
         $content = file_rewrite_pluginfile_urls(
             $message->content,
@@ -185,7 +187,7 @@ class local_mail_renderer extends plugin_renderer_base {
             $manifestpath = $CFG->dirroot . '/local/mail/svelte/build/manifest.json';
             $manifest = json_decode(file_get_contents($manifestpath), true);
             if (!$manifest || empty($manifest[$file])) {
-                throw new coding_exception('local_mail: invalid svelte manifest or script name "' . $file . '"');
+                throw new \coding_exception('local_mail: invalid svelte manifest or script name "' . $file . '"');
             }
             $jsurl = $CFG->wwwroot . '/local/mail/svelte/build/' . $manifest[$file]['file'];
             $chunks = [$file];
@@ -195,13 +197,13 @@ class local_mail_renderer extends plugin_renderer_base {
                     $chunks[] = $jsfile;
                 }
                 foreach ($manifest[$file]['css'] ?? [] as $cssfile) {
-                    $cssurls[] = new moodle_url('/local/mail/svelte/build/' . $cssfile);
+                    $cssurls[] = new \moodle_url('/local/mail/svelte/build/' . $cssfile);
                 }
             }
             foreach ($cssurls as $cssurl) {
                 if ($this->page->requires->is_head_done()) {
                     // Head already written, add CSS using javascript.
-                    $html .= html_writer::script('(function() {
+                    $html .= \html_writer::script('(function() {
                         var doc = document.getElementsByTagName("head")[0];
                         var link = document.createElement("link");
                         link.rel = "stylesheet";
@@ -214,7 +216,7 @@ class local_mail_renderer extends plugin_renderer_base {
             }
         }
 
-        $html .= html_writer::tag('script', '', ['type' => 'module', 'src' => $jsurl]);
+        $html .= \html_writer::tag('script', '', ['type' => 'module', 'src' => $jsurl]);
 
         return $html;
     }

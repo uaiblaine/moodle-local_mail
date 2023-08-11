@@ -14,6 +14,7 @@
     export let strings: Strings;
     export let courseid: number | undefined = undefined;
     export let courses: ReadonlyArray<Course>;
+    export let iconOnly = false;
     export let onClick: ((params: ViewParams) => void) | undefined;
     export let onError: ((error: ServiceError) => void) | undefined;
 
@@ -54,8 +55,8 @@
     aria-label={strings.compose}
     on:click={handleClick}
 >
-    <i class="icon fa fa-edit mr-0 mr-sm-1" />
-    <span class="d-none d-sm-inline">
+    <i class="fa fa-edit mr-0 mr-sm-1" />
+    <span class:d-none={iconOnly}>
         {strings.compose}
     </span>
 </button>

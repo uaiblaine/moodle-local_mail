@@ -49,7 +49,7 @@ export interface SearchParams {
 }
 
 export interface ViewParams {
-    readonly tray: ViewTray;
+    readonly tray?: ViewTray;
     readonly courseid?: number;
     readonly labelid?: number;
     readonly messageid?: number;
@@ -76,6 +76,7 @@ export interface State {
     readonly preferences: Preferences;
     readonly strings: Strings;
     readonly incrementalSearchStopId?: number;
+    readonly mobile: boolean;
 
     /* Parameters of the current view. */
     readonly params: ViewParams;
@@ -113,6 +114,7 @@ export interface InitialData {
     readonly settings: Settings;
     readonly preferences: Preferences;
     readonly strings: Strings;
+    readonly mobile: boolean;
 }
 
 export async function createStore(data: InitialData) {
@@ -125,9 +127,10 @@ export async function createStore(data: InitialData) {
         settings: data.settings,
         preferences: data.preferences,
         strings: data.strings,
+        mobile: data.mobile,
 
         /* Params */
-        params: { tray: 'inbox' },
+        params: {},
 
         /* Data */
         unread: 0,
@@ -198,76 +201,79 @@ export async function createStore(data: InitialData) {
                 methodname: 'get_labels',
             });
 
-            const query: MessageQuery = {
-                courseid: params.courseid,
-                labelid: params.tray == 'label' ? params.labelid : undefined,
-                draft: params.tray == 'drafts' ? true : params.tray == 'sent' ? false : undefined,
-                roles:
-                    params.tray == 'inbox'
-                        ? ['to', 'cc', 'bcc']
-                        : params.tray == 'sent'
-                        ? ['from']
-                        : undefined,
-                starred: params.tray == 'starred' ? true : undefined,
-                deleted: params.tray == 'trash',
-            };
+            if (params.tray) {
+                const query: MessageQuery = {
+                    courseid: params.courseid,
+                    labelid: params.tray == 'label' ? params.labelid : undefined,
+                    draft:
+                        params.tray == 'drafts' ? true : params.tray == 'sent' ? false : undefined,
+                    roles:
+                        params.tray == 'inbox'
+                            ? ['to', 'cc', 'bcc']
+                            : params.tray == 'sent'
+                            ? ['from']
+                            : undefined,
+                    starred: params.tray == 'starred' ? true : undefined,
+                    deleted: params.tray == 'trash',
+                };
 
-            // Total count of messages.
-            requests.push({
-                methodname: 'count_messages',
-                query,
-            });
-
-            if (params.messageid) {
-                // Full message.
+                // Total count of messages.
                 requests.push({
-                    methodname: 'get_message',
-                    messageid: params.messageid,
+                    methodname: 'count_messages',
+                    query,
                 });
 
-                // Next message.
-                requests.push({
-                    methodname: 'search_messages',
-                    query: {
-                        ...query,
-                        ...params.search,
-                        startid: params.messageid,
-                        reverse: false,
-                    },
-                    limit: 1,
-                });
-
-                // Previous message.
-                requests.push({
-                    methodname: 'search_messages',
-                    query: {
-                        ...query,
-                        ...params.search,
-                        startid: params.messageid,
-                        reverse: true,
-                    },
-                    limit: 1,
-                });
-
-                if (!params.search) {
-                    // Offset of the message.
+                if (params.messageid) {
+                    // Full message.
                     requests.push({
-                        methodname: 'count_messages',
+                        methodname: 'get_message',
+                        messageid: params.messageid,
+                    });
+
+                    // Next message.
+                    requests.push({
+                        methodname: 'search_messages',
                         query: {
                             ...query,
+                            ...params.search,
+                            startid: params.messageid,
+                            reverse: false,
+                        },
+                        limit: 1,
+                    });
+
+                    // Previous message.
+                    requests.push({
+                        methodname: 'search_messages',
+                        query: {
+                            ...query,
+                            ...params.search,
                             startid: params.messageid,
                             reverse: true,
                         },
+                        limit: 1,
+                    });
+
+                    if (!params.search) {
+                        // Offset of the message.
+                        requests.push({
+                            methodname: 'count_messages',
+                            query: {
+                                ...query,
+                                startid: params.messageid,
+                                reverse: true,
+                            },
+                        });
+                    }
+                } else {
+                    // List of messages.
+                    requests.push({
+                        methodname: 'search_messages',
+                        query: { ...query, ...params.search },
+                        offset: params.search ? undefined : params.offset,
+                        limit: params.search ? perpage + 1 : perpage,
                     });
                 }
-            } else {
-                // List of messages.
-                requests.push({
-                    methodname: 'search_messages',
-                    query: { ...query, ...params.search },
-                    offset: params.search ? undefined : params.offset,
-                    limit: params.search ? perpage + 1 : perpage,
-                });
             }
 
             let responses: unknown[];
@@ -279,34 +285,37 @@ export async function createStore(data: InitialData) {
             }
 
             let message: Message | undefined;
-            let messageOffset: number | undefined;
+            let messageOffset: CountMessagesResponse | undefined;
             let nextMessageId: number | undefined;
             let prevMessageId: number | undefined;
             let listMessages: ReadonlyArray<MessageSummary> = [];
+            let totalCount: CountMessagesResponse = 0;
 
-            if (params.messageid) {
-                if (!params.search) {
-                    messageOffset = responses.pop() as CountMessagesResponse;
-                }
-                prevMessageId = (responses.pop() as SearchMessagesResponse)[0]?.id;
-                nextMessageId = (responses.pop() as SearchMessagesResponse)[0]?.id;
-                message = responses.pop() as GetMessageResponse;
-            } else {
-                listMessages = responses.pop() as SearchMessagesResponse;
-                if (params.search) {
-                    if (params.search.reverse) {
-                        prevMessageId = listMessages[perpage]?.id;
-                        nextMessageId = params.search.startid;
-                        listMessages = listMessages.slice(0, perpage).reverse();
-                    } else {
-                        prevMessageId = params.search.startid;
-                        nextMessageId = listMessages[perpage]?.id;
-                        listMessages = listMessages.slice(0, perpage);
+            if (params.tray) {
+                if (params.messageid) {
+                    if (!params.search) {
+                        messageOffset = responses.pop() as CountMessagesResponse;
+                    }
+                    prevMessageId = (responses.pop() as SearchMessagesResponse)[0]?.id;
+                    nextMessageId = (responses.pop() as SearchMessagesResponse)[0]?.id;
+                    message = responses.pop() as GetMessageResponse;
+                } else {
+                    listMessages = responses.pop() as SearchMessagesResponse;
+                    if (params.search) {
+                        if (params.search.reverse) {
+                            prevMessageId = listMessages[perpage]?.id;
+                            nextMessageId = params.search.startid;
+                            listMessages = listMessages.slice(0, perpage).reverse();
+                        } else {
+                            prevMessageId = params.search.startid;
+                            nextMessageId = listMessages[perpage]?.id;
+                            listMessages = listMessages.slice(0, perpage);
+                        }
                     }
                 }
+                totalCount = responses.pop() as CountMessagesResponse;
             }
 
-            const totalCount = responses.pop() as CountMessagesResponse;
             const labels = responses.pop() as GetLabelsResponse;
             const courses = responses.pop() as GetCoursesResponse;
             const drafts = responses.pop() as CountMessagesResponse;
@@ -495,6 +504,10 @@ export async function createStore(data: InitialData) {
             await store.callServicesAndRefresh([], params, redirect);
         },
 
+        async navigateToMenu() {
+            await store.callServicesAndRefresh([], {});
+        },
+
         async reply(message: Message, all: boolean) {
             const params = store.get().params;
 
@@ -647,6 +660,11 @@ export async function createStore(data: InitialData) {
                 viewSize: width,
                 navigationId: state.navigationId + 1, // Prevent list animations.
             }));
+
+            // Redirect to inbox on large screens if no tray is specified.
+            if (!store.get().params.tray && width >= ViewSize.LG) {
+                store.navigate({ tray: 'inbox' }, true);
+            }
         },
 
         async setPerPage(perpage: number) {

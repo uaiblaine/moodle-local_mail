@@ -62,7 +62,7 @@ class user_search {
             $str .= "\ngroup: " . $this->groupid;
         }
         if ($this->fullname) {
-            $str .= "\fullname: " . $this->fullname;
+            $str .= "\nfullname: " . $this->fullname;
         }
         return $str;
     }

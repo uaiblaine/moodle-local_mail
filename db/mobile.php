@@ -16,6 +16,21 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$addons = array(
-    'local_mail' => array(),
-);
+$addons = [
+    'local_mail' => [
+        'handlers' => [
+            'view' => [
+                'delegate' => 'CoreMainMenuDelegate',
+                'method' => 'view',
+                'displaydata' => [
+                    'title' => 'pluginname',
+                    'icon' => 'far-envelope',
+                    'class' => 'local_mail'
+                ],
+            ],
+        ],
+        'lang' => [
+            ['pluginname', 'local_mail'],
+        ],
+    ],
+];

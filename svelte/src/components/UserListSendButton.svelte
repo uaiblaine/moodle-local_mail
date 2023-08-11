@@ -50,7 +50,7 @@
             aria-expanded="false"
             disabled={!recipients.length}
         >
-            <i class="fa fa-icon fa-envelope-o mr-1" aria-hidden="true" />
+            <i class="fa fa-envelope-o mr-1" aria-hidden="true" />
             {strings.sendmail}
         </button>
         <div class="dropdown-menu">
