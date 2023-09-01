@@ -26,6 +26,12 @@ $messageid = optional_param('m', 0, PARAM_INT);
 $courseid = optional_param('c', SITEID, PARAM_INT);
 $labelid = optional_param('l', 0, PARAM_INT);
 $appid = optional_param('appid', '', PARAM_NOTAGS);
+$applang = optional_param('applang', '', PARAM_LANG);
+
+// Use languuage from the app.
+if ($appid != '' && $applang != '') {
+    force_current_language($applang);
+}
 
 if (!settings::is_installed()) {
     throw new moodle_exception('pluginnotinstalled', 'local_mail');
