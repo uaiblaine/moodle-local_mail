@@ -45,10 +45,10 @@ const backButtonHandler = (event) => {
     }
 };
 
-this.ionViewWillEnter = () => {
+that.ionViewWillEnter = () => {
     window.addEventListener('message', messageHandler);
 };
 
-this.ionViewWillLeave = () => {
+that.ionViewWillLeave = () => {
     window.removeEventListener('message', messageHandler);
 };

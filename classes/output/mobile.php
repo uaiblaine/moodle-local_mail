@@ -18,17 +18,27 @@ namespace local_mail\output;
 
 class mobile {
 
-    public static function view() {
+    public static function init() {
         global $CFG;
+
+        return [
+            'javascript' => file_get_contents("$CFG->dirroot/local/mail/classes/output/mobile-init.js"),
+        ];
+    }
+
+    public static function view(array $args) {
+        global $CFG;
+
+        $url = new \moodle_url('/local/mail/mobile.php', $args);
 
         return [
             'templates' => [
                 [
                     'id' => 'main',
-                    'html' =>  "<core-iframe src=\"$CFG->wwwroot/local/mail/mobile.php\"></core-iframe>" 
+                    'html' => '<core-iframe src="' . $url->out(false) . '"></core-iframe>'
                 ],
             ],
-            'javascript' => file_get_contents("$CFG->dirroot/local/mail/mobile.js"),
+            'javascript' => file_get_contents("$CFG->dirroot/local/mail/classes/output/mobile-view.js"),
         ];
     }
 

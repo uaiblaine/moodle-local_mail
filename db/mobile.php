@@ -22,10 +22,10 @@ $addons = [
             'view' => [
                 'delegate' => 'CoreMainMenuDelegate',
                 'method' => 'view',
+                'init' => 'init',
                 'displaydata' => [
                     'title' => 'pluginname',
                     'icon' => 'far-envelope',
-                    'class' => 'local_mail'
                 ],
             ],
         ],
