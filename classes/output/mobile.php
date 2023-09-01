@@ -16,10 +16,20 @@
 
 namespace local_mail\output;
 
+use local_mail\course;
+use local_mail\settings;
+use local_mail\user;
+
 class mobile {
 
     public static function init() {
         global $CFG;
+
+        $user = user::current();
+
+        if (!settings::is_installed() || !$user || !course::fetch_by_user($user)) {
+            return ['disabled' => true];
+        }
 
         return [
             'javascript' => file_get_contents("$CFG->dirroot/local/mail/classes/output/mobile-init.js"),

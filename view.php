@@ -14,8 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+use local_mail\course;
 use local_mail\external;
 use local_mail\settings;
+use local_mail\user;
 
 require_once('../../config.php');
 
@@ -58,24 +60,30 @@ $PAGE->set_context(context_system::instance());
 $PAGE->set_pagelayout($appid != '' ? 'embedded' : 'base');
 $PAGE->set_title(get_string('pluginname', 'local_mail'));
 
+$user = user::current();
+if ($user && course::fetch_by_user($user)) {
+    // Initial data passed via a script tag.
+    $data = [
+        'userid' => $user->id,
+        'settings' => (array) settings::fetch(),
+        'preferences' => external::get_preferences_raw(),
+        'strings' => external::get_strings_raw(),
+        'mobile' => $appid != '',
+    ];
 
-// Initial data passed via a script tag.
-$data = [
-    'userid' => $USER->id,
-    'settings' => (array) settings::fetch(),
-    'preferences' => external::get_preferences_raw(),
-    'strings' => external::get_strings_raw(),
-    'mobile' => $appid != '',
-];
+    // Prepare script and styles before sending header.
+    $renderer = $PAGE->get_renderer('local_mail');
+    $sveltescript = $renderer->svelte_script('src/view.ts');
 
-$datascript = html_writer::script('window.local_mail_view_data = ' . json_encode($data));
-
-$renderer = $PAGE->get_renderer('local_mail');
-$sveltescript = $renderer->svelte_script('src/view.ts');
-
-// Print content.
-echo $OUTPUT->header();
-echo html_writer::div('', '', ['id' => 'local-mail-view']);
-echo $datascript;
-echo $sveltescript;
-echo $OUTPUT->footer();
+    // Print content.
+    echo $OUTPUT->header();
+    echo html_writer::div('', '', ['id' => 'local-mail-view']);
+    echo html_writer::script('window.local_mail_view_data = ' . json_encode($data));
+    echo $sveltescript;
+    echo $OUTPUT->footer();
+} else {
+    // Print error.
+    echo $OUTPUT->header();
+    echo $OUTPUT->notification(get_string('errornocourses', 'local_mail'), 'warning', false);
+    echo $OUTPUT->footer();
+}

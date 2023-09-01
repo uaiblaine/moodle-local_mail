@@ -21,6 +21,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_mail\course;
 use local_mail\external;
 use local_mail\message;
 use local_mail\message_search;
@@ -36,7 +37,7 @@ function local_mail_pluginfile(
     $forcedownload,
     array $options = array()
 ) {
-    global $SITE, $USER;
+    global $SITE;
 
     require_login($SITE, false);
 
@@ -46,7 +47,7 @@ function local_mail_pluginfile(
 
     $messageid = (int) array_shift($args);
     $message = message::fetch($messageid);
-    if ($filearea != 'message' || !$message || !$user->can_view_files($message)) {
+    if ($filearea != 'message' || !$message || !$user || !$user->can_view_files($message)) {
         return false;
     }
 
@@ -72,13 +73,10 @@ function local_mail_pluginfile(
 function local_mail_render_navbar_output(\renderer_base $renderer) {
     global $PAGE;
 
-    if (!settings::is_installed()) {
-        return '';
-    }
-
     $user = user::current();
-    if (!$user) {
-        return;
+
+    if (!settings::is_installed() || !$user || !course::fetch_by_user($user)) {
+        return '';
     }
 
     // Fallback link to avoid layout changes during page load.

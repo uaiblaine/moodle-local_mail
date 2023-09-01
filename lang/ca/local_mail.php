@@ -111,6 +111,7 @@ $string['errorinvalidcolor'] = 'Color no vàlid';
 $string['errorinvalidrecipients'] = 'Un o diversos dels destinataris no són vàlids.';
 $string['errorlabelnotfound'] = 'No s\'ha trobat l\'etiqueta';
 $string['errormessagenotfound'] = 'No s\'ha trobat el missatge';
+$string['errornocourses'] = 'No teneu permís per enviar o rebre correu en cap curs.';
 $string['errorrepeatedlabelname'] = 'El nom d\'etiqueta ja existeix';
 $string['errortoomanyrecipients'] = 'El missatge supera el límit permès de {$a} destinataris.';
 $string['filterbycourse'] = 'Filtra per curs';
