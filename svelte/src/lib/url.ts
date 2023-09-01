@@ -1,19 +1,18 @@
 import type { SearchParams, ViewParams, ViewTray } from './store';
 
 export function createUrl(courseid: number, recipients: number[] = [], role?: string): string {
-    let url = baseUrl() + 'create.php?course=' + courseid;
+    const url = new URL(baseUrl() + 'create.php');
 
+    url.searchParams.set('course', String(courseid));
     if (recipients.length) {
-        url += '&recipients=' + recipients.join(',');
+        url.searchParams.set('recipients', recipients.join(','));
     }
-
     if (role) {
-        url += '&role=' + role;
+        url.searchParams.set('role', role);
     }
+    url.searchParams.set('sesskey', window.M.cfg.sesskey);
 
-    url += '&sesskey=' + window.M.cfg.sesskey;
-
-    return url;
+    return url.toString();
 }
 
 export function preferencesUrl(): string {
@@ -21,51 +20,49 @@ export function preferencesUrl(): string {
 }
 
 export function viewUrl(params: ViewParams): string {
-    const mobileUrl = baseUrl() + 'mobile.php';
-    const currentUrl = window.location.origin + window.location.pathname;
-    let url = currentUrl == mobileUrl ? mobileUrl : baseUrl() + 'view.php';
+    const url = new URL(baseUrl() + 'view.php');
 
     if (params.tray) {
-        url += '?t=' + params.tray;
+        url.searchParams.set('t', params.tray);
     }
     if (params.courseid) {
-        url += '&c=' + params.courseid;
+        url.searchParams.set('c', String(params.courseid));
     }
     if (params.tray == 'label' && params.labelid) {
-        url += '&l=' + params.labelid;
+        url.searchParams.set('l', String(params.labelid));
     }
     if (params.messageid) {
-        url += '&m=' + params.messageid;
+        url.searchParams.set('m', String(params.messageid));
     }
     if (params.search && params.offset) {
-        url += '&o=' + params.offset;
+        url.searchParams.set('o', String(params.offset));
     }
     if (params.search?.content) {
-        url += '&q=' + params.search.content;
+        url.searchParams.set('q', params.search.content);
     }
     if (params.search?.sendername) {
-        url += '&qs=' + params.search.sendername;
+        url.searchParams.set('qs', params.search.sendername);
     }
     if (params.search?.recipientname) {
-        url += '&qr=' + params.search.recipientname;
+        url.searchParams.set('qr', params.search.recipientname);
     }
     if (params.search?.unread) {
-        url += '&u=1';
+        url.searchParams.set('u', '1');
     }
     if (params.search?.withfilesonly) {
-        url += '&f=1';
+        url.searchParams.set('f', '1');
     }
     if (params.search?.maxtime) {
-        url += '&d=' + params.search.maxtime;
+        url.searchParams.set('d', String(params.search.maxtime));
     }
     if (params.search?.startid) {
-        url += '&s=' + params.search.startid;
+        url.searchParams.set('s', String(params.search.startid));
     }
     if (params.search?.reverse) {
-        url += '&r=1';
+        url.searchParams.set('r', '1');
     }
 
-    return url;
+    return url.toString();
 }
 
 export function getViewParamsFromUrl(): ViewParams {

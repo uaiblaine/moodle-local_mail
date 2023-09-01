@@ -29,7 +29,7 @@ class mobile {
     public static function view(array $args) {
         global $CFG;
 
-        $url = new \moodle_url('/local/mail/mobile.php', $args);
+        $url = new \moodle_url('/local/mail/view.php', $args);
 
         return [
             'templates' => [

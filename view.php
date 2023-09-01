@@ -25,6 +25,7 @@ $type = optional_param('t', 'inbox', PARAM_ALPHA);
 $messageid = optional_param('m', 0, PARAM_INT);
 $courseid = optional_param('c', SITEID, PARAM_INT);
 $labelid = optional_param('l', 0, PARAM_INT);
+$appid = optional_param('appid', '', PARAM_NOTAGS);
 
 if (!settings::is_installed()) {
     throw new moodle_exception('pluginnotinstalled', 'local_mail');
@@ -48,7 +49,7 @@ if ($type == 'label') {
 }
 $PAGE->set_url($url);
 $PAGE->set_context(context_system::instance());
-$PAGE->set_pagelayout('base');
+$PAGE->set_pagelayout($appid != '' ? 'embedded' : 'base');
 $PAGE->set_title(get_string('pluginname', 'local_mail'));
 
 
@@ -58,6 +59,7 @@ $data = [
     'settings' => (array) settings::fetch(),
     'preferences' => external::get_preferences_raw(),
     'strings' => external::get_strings_raw(),
+    'mobile' => $appid != '',
 ];
 
 $datascript = html_writer::script('window.local_mail_view_data = ' . json_encode($data));
