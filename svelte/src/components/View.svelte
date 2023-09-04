@@ -264,6 +264,10 @@
         font-size: 16px;
     }
 
+    .local-mail-view :global(.form-control) {
+        font-size: 1rem !important;
+    }
+
     .local-mail-view-main-column {
         padding-right: 15px;
         padding-left: 15px;
