@@ -42,7 +42,7 @@ async function init() {
                 courses: store.get().courses,
                 labels: store.get().labels,
                 onClick: store.navigate,
-                onError: store.setError,
+                onComposeClick: store.createMessage,
             },
         });
 

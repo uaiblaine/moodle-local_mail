@@ -2,16 +2,16 @@
 
 <script lang="ts">
     import type { Strings } from '../lib/state';
-    import { preferencesUrl } from '../lib/url';
 
     export let strings: Strings;
+    export let onClick: () => void;
 </script>
 
-<a
+<button
+    type="button"
     class="btn btn-secondary text-truncate"
-    role="button"
-    href={preferencesUrl()}
     title={strings.preferences}
+    on:click={onClick}
 >
     <i class="fa fa-cog" aria-hidden={true} />
-</a>
+</button>

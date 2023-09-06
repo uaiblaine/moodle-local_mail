@@ -42,10 +42,6 @@ export function getViewParamsFromUrl(): ViewParams {
     return Object.values(search).some((v) => v != null) ? { ...params, search } : params;
 }
 
-export function preferencesUrl(): string {
-    return baseUrl() + 'preferences.php';
-}
-
 export function setUrlFromViewParams(params: ViewParams, replace: boolean) {
     const url = new URL(viewUrl(params));
     if (url.search != window.location.search) {

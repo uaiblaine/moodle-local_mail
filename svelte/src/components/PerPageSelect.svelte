@@ -13,18 +13,18 @@
     let selected: number = $store.preferences.perpage;
 </script>
 
-<dov class="form-inline justify-content-end mt-3">
+<div class="form-inline justify-content-end mt-3">
     <div class="form-group">
         <label for="local-mail-perpage-select">{$store.strings.messagesperpage}:</label>
         <select
             id="local-mail-perpage-select"
             class="custom-select"
             bind:value={selected}
-            on:change={() => store.setPerPage(selected)}
+            on:change={() => store.savePreferences({ perpage: selected })}
         >
             {#each values as value}
                 <option {value}>{value}</option>
             {/each}
         </select>
     </div>
-</dov>
+</div>

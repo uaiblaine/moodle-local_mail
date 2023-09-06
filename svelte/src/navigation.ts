@@ -1,8 +1,8 @@
 import Navbar from './components/Navbar.svelte';
 import UserListSendButton from './components/UserListSendButton.svelte';
 import UserProfileSendButton from './components/UserProfileSendButton.svelte';
-import type { Course, Label, Settings, Strings } from './lib/state';
-
+import type { Course, Label, Settings, Strings, ViewParams } from './lib/state';
+import { createUrl, viewUrl } from './lib/url';
 import './global.css';
 
 async function init() {
@@ -45,6 +45,12 @@ function initNavbar(data: Record<string, unknown>) {
                 drafts: data.drafts as number,
                 courses: data.courses as Course[],
                 labels: data.labels as Label[],
+                onClick: (params: ViewParams) => {
+                    window.location.href = viewUrl(params);
+                },
+                onComposeClick: (courseid: number) => {
+                    window.location.href = createUrl(courseid);
+                },
             },
         });
     }

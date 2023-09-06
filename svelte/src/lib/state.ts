@@ -23,12 +23,13 @@ export enum DeletedStatus {
 }
 
 export type Dialog =
-    | 'deleteforever'
+    | 'preferences'
     | 'createlabel'
     | 'editlabel'
     | 'deletelabel'
-    | 'emptytrash'
-    | 'restore';
+    | 'restore'
+    | 'deleteforever'
+    | 'emptytrash';
 
 export interface Group {
     readonly id: number;
@@ -80,6 +81,18 @@ export interface MessageForm {
     readonly javascript: string;
 }
 
+export interface MessageProcessor {
+    name: string;
+    displayname: string;
+    enabled: boolean;
+    locked: boolean;
+}
+
+export interface MessageProcessorPreference {
+    name: string;
+    enabled: boolean;
+}
+
 export interface MessageSummary {
     readonly id: number;
     readonly subject: string;
@@ -100,6 +113,7 @@ export interface MessageSummary {
 export interface Preferences {
     readonly perpage: number;
     readonly markasread: boolean;
+    readonly notifications: ReadonlyArray<string>;
 }
 
 export interface Recipient extends User {
@@ -161,6 +175,7 @@ export interface Settings {
     filterbycourse: 'hidden' | 'shortname' | 'fullname';
     incrementalsearch: boolean;
     incrementalsearchlimit: number;
+    messageprocessors: ReadonlyArray<MessageProcessor>;
 }
 
 export interface State {

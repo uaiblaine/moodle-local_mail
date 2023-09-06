@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import { blur } from '../actions/blur';
-    import type { Course, Label, ServiceError, Settings, Strings, ViewParams } from '../lib/state';
+    import type { Course, Label, Settings, Strings, ViewParams } from '../lib/state';
     import { viewUrl } from '../lib/url';
     import ComposeButton from './ComposeButton.svelte';
     import MenuComponent from './Menu.svelte';
@@ -15,8 +15,8 @@
     export let courses: ReadonlyArray<Course>;
     export let labels: ReadonlyArray<Label>;
     export let params: ViewParams | undefined = undefined;
-    export let onClick: ((params: ViewParams) => void) | undefined = undefined;
-    export let onError: ((error: ServiceError) => void) | undefined = undefined;
+    export let onClick: (params: ViewParams) => void;
+    export let onComposeClick: (courseid: number) => void;
 
     let expanded = false;
     let viewportWidth: number;
@@ -25,11 +25,16 @@
         expanded = false;
     };
 
+    const handleComposeClick = () => {
+        expanded = false;
+        onComposeClick(params?.courseid || courses[0].id);
+    };
+
     const handleIconClick = (event: Event) => {
         if (settings.globaltrays.length > 0 || labels.length > 0) {
             expanded = !expanded;
             event.preventDefault();
-        } else if (onClick) {
+        } else {
             event.preventDefault();
             onClick({ tray: 'inbox' });
         }
@@ -37,7 +42,15 @@
 
     const handleMenuClick = (params: ViewParams) => {
         expanded = false;
-        onClick?.(params);
+        onClick(params);
+    };
+
+    const handlePreferencesClick = () => {
+        expanded = false;
+        onClick({
+            ...(params || { tray: 'inbox' }),
+            dialog: 'preferences',
+        });
     };
 </script>
 
@@ -65,8 +78,8 @@
             class="local-mail-navbar-dropdown dropdown-menu dropdown-menu-right show p-0 overflow-auto"
         >
             <div class="d-flex justify-content-between pl-3 pr-2 py-2">
-                <ComposeButton {strings} {courses} {onClick} {onError} />
-                <PreferencesButton {strings} />
+                <ComposeButton {strings} onClick={handleComposeClick} />
+                <PreferencesButton {strings} onClick={handlePreferencesClick} />
             </div>
             <hr class="m-0" />
             <MenuComponent
@@ -77,7 +90,7 @@
                 {courses}
                 {labels}
                 {params}
-                onClick={onClick ? handleMenuClick : undefined}
+                onClick={handleMenuClick}
                 flush={true}
             />
         </div>

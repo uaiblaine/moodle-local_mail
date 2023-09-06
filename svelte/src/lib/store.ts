@@ -3,6 +3,7 @@ import {
     callServices,
     type CountMessagesResponse,
     type CreateLabelRequest,
+    type CreateMessageRequest,
     type DeleteLabelRequest,
     type EmptyTrashRequest,
     type ForwardMessageRequest,
@@ -36,6 +37,7 @@ import {
     type State,
     type Toast,
     type ViewParams,
+    type Preferences,
 } from './state';
 import { getViewParamsFromUrl, setUrlFromViewParams } from './url';
 import { replaceStringParams } from './utils';
@@ -342,6 +344,29 @@ export async function createStore(data: InitialData) {
         return responses.pop() as number | undefined;
     };
 
+    const createMessage = async (courseid?: number) => {
+        courseid = courseid || state.params.courseid || state.courses[0].id;
+
+        const request: CreateMessageRequest = {
+            methodname: 'create_message',
+            courseid,
+        };
+
+        let responses: unknown[];
+        try {
+            responses = await callServices([request]);
+        } catch (error) {
+            setError(error as ServiceError);
+            return;
+        }
+
+        await navigate({
+            tray: 'drafts',
+            messageid: responses.pop() as number,
+            courseid,
+        });
+    };
+
     const deleteLabel = async (labelid: number) => {
         const request: DeleteLabelRequest = {
             methodname: 'delete_label',
@@ -450,6 +475,24 @@ export async function createStore(data: InitialData) {
             messageid: responses.pop() as number,
             courseid: oldParams.courseid ? message.course.id : undefined,
         });
+    };
+
+    const savePreferences = async (preferences: Partial<Preferences>) => {
+        patch({ preferences: { ...state.preferences, ...preferences } });
+        let newParams = state.params;
+        if (preferences.perpage) {
+            newParams = {
+                ...newParams,
+                offset: state.params.offset
+                    ? Math.trunc(state.params.offset / preferences.perpage) * preferences.perpage
+                    : undefined,
+            };
+        }
+        const request: SetPreferencesRequest = {
+            methodname: 'set_preferences',
+            preferences,
+        };
+        await callServicesAndRefresh([request], newParams, true);
     };
 
     const selectAll = (type: SelectAllType) => {
@@ -567,21 +610,6 @@ export async function createStore(data: InitialData) {
         });
 
         await callServicesAndRefresh(requests);
-    };
-
-    const setPerPage = async (perpage: number) => {
-        patch({ preferences: { ...state.preferences, perpage } });
-        const newParams: ViewParams = {
-            ...state.params,
-            offset: state.params.offset
-                ? Math.trunc(state.params.offset / perpage) * perpage
-                : undefined,
-        };
-        const request: SetPreferencesRequest = {
-            methodname: 'set_preferences',
-            preferences: { perpage },
-        };
-        await callServicesAndRefresh([request], newParams, true);
     };
 
     const setStarred = async (messageids: ReadonlyArray<number>, starred: boolean) => {
@@ -741,6 +769,7 @@ export async function createStore(data: InitialData) {
 
     return {
         createLabel,
+        createMessage,
         deleteLabel,
         emptyTrash,
         forward,
@@ -751,13 +780,13 @@ export async function createStore(data: InitialData) {
         navigateToList,
         navigateToMenu,
         reply,
+        savePreferences,
         selectAll,
         selectCourse,
         sendMessage,
         setDeleted,
         setError,
         setLabels,
-        setPerPage,
         setStarred,
         setUnread,
         setViewportSize,

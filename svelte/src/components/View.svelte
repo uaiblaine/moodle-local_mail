@@ -14,6 +14,7 @@
     import DraftForm from './DraftForm.svelte';
     import PerPageSelect from './PerPageSelect.svelte';
     import PreferencesButton from './PreferencesButton.svelte';
+    import PreferencesDialog from './PreferencesDialog.svelte';
     import SearchBox from './SearchBox.svelte';
     import Toasts from './Toasts.svelte';
     import TopToolBar from './TopToolBar.svelte';
@@ -137,16 +138,16 @@
                 <div class="text-truncate d-flex">
                     <ComposeButton
                         strings={$store.strings}
-                        courseid={$store.params.courseid}
-                        courses={$store.courses}
                         iconOnly={tray && $store.viewportSize < ViewportSize.SM}
-                        onClick={store.navigate}
-                        onError={store.setError}
+                        onClick={() => store.createMessage()}
                     />
                 </div>
                 {#if !tray}
                     <div class="ml-auto">
-                        <PreferencesButton strings={$store.strings} />
+                        <PreferencesButton
+                            strings={$store.strings}
+                            onClick={() => store.showDialog('preferences')}
+                        />
                     </div>
                 {/if}
             {/if}
@@ -158,13 +159,7 @@
         <div class="row mb-3">
             {#if $store.viewportSize >= ViewportSize.LG}
                 <div class="local-mail-view-side-column">
-                    <ComposeButton
-                        strings={$store.strings}
-                        courseid={$store.params.courseid}
-                        courses={$store.courses}
-                        onClick={store.navigate}
-                        onError={store.setError}
-                    />
+                    <ComposeButton strings={$store.strings} onClick={() => store.createMessage()} />
                 </div>
             {/if}
             {#if tray}
@@ -199,6 +194,7 @@
                     <Message {store} message={$store.message} />
                 {:else}
                     <List {store} />
+
                     <PerPageSelect {store} />
                 {/if}
             </div>
@@ -207,6 +203,10 @@
 
     {#if tray && $store.viewportSize < ViewportSize.MD}
         <BottomToolBar {store} />
+    {/if}
+
+    {#if $store.params.dialog == 'preferences'}
+        <PreferencesDialog {store} onCancel={() => store.hideDialog()} />
     {/if}
 
     <Toasts {store} />

@@ -1,53 +1,18 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { callServices, type CreateMessageRequest } from '../lib/services';
-    import type { Course, ServiceError, Strings, ViewParams } from '../lib/state';
-    import { viewUrl } from '../lib/url';
+    import type { Strings } from '../lib/state';
 
     export let strings: Strings;
-    export let courseid: number | undefined = undefined;
-    export let courses: ReadonlyArray<Course>;
     export let iconOnly = false;
-    export let onClick: ((params: ViewParams) => void) | undefined;
-    export let onError: ((error: ServiceError) => void) | undefined;
-
-    const handleClick = async (event: Event) => {
-        const request: CreateMessageRequest = {
-            methodname: 'create_message',
-            courseid: courseid || courses[0].id,
-        };
-
-        let responses: unknown[];
-        try {
-            responses = await callServices([request]);
-        } catch (error) {
-            if (onError) {
-                onError(error as ServiceError);
-            } else {
-                alert((error as ServiceError).message);
-            }
-            return;
-        }
-        const params: ViewParams = {
-            tray: 'drafts',
-            messageid: responses.pop() as number,
-            courseid: request.courseid,
-        };
-        if (onClick) {
-            event.preventDefault();
-            onClick(params);
-        } else {
-            window.location.href = viewUrl(params);
-        }
-    };
+    export let onClick: () => void;
 </script>
 
 <button
     type="button"
     class="btn btn-primary text-truncate px-2 px-sm-3"
     aria-label={strings.compose}
-    on:click={handleClick}
+    on:click={onClick}
 >
     <i class="fa fa-edit mr-0 mr-sm-1" />
     <span class:d-none={iconOnly}>
