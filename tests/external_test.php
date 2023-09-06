@@ -45,6 +45,8 @@ class external_test extends testcase {
         set_config('filterbycourse', 'hidden', 'local_mail');
         set_config('incrementalsearch', '1', 'local_mail');
         set_config('incrementalsearchlimit', '2000', 'local_mail');
+        set_config('message_provider_local_mail_mail_enabled', 'popup,email', 'message');
+        set_config('email_provider_local_mail_mail_locked', '1', 'message');
         $this->setUser($user);
 
         $result = external::get_settings();
@@ -64,6 +66,20 @@ class external_test extends testcase {
             'filterbycourse' => 'hidden',
             'incrementalsearch' => true,
             'incrementalsearchlimit' => 2000,
+            'messageprocessors' => [
+                [
+                    'name' => 'popup',
+                    'displayname' => get_string('pluginname', 'message_popup'),
+                    'locked' => false,
+                    'enabled' => true,
+                ],
+                [
+                    'name' => 'email',
+                    'displayname' => get_string('pluginname', 'message_email'),
+                    'locked' => true,
+                    'enabled' => true,
+                ],
+            ],
         ];
         $this->assertEquals($expected, $result);
 
@@ -87,22 +103,19 @@ class external_test extends testcase {
         $result = external::get_settings();
 
         external::validate_parameters(external::get_settings_returns(), $result);
-        $expected = [
-            'enablebackup' => true,
-            'maxrecipients' => 100,
-            'usersearchlimit' => 100,
-            'maxfiles' => 20,
-            'maxbytes' => 123000,
-            'globaltrays' => ['starred', 'sent', 'drafts', 'trash'],
-            'coursetrays' => 'all',
-            'coursetraysname' => 'fullname',
-            'coursebadges' => 'fullname',
-            'coursebadgeslength' => 20,
-            'filterbycourse' => 'fullname',
-            'incrementalsearch' => false,
-            'incrementalsearchlimit' => 1000,
-        ];
-        $this->assertEquals($expected, $result);
+        self::assertEquals(true, $result['enablebackup']);
+        self::assertEquals(100, $result['maxrecipients']);
+        self::assertEquals(100, $result['usersearchlimit']);
+        self::assertEquals(20, $result['maxfiles']);
+        self::assertEquals(123000, $result['maxbytes']);
+        self::assertEquals(['starred', 'sent', 'drafts', 'trash'], $result['globaltrays']);
+        self::assertEquals('all', $result['coursetrays']);
+        self::assertEquals('fullname', $result['coursetraysname']);
+        self::assertEquals('fullname', $result['coursebadges']);
+        self::assertEquals(20, $result['coursebadgeslength']);
+        self::assertEquals('fullname', $result['filterbycourse']);
+        self::assertEquals(false, $result['incrementalsearch']);
+        self::assertEquals(1000, $result['incrementalsearchlimit']);
 
         // Empty global trays.
 
@@ -168,8 +181,10 @@ class external_test extends testcase {
         $generator = $this->getDataGenerator();
         $user = $generator->create_user();
         $this->setUser($user);
+        set_config('message_provider_local_mail_mail_enabled', 'email', 'message');
         set_user_preference('local_mail_mailsperpage', 20);
         set_user_preference('local_mail_markasread', 1);
+        set_user_preference('message_provider_local_mail_mail_enabled', 'popup,unknown');
 
         $result = external::get_preferences();
 
@@ -178,6 +193,7 @@ class external_test extends testcase {
         $expected = [
             'perpage' => 20,
             'markasread' => true,
+            'notifications' => ['popup'],
         ];
         $this->assertEquals($expected, $result);
 
@@ -185,6 +201,7 @@ class external_test extends testcase {
 
         unset_user_preference('local_mail_mailsperpage');
         unset_user_preference('local_mail_markasread');
+        unset_user_preference('message_provider_local_mail_mail_enabled');
 
         $result = external::get_preferences();
 
@@ -193,6 +210,7 @@ class external_test extends testcase {
         $expected = [
             'perpage' => 10,
             'markasread' => false,
+            'notifications' => ['email'],
         ];
         $this->assertEquals($expected, $result);
 
@@ -203,22 +221,14 @@ class external_test extends testcase {
         $result = external::get_preferences();
 
         external::validate_parameters(external::get_preferencs_returns(), $result);
-        $expected = [
-            'perpage' => 5,
-            'markasread' => false,
-        ];
-        $this->assertEquals($expected, $result);
+        $this->assertEquals(5, $result['perpage']);
 
         set_user_preference('local_mail_mailsperpage', 101);
 
         $result = external::get_preferences();
 
         external::validate_parameters(external::get_preferencs_returns(), $result);
-        $expected = [
-            'perpage' => 100,
-            'markasread' => false,
-        ];
-        $this->assertEquals($expected, $result);
+        $this->assertEquals(100, $result['perpage']);
     }
 
     public function test_set_preferences() {
@@ -228,20 +238,26 @@ class external_test extends testcase {
 
         set_user_preference('local_mail_mailsperpage', 10);
         set_user_preference('local_mail_markasread', 0);
+        set_user_preference('message_provider_local_mail_mail_enabled', 'popup,unknown');
 
-        $result = external::set_preferences(['perpage' => '20', 'markasread' => true]);
+        $result = external::set_preferences([
+            'perpage' => '20',
+            'markasread' => true,
+            'notifications' => ['email']
+        ]);
 
         $this->assertNull(external::set_preferences_returns());
         $this->assertNull($result);
         $this->assertEquals('20', get_user_preferences('local_mail_mailsperpage'));
         $this->assertEquals('1', get_user_preferences('local_mail_markasread'));
+        $this->assertEquals('email', get_user_preferences('message_provider_local_mail_mail_enabled'));
 
         // Optional preferences.
 
-        $result = external::set_preferences(['perpage' => '50']);
+        $result = external::set_preferences([]);
 
         $this->assertNull($result);
-        $this->assertEquals('50', get_user_preferences('local_mail_mailsperpage'));
+        $this->assertEquals('20', get_user_preferences('local_mail_mailsperpage'));
         $this->assertEquals('1', get_user_preferences('local_mail_markasread'));
 
         // Invalid perpage.
@@ -258,6 +274,15 @@ class external_test extends testcase {
             $this->fail();
         } catch (\invalid_parameter_exception $e) {
             $this->assertEquals('"perpage" must be between 5 and 100', $e->debuginfo);
+        }
+
+        // Invalid processor name.
+
+        try {
+            $result = external::set_preferences(['notifications' => ['invalud']]);
+            $this->fail();
+        } catch (\invalid_parameter_exception $e) {
+            $this->assertEquals('"notifications" must contain message processor names', $e->debuginfo);
         }
     }
 

@@ -57,6 +57,9 @@ class settings {
     /** @var int Maximum number of recent messages included in incremental search. */
     public int $incrementalsearchlimit = 1000;
 
+    /** @var array Array of message providers (name, displayname, locked, enabled). */
+    public array $messageprocessors = [];
+
     /**
      * Private constructor.
      */
@@ -127,6 +130,18 @@ class settings {
         }
         if (isset($config->incrementalsearchlimit)) {
             $settings->incrementalsearchlimit = (int) $config->incrementalsearchlimit;
+        }
+        if (!get_config('message', 'local_mail_mail_disable')) {
+            $enabled = explode(',', get_config('message', 'message_provider_local_mail_mail_enabled'));
+            foreach (get_message_processors(true) as $processor) {
+                $locked = (bool) get_config('message', "{$processor->name}_provider_local_mail_mail_locked");
+                $settings->messageprocessors[] = [
+                    'name' => $processor->name,
+                    'displayname' => get_string('pluginname', 'message_' . $processor->name),
+                    'locked' => $locked,
+                    'enabled' => array_search($processor->name, $enabled) !== false,
+                ];
+            }
         }
 
         return $settings;

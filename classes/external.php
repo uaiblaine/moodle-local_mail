@@ -93,6 +93,14 @@ class external extends \external_api {
                 PARAM_INT,
                 'Maximum number of recent messages included in incremental search',
             ),
+            'messageprocessors' => new \external_multiple_structure(
+                new \external_single_structure([
+                    'name' => new \external_value(PARAM_PLUGIN, 'Name of the message processor'),
+                    'displayname' => new \external_value(PARAM_TEXT, 'Display name of the message processor'),
+                    'enabled' => new \external_value(PARAM_BOOL, 'Message processor is enabled'),
+                    'locked' => new \external_value(PARAM_BOOL, 'Message processor is locked'),
+                ])
+            )
         ]);
     }
 
@@ -156,16 +164,33 @@ class external extends \external_api {
     }
 
     public static function get_preferences_raw() {
-        return [
+        $result = [
             'perpage' => max(5, min(100, (int) get_user_preferences('local_mail_mailsperpage', 10))),
             'markasread' => (bool) get_user_preferences('local_mail_markasread', 0),
+            'notifications' => [],
         ];
+
+        if (!get_config('message', 'local_mail_mail_disable')) {
+            $configenabled = get_config('message', 'message_provider_local_mail_mail_enabled');
+            $prefenabled = get_user_preferences('message_provider_local_mail_mail_enabled');
+            foreach (get_message_processors(true) as $processor) {
+                $enabled = explode(',', $prefenabled === null ? $configenabled : $prefenabled);
+                if (array_search($processor->name, $enabled) !== false) {
+                    $result['notifications'][] = $processor->name;
+                }
+            }
+        }
+
+        return $result;
     }
 
     public static function get_preferencs_returns() {
         return new \external_single_structure([
             'perpage' => new \external_value(PARAM_INT, 'Number of messages to display per page (5-100)'),
             'markasread' => new \external_value(PARAM_BOOL, 'Mark new messages as read if a notification is sent'),
+            'notifications' => new \external_multiple_structure(
+                new \external_value(PARAM_PLUGIN, 'Name of the message processor')
+            )
         ]);
     }
 
@@ -182,6 +207,11 @@ class external extends \external_api {
                     'Mark new messages as read if a notification is sent',
                     VALUE_OPTIONAL
                 ),
+                'notifications' => new \external_multiple_structure(
+                    new \external_value(PARAM_PLUGIN, 'Name of the message processor'),
+                    'Notifications',
+                    VALUE_OPTIONAL
+                )
             ]),
         ]);
     }
@@ -195,19 +225,24 @@ class external extends \external_api {
             }
         }
 
-        self::set_preferences_raw($params['preferences']);
+        if (isset($params['preferences']['perpage'])) {
+            set_user_preference('local_mail_mailsperpage', $params['preferences']['perpage']);
+        }
+
+        if (isset($params['preferences']['markasread'])) {
+            set_user_preference('local_mail_markasread', $params['preferences']['markasread']);
+        }
+
+        if (isset($params['preferences']['notifications'])) {
+            $processornames = array_column(get_message_processors(true) , 'name');
+            if (array_diff($params['preferences']['notifications'],  $processornames)) {
+                throw new \invalid_parameter_exception('"notifications" must contain message processor names');
+            }
+            $enabled = implode(',', $params['preferences']['notifications']);
+            set_user_preference('message_provider_local_mail_mail_enabled', $enabled);
+        }
 
         return null;
-    }
-
-    public static function set_preferences_raw($preferences) {
-        if (isset($preferences['perpage'])) {
-            set_user_preference('local_mail_mailsperpage', $preferences['perpage']);
-        }
-
-        if (isset($preferences['markasread'])) {
-            set_user_preference('local_mail_markasread', $preferences['markasread']);
-        }
     }
 
     public static function set_preferences_returns() {
@@ -279,7 +314,6 @@ class external extends \external_api {
         $result = [];
 
         $user = user::current();
-        $courses = course::fetch_by_user($user);
 
         $search = new message_search($user);
         $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
