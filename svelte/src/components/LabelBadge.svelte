@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { Label } from '../lib/services';
+    import type { Label } from '../lib/state';
     import { colors } from '../lib/utils';
 
     export let label: Label;

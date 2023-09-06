@@ -1,7 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { ViewSize, type Store } from '../lib/store';
+    import { ViewportSize } from '../lib/state';
+    import type { Store } from '../lib/store';
     import BackButton from './BackButton.svelte';
     import CourseSelect from './CourseSelect.svelte';
     import DeleteButton from './DeleteButton.svelte';
@@ -23,7 +24,7 @@
         <SelectAllButton {store} />
     {/if}
 
-    {#if $store.viewSize >= ViewSize.MD}
+    {#if $store.viewportSize >= ViewportSize.MD}
         <div class="btn-group" role="group">
             {#if $store.params.tray == 'trash'}
                 <RestoreButton {store} />
@@ -47,12 +48,12 @@
                 readonly={$store.params.tray == 'course'}
                 onChange={(id) => store.selectCourse(id)}
                 primary={true}
-                align={$store.viewSize >= ViewSize.MD ? 'left' : 'right'}
+                align={$store.viewportSize >= ViewportSize.MD ? 'left' : 'right'}
             />
         </div>
     {/if}
 
-    {#if $store.viewSize >= ViewSize.MD}
+    {#if $store.viewportSize >= ViewportSize.MD}
         <PagingButtons {store} />
     {:else if $store.message?.draft}
         <SendButton {store} />

@@ -4,13 +4,14 @@
     import { onDestroy, onMount, tick } from 'svelte';
     import { require, type CoreFragment } from '../lib/amd';
     import {
+        ViewportSize,
         type Message,
         type MessageData,
         type MessageForm,
         type RecipientType,
         type User,
-    } from '../lib/services';
-    import { ViewSize, type Store } from '../lib/store';
+    } from '../lib/state';
+    import type { Store } from '../lib/store';
     import { replaceStringParams } from '../lib/utils';
     import CourseSelect from './CourseSelect.svelte';
     import DraftFormRecipients from './DraftFormRecipients.svelte';
@@ -108,7 +109,7 @@
     bind:this={formNode}
     on:submit|preventDefault={() => save(true)}
     class="pt-lg-2 pb-3 px-lg-4"
-    class:card={$store.viewSize >= ViewSize.LG}
+    class:card={$store.viewportSize >= ViewportSize.LG}
 >
     <DraftFormTimeAndLabels {store} {message} />
     <div class="row">

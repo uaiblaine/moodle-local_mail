@@ -4,7 +4,7 @@
     import { tick } from 'svelte';
     import { blur } from '../actions/blur';
     import { truncate } from '../actions/truncate';
-    import type { Course } from '../lib/services';
+    import type { Course } from '../lib/state';
     import type { Store } from '../lib/store';
 
     export let store: Store;

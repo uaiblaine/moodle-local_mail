@@ -3,9 +3,8 @@
 <script lang="ts">
     import { flip } from 'svelte/animate';
     import { fade } from 'svelte/transition';
-
-    import { ViewSize, type Store } from '../lib/store';
-    import type { MessageSummary } from '../lib/services';
+    import { ViewportSize, type MessageSummary } from '../lib/state';
+    import type { Store } from '../lib/store';
     import { viewUrl } from '../lib/url';
     import ListMessageCheckbox from './ListMessageCheckbox.svelte';
     import ListMessageStar from './ListMessageStar.svelte';
@@ -42,7 +41,7 @@
                 class:font-weight-bold={message.unread}
                 on:click|preventDefault={() => store.navigate(messageParams(message, i))}
             >
-                {#if $store.viewSize >= ViewSize.MD}
+                {#if $store.viewportSize >= ViewportSize.MD}
                     <div class="d-flex align-items-center pl-1 pr-3">
                         <ListMessageCheckbox {store} {message} />
                         <ListMessageStar {store} {message} />

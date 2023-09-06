@@ -2,20 +2,19 @@
 
 <script lang="ts">
     import { blur } from '../actions/blur';
+    import { truncate } from '../actions/truncate';
+    import { callServices, type ServiceRequest } from '../lib/services';
     import {
-        callServices,
+        GroupMode,
         RecipientType,
         type Course,
         type Group,
         type Recipient,
         type Role,
         type ServiceError,
-        type ServiceRequest,
         type User,
-        GroupMode,
-    } from '../lib/services';
+    } from '../lib/state';
     import type { Store } from '../lib/store';
-    import { truncate } from '../actions/truncate';
 
     export let store: Store;
     export let course: Course;

@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import { onMount } from 'svelte';
-    import type { Label } from '../lib/services';
+    import type { Label } from '../lib/state';
     import type { Store } from '../lib/store';
     import { colors, normalizeLabelName } from '../lib/utils';
     import ModalDialog from './ModalDialog.svelte';

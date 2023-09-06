@@ -1,136 +1,52 @@
-import { get, writable } from 'svelte/store';
+import { writable } from 'svelte/store';
 import {
     callServices,
-    DeletedStatus,
     type CountMessagesResponse,
-    type Course,
     type CreateLabelRequest,
     type DeleteLabelRequest,
     type EmptyTrashRequest,
+    type ForwardMessageRequest,
     type GetCoursesResponse,
     type GetLabelsResponse,
+    type GetMessageFormeResponse,
     type GetMessageResponse,
-    type Label,
-    type Message,
     type MessageQuery,
-    type MessageSummary,
-    type Preferences,
+    type ReplyMessageRequest,
     type SearchMessagesResponse,
-    type ServiceError,
     type ServiceRequest,
     type SetDeletedRequest,
     type SetLabelsRequest,
     type SetPreferencesRequest,
     type SetStarredRequest,
-    type Settings,
     type SetUnreadRequest,
-    type Strings,
     type UpdateLabelRequest,
-    type MessageForm,
-    RecipientType,
-    type MessageData,
-    type ReplyMessageRequest,
-    type ForwardMessageRequest,
 } from './services';
+import {
+    DeletedStatus,
+    RecipientType,
+    ViewportSize,
+    type Dialog,
+    type InitialData,
+    type Message,
+    type MessageData,
+    type MessageForm,
+    type MessageSummary,
+    type SelectAllType,
+    type ServiceError,
+    type State,
+    type Toast,
+    type ViewParams,
+} from './state';
 import { getViewParamsFromUrl, setUrlFromViewParams } from './url';
-import { replaceStringParams, sleep } from './utils';
+import { replaceStringParams } from './utils';
 
-export type Dialog =
-    | 'deleteforever'
-    | 'createlabel'
-    | 'editlabel'
-    | 'deletelabel'
-    | 'emptytrash'
-    | 'restore';
-
-export type ViewTray = 'inbox' | 'sent' | 'drafts' | 'starred' | 'course' | 'label' | 'trash';
-
-export interface SearchParams {
-    readonly content?: string;
-    readonly sendername?: string;
-    readonly recipientname?: string;
-    readonly unread?: boolean;
-    readonly withfilesonly?: boolean;
-    readonly maxtime?: number;
-    readonly startid?: number;
-    readonly reverse?: boolean;
-}
-
-export interface ViewParams {
-    readonly tray?: ViewTray;
-    readonly courseid?: number;
-    readonly labelid?: number;
-    readonly messageid?: number;
-    readonly offset?: number;
-    readonly search?: SearchParams;
-    readonly dialog?: Dialog;
-}
-
-export enum ViewSize {
-    SM = 576,
-    MD = 768,
-    LG = 992,
-    XL = 1200,
-}
-
-export interface Toast {
-    readonly text: string;
-    readonly undo?: () => void;
-}
-
-export interface State {
-    /* General information fetched only once. */
-    readonly userid: number;
-    readonly settings: Settings;
-    readonly preferences: Preferences;
-    readonly strings: Strings;
-    readonly incrementalSearchStopId?: number;
-    readonly mobile: boolean;
-
-    /* Parameters of the current view. */
-    readonly params: ViewParams;
-
-    /* Data fetched using web services for the current view.  */
-    readonly unread: number;
-    readonly drafts: number;
-    readonly courses: ReadonlyArray<Course>;
-    readonly labels: ReadonlyArray<Label>;
-    readonly totalCount: number;
-    readonly listMessages: ReadonlyArray<MessageSummary>;
-    readonly message?: Message;
-    readonly messageOffset?: number;
-    readonly nextMessageId?: number;
-    readonly prevMessageId?: number;
-
-    /* Data used for editing drafts. */
-    readonly draftForm?: MessageForm;
-    readonly draftData?: MessageData;
-    readonly draftSaved?: boolean;
-
-    /* Transient interface state. */
-    readonly loading: boolean;
-    readonly error?: ServiceError;
-    readonly selectedMessages: ReadonlyMap<number, MessageSummary>;
-    readonly toasts: ReadonlyArray<Toast>;
-    readonly viewSize: number;
-    readonly navigationId: number;
-}
-
-export type SelectAllType = 'all' | 'none' | 'read' | 'unread' | 'starred' | 'unstarred';
-
-export interface InitialData {
-    readonly userid: number;
-    readonly settings: Settings;
-    readonly preferences: Preferences;
-    readonly strings: Strings;
-    readonly mobile: boolean;
-}
+export type Store = Awaited<ReturnType<typeof createStore>>;
 
 export async function createStore(data: InitialData) {
     let currentActionId = 0;
     let draftTimeoutId = 0;
 
-    const { subscribe, update } = writable<State>({
+    let state: State = {
         /* Info */
         userid: data.userid,
         settings: data.settings,
@@ -154,713 +70,702 @@ export async function createStore(data: InitialData) {
         selectedMessages: new Map(),
         toasts: [],
         navigationId: 0,
-        viewSize: 0,
+        viewportSize: 0,
+    };
+
+    const { subscribe, set } = writable<State>(state);
+
+    const patch = (update: Partial<State>) => set({ ...state, ...update });
+
+    subscribe((newState) => {
+        state = newState;
     });
 
-    const store = {
-        subscribe,
+    const callServicesAndRefresh = async (
+        requests: ServiceRequest[],
+        newParams?: ViewParams,
+        redirect = false,
+    ): Promise<unknown[]> => {
+        const actionId = ++currentActionId;
 
-        get(): State {
-            return get(store);
-        },
+        const messageid = state.message?.id;
+        const draftData = state.draftData;
+        const params = newParams || state.params;
+        const perpage = state.preferences.perpage;
 
-        async callServicesAndRefresh(
-            requests: ServiceRequest[],
-            newParams?: ViewParams,
-            redirect = false,
-        ): Promise<unknown[]> {
-            const actionId = ++currentActionId;
+        patch({ loading: true, error: undefined });
 
-            const messageid = store.get().message?.id;
-            const draftData = store.get().draftData;
-            const params = newParams || store.get().params;
-            const perpage = store.get().preferences.perpage;
+        setUrlFromViewParams(params, redirect);
 
-            update((state) => ({ ...state, loading: true, error: undefined }));
+        // Save draft.
+        if (messageid && draftData) {
+            clearTimeout(draftTimeoutId);
+            requests.unshift({
+                methodname: 'update_message',
+                messageid,
+                data: draftData,
+            });
+        }
 
-            setUrlFromViewParams(params, redirect);
+        // Number of unread messages.
+        requests.push({
+            methodname: 'count_messages',
+            query: { roles: Object.values(RecipientType), unread: true },
+        });
 
-            // Save draft.
-            if (messageid && draftData) {
-                clearTimeout(draftTimeoutId);
-                requests.unshift({
-                    methodname: 'update_message',
-                    messageid,
-                    data: draftData,
-                });
-            }
+        // Number of drafts.
+        requests.push({
+            methodname: 'count_messages',
+            query: { draft: true },
+        });
 
-            // Number of unread messages.
+        // Courses.
+        requests.push({
+            methodname: 'get_courses',
+        });
+
+        // Labels.
+        requests.push({
+            methodname: 'get_labels',
+        });
+
+        if (params.tray) {
+            const query: MessageQuery = {
+                courseid: params.courseid,
+                labelid: params.tray == 'label' ? params.labelid : undefined,
+                draft: params.tray == 'drafts' ? true : params.tray == 'sent' ? false : undefined,
+                roles:
+                    params.tray == 'inbox'
+                        ? ['to', 'cc', 'bcc']
+                        : params.tray == 'sent'
+                        ? ['from']
+                        : undefined,
+                starred: params.tray == 'starred' ? true : undefined,
+                deleted: params.tray == 'trash',
+            };
+
+            // Total count of messages.
             requests.push({
                 methodname: 'count_messages',
-                query: { roles: Object.values(RecipientType), unread: true },
+                query,
             });
 
-            // Number of drafts.
-            requests.push({
-                methodname: 'count_messages',
-                query: { draft: true },
-            });
-
-            // Courses.
-            requests.push({
-                methodname: 'get_courses',
-            });
-
-            // Labels.
-            requests.push({
-                methodname: 'get_labels',
-            });
-
-            if (params.tray) {
-                const query: MessageQuery = {
-                    courseid: params.courseid,
-                    labelid: params.tray == 'label' ? params.labelid : undefined,
-                    draft:
-                        params.tray == 'drafts' ? true : params.tray == 'sent' ? false : undefined,
-                    roles:
-                        params.tray == 'inbox'
-                            ? ['to', 'cc', 'bcc']
-                            : params.tray == 'sent'
-                            ? ['from']
-                            : undefined,
-                    starred: params.tray == 'starred' ? true : undefined,
-                    deleted: params.tray == 'trash',
-                };
-
-                // Total count of messages.
+            if (params.messageid) {
+                // Full message.
                 requests.push({
-                    methodname: 'count_messages',
-                    query,
+                    methodname: 'get_message',
+                    messageid: params.messageid,
                 });
 
-                if (params.messageid) {
-                    // Full message.
-                    requests.push({
-                        methodname: 'get_message',
-                        messageid: params.messageid,
-                    });
+                // Next message.
+                requests.push({
+                    methodname: 'search_messages',
+                    query: {
+                        ...query,
+                        ...params.search,
+                        startid: params.messageid,
+                        reverse: false,
+                    },
+                    limit: 1,
+                });
 
-                    // Next message.
+                // Previous message.
+                requests.push({
+                    methodname: 'search_messages',
+                    query: {
+                        ...query,
+                        ...params.search,
+                        startid: params.messageid,
+                        reverse: true,
+                    },
+                    limit: 1,
+                });
+
+                if (!params.search) {
+                    // Offset of the message.
                     requests.push({
-                        methodname: 'search_messages',
+                        methodname: 'count_messages',
                         query: {
                             ...query,
-                            ...params.search,
-                            startid: params.messageid,
-                            reverse: false,
-                        },
-                        limit: 1,
-                    });
-
-                    // Previous message.
-                    requests.push({
-                        methodname: 'search_messages',
-                        query: {
-                            ...query,
-                            ...params.search,
                             startid: params.messageid,
                             reverse: true,
                         },
-                        limit: 1,
-                    });
-
-                    if (!params.search) {
-                        // Offset of the message.
-                        requests.push({
-                            methodname: 'count_messages',
-                            query: {
-                                ...query,
-                                startid: params.messageid,
-                                reverse: true,
-                            },
-                        });
-                    }
-                } else {
-                    // List of messages.
-                    requests.push({
-                        methodname: 'search_messages',
-                        query: { ...query, ...params.search },
-                        offset: params.search ? undefined : params.offset,
-                        limit: params.search ? perpage + 1 : perpage,
                     });
                 }
+            } else {
+                // List of messages.
+                requests.push({
+                    methodname: 'search_messages',
+                    query: { ...query, ...params.search },
+                    offset: params.search ? undefined : params.offset,
+                    limit: params.search ? perpage + 1 : perpage,
+                });
             }
+        }
+
+        let responses: unknown[];
+        try {
+            responses = await callServices(requests);
+        } catch (error) {
+            setError(error as ServiceError);
+            return [];
+        }
+
+        let message: Message | undefined;
+        let messageOffset: CountMessagesResponse | undefined;
+        let nextMessageId: number | undefined;
+        let prevMessageId: number | undefined;
+        let listMessages: ReadonlyArray<MessageSummary> = [];
+        let totalCount: CountMessagesResponse = 0;
+
+        if (params.tray) {
+            if (params.messageid) {
+                if (!params.search) {
+                    messageOffset = responses.pop() as CountMessagesResponse;
+                }
+                prevMessageId = (responses.pop() as SearchMessagesResponse)[0]?.id;
+                nextMessageId = (responses.pop() as SearchMessagesResponse)[0]?.id;
+                message = responses.pop() as GetMessageResponse;
+            } else {
+                listMessages = responses.pop() as SearchMessagesResponse;
+                if (params.search) {
+                    if (params.search.reverse) {
+                        prevMessageId = listMessages[perpage]?.id;
+                        nextMessageId = params.search.startid;
+                        listMessages = listMessages.slice(0, perpage).reverse();
+                    } else {
+                        prevMessageId = params.search.startid;
+                        nextMessageId = listMessages[perpage]?.id;
+                        listMessages = listMessages.slice(0, perpage);
+                    }
+                }
+            }
+            totalCount = responses.pop() as CountMessagesResponse;
+        }
+
+        const labels = responses.pop() as GetLabelsResponse;
+        const courses = responses.pop() as GetCoursesResponse;
+        const drafts = responses.pop() as CountMessagesResponse;
+        const unread = responses.pop() as CountMessagesResponse;
+        if (messageid && draftData) {
+            responses.shift();
+        }
+
+        // Check if the course or label exists.
+        if (
+            (params.tray == 'course' && !courses.find((c) => c.id == params.courseid)) ||
+            (params.tray == 'label' && !labels.find((l) => l.id == params.labelid))
+        ) {
+            await navigate({ tray: 'inbox' }, true);
+            return responses;
+        }
+
+        // Fetch form if message is a draft.
+        let draftForm: MessageForm | undefined;
+        if (message?.draft && message?.id != messageid) {
+            const draftRequests: ServiceRequest[] = [
+                {
+                    methodname: 'get_message_form',
+                    messageid: message.id,
+                },
+            ];
+            let draftResponses: unknown[];
+            try {
+                draftResponses = await callServices(draftRequests);
+            } catch (error) {
+                setError(error as ServiceError);
+                return responses;
+            }
+            draftForm = draftResponses.pop() as GetMessageFormeResponse;
+        }
+
+        // Check if the user has done some other action during the web service calls.
+        if (actionId != currentActionId) {
+            return responses;
+        }
+
+        // Update state with fetched data.
+        patch({
+            params,
+            unread,
+            drafts,
+            courses,
+            labels,
+            messageOffset,
+            totalCount,
+            listMessages,
+            message,
+            nextMessageId,
+            prevMessageId,
+            draftForm: message?.id != messageid ? draftForm : state.draftForm,
+            draftData: undefined,
+            draftSaved: message?.id == messageid ? draftData == null : false,
+            selectedMessages: new Map(
+                message
+                    ? [[message.id, message]]
+                    : state.message
+                    ? []
+                    : listMessages
+                          .filter((message) => state.selectedMessages.has(message.id))
+                          .map((message) => [message.id, message]),
+            ),
+            loading: false,
+            // Scroll to top and prevent animations if changing page.
+            navigationId:
+                redirect ||
+                params.tray != state.params.tray ||
+                params.courseid != state.params.courseid ||
+                params.labelid != state.params.labelid ||
+                params.messageid != state.params.messageid ||
+                params.offset != state.params.offset
+                    ? state.navigationId + 1
+                    : state.navigationId,
+        });
+
+        // Display draft saved notification if navigated to another page.
+        if (messageid && draftData && messageid != message?.id) {
+            showToast({ text: state.strings.draftsaved });
+        }
+
+        return responses;
+    };
+
+    const createLabel = async (name: string, color: string): Promise<number | undefined> => {
+        const request: CreateLabelRequest = {
+            methodname: 'create_label',
+            name,
+            color,
+        };
+
+        const responses = await callServicesAndRefresh([request]);
+
+        return responses.pop() as number | undefined;
+    };
+
+    const deleteLabel = async (labelid: number) => {
+        const request: DeleteLabelRequest = {
+            methodname: 'delete_label',
+            labelid,
+        };
+        await callServicesAndRefresh([request], { tray: 'inbox' });
+    };
+
+    const emptyTrash = async () => {
+        const request: EmptyTrashRequest = {
+            methodname: 'empty_trash',
+        };
+        await callServicesAndRefresh([request]);
+    };
+
+    const forward = async (message: Message) => {
+        const oldParams = state.params;
+
+        const request: ForwardMessageRequest = {
+            methodname: 'forward_message',
+            messageid: message.id,
+        };
+
+        const responses = await callServicesAndRefresh([request]);
+
+        await navigate({
+            tray: 'drafts',
+            messageid: responses.pop() as number,
+            courseid: oldParams.courseid ? message.course.id : undefined,
+        });
+    };
+
+    const hideDialog = () => {
+        const newParams: ViewParams = { ...state.params, dialog: undefined };
+        patch({ params: newParams });
+        setUrlFromViewParams(newParams, true);
+    };
+
+    const hideToast = (toast: Toast) => {
+        patch({ toasts: state.toasts.filter((t) => t != toast) });
+    };
+
+    const init = async () => {
+        const params = getViewParamsFromUrl();
+
+        const requests: ServiceRequest[] = [];
+        if (state.settings.incrementalsearch) {
+            requests.push({
+                methodname: 'search_messages',
+                query: { deleted: false },
+                offset: state.settings.incrementalsearchlimit,
+                limit: 1,
+            });
+        }
+
+        const responses = await callServicesAndRefresh(requests, params, true);
+
+        if (state.settings.incrementalsearch) {
+            const messages = responses.pop() as MessageSummary[] | undefined;
+            patch({ incrementalSearchStopId: messages?.[0]?.id });
+        }
+    };
+
+    const navigate = async (params?: ViewParams, redirect = false) => {
+        const requests: ServiceRequest[] = [];
+        if (params?.messageid) {
+            requests.push({
+                methodname: 'set_unread',
+                messageid: params.messageid,
+                unread: false,
+            });
+        }
+        await callServicesAndRefresh(requests, params, redirect);
+    };
+
+    const navigateToList = async (redirect = false) => {
+        const params: ViewParams = {
+            ...state.params,
+            messageid: undefined,
+            offset: state.params.search
+                ? Math.floor((state.messageOffset || 0) / state.preferences.perpage) *
+                  state.preferences.perpage
+                : undefined,
+        };
+
+        await callServicesAndRefresh([], params, redirect);
+    };
+
+    const navigateToMenu = async () => {
+        await callServicesAndRefresh([], {});
+    };
+
+    const reply = async (message: Message, all: boolean) => {
+        const oldParams = state.params;
+
+        const request: ReplyMessageRequest = {
+            methodname: 'reply_message',
+            messageid: message.id,
+            all,
+        };
+
+        const responses = await callServicesAndRefresh([request]);
+
+        await navigate({
+            tray: 'drafts',
+            messageid: responses.pop() as number,
+            courseid: oldParams.courseid ? message.course.id : undefined,
+        });
+    };
+
+    const selectAll = (type: SelectAllType) => {
+        patch({
+            selectedMessages: new Map(
+                state.listMessages
+                    .filter(
+                        (message) =>
+                            type == 'all' ||
+                            (type == 'read' && !message.unread) ||
+                            (type == 'unread' && message.unread) ||
+                            (type == 'starred' && message.starred) ||
+                            (type == 'unstarred' && !message.starred),
+                    )
+                    .map((message) => [message.id, message]),
+            ),
+        });
+    };
+
+    const selectCourse = async (id?: number) => {
+        await navigate({
+            ...state.params,
+            courseid: id,
+            offset: 0,
+            messageid: undefined,
+            search: state.params.search
+                ? { ...state.params.search, startid: undefined, reverse: undefined }
+                : undefined,
+        });
+    };
+
+    const sendMessage = async () => {
+        if (!state.message?.draft) {
+            return;
+        }
+
+        const request: ServiceRequest = {
+            methodname: 'send_message',
+            messageid: state.message.id,
+        };
+
+        const newParams: ViewParams = {
+            tray: 'inbox',
+            courseid: state.params.courseid ? state.message.course.id : undefined,
+        };
+
+        await callServicesAndRefresh([request], newParams);
+
+        showToast({ text: state.strings.messagesent });
+    };
+
+    const setDeleted = async (
+        ids: ReadonlyArray<number>,
+        deleted: DeletedStatus,
+        allowUndo: boolean,
+    ) => {
+        const requests = ids.map(
+            (id): SetDeletedRequest => ({
+                methodname: 'set_deleted',
+                messageid: id,
+                deleted,
+            }),
+        );
+
+        // Redirect if deleting message in single view.
+        const params: ViewParams = { ...state.params, messageid: undefined };
+        await callServicesAndRefresh(requests, params, true);
+
+        if (deleted != DeletedStatus.DeletedForever) {
+            const string = deleted
+                ? ids.length > 1
+                    ? 'undodeletemany'
+                    : 'undodeleteone'
+                : ids.length > 1
+                ? 'undorestoremany'
+                : 'undorestoreone';
+            const text = replaceStringParams(state.strings[string], ids.length);
+            const undo = () => {
+                setDeleted(ids, deleted ? DeletedStatus.NotDeleted : DeletedStatus.Deleted, false);
+            };
+            showToast({ text, undo: allowUndo ? undo : undefined });
+        }
+    };
+
+    const setError = async (error?: ServiceError) => {
+        patch({ loading: state.loading && !error, error });
+    };
+
+    const setLabels = async (added: number[], removed: number[]) => {
+        updateMessages((message) => {
+            if (!state.selectedMessages.has(message.id)) {
+                return message;
+            }
+            return {
+                ...message,
+                labels: state.labels.filter((label) => {
+                    if (added.includes(label.id)) {
+                        return true;
+                    } else if (removed.includes(label.id)) {
+                        return false;
+                    } else {
+                        return message.labels.findIndex((l) => l.id == label.id) >= 0;
+                    }
+                }),
+            };
+        });
+
+        const requests: SetLabelsRequest[] = [];
+        state.selectedMessages.forEach((message) => {
+            requests.push({
+                methodname: 'set_labels',
+                messageid: message.id,
+                labelids: message.labels.map((label) => label.id),
+            });
+        });
+
+        await callServicesAndRefresh(requests);
+    };
+
+    const setPerPage = async (perpage: number) => {
+        patch({ preferences: { ...state.preferences, perpage } });
+        const newParams: ViewParams = {
+            ...state.params,
+            offset: state.params.offset
+                ? Math.trunc(state.params.offset / perpage) * perpage
+                : undefined,
+        };
+        const request: SetPreferencesRequest = {
+            methodname: 'set_preferences',
+            preferences: { perpage },
+        };
+        await callServicesAndRefresh([request], newParams, true);
+    };
+
+    const setStarred = async (messageids: ReadonlyArray<number>, starred: boolean) => {
+        updateMessages((message) =>
+            messageids.includes(message.id) ? { ...message, starred } : message,
+        );
+
+        const requests = messageids.map(
+            (messageid): SetStarredRequest => ({
+                methodname: 'set_starred',
+                messageid,
+                starred,
+            }),
+        );
+
+        await callServicesAndRefresh(requests);
+    };
+
+    const setUnread = async (messageids: ReadonlyArray<number>, unread: boolean) => {
+        updateMessages((message) =>
+            messageids.includes(message.id) ? { ...message, unread } : message,
+        );
+
+        const requests = messageids.map(
+            (messageid): SetUnreadRequest => ({
+                methodname: 'set_unread',
+                messageid,
+                unread,
+            }),
+        );
+
+        const params: ViewParams = { ...state.params, messageid: undefined };
+
+        await callServicesAndRefresh(requests, params);
+    };
+
+    const setViewportSize = (width: number) => {
+        patch({
+            viewportSize: width,
+            navigationId: state.navigationId + 1, // Prevent list animations.
+        });
+
+        // Redirect to inbox on large screens if no tray is specified.
+        if (!state.params.tray && width >= ViewportSize.LG && !state.error) {
+            navigate({ tray: 'inbox' }, true);
+        }
+    };
+
+    const showDialog = async (dialog: Dialog) => {
+        const params: ViewParams = { ...state.params, dialog };
+        setUrlFromViewParams(params, state.params.dialog != null);
+        patch({ params });
+    };
+
+    const showToast = async (toast: Toast) => {
+        patch({ toasts: [toast] });
+        if (toast) {
+            setTimeout(() => hideToast(toast), 10000);
+        }
+    };
+
+    const toggleSelected = (id: number) => {
+        patch({
+            selectedMessages: new Map(
+                state.listMessages
+                    .filter((message) =>
+                        message.id == id
+                            ? !state.selectedMessages.has(message.id)
+                            : state.selectedMessages.has(message.id),
+                    )
+                    .map((message) => [message.id, message]),
+            ),
+        });
+    };
+
+    const undo = async (toast: Toast) => {
+        if (toast.undo) {
+            hideToast(toast);
+            toast.undo();
+        }
+    };
+
+    const updateDraft = (data: MessageData, force: boolean) => {
+        if (!state.message) {
+            return;
+        }
+
+        const actionId = ++currentActionId;
+        const message = state.message;
+        const prevData = state.draftData;
+        patch({ draftData: data, draftSaved: false });
+
+        let delay = 3000;
+        if (force) {
+            delay = 0;
+        } else if (prevData) {
+            delay = Math.max(0, message.time * 1000 + delay - Date.now());
+        }
+        clearTimeout(draftTimeoutId);
+
+        draftTimeoutId = setTimeout(async () => {
+            const requests: ServiceRequest[] = [
+                {
+                    methodname: 'update_message',
+                    messageid: message.id,
+                    data,
+                },
+                {
+                    methodname: 'get_message',
+                    messageid: message.id,
+                },
+            ];
 
             let responses: unknown[];
             try {
                 responses = await callServices(requests);
             } catch (error) {
-                store.setError(error as ServiceError);
-                return [];
+                setError(error as ServiceError);
+                return;
             }
-
-            let message: Message | undefined;
-            let messageOffset: CountMessagesResponse | undefined;
-            let nextMessageId: number | undefined;
-            let prevMessageId: number | undefined;
-            let listMessages: ReadonlyArray<MessageSummary> = [];
-            let totalCount: CountMessagesResponse = 0;
-
-            if (params.tray) {
-                if (params.messageid) {
-                    if (!params.search) {
-                        messageOffset = responses.pop() as CountMessagesResponse;
-                    }
-                    prevMessageId = (responses.pop() as SearchMessagesResponse)[0]?.id;
-                    nextMessageId = (responses.pop() as SearchMessagesResponse)[0]?.id;
-                    message = responses.pop() as GetMessageResponse;
-                } else {
-                    listMessages = responses.pop() as SearchMessagesResponse;
-                    if (params.search) {
-                        if (params.search.reverse) {
-                            prevMessageId = listMessages[perpage]?.id;
-                            nextMessageId = params.search.startid;
-                            listMessages = listMessages.slice(0, perpage).reverse();
-                        } else {
-                            prevMessageId = params.search.startid;
-                            nextMessageId = listMessages[perpage]?.id;
-                            listMessages = listMessages.slice(0, perpage);
-                        }
-                    }
-                }
-                totalCount = responses.pop() as CountMessagesResponse;
-            }
-
-            const labels = responses.pop() as GetLabelsResponse;
-            const courses = responses.pop() as GetCoursesResponse;
-            const drafts = responses.pop() as CountMessagesResponse;
-            const unread = responses.pop() as CountMessagesResponse;
-            if (messageid && draftData) {
-                responses.shift();
-            }
-
-            // Check if the course or label exists.
-            if (
-                (params.tray == 'course' && !courses.find((c) => c.id == params.courseid)) ||
-                (params.tray == 'label' && !labels.find((l) => l.id == params.labelid))
-            ) {
-                await store.navigate({ tray: 'inbox' }, true);
-                return responses;
-            }
-
-            // Fetch form if message is a draft.
-            let draftForm: MessageForm | undefined;
-            if (message?.draft && message?.id != messageid) {
-                const draftRequests: ServiceRequest[] = [
-                    {
-                        methodname: 'get_message_form',
-                        messageid: message.id,
-                    },
-                ];
-                let draftResponses: unknown[];
-                try {
-                    draftResponses = await callServices(draftRequests);
-                } catch (error) {
-                    store.setError(error as ServiceError);
-                    return responses;
-                }
-                draftForm = draftResponses.pop() as MessageForm;
-            }
-
-            // Check if the user has done some other action during the web service calls.
-            if (actionId != currentActionId) {
-                return responses;
-            }
-
-            // Update state.
-            update((state): State => {
-                return {
-                    ...state,
-                    params,
-                    unread,
-                    drafts,
-                    courses,
-                    labels,
-                    messageOffset,
-                    totalCount,
-                    listMessages,
-                    message,
-                    nextMessageId,
-                    prevMessageId,
-                    draftForm: message?.id != messageid ? draftForm : state.draftForm,
+            const updatedMessage = responses.pop() as Message;
+            if (actionId == currentActionId) {
+                patch({
+                    message: updatedMessage,
                     draftData: undefined,
-                    draftSaved: message?.id == messageid ? draftData == null : false,
-                    selectedMessages: new Map(
-                        message
-                            ? [[message.id, message]]
-                            : state.message
-                            ? []
-                            : listMessages
-                                  .filter((message) => state.selectedMessages.has(message.id))
-                                  .map((message) => [message.id, message]),
-                    ),
-                    loading: false,
-                    // Scroll to top and prevent animations if changing page.
-                    navigationId:
-                        redirect ||
-                        params.tray != state.params.tray ||
-                        params.courseid != state.params.courseid ||
-                        params.labelid != state.params.labelid ||
-                        params.messageid != state.params.messageid ||
-                        params.offset != state.params.offset
-                            ? state.navigationId + 1
-                            : state.navigationId,
-                };
-            });
-
-            // Display draft saved notification if navigated to another page.
-            if (messageid && draftData && messageid != message?.id) {
-                store.showToast({ text: store.get().strings.draftsaved });
-            }
-
-            return responses;
-        },
-
-        async createLabel(name: string, color: string): Promise<number | undefined> {
-            const request: CreateLabelRequest = {
-                methodname: 'create_label',
-                name,
-                color,
-            };
-
-            const responses = await store.callServicesAndRefresh([request]);
-
-            return responses.pop() as number | undefined;
-        },
-
-        async deleteLabel(labelid: number) {
-            const request: DeleteLabelRequest = {
-                methodname: 'delete_label',
-                labelid,
-            };
-            store.callServicesAndRefresh([request], { tray: 'inbox' });
-        },
-
-        async emptyTrash() {
-            const request: EmptyTrashRequest = {
-                methodname: 'empty_trash',
-            };
-            await store.callServicesAndRefresh([request]);
-        },
-
-        async forward(message: Message) {
-            const params = store.get().params;
-
-            const request: ForwardMessageRequest = {
-                methodname: 'forward_message',
-                messageid: message.id,
-            };
-
-            const responses = await store.callServicesAndRefresh([request]);
-
-            await store.navigate({
-                tray: 'drafts',
-                messageid: responses.pop() as number,
-                courseid: params.courseid ? message.course.id : undefined,
-            });
-        },
-
-        hideDialog() {
-            const oldParams = store.get().params;
-            const newParams: ViewParams = { ...oldParams, dialog: undefined };
-            update((state) => ({ ...state, params: newParams }));
-            setUrlFromViewParams(newParams, true);
-        },
-
-        hideToast(toast: Toast) {
-            update((state) => ({
-                ...state,
-                toasts: state.toasts.filter((t) => t != toast),
-            }));
-        },
-
-        async init() {
-            const params = getViewParamsFromUrl();
-
-            const requests: ServiceRequest[] = [];
-            if (store.get().settings.incrementalsearch) {
-                requests.push({
-                    methodname: 'search_messages',
-                    query: { deleted: false },
-                    offset: store.get().settings.incrementalsearchlimit,
-                    limit: 1,
+                    draftSaved: true,
                 });
             }
-
-            const responses = await store.callServicesAndRefresh(requests, params, true);
-
-            if (store.get().settings.incrementalsearch) {
-                const messages = responses.pop() as MessageSummary[] | undefined;
-                update((state) => ({ ...state, incrementalSearchStopId: messages?.[0]?.id }));
-            }
-        },
-
-        async navigate(params?: ViewParams, redirect = false) {
-            const requests: ServiceRequest[] = [];
-            if (params?.messageid) {
-                requests.push({
-                    methodname: 'set_unread',
-                    messageid: params.messageid,
-                    unread: false,
-                });
-            }
-            await store.callServicesAndRefresh(requests, params, redirect);
-        },
-
-        async navigateToList(redirect = false) {
-            const state = store.get();
-            const params: ViewParams = {
-                ...state.params,
-                messageid: undefined,
-                offset: state.params.search
-                    ? Math.floor((state.messageOffset || 0) / state.preferences.perpage) *
-                      state.preferences.perpage
-                    : undefined,
-            };
-
-            await store.callServicesAndRefresh([], params, redirect);
-        },
-
-        async navigateToMenu() {
-            await store.callServicesAndRefresh([], {});
-        },
-
-        async reply(message: Message, all: boolean) {
-            const params = store.get().params;
-
-            const request: ReplyMessageRequest = {
-                methodname: 'reply_message',
-                messageid: message.id,
-                all,
-            };
-
-            const responses = await store.callServicesAndRefresh([request]);
-
-            await store.navigate({
-                tray: 'drafts',
-                messageid: responses.pop() as number,
-                courseid: params.courseid ? message.course.id : undefined,
-            });
-        },
-
-        selectAll(type: SelectAllType) {
-            update((state) => {
-                return {
-                    ...state,
-                    selectedMessages: new Map(
-                        state.listMessages
-                            .filter(
-                                (message) =>
-                                    type == 'all' ||
-                                    (type == 'read' && !message.unread) ||
-                                    (type == 'unread' && message.unread) ||
-                                    (type == 'starred' && message.starred) ||
-                                    (type == 'unstarred' && !message.starred),
-                            )
-                            .map((message) => [message.id, message]),
-                    ),
-                };
-            });
-        },
-
-        async selectCourse(id?: number) {
-            const params = store.get().params;
-            await store.navigate({
-                ...params,
-                courseid: id,
-                offset: 0,
-                messageid: undefined,
-                search: params.search
-                    ? { ...params.search, startid: undefined, reverse: undefined }
-                    : undefined,
-            });
-        },
-
-        async sendMessage() {
-            const params = store.get().params;
-            const message = store.get().message;
-
-            if (!message?.draft) {
-                return;
-            }
-
-            const request: ServiceRequest = {
-                methodname: 'send_message',
-                messageid: message.id,
-            };
-
-            const newParams: ViewParams = {
-                tray: 'inbox',
-                courseid: params.courseid ? message.course.id : undefined,
-            };
-
-            await store.callServicesAndRefresh([request], newParams);
-
-            store.showToast({ text: store.get().strings.messagesent });
-        },
-
-        async setDeleted(ids: ReadonlyArray<number>, deleted: DeletedStatus, allowUndo: boolean) {
-            const requests = ids.map(
-                (id): SetDeletedRequest => ({
-                    methodname: 'set_deleted',
-                    messageid: id,
-                    deleted,
-                }),
-            );
-
-            // Redirect if deleting message in single view.
-            const params: ViewParams = { ...store.get().params, messageid: undefined };
-            await store.callServicesAndRefresh(requests, params, true);
-
-            if (deleted != DeletedStatus.DeletedForever) {
-                const string = deleted
-                    ? ids.length > 1
-                        ? 'undodeletemany'
-                        : 'undodeleteone'
-                    : ids.length > 1
-                    ? 'undorestoremany'
-                    : 'undorestoreone';
-                const text = replaceStringParams(store.get().strings[string], ids.length);
-                const undo = () => {
-                    store.setDeleted(
-                        ids,
-                        deleted ? DeletedStatus.NotDeleted : DeletedStatus.Deleted,
-                        false,
-                    );
-                };
-                store.showToast({ text, undo: allowUndo ? undo : undefined });
-            }
-        },
-
-        async setError(error?: ServiceError) {
-            update((state) => ({
-                ...state,
-                loading: state.loading && !error,
-                error,
-            }));
-        },
-
-        async setLabels(added: number[], removed: number[]) {
-            store.updateStateMessages((message, state) => {
-                if (!state.selectedMessages.has(message.id)) {
-                    return message;
-                }
-                return {
-                    ...message,
-                    labels: state.labels.filter((label) => {
-                        if (added.includes(label.id)) {
-                            return true;
-                        } else if (removed.includes(label.id)) {
-                            return false;
-                        } else {
-                            return message.labels.findIndex((l) => l.id == label.id) >= 0;
-                        }
-                    }),
-                };
-            });
-
-            const requests: SetLabelsRequest[] = [];
-            store.get().selectedMessages.forEach((message) => {
-                requests.push({
-                    methodname: 'set_labels',
-                    messageid: message.id,
-                    labelids: message.labels.map((label) => label.id),
-                });
-            });
-
-            await store.callServicesAndRefresh(requests);
-        },
-
-        setViewportSize(width: number) {
-            update((state) => ({
-                ...state,
-                viewSize: width,
-                navigationId: state.navigationId + 1, // Prevent list animations.
-            }));
-
-            // Redirect to inbox on large screens if no tray is specified.
-            if (!store.get().params.tray && width >= ViewSize.LG && !store.get().error) {
-                store.navigate({ tray: 'inbox' }, true);
-            }
-        },
-
-        async setPerPage(perpage: number) {
-            update((state) => ({
-                ...state,
-                preferences: { ...state.preferences, perpage },
-            }));
-            const params = store.get().params;
-            const newParams: ViewParams = {
-                ...params,
-                offset: params.offset ? Math.trunc(params.offset / perpage) * perpage : undefined,
-            };
-            const request: SetPreferencesRequest = {
-                methodname: 'set_preferences',
-                preferences: { perpage },
-            };
-            await store.callServicesAndRefresh([request], newParams, true);
-        },
-
-        async setStarred(messageids: ReadonlyArray<number>, starred: boolean) {
-            store.updateStateMessages((message) =>
-                messageids.includes(message.id) ? { ...message, starred } : message,
-            );
-
-            const requests = messageids.map(
-                (messageid): SetStarredRequest => ({
-                    methodname: 'set_starred',
-                    messageid,
-                    starred,
-                }),
-            );
-
-            await store.callServicesAndRefresh(requests);
-        },
-
-        async setUnread(messageids: ReadonlyArray<number>, unread: boolean) {
-            store.updateStateMessages((message) =>
-                messageids.includes(message.id) ? { ...message, unread } : message,
-            );
-
-            const requests = messageids.map(
-                (messageid): SetUnreadRequest => ({
-                    methodname: 'set_unread',
-                    messageid,
-                    unread,
-                }),
-            );
-
-            const params: ViewParams = { ...store.get().params, messageid: undefined };
-
-            await store.callServicesAndRefresh(requests, params);
-        },
-
-        async showDialog(dialog: Dialog) {
-            const oldParams = store.get().params;
-            const newParams: ViewParams = { ...oldParams, dialog };
-            update((state) => ({ ...state, params: newParams }));
-            setUrlFromViewParams(newParams, oldParams.dialog != null);
-        },
-
-        async showToast(toast: Toast) {
-            update((state) => ({ ...state, toasts: [toast] }));
-            if (toast) {
-                await sleep(10000);
-                store.hideToast(toast);
-            }
-        },
-
-        toggleSelected(id: number) {
-            update((state) => {
-                return {
-                    ...state,
-                    selectedMessages: new Map(
-                        state.listMessages
-                            .filter((message) =>
-                                message.id == id
-                                    ? !state.selectedMessages.has(message.id)
-                                    : state.selectedMessages.has(message.id),
-                            )
-                            .map((message) => [message.id, message]),
-                    ),
-                };
-            });
-        },
-
-        async undo(toast: Toast) {
-            if (toast.undo) {
-                await toast.undo();
-                store.hideToast(toast);
-            }
-        },
-
-        updateDraft(data: MessageData, force: boolean) {
-            const message = store.get().message;
-            const prevData = store.get().draftData;
-            if (!message) {
-                return;
-            }
-
-            update((state) => ({
-                ...state,
-                draftData: data,
-                draftSaved: false,
-            }));
-
-            const actionId = ++currentActionId;
-
-            let delay = 3000;
-            if (force) {
-                delay = 0;
-            } else if (prevData) {
-                delay = Math.max(0, message.time * 1000 + delay - Date.now());
-            }
-            clearTimeout(draftTimeoutId);
-
-            draftTimeoutId = setTimeout(async () => {
-                const requests: ServiceRequest[] = [
-                    {
-                        methodname: 'update_message',
-                        messageid: message.id,
-                        data,
-                    },
-                    {
-                        methodname: 'get_message',
-                        messageid: message.id,
-                    },
-                ];
-
-                let responses: unknown[];
-                try {
-                    responses = await callServices(requests);
-                } catch (error) {
-                    store.setError(error as ServiceError);
-                    return;
-                }
-                const updatedMessage = responses.pop() as Message;
-                if (actionId == currentActionId) {
-                    update((state) => ({
-                        ...state,
-                        message: updatedMessage,
-                        draftData: undefined,
-                        draftSaved: true,
-                    }));
-                }
-            }, delay);
-        },
-
-        async updateLabel(labelid: number, name: string, color: string) {
-            const request: UpdateLabelRequest = {
-                methodname: 'update_label',
-                labelid,
-                name,
-                color,
-            };
-
-            await store.callServicesAndRefresh([request]);
-        },
-
-        updateStateMessages(callback: <T extends MessageSummary>(message: T, state: State) => T) {
-            update((state) => ({
-                ...state,
-                listMessages: state.listMessages.map((message) => callback(message, state)),
-                message: state.message ? callback(state.message, state) : undefined,
-                selectedMessages: new Map(
-                    Array.from(state.selectedMessages.entries()).map(([id, message]) => [
-                        id,
-                        callback(message, state),
-                    ]),
-                ),
-            }));
-        },
+        }, delay);
     };
 
-    await store.init();
+    const updateLabel = async (labelid: number, name: string, color: string) => {
+        const request: UpdateLabelRequest = {
+            methodname: 'update_label',
+            labelid,
+            name,
+            color,
+        };
 
-    return store;
+        await callServicesAndRefresh([request]);
+    };
+
+    const updateMessages = (callback: <T extends MessageSummary>(message: T) => T) => {
+        patch({
+            listMessages: state.listMessages.map((message) => callback(message)),
+            message: state.message ? callback(state.message) : undefined,
+            selectedMessages: new Map(
+                Array.from(state.selectedMessages.entries()).map(([id, message]) => [
+                    id,
+                    callback(message),
+                ]),
+            ),
+        });
+    };
+
+    await init();
+
+    return {
+        createLabel,
+        deleteLabel,
+        emptyTrash,
+        forward,
+        get: (): State => state,
+        hideDialog,
+        hideToast,
+        navigate,
+        navigateToList,
+        navigateToMenu,
+        reply,
+        selectAll,
+        selectCourse,
+        sendMessage,
+        setDeleted,
+        setError,
+        setLabels,
+        setPerPage,
+        setStarred,
+        setUnread,
+        setViewportSize,
+        showDialog,
+        subscribe,
+        toggleSelected,
+        undo,
+        updateDraft,
+        updateLabel,
+    };
 }
-
-export type Store = Awaited<ReturnType<typeof createStore>>;
-
-export type { Unsubscriber } from 'svelte/store';

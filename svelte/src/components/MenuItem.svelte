@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import { truncate } from '../actions/truncate';
-    import { type ViewParams } from '../lib/store';
+    import type { ViewParams } from '../lib/state';
     import { viewUrl } from '../lib/url';
 
     export let icon: string;

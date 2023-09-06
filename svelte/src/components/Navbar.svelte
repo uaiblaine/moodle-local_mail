@@ -2,12 +2,11 @@
 
 <script lang="ts">
     import { blur } from '../actions/blur';
-    import type { Course, Label, ServiceError, Settings, Strings } from '../lib/services';
-    import type { ViewParams } from '../lib/store';
+    import type { Course, Label, ServiceError, Settings, Strings, ViewParams } from '../lib/state';
+    import { viewUrl } from '../lib/url';
     import ComposeButton from './ComposeButton.svelte';
     import MenuComponent from './Menu.svelte';
     import PreferencesButton from './PreferencesButton.svelte';
-    import { viewUrl } from '../lib/url';
 
     export let settings: Settings;
     export let strings: Strings;

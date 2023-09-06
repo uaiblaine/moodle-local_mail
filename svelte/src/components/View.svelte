@@ -2,7 +2,9 @@
 
 <script lang="ts">
     import { onMount, afterUpdate } from 'svelte';
-
+    import { ViewportSize } from '../lib/state';
+    import type { Store } from '../lib/store';
+    import { getViewParamsFromUrl } from '../lib/url';
     import ComposeButton from './ComposeButton.svelte';
     import ErrorModal from './ErrorModal.svelte';
     import BottomToolBar from './BottomToolBar.svelte';
@@ -15,8 +17,6 @@
     import SearchBox from './SearchBox.svelte';
     import Toasts from './Toasts.svelte';
     import TopToolBar from './TopToolBar.svelte';
-    import { ViewSize, type Store } from '../lib/store';
-    import { getViewParamsFromUrl } from '../lib/url';
 
     export let store: Store;
 
@@ -44,7 +44,8 @@
 
     $: title = $store.message ? $store.message.subject.trim() || $store.strings.nosubject : heading;
 
-    $: mobileTitle = $store.viewSize < ViewSize.LG ? heading || $store.strings.pluginname : '';
+    $: mobileTitle =
+        $store.viewportSize < ViewportSize.LG ? heading || $store.strings.pluginname : '';
 
     $: window.parent?.postMessage(
         {
@@ -114,12 +115,12 @@
 >
     <!-- Heading / search / compose button -->
     <div class="row align-items-center">
-        {#if $store.mobile && $store.viewSize < ViewSize.LG}
+        {#if $store.mobile && $store.viewportSize < ViewportSize.LG}
             <div class="local-mail-view-side-column" />
         {:else}
             <h1 class="h2 local-mail-view-side-column text-truncate mb-4">
                 {$store.strings.pluginname}
-                {#if $store.viewSize < ViewSize.LG}
+                {#if $store.viewportSize < ViewportSize.LG}
                     <i class="fa fa-angle-right mx-1" aria-hidden="true" />
                     {heading}
                 {/if}
@@ -132,13 +133,13 @@
                     <SearchBox {store} />
                 </div>
             {/if}
-            {#if $store.viewSize < ViewSize.LG}
+            {#if $store.viewportSize < ViewportSize.LG}
                 <div class="text-truncate d-flex">
                     <ComposeButton
                         strings={$store.strings}
                         courseid={$store.params.courseid}
                         courses={$store.courses}
-                        iconOnly={tray && $store.viewSize < ViewSize.SM}
+                        iconOnly={tray && $store.viewportSize < ViewportSize.SM}
                         onClick={store.navigate}
                         onError={store.setError}
                     />
@@ -153,9 +154,9 @@
     </div>
 
     <!-- Toolbar -->
-    {#if tray || $store.viewSize >= ViewSize.LG}
+    {#if tray || $store.viewportSize >= ViewportSize.LG}
         <div class="row mb-3">
-            {#if $store.viewSize >= ViewSize.LG}
+            {#if $store.viewportSize >= ViewportSize.LG}
                 <div class="local-mail-view-side-column">
                     <ComposeButton
                         strings={$store.strings}
@@ -176,7 +177,7 @@
 
     <!-- List / Messaege -->
     <div class="row mb-3">
-        {#if !tray || $store.viewSize >= ViewSize.LG}
+        {#if !tray || $store.viewportSize >= ViewportSize.LG}
             <div class="local-mail-view-side-column">
                 <Menu
                     settings={$store.settings}
@@ -204,7 +205,7 @@
         {/if}
     </div>
 
-    {#if tray && $store.viewSize < ViewSize.MD}
+    {#if tray && $store.viewportSize < ViewportSize.MD}
         <BottomToolBar {store} />
     {/if}
 

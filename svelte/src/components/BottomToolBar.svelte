@@ -2,13 +2,13 @@
 
 <script lang="ts">
     import { onMount } from 'svelte';
+    import type { Store } from '../lib/store';
     import DeleteButton from './DeleteButton.svelte';
     import DeleteForeverButton from './DeleteForeverButton.svelte';
     import LabelsButton from './LabelsButton.svelte';
     import MoreActionsButton from './MoreActionsButton.svelte';
     import PagingButtons from './PagingButtons.svelte';
     import RestoreButton from './RestoreButton.svelte';
-    import { type Store } from '../lib/store';
 
     export let store: Store;
 

@@ -90,18 +90,6 @@ export function replaceStringParams(
 }
 
 /**
- * Waits for the number of specified miliseconds before continuing.
- *
- * @param miliseconds Number of miliseconds to wait for.
- * @returns Promise that is resolved after the specified miliseconds.
- */
-export async function sleep(miliseconds: number): Promise<void> {
-    return new Promise((resolve) => {
-        setTimeout(resolve, miliseconds);
-    });
-}
-
-/**
  * Converts a date string to a timestamp.
  *
  * @param date Date in YYYY-MM-DD format.

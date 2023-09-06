@@ -1,6 +1,6 @@
 import Navbar from './components/Navbar.svelte';
 import View from './components/View.svelte';
-import type { Preferences, Settings, Strings } from './lib/services';
+import type { Preferences, Settings, Strings } from './lib/state';
 import { createStore } from './lib/store';
 
 import './global.css';

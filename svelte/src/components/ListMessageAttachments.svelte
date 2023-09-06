@@ -1,15 +1,15 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { MessageSummary } from '../lib/services';
-    import { ViewSize, type Store } from '../lib/store';
+    import { ViewportSize, type MessageSummary } from '../lib/state';
+    import type { Store } from '../lib/store';
     import { replaceStringParams } from '../lib/utils';
 
     export let store: Store;
     export let message: MessageSummary;
 </script>
 
-{#if message.numattachments > 0 || $store.viewSize >= ViewSize.MD}
+{#if message.numattachments > 0 || $store.viewportSize >= ViewportSize.MD}
     <span
         class="-shrink-0 mr-2"
         title={message.numattachments > 0

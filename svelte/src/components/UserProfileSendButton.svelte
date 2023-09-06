@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { Course, Strings } from '../lib/services';
+    import type { Course, Strings } from '../lib/state';
     import { createUrl } from '../lib/url';
 
     export let userid: number;

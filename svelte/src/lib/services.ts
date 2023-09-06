@@ -1,4 +1,17 @@
 import { require, type CoreAjax } from './amd';
+import {
+    DeletedStatus,
+    type Course,
+    type Group,
+    type Label,
+    type Message,
+    type MessageData,
+    type MessageForm,
+    type MessageSummary,
+    type Preferences,
+    type Role,
+    type User,
+} from './state';
 
 export type ServiceRequest =
     | SetPreferencesRequest
@@ -29,6 +42,8 @@ export interface SetPreferencesRequest {
     readonly methodname: 'set_preferences';
     readonly preferences: Partial<Preferences>;
 }
+
+export type SetPreferencesResponse = void;
 
 export interface GetCoursesRequest {
     readonly methodname: 'get_courses';
@@ -89,17 +104,15 @@ export interface SetUnreadRequest {
     readonly unread: boolean;
 }
 
+export type SetUnreadResponse = void;
+
 export interface SetStarredRequest {
     readonly methodname: 'set_starred';
     readonly messageid: number;
     readonly starred: boolean;
 }
 
-export enum DeletedStatus {
-    NotDeleted = 0,
-    Deleted = 1,
-    DeletedForever = 2,
-}
+export type SetStarredResponse = void;
 
 export interface SetDeletedRequest {
     readonly methodname: 'set_deleted';
@@ -107,15 +120,21 @@ export interface SetDeletedRequest {
     readonly deleted: DeletedStatus;
 }
 
+export type SetDeletedResponse = void;
+
 export interface EmptyTrashRequest {
     readonly methodname: 'empty_trash';
 }
+
+export type EmptyTrashResponse = void;
 
 export interface CreateLabelRequest {
     readonly methodname: 'create_label';
     readonly name: string;
     readonly color: string;
 }
+
+export type CreateLabelResponse = void;
 
 export interface UpdateLabelRequest {
     readonly methodname: 'update_label';
@@ -124,16 +143,22 @@ export interface UpdateLabelRequest {
     readonly color: string;
 }
 
+export type UpdateLabelResponse = void;
+
 export interface DeleteLabelRequest {
     readonly methodname: 'delete_label';
     readonly labelid: number;
 }
+
+export type DeleteLabelResponse = void;
 
 export interface SetLabelsRequest {
     readonly methodname: 'set_labels';
     readonly messageid: number;
     readonly labelids: ReadonlyArray<number>;
 }
+
+export type SetLabelsResponse = void;
 
 export interface GetRolesRequest {
     readonly methodname: 'get_roles';
@@ -195,156 +220,20 @@ export interface ForwardMessageRequest {
 
 export type ForwardMessageResponse = number;
 
-export interface MessageData {
-    readonly courseid: number;
-    readonly to: number[];
-    readonly cc: number[];
-    readonly bcc: number[];
-    readonly subject: string;
-    readonly content: string;
-    readonly format: number;
-    readonly draftitemid: number;
-}
-
 export interface UpdateMessageRequest {
     readonly methodname: 'update_message';
     readonly messageid: number;
     readonly data: MessageData;
 }
 
+export type UpdateMessageResponse = void;
+
 export interface SendMessageRequest {
     readonly methodname: 'send_message';
     readonly messageid: number;
 }
 
-export interface Settings {
-    maxrecipients: number;
-    usersearchlimit: number;
-    globaltrays: ReadonlyArray<string>;
-    coursetrays: 'none' | 'unread' | 'all';
-    coursetraysname: 'shortname' | 'fullname';
-    coursebadges: 'hidden' | 'shortname' | 'fullname';
-    coursebadgeslength: number;
-    filterbycourse: 'hidden' | 'shortname' | 'fullname';
-    incrementalsearch: boolean;
-    incrementalsearchlimit: number;
-}
-
-export type Strings = Record<string, string>;
-
-export interface Preferences {
-    readonly perpage: number;
-    readonly markasread: boolean;
-}
-
-export enum GroupMode {
-    No = 0,
-    Separate = 1,
-    Visible = 2,
-}
-
-export interface Course {
-    readonly id: number;
-    readonly shortname: string;
-    readonly fullname: string;
-    readonly visible: boolean;
-    readonly groupmode: GroupMode;
-    readonly unread?: number;
-}
-
-export interface Label {
-    readonly id: number;
-    readonly name: string;
-    readonly color: string;
-    readonly unread?: number;
-}
-
-export interface MessageSummary {
-    readonly id: number;
-    readonly subject: string;
-    readonly numattachments: number;
-    readonly draft: boolean;
-    readonly time: number;
-    readonly shorttime: string;
-    readonly fulltime: string;
-    readonly unread: boolean;
-    readonly starred: boolean;
-    readonly deleted: boolean;
-    readonly course: Course;
-    readonly sender: User;
-    readonly recipients: ReadonlyArray<Recipient>;
-    readonly labels: ReadonlyArray<Label>;
-}
-
-export interface User {
-    readonly id: number;
-    readonly fullname: string;
-    readonly pictureurl: string;
-    readonly profileurl: string;
-    readonly sortorder: string;
-}
-
-export enum RecipientType {
-    TO = 'to',
-    CC = 'cc',
-    BCC = 'bcc',
-}
-
-export interface Recipient extends User {
-    readonly type: RecipientType;
-    readonly isvalid?: boolean;
-}
-
-export interface Message extends MessageSummary {
-    readonly content: string;
-    readonly format: number;
-    readonly attachments: ReadonlyArray<Attachment>;
-    readonly references: ReadonlyArray<Reference>;
-}
-
-export interface Reference {
-    readonly id: number;
-    readonly subject: string;
-    readonly content: string;
-    readonly format: number;
-    readonly time: number;
-    readonly shorttime: string;
-    readonly fulltime: string;
-    readonly sender: User;
-    readonly attachments: ReadonlyArray<Attachment>;
-}
-
-export interface Attachment {
-    readonly filepath: string;
-    readonly filename: string;
-    readonly mimetype: string;
-    readonly filesize: number;
-    readonly fileurl: string;
-    readonly iconurl: string;
-}
-
-export interface Role {
-    readonly id: number;
-    readonly name: string;
-}
-
-export interface Group {
-    readonly id: number;
-    readonly name: string;
-}
-
-export interface MessageForm {
-    readonly editorhtml: string;
-    readonly filemanagerhtml: string;
-    readonly javascript: string;
-}
-
-export interface ServiceError {
-    readonly message: string;
-    readonly errorcode: string;
-    readonly debuginfo?: string;
-    readonly stacktrace?: string;
-}
+export type SendMessageResponse = void;
 
 /**
  * Calls one or more web service methods in a single HTTP request.

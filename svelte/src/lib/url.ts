@@ -1,4 +1,8 @@
-import type { Dialog, SearchParams, ViewParams, ViewTray } from './store';
+import { type Dialog, type SearchParams, type Tray, type ViewParams } from './state';
+
+function baseUrl() {
+    return window.M.cfg.wwwroot + '/local/mail/';
+}
 
 export function createUrl(courseid: number, recipients: number[] = [], role?: string): string {
     const url = new URL(baseUrl() + 'create.php');
@@ -15,8 +19,42 @@ export function createUrl(courseid: number, recipients: number[] = [], role?: st
     return url.toString();
 }
 
+export function getViewParamsFromUrl(): ViewParams {
+    const url = new URL(window.location.href);
+    const params: ViewParams = {
+        tray: (url.searchParams.get('t') as Tray) || undefined,
+        courseid: parseInt(url.searchParams.get('c') || '') || undefined,
+        labelid: parseInt(url.searchParams.get('l') || '') || undefined,
+        messageid: parseInt(url.searchParams.get('m') || '') || undefined,
+        offset: parseInt(url.searchParams.get('o') || '') || undefined,
+        dialog: (url.searchParams.get('d') as Dialog) || undefined,
+    };
+    const search: SearchParams = {
+        content: url.searchParams.get('s') || undefined,
+        sendername: url.searchParams.get('sf') || undefined,
+        recipientname: url.searchParams.get('st') || undefined,
+        unread: url.searchParams.get('su') == '1' || undefined,
+        withfilesonly: url.searchParams.get('sa') == '1' || undefined,
+        maxtime: parseInt(url.searchParams.get('sd') || '') || undefined,
+        startid: parseInt(url.searchParams.get('ss') || '') || undefined,
+        reverse: url.searchParams.get('sr') == '1' || undefined,
+    };
+    return Object.values(search).some((v) => v != null) ? { ...params, search } : params;
+}
+
 export function preferencesUrl(): string {
     return baseUrl() + 'preferences.php';
+}
+
+export function setUrlFromViewParams(params: ViewParams, replace: boolean) {
+    const url = new URL(viewUrl(params));
+    if (url.search != window.location.search) {
+        if (replace) {
+            window.history.replaceState(undefined, '', url.toString());
+        } else {
+            window.history.pushState(undefined, '', url.toString());
+        }
+    }
 }
 
 export function viewUrl(params: ViewParams): string {
@@ -66,42 +104,4 @@ export function viewUrl(params: ViewParams): string {
     }
 
     return url.toString();
-}
-
-export function getViewParamsFromUrl(): ViewParams {
-    const url = new URL(window.location.href);
-    const params: ViewParams = {
-        tray: (url.searchParams.get('t') as ViewTray) || undefined,
-        courseid: parseInt(url.searchParams.get('c') || '') || undefined,
-        labelid: parseInt(url.searchParams.get('l') || '') || undefined,
-        messageid: parseInt(url.searchParams.get('m') || '') || undefined,
-        offset: parseInt(url.searchParams.get('o') || '') || undefined,
-        dialog: (url.searchParams.get('d') as Dialog) || undefined,
-    };
-    const search: SearchParams = {
-        content: url.searchParams.get('s') || undefined,
-        sendername: url.searchParams.get('sf') || undefined,
-        recipientname: url.searchParams.get('st') || undefined,
-        unread: url.searchParams.get('su') == '1' || undefined,
-        withfilesonly: url.searchParams.get('sa') == '1' || undefined,
-        maxtime: parseInt(url.searchParams.get('sd') || '') || undefined,
-        startid: parseInt(url.searchParams.get('ss') || '') || undefined,
-        reverse: url.searchParams.get('sr') == '1' || undefined,
-    };
-    return Object.values(search).some((v) => v != null) ? { ...params, search } : params;
-}
-
-export function setUrlFromViewParams(params: ViewParams, replace: boolean) {
-    const url = new URL(viewUrl(params));
-    if (url.search != window.location.search) {
-        if (replace) {
-            window.history.replaceState(undefined, '', url.toString());
-        } else {
-            window.history.pushState(undefined, '', url.toString());
-        }
-    }
-}
-
-function baseUrl() {
-    return window.M.cfg.wwwroot + '/local/mail/';
 }

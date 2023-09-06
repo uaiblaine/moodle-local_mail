@@ -3,7 +3,6 @@
 <script lang="ts">
     import { flip } from 'svelte/animate';
     import { fly } from 'svelte/transition';
-
     import type { Store } from '../lib/store';
 
     export let store: Store;

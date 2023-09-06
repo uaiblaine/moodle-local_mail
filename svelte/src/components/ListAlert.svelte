@@ -2,7 +2,6 @@
 
 <script lang="ts">
     import { fade } from 'svelte/transition';
-
     import type { Store } from '../lib/store';
     import { viewUrl } from '../lib/url';
 

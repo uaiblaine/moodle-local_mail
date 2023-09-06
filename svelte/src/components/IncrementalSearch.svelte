@@ -3,17 +3,16 @@
 <script lang="ts">
     import { onDestroy } from 'svelte';
     import {
-        callServices,
-        type MessageQuery,
-        type MessageSummary,
-        type ServiceError,
-        type SearchMessagesRequest,
         RecipientType,
-    } from '../lib/services';
-    import type { Store, ViewParams } from '../lib/store';
+        type MessageSummary,
+        type ViewParams,
+        type ServiceError,
+    } from '../lib/state';
+    import { callServices, type MessageQuery, type SearchMessagesRequest } from '../lib/services';
+    import type { Store } from '../lib/store';
+    import { viewUrl } from '../lib/url';
     import ListMessageSubject from './ListMessageSubject.svelte';
     import ListMessageUsers from './ListMessageUsers.svelte';
-    import { viewUrl } from '../lib/url';
 
     export let store: Store;
     export let enabled: boolean;

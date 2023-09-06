@@ -1,10 +1,10 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+    import type { Message } from '../lib/state';
+    import type { Store } from '../lib/store';
     import CourseBadge from './CourseBadge.svelte';
     import LabelBadge from './LabelBadge.svelte';
-    import type { Message } from '../lib/services';
-    import { type Store } from '../lib/store';
 
     export let store: Store;
     export let message: Message;

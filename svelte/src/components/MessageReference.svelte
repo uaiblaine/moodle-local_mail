@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { Reference } from '../lib/services';
+    import type { Reference } from '../lib/state';
     import MessageAttachments from './MessageAttachments.svelte';
 
     export let reference: Reference;

@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import { truncate } from '../actions/truncate';
-    import type { MessageSummary } from '../lib/services';
+    import type { MessageSummary } from '../lib/state';
     import type { Store } from '../lib/store';
 
     export let store: Store;

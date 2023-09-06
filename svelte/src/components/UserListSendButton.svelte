@@ -2,9 +2,9 @@
 
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte';
-    import type { Course, Strings } from '../lib/services';
-    import { createUrl } from '../lib/url';
     import { require, type CorePubSub } from '../lib/amd';
+    import type { Course, Strings } from '../lib/state';
+    import { createUrl } from '../lib/url';
 
     export let strings: Strings;
     export let courses: ReadonlyArray<Course>;
@@ -26,7 +26,7 @@
         pubsub.unsubscribe('core/checkbox-toggleall:checkboxToggled', updateRecipients);
     });
 
-    async function updateRecipients() {
+    const updateRecipients = async () => {
         recipients = [];
         const formData = new FormData(form);
         for (const name of formData.keys()) {
@@ -38,7 +38,7 @@
                 }
             }
         }
-    }
+    };
 </script>
 
 {#if course}

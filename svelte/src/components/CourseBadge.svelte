@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import { truncate } from '../actions/truncate';
-    import type { Course, Settings } from '../lib/services';
+    import type { Course, Settings } from '../lib/state';
 
     export let course: Course;
     export let settings: Settings;

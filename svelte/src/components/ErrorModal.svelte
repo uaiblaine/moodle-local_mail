@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { type Store } from '../lib/store';
+    import type { Store } from '../lib/store';
     import ModalDialog from './ModalDialog.svelte';
 
     export let store: Store;

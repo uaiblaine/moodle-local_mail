@@ -1,8 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+    import type { Message } from '../lib/state';
     import type { Store } from '../lib/store';
-    import type { Message } from '../lib/services';
     import NessageActions from './MessageActions.svelte';
     import MessageAttachments from './MessageAttachments.svelte';
     import MessageButtons from './MessageButtons.svelte';

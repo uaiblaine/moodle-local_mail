@@ -1,7 +1,7 @@
 import Navbar from './components/Navbar.svelte';
 import UserListSendButton from './components/UserListSendButton.svelte';
 import UserProfileSendButton from './components/UserProfileSendButton.svelte';
-import type { Course, Label, Settings, Strings } from './lib/services';
+import type { Course, Label, Settings, Strings } from './lib/state';
 
 import './global.css';
 

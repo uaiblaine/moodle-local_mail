@@ -2,7 +2,8 @@
 
 <script lang="ts">
     import { blur } from '../actions/blur';
-    import type { SelectAllType, Store } from '../lib/store';
+    import type { SelectAllType } from '../lib/state';
+    import type { Store } from '../lib/store';
 
     export let store: Store;
 

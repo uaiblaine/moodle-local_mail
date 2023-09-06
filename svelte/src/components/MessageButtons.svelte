@@ -1,8 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { Message } from '../lib/services';
-    import { type Store } from '../lib/store';
+    import type { Message } from '../lib/state';
+    import type { Store } from '../lib/store';
 
     export let store: Store;
     export let message: Message;

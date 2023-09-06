@@ -1,14 +1,8 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import {
-        callServices,
-        type Course,
-        type CreateMessageRequest,
-        type ServiceError,
-        type Strings,
-    } from '../lib/services';
-    import type { ViewParams } from '../lib/store';
+    import { callServices, type CreateMessageRequest } from '../lib/services';
+    import type { Course, ServiceError, Strings, ViewParams } from '../lib/state';
     import { viewUrl } from '../lib/url';
 
     export let strings: Strings;

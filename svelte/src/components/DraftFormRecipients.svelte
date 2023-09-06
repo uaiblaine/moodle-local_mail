@@ -4,8 +4,8 @@
     import { fade } from 'svelte/transition';
 
     import { truncate } from '../actions/truncate';
-    import { type Store } from '../lib/store';
-    import { RecipientType, type Recipient, type User } from '../lib/services';
+    import { RecipientType, type Recipient, type User } from '../lib/state';
+    import type { Store } from '../lib/store';
 
     export let store: Store;
     export let recipients: ReadonlyMap<number, Recipient>;

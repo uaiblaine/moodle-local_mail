@@ -2,8 +2,8 @@
 
 <script lang="ts">
     import { blur } from '../actions/blur';
-    import type { Message } from '../lib/services';
-    import { ViewSize, type Store } from '../lib/store';
+    import { ViewportSize, type Message } from '../lib/state';
+    import type { Store } from '../lib/store';
 
     export let store: Store;
     export let message: Message;
@@ -34,7 +34,7 @@
     <i class="fa {starClass}" />
 </button>
 
-{#if $store.viewSize < ViewSize.SM}
+{#if $store.viewportSize < ViewportSize.SM}
     <div class="dropdown" use:blur={closeMenu}>
         <button
             type="button"
@@ -74,7 +74,7 @@
     </div>
 {/if}
 
-{#if $store.viewSize >= ViewSize.SM}
+{#if $store.viewportSize >= ViewportSize.SM}
     <button
         type="button"
         title={$store.strings.reply}

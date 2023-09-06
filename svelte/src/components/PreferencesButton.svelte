@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import type { Strings } from '../lib/services';
+    import type { Strings } from '../lib/state';
     import { preferencesUrl } from '../lib/url';
 
     export let strings: Strings;
