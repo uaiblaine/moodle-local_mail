@@ -8,18 +8,8 @@
     export let store: Store;
     export let transparent = false;
 
-    let modalOpen = false;
-
-    const open = () => {
-        modalOpen = true;
-    };
-
-    const cancel = () => {
-        modalOpen = false;
-    };
-
     const confirm = () => {
-        modalOpen = false;
+        store.hideDialog();
         store.setDeleted(
             Array.from($store.selectedMessages.keys()),
             DeletedStatus.NotDeleted,
@@ -35,18 +25,18 @@
     class:disabled={!$store.selectedMessages.size}
     disabled={!$store.selectedMessages.size}
     title={$store.strings.restore}
-    on:click={open}
+    on:click={() => store.showDialog('restore')}
 >
     <i class="fa fa-fw fa-undo" /></button
 >
 
-{#if modalOpen}
+{#if $store.params.dialog == 'restore'}
     <ModalDialog
         title={$store.strings.restore}
         cancelText={$store.strings.cancel}
         confirmText={$store.strings.restore}
-        handleCancel={cancel}
-        handleConfirm={confirm}
+        onCancel={() => store.hideDialog()}
+        onConfirm={confirm}
     >
         {$store.strings.messagerestoreconfirm}
     </ModalDialog>

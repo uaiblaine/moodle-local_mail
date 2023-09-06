@@ -8,7 +8,7 @@
 </script>
 
 {#if $store.error}
-    <ModalDialog title={$store.strings.error} handleCancel={() => store.setError()}>
+    <ModalDialog title={$store.strings.error} onCancel={() => store.setError()}>
         <p>{$store.error?.message}</p>
         {#if $store.error?.debuginfo}
             <p>{$store.error?.debuginfo}</p>

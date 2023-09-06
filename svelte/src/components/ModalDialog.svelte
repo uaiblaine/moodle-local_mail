@@ -8,8 +8,8 @@
     export let title: string;
     export let cancelText = '';
     export let confirmText = '';
-    export let handleCancel: () => void;
-    export let handleConfirm: (() => void) | undefined = undefined;
+    export let onCancel: () => void;
+    export let onConfirm: (() => void) | undefined = undefined;
     export let confirmClass = 'btn-primary';
     export let confirmDisabled = false;
 
@@ -26,7 +26,7 @@
 
     const handleKey = (event: KeyboardEvent) => {
         if (event.key == 'Escape') {
-            handleCancel();
+            onCancel();
         }
     };
 </script>
@@ -41,7 +41,7 @@
     aria-modal="true"
     bind:this={node}
     transition:fly|global={{ y: -100 }}
-    use:blur={handleCancel}
+    use:blur={onCancel}
 >
     <div class="modal-dialog">
         <div class="modal-content">
@@ -49,26 +49,26 @@
                 <h5 class="modal-title">
                     {title}
                 </h5>
-                <button type="button" class="close" aria-label={cancelText} on:click={handleCancel}>
+                <button type="button" class="close" aria-label={cancelText} on:click={onCancel}>
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <slot />
             </div>
-            {#if cancelText || (confirmText && handleConfirm)}
+            {#if cancelText || (confirmText && onConfirm)}
                 <div class="modal-footer">
                     {#if cancelText}
-                        <button type="button" class="btn btn-secondary" on:click={handleCancel}>
+                        <button type="button" class="btn btn-secondary" on:click={onCancel}>
                             {cancelText}
                         </button>
                     {/if}
-                    {#if confirmText && handleConfirm}
+                    {#if confirmText && onConfirm}
                         <button
                             type="button"
                             class="btn {confirmClass}"
                             disabled={confirmDisabled}
-                            on:click={handleConfirm}
+                            on:click={onConfirm}
                         >
                             {confirmText}
                         </button>

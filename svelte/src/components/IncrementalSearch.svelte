@@ -19,7 +19,7 @@
     export let enabled: boolean;
     export let content: string;
     export let loading = false;
-    export let handleClick: (params: ViewParams) => void;
+    export let onClick: (params: ViewParams) => void;
 
     $: if (enabled) {
         search(content);
@@ -82,7 +82,7 @@
         return (event: MouseEvent) => {
             if (!message.draft) {
                 event.preventDefault();
-                handleClick(messageParams(message, i));
+                onClick(messageParams(message, i));
             }
         };
     };
@@ -137,7 +137,7 @@
             <a
                 class="dropdown-item py-2"
                 href={viewUrl(allParams)}
-                on:click|preventDefault={() => handleClick(allParams)}
+                on:click|preventDefault={() => onClick(allParams)}
             >
                 {$store.strings.searchallmessages}
             </a>

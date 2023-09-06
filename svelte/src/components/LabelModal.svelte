@@ -9,8 +9,8 @@
 
     export let store: Store;
     export let label: Label | undefined = undefined;
-    export let handleCancel: () => void;
-    export let handleSubmit: (name: string, color: string) => void;
+    export let onCancel: () => void;
+    export let onSubmit: (name: string, color: string) => void;
 
     let nameEl: HTMLElement;
 
@@ -24,7 +24,7 @@
     $: validName = !emptyName && !repeatedName;
 
     const submit = async () => {
-        handleSubmit(name, selectedColor);
+        onSubmit(name, selectedColor);
     };
 
     onMount(() => nameEl.focus());
@@ -33,10 +33,10 @@
 <ModalDialog
     title={$store.strings[label ? 'editlabel' : 'newlabel']}
     cancelText={$store.strings.cancel}
-    {handleCancel}
+    {onCancel}
     confirmText={$store.strings[label ? 'save' : 'create']}
     confirmDisabled={!validName}
-    handleConfirm={submit}
+    onConfirm={submit}
 >
     <form on:submit|preventDefault={submit}>
         <div class="form-group">

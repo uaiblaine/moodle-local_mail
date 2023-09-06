@@ -35,6 +35,14 @@ import {
 import { getViewParamsFromUrl, setUrlFromViewParams } from './url';
 import { replaceStringParams, sleep } from './utils';
 
+export type Dialog =
+    | 'deleteforever'
+    | 'createlabel'
+    | 'editlabel'
+    | 'deletelabel'
+    | 'emptytrash'
+    | 'restore';
+
 export type ViewTray = 'inbox' | 'sent' | 'drafts' | 'starred' | 'course' | 'label' | 'trash';
 
 export interface SearchParams {
@@ -55,6 +63,7 @@ export interface ViewParams {
     readonly messageid?: number;
     readonly offset?: number;
     readonly search?: SearchParams;
+    readonly dialog?: Dialog;
 }
 
 export enum ViewSize {
@@ -167,7 +176,9 @@ export async function createStore(data: InitialData) {
             const params = newParams || store.get().params;
             const perpage = store.get().preferences.perpage;
 
-            update((state) => ({ ...state, loading: true }));
+            update((state) => ({ ...state, loading: true, error: undefined }));
+
+            setUrlFromViewParams(params, redirect);
 
             // Save draft.
             if (messageid && draftData) {
@@ -403,8 +414,6 @@ export async function createStore(data: InitialData) {
                 store.showToast({ text: store.get().strings.draftsaved });
             }
 
-            setUrlFromViewParams(params, redirect);
-
             return responses;
         },
 
@@ -452,6 +461,13 @@ export async function createStore(data: InitialData) {
             });
         },
 
+        hideDialog() {
+            const oldParams = store.get().params;
+            const newParams: ViewParams = { ...oldParams, dialog: undefined };
+            update((state) => ({ ...state, params: newParams }));
+            setUrlFromViewParams(newParams, true);
+        },
+
         hideToast(toast: Toast) {
             update((state) => ({
                 ...state,
@@ -460,6 +476,8 @@ export async function createStore(data: InitialData) {
         },
 
         async init() {
+            const params = getViewParamsFromUrl();
+
             const requests: ServiceRequest[] = [];
             if (store.get().settings.incrementalsearch) {
                 requests.push({
@@ -470,12 +488,12 @@ export async function createStore(data: InitialData) {
                 });
             }
 
-            const responses = await store.callServicesAndRefresh(requests, getViewParamsFromUrl());
+            const responses = await store.callServicesAndRefresh(requests, params, true);
 
-            update((state) => ({
-                ...state,
-                incrementalSearchStopId: (responses.pop() as MessageSummary[] | undefined)?.[0]?.id,
-            }));
+            if (store.get().settings.incrementalsearch) {
+                const messages = responses.pop() as MessageSummary[] | undefined;
+                update((state) => ({ ...state, incrementalSearchStopId: messages?.[0]?.id }));
+            }
         },
 
         async navigate(params?: ViewParams, redirect = false) {
@@ -662,7 +680,7 @@ export async function createStore(data: InitialData) {
             }));
 
             // Redirect to inbox on large screens if no tray is specified.
-            if (!store.get().params.tray && width >= ViewSize.LG) {
+            if (!store.get().params.tray && width >= ViewSize.LG && !store.get().error) {
                 store.navigate({ tray: 'inbox' }, true);
             }
         },
@@ -716,6 +734,13 @@ export async function createStore(data: InitialData) {
             const params: ViewParams = { ...store.get().params, messageid: undefined };
 
             await store.callServicesAndRefresh(requests, params);
+        },
+
+        async showDialog(dialog: Dialog) {
+            const oldParams = store.get().params;
+            const newParams: ViewParams = { ...oldParams, dialog };
+            update((state) => ({ ...state, params: newParams }));
+            setUrlFromViewParams(newParams, oldParams.dialog != null);
         },
 
         async showToast(toast: Toast) {

@@ -12,9 +12,6 @@
     export let dropup = false;
 
     let expanded = false;
-    let editLabelModal = false;
-    let deleteLabelModal = false;
-    let emptyTrashModal = false;
 
     $: label =
         $store.params.tray == 'label' && $store.message == null
@@ -40,7 +37,7 @@
     };
 
     const setUnread = (unread: boolean) => {
-        expanded = false;
+        closeMenu();
         store.setUnread(
             messages.filter((message) => !message.draft).map((message) => message.id),
             unread,
@@ -48,7 +45,7 @@
     };
 
     const setStarred = (starred: boolean) => {
-        expanded = false;
+        closeMenu();
         store.setStarred(
             messages.map((message) => message.id),
             starred,
@@ -56,46 +53,34 @@
     };
 
     const openEditLabelModal = () => {
-        expanded = false;
-        editLabelModal = true;
+        closeMenu();
+        store.showDialog('editlabel');
     };
 
-    const cancelEditLabel = () => {
-        editLabelModal = false;
-    };
-
-    const updateLabel = async (name: string, color: string) => {
-        editLabelModal = false;
+    const confirmEditLabel = (name: string, color: string) => {
+        store.hideDialog();
         if (label) {
             store.updateLabel(label.id, name, color);
         }
     };
 
     const openDeleteLabelModal = () => {
-        expanded = false;
-        deleteLabelModal = true;
-    };
-
-    const cancelDeleteLabel = () => {
-        deleteLabelModal = false;
+        closeMenu();
+        store.showDialog('deletelabel');
     };
 
     const confirmDeleteLabel = () => {
-        deleteLabelModal = false;
+        store.hideDialog();
         store.deleteLabel($store.params.labelid || 0);
     };
 
     const openEmptyTrashModal = () => {
-        expanded = false;
-        emptyTrashModal = true;
-    };
-
-    const cancelEmptyTrash = () => {
-        emptyTrashModal = false;
+        closeMenu();
+        store.showDialog('emptytrash');
     };
 
     const confirmEmptyTrash = () => {
-        emptyTrashModal = false;
+        store.hideDialog();
         store.emptyTrash();
     };
 </script>
@@ -154,38 +139,42 @@
             {/if}
         </div>
     {/if}
-
-    {#if $store.params.tray == 'trash'}
-        {#if emptyTrashModal}
-            <ModalDialog
-                title={$store.strings.emptytrash}
-                cancelText={$store.strings.cancel}
-                confirmText={$store.strings.emptytrash}
-                confirmClass="btn-danger"
-                handleCancel={cancelEmptyTrash}
-                handleConfirm={confirmEmptyTrash}
-            >
-                {$store.strings.emptytrashconfirm}
-            </ModalDialog>
-        {/if}
-    {:else if label}
-        {#if editLabelModal}
-            <LabelModal {store} {label} handleCancel={cancelEditLabel} handleSubmit={updateLabel} />
-        {/if}
-        {#if deleteLabelModal}
-            <ModalDialog
-                title={$store.strings.deletelabel}
-                cancelText={$store.strings.cancel}
-                confirmText={$store.strings.deletelabel}
-                confirmClass="btn-danger"
-                handleCancel={cancelDeleteLabel}
-                handleConfirm={confirmDeleteLabel}
-            >
-                {replaceStringParams($store.strings.labeldeleteconfirm, label.name)}
-            </ModalDialog>
-        {/if}
-    {/if}
 </div>
+
+{#if $store.params.tray == 'trash'}
+    {#if $store.params.dialog == 'emptytrash'}
+        <ModalDialog
+            title={$store.strings.emptytrash}
+            cancelText={$store.strings.cancel}
+            confirmText={$store.strings.emptytrash}
+            confirmClass="btn-danger"
+            onCancel={() => store.hideDialog()}
+            onConfirm={confirmEmptyTrash}
+        >
+            {$store.strings.emptytrashconfirm}
+        </ModalDialog>
+    {/if}
+{:else if label}
+    {#if $store.params.dialog == 'editlabel'}
+        <LabelModal
+            {store}
+            {label}
+            onCancel={() => store.hideDialog()}
+            onSubmit={confirmEditLabel}
+        />
+    {:else if $store.params.dialog == 'deletelabel'}
+        <ModalDialog
+            title={$store.strings.deletelabel}
+            cancelText={$store.strings.cancel}
+            confirmText={$store.strings.deletelabel}
+            confirmClass="btn-danger"
+            onCancel={() => store.hideDialog()}
+            onConfirm={confirmDeleteLabel}
+        >
+            {replaceStringParams($store.strings.labeldeleteconfirm, label.name)}
+        </ModalDialog>
+    {/if}
+{/if}
 
 <style>
     .local-mail-action-more-button::after {

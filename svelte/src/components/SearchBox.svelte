@@ -229,7 +229,7 @@
             enabled={entering && !advancedExpanded && !!content.trim()}
             {content}
             bind:loading
-            handleClick={handleIncrementalSearchClick}
+            onClick={handleIncrementalSearchClick}
         />
     {/if}
 </form>

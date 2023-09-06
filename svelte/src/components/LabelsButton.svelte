@@ -10,7 +10,6 @@
     export let dropup = false;
 
     let expanded = false;
-    let modal = false;
 
     let selectedLabels: ReadonlyMap<number, 'false' | 'mixed' | 'true'> = new Map();
 
@@ -48,13 +47,12 @@
         }
     };
 
-    const toggleMenu = () => {
-        expanded = !expanded;
+    const closeMenu = () => {
+        expanded = false;
     };
 
-    const cancel = () => {
-        expanded = false;
-        modal = false;
+    const toggleMenu = () => {
+        expanded = !expanded;
     };
 
     const toggleLabel = (labelid: number) => {
@@ -75,12 +73,12 @@
     };
 
     const newLabel = () => {
-        expanded = false;
-        modal = true;
+        closeMenu();
+        store.showDialog('createlabel');
     };
 
     const createLabel = async (name: string, color: string) => {
-        modal = false;
+        store.hideDialog();
         const id = await store.createLabel(name, color);
         if (id) {
             store.setLabels([id], []);
@@ -88,7 +86,7 @@
     };
 </script>
 
-<div class="btn-group" class:dropup role="group" use:blur={cancel}>
+<div class="btn-group" class:dropup role="group" use:blur={closeMenu}>
     <button
         type="button"
         class="local-mail-action-label-button btn dropdown-toggle"
@@ -135,8 +133,8 @@
             {/if}
         </div>
     {/if}
-    {#if modal}
-        <LabelModal {store} handleCancel={cancel} handleSubmit={createLabel} />
+    {#if $store.params.dialog == 'createlabel'}
+        <LabelModal {store} onCancel={() => store.hideDialog()} onSubmit={createLabel} />
     {/if}
 </div>
 

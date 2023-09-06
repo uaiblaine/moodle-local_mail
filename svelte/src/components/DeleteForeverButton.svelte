@@ -8,18 +8,8 @@
     export let store: Store;
     export let transparent = false;
 
-    let modalOpen = false;
-
-    const open = () => {
-        modalOpen = true;
-    };
-
-    const cancel = () => {
-        modalOpen = false;
-    };
-
     const confirm = () => {
-        modalOpen = false;
+        store.hideDialog();
         store.setDeleted(
             Array.from($store.selectedMessages.keys()),
             DeletedStatus.DeletedForever,
@@ -35,19 +25,19 @@
     class:disabled={!$store.selectedMessages.size}
     disabled={!$store.selectedMessages.size}
     title={$store.strings.deleteforever}
-    on:click={open}
+    on:click={() => store.showDialog('deleteforever')}
 >
     <i class="fa fa-fw fa-trash" />
 </button>
 
-{#if modalOpen}
+{#if $store.params.dialog == 'deleteforever'}
     <ModalDialog
         title={$store.strings.deleteforever}
         cancelText={$store.strings.cancel}
         confirmText={$store.strings.deleteforever}
         confirmClass="btn-danger"
-        handleCancel={cancel}
-        handleConfirm={confirm}
+        onCancel={() => store.hideDialog()}
+        onConfirm={confirm}
     >
         {$store.strings.messagedeleteconfirm}
     </ModalDialog>

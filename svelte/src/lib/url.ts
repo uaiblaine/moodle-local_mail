@@ -1,4 +1,4 @@
-import type { SearchParams, ViewParams, ViewTray } from './store';
+import type { Dialog, SearchParams, ViewParams, ViewTray } from './store';
 
 export function createUrl(courseid: number, recipients: number[] = [], role?: string): string {
     const url = new URL(baseUrl() + 'create.php');
@@ -38,28 +38,31 @@ export function viewUrl(params: ViewParams): string {
         url.searchParams.set('o', String(params.offset));
     }
     if (params.search?.content) {
-        url.searchParams.set('q', params.search.content);
+        url.searchParams.set('s', params.search.content);
     }
     if (params.search?.sendername) {
-        url.searchParams.set('qs', params.search.sendername);
+        url.searchParams.set('sf', params.search.sendername);
     }
     if (params.search?.recipientname) {
-        url.searchParams.set('qr', params.search.recipientname);
+        url.searchParams.set('st', params.search.recipientname);
     }
     if (params.search?.unread) {
-        url.searchParams.set('u', '1');
+        url.searchParams.set('su', '1');
     }
     if (params.search?.withfilesonly) {
-        url.searchParams.set('f', '1');
+        url.searchParams.set('sa', '1');
     }
     if (params.search?.maxtime) {
-        url.searchParams.set('d', String(params.search.maxtime));
+        url.searchParams.set('sd', String(params.search.maxtime));
     }
     if (params.search?.startid) {
-        url.searchParams.set('s', String(params.search.startid));
+        url.searchParams.set('ss', String(params.search.startid));
     }
     if (params.search?.reverse) {
-        url.searchParams.set('r', '1');
+        url.searchParams.set('sr', '1');
+    }
+    if (params.dialog) {
+        url.searchParams.set('d', params.dialog);
     }
 
     return url.toString();
@@ -73,16 +76,17 @@ export function getViewParamsFromUrl(): ViewParams {
         labelid: parseInt(url.searchParams.get('l') || '') || undefined,
         messageid: parseInt(url.searchParams.get('m') || '') || undefined,
         offset: parseInt(url.searchParams.get('o') || '') || undefined,
+        dialog: (url.searchParams.get('d') as Dialog) || undefined,
     };
     const search: SearchParams = {
-        content: url.searchParams.get('q') || undefined,
-        sendername: url.searchParams.get('qs') || undefined,
-        recipientname: url.searchParams.get('qr') || undefined,
-        unread: url.searchParams.get('u') == '1' || undefined,
-        withfilesonly: url.searchParams.get('f') == '1' || undefined,
-        maxtime: parseInt(url.searchParams.get('d') || '') || undefined,
-        startid: parseInt(url.searchParams.get('s') || '') || undefined,
-        reverse: url.searchParams.get('r') == '1' || undefined,
+        content: url.searchParams.get('s') || undefined,
+        sendername: url.searchParams.get('sf') || undefined,
+        recipientname: url.searchParams.get('st') || undefined,
+        unread: url.searchParams.get('su') == '1' || undefined,
+        withfilesonly: url.searchParams.get('sa') == '1' || undefined,
+        maxtime: parseInt(url.searchParams.get('sd') || '') || undefined,
+        startid: parseInt(url.searchParams.get('ss') || '') || undefined,
+        reverse: url.searchParams.get('sr') == '1' || undefined,
     };
     return Object.values(search).some((v) => v != null) ? { ...params, search } : params;
 }
