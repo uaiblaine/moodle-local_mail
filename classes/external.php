@@ -1344,9 +1344,12 @@ class external extends \external_api {
 
         $PAGE->set_url(new \moodle_url('/local/mail/view.php',  ['t' => 'drafts', 'm' => $message->id]));
         $PAGE->set_context(\context_system::instance());
-        $editor = new \MoodleQuickForm_editor('content', null, ['id' => 'local_mail_compose_editor'], $options);
+        $options['autosave'] = false;
+        $attributes = ['id' => 'local-mail-compose-editor-' . $message->id];
+        $editor = new \MoodleQuickForm_editor('content', null, $attributes, $options);
         $editor->setValue(['text' => $data->content, 'format' => $data->format, 'itemid' => $data->draftitemid]);
-        $filemanager = new \MoodleQuickForm_filemanager('attachments', null, ['id' => 'local_mail_compose_filemanager'], $options);
+        $attributes = ['id' => 'local-mail-compose-filemanager-' . $message->id];
+        $filemanager = new \MoodleQuickForm_filemanager('attachments', null, $attributes, $options);
         $filemanager->setValue($data->draftitemid);
 
         $PAGE->initialise_theme_and_output();
