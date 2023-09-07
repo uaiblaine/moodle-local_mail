@@ -43,7 +43,7 @@
             search?.maxtime,
     );
 
-    $: searchEnabled = search?.content || advancedEnabled;
+    $: searchEnabled = Boolean(search?.content) || advancedEnabled;
 
     $: submitEnabled = Boolean(
         content.trim() ||
@@ -147,10 +147,10 @@
     };
 </script>
 
-<form class="local-mail-search-input position-relative" use:blur={stopEntering}>
+<form class="local-mail-search-box position-relative" use:blur={stopEntering}>
     <div
-        class="position-absolute h-100 d-flex justify-content-center align-items-center px-0"
-        style="top: 0; left: 0; width: 2.5rem"
+        class="local-mail-search-box-icon position-absolute h-100 d-flex justify-content-center align-items-center px-0"
+        style="top: 0; left: 0"
     >
         <i class="fa fa-fw {loading ? 'fa-spinner fa-pulse' : 'fa-search'}" aria-hidden="true" />
     </div>
@@ -158,8 +158,8 @@
     {#if entering}
         <input
             type="text"
-            class="form-control"
-            style="padding-left: 2.5rem; padding-right: 5rem"
+            class="local-mail-search-box-input form-control"
+            class:local-mail-search-box-input-enabled={searchEnabled || submitEnabled}
             placeholder={$store.strings.search}
             aria-label={$store.strings.search}
             autocomplete="off"
@@ -170,8 +170,7 @@
     {:else}
         <button
             type="button"
-            class="alert-primary form-control text-left text-truncate"
-            style="padding-left: 2.5rem; padding-right: 5rem"
+            class="local-mail-search-box-input-enabled alert-primary form-control text-left text-truncate"
             on:click={startEntering}
         >
             {#each searchFields as { label, value }, i}
@@ -189,9 +188,8 @@
         {#if searchEnabled || submitEnabled}
             <button
                 type="button"
-                class="btn px-0"
+                class="local-mail-search-box-icon btn px-0"
                 title={$store.strings.cancel}
-                style="width: 2.5rem"
                 on:click|preventDefault={cancel}
             >
                 <i class="fa fa-fw fa-times" aria-hidden="true" />
@@ -200,8 +198,7 @@
         <button
             type="button"
             aria-expanded={advancedExpanded}
-            class="btn px-0"
-            style="width: 2.5rem"
+            class="local-mail-search-box-icon btn px-0"
             title={$store.strings.advsearch}
             on:click|preventDefault={toggleDropdown}
         >
@@ -236,8 +233,19 @@
 </form>
 
 <style>
-    .local-mail-search-input {
+    .local-mail-search-box {
         width: 100%;
         max-width: 100%;
+    }
+    .local-mail-search-box-input {
+        padding-left: 2.5rem;
+        padding-right: 2.5rem;
+    }
+    .local-mail-search-box-input-enabled {
+        padding-left: 2.5rem;
+        padding-right: 5rem;
+    }
+    .local-mail-search-box-icon {
+        width: 2.5rem;
     }
 </style>

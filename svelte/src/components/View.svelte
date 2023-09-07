@@ -135,13 +135,11 @@
                 </div>
             {/if}
             {#if $store.viewportSize < ViewportSize.LG}
-                <div class="text-truncate d-flex">
-                    <ComposeButton
-                        strings={$store.strings}
-                        iconOnly={tray && $store.viewportSize < ViewportSize.SM}
-                        onClick={() => store.createMessage()}
-                    />
-                </div>
+                <ComposeButton
+                    strings={$store.strings}
+                    iconOnly={tray && $store.viewportSize < ViewportSize.SM}
+                    onClick={() => store.createMessage()}
+                />
                 {#if !tray}
                     <div class="ml-auto">
                         <PreferencesButton

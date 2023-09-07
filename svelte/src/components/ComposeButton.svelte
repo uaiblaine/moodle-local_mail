@@ -11,6 +11,7 @@
 <button
     type="button"
     class="btn btn-primary text-truncate px-2 px-sm-3"
+    class:flex-shrink-0={iconOnly}
     aria-label={strings.compose}
     on:click={onClick}
 >
