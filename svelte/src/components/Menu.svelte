@@ -99,7 +99,7 @@
     {#each courses as course (course.id)}
         {#if courseVisible(course)}
             <MenuItem
-                icon="fa-university"
+                icon="fa-graduation-cap"
                 text={settings.coursetraysname == 'fullname' ? course.fullname : course.shortname}
                 count={course.unread}
                 params={{ tray: 'course', courseid: course.id, search }}
