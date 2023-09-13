@@ -10,24 +10,25 @@
 
     export let settings: Settings;
     export let strings: Strings;
-    export let unread: number;
-    export let drafts: number;
     export let courses: ReadonlyArray<Course>;
     export let labels: ReadonlyArray<Label>;
-    export let params: ViewParams | undefined = undefined;
+    export let params: ViewParams;
     export let onClick: (params: ViewParams) => void;
     export let onComposeClick: (courseid: number) => void;
+    export let onCourseChange: (courseid?: number) => void;
 
     let expanded = false;
     let viewportWidth: number;
+
+    $: unread = courses.reduce((acc, course) => acc + course.unread, 0);
 
     const closeMenu = () => {
         expanded = false;
     };
 
     const handleComposeClick = () => {
-        expanded = false;
-        onComposeClick(params?.courseid || courses[0].id);
+        closeMenu();
+        onComposeClick(params.courseid || courses[0].id);
     };
 
     const handleIconClick = (event: Event) => {
@@ -41,16 +42,13 @@
     };
 
     const handleMenuClick = (params: ViewParams) => {
-        expanded = false;
+        closeMenu();
         onClick(params);
     };
 
     const handlePreferencesClick = () => {
-        expanded = false;
-        onClick({
-            ...(params || { tray: 'inbox' }),
-            dialog: 'preferences',
-        });
+        closeMenu();
+        onClick({ ...params, dialog: 'preferences' });
     };
 </script>
 
@@ -74,24 +72,20 @@
         {/if}
     </a>
     {#if expanded}
-        <div
-            class="local-mail-navbar-dropdown dropdown-menu dropdown-menu-right show p-0 overflow-auto"
-        >
-            <div class="d-flex justify-content-between pl-3 pr-2 py-2">
+        <div class="local-mail-navbar-dropdown dropdown-menu dropdown-menu-right show p-0">
+            <div class="d-flex justify-content-between p-2">
                 <ComposeButton {strings} onClick={handleComposeClick} />
                 <PreferencesButton {strings} onClick={handlePreferencesClick} />
             </div>
-            <hr class="m-0" />
             <MenuComponent
                 {settings}
                 {strings}
-                {unread}
-                {drafts}
                 {courses}
                 {labels}
                 {params}
+                navbar={true}
                 onClick={handleMenuClick}
-                flush={true}
+                {onCourseChange}
             />
         </div>
     {/if}
@@ -111,7 +105,7 @@
         background-color: var(--light);
         box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.1);
     }
-    .local-mail-navbar-dropdown :global(.list-group-item) {
+    .local-mail-navbar-dropdown :global(.list-group-item:not(.list-group-item-primary)) {
         background-color: var(--light);
     }
 </style>

@@ -121,14 +121,17 @@
         {:else}
             <h1 class="h2 local-mail-view-side-column text-truncate mb-4">
                 {$store.strings.pluginname}
-                {#if $store.viewportSize < ViewportSize.LG}
+                {#if heading && $store.viewportSize < ViewportSize.LG}
                     <i class="fa fa-angle-right mx-1" aria-hidden="true" />
                     {heading}
                 {/if}
             </h1>
         {/if}
 
-        <div class="local-mail-view-main-column d-flex mb-4">
+        <div
+            class="local-mail-view-main-column d-flex mb-3"
+            class:mb-4={$store.viewportSize >= ViewportSize.LG}
+        >
             {#if tray}
                 <div class="local-mail-view-search">
                     <SearchBox {store} />
@@ -175,12 +178,11 @@
                 <Menu
                     settings={$store.settings}
                     strings={$store.strings}
-                    unread={$store.unread}
-                    drafts={$store.drafts}
                     courses={$store.courses}
                     labels={$store.labels}
                     params={$store.params}
-                    onClick={(params) => store.navigate(params)}
+                    onClick={store.navigate}
+                    onCourseChange={store.selectCourse}
                 />
             </div>
         {/if}
@@ -263,8 +265,10 @@
         font-size: 16px;
     }
 
-    .local-mail-view :global(.form-control) {
-        font-size: 1rem !important;
+    .local-mail-view :global(input.form-control:not(.is-invalid)),
+    .local-mail-view :global(.fp-navbar),
+    .local-mail-view :global(.filemanager-container) {
+        border-color: rgba(0, 0, 0, 0.125);
     }
 
     .local-mail-view-main-column {

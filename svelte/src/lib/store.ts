@@ -24,7 +24,6 @@ import {
 } from './services';
 import {
     DeletedStatus,
-    RecipientType,
     ViewportSize,
     type Dialog,
     type InitialData,
@@ -92,8 +91,22 @@ export async function createStore(data: InitialData) {
 
         const messageid = state.message?.id;
         const draftData = state.draftData;
-        const params = newParams || state.params;
+        let params = newParams || state.params;
         const perpage = state.preferences.perpage;
+
+        if (params.courseid) {
+            if (['fullname', 'shortname'].includes(state.settings.filterbycourse)) {
+                // Course tray is not allowed when course filter is enabled.
+                if (params?.tray == 'course') {
+                    params = { ...params, tray: 'inbox' };
+                }
+            } else {
+                // Only course tray is allowed when course filter is enabled.
+                if (params?.tray != 'course') {
+                    params = { ...params, courseid: undefined };
+                }
+            }
+        }
 
         patch({ loading: true, error: undefined });
 
@@ -108,18 +121,6 @@ export async function createStore(data: InitialData) {
                 data: draftData,
             });
         }
-
-        // Number of unread messages.
-        requests.push({
-            methodname: 'count_messages',
-            query: { roles: Object.values(RecipientType), unread: true },
-        });
-
-        // Number of drafts.
-        requests.push({
-            methodname: 'count_messages',
-            query: { draft: true },
-        });
 
         // Courses.
         requests.push({
@@ -247,8 +248,6 @@ export async function createStore(data: InitialData) {
 
         const labels = responses.pop() as GetLabelsResponse;
         const courses = responses.pop() as GetCoursesResponse;
-        const drafts = responses.pop() as CountMessagesResponse;
-        const unread = responses.pop() as CountMessagesResponse;
         if (messageid && draftData) {
             responses.shift();
         }
@@ -289,8 +288,8 @@ export async function createStore(data: InitialData) {
         // Update state with fetched data.
         patch({
             params,
-            unread,
-            drafts,
+            unread: courses.reduce((total, course) => total + course.unread, 0),
+            drafts: courses.reduce((total, course) => total + course.drafts, 0),
             courses,
             labels,
             messageOffset,
@@ -439,6 +438,7 @@ export async function createStore(data: InitialData) {
                 unread: false,
             });
         }
+
         await callServicesAndRefresh(requests, params, redirect);
     };
 
@@ -654,7 +654,7 @@ export async function createStore(data: InitialData) {
 
         // Redirect to inbox on large screens if no tray is specified.
         if (!state.params.tray && width >= ViewportSize.LG && !state.error) {
-            navigate({ tray: 'inbox' }, true);
+            navigate({ tray: 'inbox', dialog: state.params.dialog }, true);
         }
     };
 

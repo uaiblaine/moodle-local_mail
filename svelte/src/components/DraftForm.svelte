@@ -48,7 +48,7 @@
         let tinyEditor: TinyMCE.Editor | undefined;
 
         const handleChange = () => {
-            tinyEditor?.save()
+            tinyEditor?.save();
             save(false);
         };
 
@@ -149,11 +149,14 @@
     <div class="row">
         <div class="form-group col-12 col-xl-5">
             <CourseSelect
-                {store}
+                settings={$store.settings}
+                strings={$store.strings}
+                courses={$store.courses}
                 label={$store.strings.course}
                 selected={course.id}
                 required={true}
                 readonly={message.references.length > 0}
+                style="filter-left"
                 onChange={handleCourseChange}
             />
         </div>

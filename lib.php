@@ -71,7 +71,7 @@ function local_mail_pluginfile(
  * @return string The HTML
  */
 function local_mail_render_navbar_output(\renderer_base $renderer) {
-    global $PAGE;
+    global $COURSE, $PAGE;
 
     $user = user::current();
 
@@ -101,34 +101,29 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
         // Pass all data via a script tag to avoid web service requests.
         $strings = external::get_strings_raw();
 
-        $search = new message_search($user);
-        $search->unread = true;
-        $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
-        $unread = $search->count();
-        $search = new message_search($user);
-        $search->draft = true;
-        $drafts = $search->count();
+        $courses = external::get_courses_raw();
 
         $data = [
             'userid' => $user->id,
+            'courseid' => array_search($COURSE->id, array_column($courses, 'id')) !== false ? $COURSE->id : 0,
             'settings' => (array) settings::fetch(),
             'strings' => [
-                'togglemailmenu' => $strings['togglemailmenu'],
-                'compose' => $strings['compose'],
-                'preferences' => $strings['preferences'],
-                'inbox' => $strings['inbox'],
-                'starredmail' => $strings['starredmail'],
-                'sentmail' => $strings['sentmail'],
-                'drafts' => $strings['drafts'],
-                'trash' => $strings['trash'],
-                'sendmail' => $strings['sendmail'],
-                'to' => $strings['to'],
-                'cc' => $strings['cc'],
+                'allcourses' => $strings['allcourses'],
                 'bcc' => $strings['bcc'],
+                'cc' => $strings['cc'],
+                'compose' => $strings['compose'],
+                'course' => $strings['course'],
+                'drafts' => $strings['drafts'],
+                'inbox' => $strings['inbox'],
+                'preferences' => $strings['preferences'],
+                'sendmail' => $strings['sendmail'],
+                'sentmail' => $strings['sentmail'],
+                'starredmail' => $strings['starredmail'],
+                'to' => $strings['to'],
+                'togglemailmenu' => $strings['togglemailmenu'],
+                'trash' => $strings['trash'],
             ],
-            'unread' => $unread,
-            'drafts' => $drafts,
-            'courses' => external::get_courses_raw(),
+            'courses' => $courses,
             'labels' => external::get_labels_raw(),
         ];
         $datascript = html_writer::script('window.local_mail_navbar_data = ' . json_encode($data));

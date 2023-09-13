@@ -117,6 +117,18 @@ if ($hassiteconfig) {
     ];
     $settings->add(new admin_setting_configselect($name, $visiblename, $description, $defaultsetting, $choices));
 
+    // Filter by course.
+    $name = 'local_mail/filterbycourse';
+    $visiblename = get_string('configfilterbycourse', 'local_mail');
+    $description = get_string('configfilterbycoursedesc', 'local_mail');
+    $defaultsetting = $defaults->filterbycourse;
+    $choices = [
+        'hidden' => get_string('hide'),
+        'shortname' => get_string('shortname'),
+        'fullname' => get_string('fullname'),
+    ];
+    $settings->add(new admin_setting_configselect($name, $visiblename, $description, $defaultsetting, $choices));
+   
     // Messages.
     $settings->add(new admin_setting_heading('local_mail_messages', get_string('messages', 'local_mail'), ''));
 
@@ -140,20 +152,6 @@ if ($hassiteconfig) {
     $paramtype = PARAM_INT;
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
 
-    // Course badge type.
-    $name = 'local_mail/filterbycourse';
-    $visiblename = get_string('configfilterbycourse', 'local_mail');
-    $description = get_string('configfilterbycoursedesc', 'local_mail');
-    $defaultsetting = $defaults->filterbycourse;
-    $choices = [
-        'hidden' => get_string('hide'),
-        'shortname' => get_string('shortname'),
-        'fullname' => get_string('fullname'),
-    ];
-    $settings->add(new admin_setting_configselect($name, $visiblename, $description, $defaultsetting, $choices));
-
-    $ADMIN->add('localplugins', $settings);
-
     // Search.
     $settings->add(new admin_setting_heading('local_mail_search', get_string('search', 'local_mail'), ''));
 
@@ -171,4 +169,6 @@ if ($hassiteconfig) {
     $defaultsetting = $defaults->incrementalsearchlimit;
     $paramtype = PARAM_INT;
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
+
+    $ADMIN->add('localplugins', $settings);
 }

@@ -23,7 +23,7 @@
 </script>
 
 <a
-    class="local-mail-menu-item list-group-item list-group-item-action d-flex align-items-center px-3 py-2"
+    class="list-group-item list-group-item-action d-flex align-items-center px-3 py-2"
     class:list-group-item-primary={active}
     class:disabled
     aria-current={active}
@@ -42,12 +42,8 @@
             ? `color: var(--local-mail-color-${color}-bg, var(--local-mail-color-gray-bg));`
             : ''}
     />
-    <span class="flex-fill px-2" use:truncate={text}>
-        {text}
-    </span>
+    <span class="flex-fill px-2" use:truncate={text}>{text}</span>
     {#if count > 0}
-        <span class="local-mail-menu-item-count badge">
-            {count}
-        </span>
+        <span class="badge">{count}</span>
     {/if}
 </a>

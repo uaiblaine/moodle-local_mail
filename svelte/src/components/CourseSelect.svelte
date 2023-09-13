@@ -4,16 +4,17 @@
     import { tick } from 'svelte';
     import { blur } from '../actions/blur';
     import { truncate } from '../actions/truncate';
-    import type { Course } from '../lib/state';
-    import type { Store } from '../lib/store';
+    import type { Course, Settings, Strings } from '../lib/state';
 
-    export let store: Store;
+    export let settings: Settings;
+    export let strings: Strings;
+    export let courses: ReadonlyArray<Course>;
     export let label: string;
     export let selected: number | undefined;
     export let required = false;
     export let readonly = false;
     export let primary = false;
-    export let align: 'left' | 'right' = 'left';
+    export let style: 'menu' | 'navbar' | 'filter-left' | 'filter-right';
     export let onChange: (id?: number) => void;
 
     let inputNode: HTMLInputElement;
@@ -22,10 +23,10 @@
     let currentCourse: Course | undefined;
     let nameField: 'shortname' | 'fullname';
 
-    $: nameField = $store.settings.filterbycourse == 'shortname' ? 'shortname' : 'fullname';
-    $: currentCourse = $store.courses.find((course) => course.id == selected);
+    $: nameField = settings.filterbycourse == 'shortname' ? 'shortname' : 'fullname';
+    $: currentCourse = courses.find((course) => course.id == selected);
     $: inputPattern = new RegExp(escape(inputText.trim()).replaceAll(/\s+/gu, '\\s+'), 'giu');
-    $: dropdownCourses = $store.courses.filter((course) => course[nameField].match(inputPattern));
+    $: dropdownCourses = courses.filter((course) => course[nameField].match(inputPattern));
     $: dropdownIconClass = !entering ? 'fa-caret-down' : inputText ? 'fa-times' : 'fa-caret-up';
     $: courseHtml = (course: Course): string =>
         course[nameField].replaceAll(inputPattern, (match) =>
@@ -77,34 +78,51 @@
     };
 </script>
 
-<div class="local-mail-course-select position-relative d-flex" use:blur={closeDropdown}>
+<div
+    class="local-mail-course-select position-relative d-flex p-0"
+    class:local-mail-course-select-menu={style == 'menu'}
+    class:local-mail-course-select-navbar={style == 'navbar'}
+    class:list-group-item={style == 'menu' || style == 'navbar'}
+    use:blur={closeDropdown}
+>
     <div class="position-absolute h-100 d-flex align-items-center px-2" style="top: 0; left: 0">
-        <i class="fa fa-fw fa-graduation-cap" aria-hidden="true" />
+        <i class="fa fa-fw fa-graduation-cap ml-2" aria-hidden="true" />
     </div>
 
     {#if readonly}
         <div
-            class="alert-secondary form-control pl-5 pr-2 text-left"
+            class="form-control alert-secondary pr-2 text-left"
             use:truncate={currentCourse?.[nameField] || ''}
         >
             {currentCourse?.[nameField]}
         </div>
-    {:else if entering || !currentCourse}
+    {:else if entering}
         <input
             type="text"
-            class="form-control px-5 text-truncate"
-            placeholder={label}
-            aria-label={label}
+            class="form-control pr-5 text-truncate"
+            placeholder={entering ? strings.course : label}
+            aria-label={entering ? strings.course : label}
             bind:value={inputText}
             bind:this={inputNode}
             on:focus={openDropdown}
             on:keyup={handleInputKey}
         />
+    {:else if !currentCourse}
+        <button
+            type="button"
+            class="form-control pr-5 text-left"
+            style="border-color: rgba(0, 0, 0, 0.125)"
+            class:btn-secondary={style == 'menu' || style == 'navbar'}
+            on:click={openDropdown}
+        >
+            {label}
+        </button>
     {:else}
         <button
             type="button"
-            class="form-control px-5 text-left"
-            class:alert-primary={primary}
+            class="form-control pr-5 text-left"
+            class:alert-primary={primary && (style == 'filter-left' || style == 'filter-right')}
+            class:btn-secondary={style == 'menu' || style == 'navbar'}
             use:truncate={currentCourse?.[nameField] || ''}
             on:click={toggleDropdown}
         >
@@ -120,19 +138,25 @@
             on:click={toggleDropdown}
         >
             <i class="fa fa-fw {dropdownIconClass}" aria-hidden="true" />
-            <span class="sr-only">{$store.strings.togglefilterresults}n</span>
+            <span class="sr-only">{strings.togglefilterresults}n</span>
         </button>
     {/if}
 
     {#if entering}
-        <div class="dropdown-menu dropdown-menu-{align} show">
+        <div
+            class="dropdown-menu show"
+            class:dropdown-menu-left={style == 'menu' || style == 'filter-left'}
+            class:dropdown-menu-right={style == 'filter-right'}
+            class:w-100={style == 'navbar'}
+        >
             {#if !required}
                 <button
                     type="button"
                     class="dropdown-item text-truncate"
+                    class:px-3={style == 'navbar'}
                     on:click={() => selectAllCourses()}
                 >
-                    {$store.strings.allcourses}
+                    {strings.allcourses}
                 </button>
 
                 <div class="dropdown-divider" />
@@ -141,6 +165,7 @@
                 <button
                     type="button"
                     class="dropdown-item text-truncate"
+                    class:px-3={style == 'navbar'}
                     on:click={() => selectCourse(course)}
                 >
                     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
@@ -148,7 +173,7 @@
                 </button>
             {:else}
                 <div class="px-4 text-danger">
-                    {$store.strings.emptycoursefilterresults}
+                    {strings.emptycoursefilterresults}
                 </div>
             {/each}
         </div>
@@ -162,14 +187,44 @@
         width: 100%;
     }
 
-    .local-mail-course-select .dropdown-menu {
-        max-width: 90vw;
-    }
-
     .local-mail-course-select .dropdown-item :global(mark) {
         padding-left: 0;
         padding-right: 0;
         background-color: rgba(255, 255, 0, 0.2);
         color: inherit;
+    }
+
+    .local-mail-course-select .form-control {
+        padding-left: 2.75rem !important;
+    }
+
+    .local-mail-course-select input.form-control {
+        border-color: rgba(0, 0, 0, 0.125);
+    }
+
+    .local-mail-course-select .dropdown-menu {
+        max-width: 90vw;
+        box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .local-mail-course-select .dropdown-item:not(:focus):hover {
+        color: inherit;
+        background-color: #eee;
+    }
+
+    .local-mail-course-select-menu > .form-control,
+    .local-mail-course-select-navbar > .form-control {
+        font-size: inherit;
+        height: auto;
+        border-width: 0;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    .local-mail-course-select-navbar > .form-control {
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
     }
 </style>

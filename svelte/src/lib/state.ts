@@ -13,7 +13,8 @@ export interface Course {
     readonly fullname: string;
     readonly visible: boolean;
     readonly groupmode: GroupMode;
-    readonly unread?: number;
+    readonly unread: number;
+    readonly drafts: number;
 }
 
 export enum DeletedStatus {
@@ -54,7 +55,13 @@ export interface Label {
     readonly id: number;
     readonly name: string;
     readonly color: string;
-    readonly unread?: number;
+    readonly unread: number;
+    readonly courses: ReadonlyArray<LabelCourse>;
+}
+
+export interface LabelCourse {
+    readonly id: number;
+    readonly unread: number;
 }
 
 export interface Message extends MessageSummary {

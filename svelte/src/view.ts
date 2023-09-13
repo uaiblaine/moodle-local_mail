@@ -32,17 +32,18 @@ async function init() {
         navbarTarget.innerHTML = '';
 
         // Instantiate Navbar component with current store data.
+        const state = store.get();
         const navbar = new Navbar({
             target: navbarTarget,
             props: {
-                settings: store.get().settings,
-                strings: store.get().strings,
-                unread: store.get().unread,
-                drafts: store.get().drafts,
-                courses: store.get().courses,
-                labels: store.get().labels,
+                settings: state.settings,
+                strings: state.strings,
+                courses: state.courses,
+                labels: state.labels,
+                params: state.params,
                 onClick: store.navigate,
                 onComposeClick: store.createMessage,
+                onCourseChange: store.selectCourse,
             },
         });
 
@@ -51,8 +52,6 @@ async function init() {
             navbar.$set({
                 settings: state.settings,
                 strings: state.strings,
-                unread: state.unread,
-                drafts: state.drafts,
                 courses: state.courses,
                 labels: state.labels,
                 params: state.params,
