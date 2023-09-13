@@ -272,6 +272,11 @@ class external extends \external_api {
         $search->unread = true;
         $unread = $search->count_per_course();
 
+        $search = new message_search($user);
+        $search->roles = [message::ROLE_FROM];
+        $search->draft = true;
+        $drafts = $search->count_per_course();
+
         $result = [];
         foreach ($courses as $course) {
             $result[] = [
@@ -281,6 +286,7 @@ class external extends \external_api {
                 'visible' => $course->visible,
                 'groupmode' => $course->groupmode,
                 'unread' => $unread[$course->id] ?? 0,
+                'drafts' => $drafts[$course->id] ?? 0,
             ];
         }
 
@@ -293,9 +299,10 @@ class external extends \external_api {
                 'id' => new \external_value(PARAM_INT, 'Id of the course'),
                 'shortname' => new \external_value(PARAM_TEXT, 'Short name of the course'),
                 'fullname' => new \external_value(PARAM_TEXT, 'Full name of the course'),
-                'unread' => new \external_value(PARAM_INT, 'Number of unread messages'),
                 'visible' => new \external_value(PARAM_BOOL, 'Course visibility'),
                 'groupmode' => new \external_value(PARAM_INT, 'Group mode: 0 (no), 1 (separate) or 2 (visible)'),
+                'unread' => new \external_value(PARAM_INT, 'Number of unread messages'),
+                'drafts' => new \external_value(PARAM_INT, 'Number of drafts'),
             ])
         );
     }
@@ -321,12 +328,17 @@ class external extends \external_api {
         $unread = $search->count_per_label();
 
         foreach (label::fetch_by_user($user) as $label) {
-            $result[] = [
+            $labelresult = [
                 'id' => $label->id,
                 'name' => $label->name,
                 'color' => $label->color,
-                'unread' => $unread[$label->id] ?? 0,
+                'unread' => array_sum($unread[$label->id]),
+                'courses' => [],
             ];
+            foreach ($unread[$label->id] as $courseid => $courseunread) {
+                $labelresult['courses'][] = ['id' => $courseid, 'unread' => $courseunread];
+            }
+            $result[] = $labelresult;
         }
 
         return $result;
@@ -339,6 +351,12 @@ class external extends \external_api {
                 'name' => new \external_value(PARAM_TEXT, 'Nane of the label'),
                 'color' => new \external_value(PARAM_ALPHA, 'Color of the label'),
                 'unread' => new \external_value(PARAM_INT, 'Number of unread messages'),
+                'courses' => new \external_multiple_structure(
+                    new \external_single_structure([
+                        'id' => new \external_value(PARAM_INT, 'Id of the course'),
+                        'unread' => new \external_value(PARAM_INT, 'Number of unread messages'),
+                    ]),
+                ),
             ])
         );
     }

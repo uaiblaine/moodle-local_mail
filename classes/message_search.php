@@ -171,7 +171,7 @@ class message_search {
 
         $result = [];
         foreach ($DB->get_records_sql($sql, $params) as $record) {
-            $result[$record->courseid] = $record->num;
+            $result[$record->courseid] = (int) $record->num;
         }
 
         return $result;
@@ -180,18 +180,18 @@ class message_search {
     /**
      * Counts the number of messages per label that match the search parameters.
      *
-     * @return int[] Array of number of messages, indexed by label ID.
+     * @return int[][] Array of number of messages, indexed by label ID and course ID.
      */
     public function count_per_label(): array {
         global $DB;
 
         list($fromsql, $wheresql, $ordersql, $params) = $this->get_base_sql(true);
 
-        $sql = "SELECT i.labelid, COUNT(*) AS num $fromsql $wheresql GROUP BY i.labelid";
+        $sql = "SELECT MIN(i.id), i.labelid, i.courseid, COUNT(*) AS num $fromsql $wheresql GROUP BY i.labelid, i.courseid";
 
         $result = [];
         foreach ($DB->get_records_sql($sql, $params) as $record) {
-            $result[$record->labelid] = $record->num;
+            $result[$record->labelid][$record->courseid] = (int) $record->num;
         }
 
         return $result;

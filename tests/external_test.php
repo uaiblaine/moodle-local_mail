@@ -298,13 +298,20 @@ class external_test extends testcase {
                 $search->course = $course;
                 $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
                 $search->unread = true;
+                $unread = $search->count();
+                $search = new message_search($user);
+                $search->course = $course;
+                $search->roles = [message::ROLE_FROM];
+                $search->draft = true;
+                $drafts = $search->count();
                 $expected[] = [
                     'id' => $course->id,
                     'shortname' => $course->shortname,
                     'fullname' => $course->fullname,
                     'visible' => $course->visible,
                     'groupmode' => $course->groupmode,
-                    'unread' => $search->count(),
+                    'unread' => $unread,
+                    'drafts' => $drafts,
                 ];
             }
             $result = external::get_courses();
@@ -332,12 +339,17 @@ class external_test extends testcase {
                 $search->label = $label;
                 $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
                 $search->unread = true;
-                $expected[] = [
+                $expectedlabel = [
                     'id' => $label->id,
                     'name' => $label->name,
                     'color' => $label->color,
                     'unread' => $search->count(),
+                    'courses' => [],
                 ];
+                foreach ($search->count_per_course() as $id => $unread) {
+                    $expectedlabel['courses'][] = ['id' => $id, 'unread' => $unread];
+                }
+                $expected[] = $expectedlabel;
             }
             $result = external::get_labels();
             external::validate_parameters(external::get_labels_returns(), $result);
