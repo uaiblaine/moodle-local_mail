@@ -50,7 +50,12 @@
         : undefined;
 </script>
 
-<div class="list-group" class:list-group-flush={navbar} class:border-top={navbar}>
+<div
+    class="list-group"
+    class:local-mail-menu-navbar={navbar}
+    class:list-group-flush={navbar}
+    class:border-top={navbar}
+>
     {#if filterenabled || courseid}
         <CourseSelect
             {settings}
@@ -135,3 +140,12 @@
         {/if}
     {/each}
 </div>
+
+<style>
+    .local-mail-menu-navbar :global(a:focus),
+    .local-mail-menu-navbar :global(.btn:focus),
+    .local-mail-menu-navbar :global(.form-control:focus) {
+        box-shadow: inset 0 0 0 0.2rem var(--primary);
+        outline: none;
+    }
+</style>

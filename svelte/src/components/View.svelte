@@ -109,7 +109,7 @@
 </svelte:head>
 
 <div
-    class="local-mail-view container-fluid pt-2"
+    class="local-mail local-mail-view container-fluid pt-2"
     class:p-4={!$store.mobile}
     class:local-mail-loading={$store.loading}
     bind:this={viewNode}
@@ -214,61 +214,8 @@
 </div>
 
 <style>
-    :global(#page-local-mail-view #topofscroll) {
-        padding: 0;
-        margin-bottom: 0;
-    }
-    :global(#page-local-mail-view #region-main-box) {
-        padding-left: 0;
-        padding-right: 0;
-    }
-
-    :global(#page-local-mail-view #page-header) {
-        display: none;
-    }
-
-    :global(#page-local-mail-view #page.drawers) {
-        padding-left: 0;
-        padding-right: 0;
-    }
-
-    :global(#page-local-mail-view #page.drawers .main-inner) {
-        margin-top: 0;
-    }
-
-    :global(#page-local-mail-view .btn-footer-popover) {
-        position: static;
-        margin: 0 2rem 2rem auto;
-    }
-
-    .local-mail-view :global(.dropdown-menu) {
-        z-index: 1040;
-        box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .local-mail-view :global(.dropdown-menu),
-    .local-mail-view :global(.dropdown-menu .list-group-item),
-    .local-mail-view :global(.dropdown-menu .form-control) {
-        background-color: var(--light);
-    }
-
-    .local-mail-view :global(.dropdown-item:not(:focus):hover) {
-        color: inherit;
-        background-color: #eee;
-    }
-
     .local-mail-view {
         max-width: 100rem;
-    }
-
-    .local-mail-view :global(.fa) {
-        font-size: 16px;
-    }
-
-    .local-mail-view :global(input.form-control:not(.is-invalid)),
-    .local-mail-view :global(.fp-navbar),
-    .local-mail-view :global(.filemanager-container) {
-        border-color: rgba(0, 0, 0, 0.125);
     }
 
     .local-mail-view-main-column {

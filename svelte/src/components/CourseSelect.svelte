@@ -204,12 +204,19 @@
 
     .local-mail-course-select .dropdown-menu {
         max-width: 90vw;
-        box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .local-mail-course-select .dropdown-item:not(:focus):hover {
         color: inherit;
         background-color: #eee;
+    }
+
+    .local-mail-course-select > .position-absolute {
+        z-index: 10;
+    }
+
+    .local-mail-course-select .form-control:focus {
+        z-index: 3;
     }
 
     .local-mail-course-select-menu > .form-control,

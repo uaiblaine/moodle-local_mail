@@ -101,4 +101,9 @@
     .local-mail-list-message {
         color: var(--dark) !important;
     }
+
+    .local-mail-list-message:focus,
+    .local-mail-list-message :global(.btn:focus) {
+        z-index: 3;
+    }
 </style>

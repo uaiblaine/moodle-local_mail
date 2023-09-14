@@ -55,14 +55,14 @@
 <svelte:window bind:innerWidth={viewportWidth} />
 
 <div
-    class="local-mail-navbar dropdown h-100"
+    class="local-mail local-mail-navbar dropdown h-100"
     class:position-static={viewportWidth < 768}
     use:blur={closeMenu}
 >
     <a
         aria-expanded={expanded}
         aria-label={strings.togglemailmenu}
-        class="btn h-100 position-relative d-flex align-items-center px-2 py-0"
+        class="btn h-100 position-relative d-flex align-items-center px-2 py-0 rounded-0"
         href={viewUrl({ tray: 'inbox' })}
         on:click={handleIconClick}
     >
@@ -92,9 +92,6 @@
 </div>
 
 <style>
-    .local-mail-navbar :global(.fa) {
-        font-size: 16px;
-    }
     .local-mail-navbar-count {
         top: 50%;
         transform: translateY(-16px);
@@ -102,10 +99,5 @@
     .local-mail-navbar-dropdown {
         width: 100vw;
         max-width: 20rem;
-        background-color: var(--light);
-        box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    .local-mail-navbar-dropdown :global(.list-group-item:not(.list-group-item-primary)) {
-        background-color: var(--light);
     }
 </style>

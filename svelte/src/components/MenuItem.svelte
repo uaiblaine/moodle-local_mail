@@ -14,6 +14,8 @@
     export let color: string | undefined = undefined;
     export let onClick: ((params: ViewParams) => void) | undefined = undefined;
 
+    $: styleColor = color && !active ? `color: var(--local-mail-color-${color}-fg)` : '';
+
     const handleClick = (event: Event) => {
         if (onClick) {
             event.preventDefault();
@@ -23,7 +25,7 @@
 </script>
 
 <a
-    class="list-group-item list-group-item-action d-flex align-items-center px-3 py-2"
+    class="local-mail-menu-item list-group-item list-group-item-action d-flex align-items-center px-3 py-2"
     class:list-group-item-primary={active}
     class:disabled
     aria-current={active}
@@ -31,19 +33,17 @@
     role="tab"
     href={viewUrl(params)}
     on:click={handleClick}
-    style={color != null && !active
-        ? `color: var(--local-mail-color-${color}-fg, var(--local-mail-color-gray-fg));`
-        : ''}
+    style={styleColor}
 >
-    <i
-        class="fa {icon} fa-fw"
-        aria-hidden="true"
-        style={color != null && !active
-            ? `color: var(--local-mail-color-${color}-bg, var(--local-mail-color-gray-bg));`
-            : ''}
-    />
+    <i class="fa {icon} fa-fw" aria-hidden="true" style={styleColor} />
     <span class="flex-fill px-2" use:truncate={text}>{text}</span>
     {#if count > 0}
         <span class="badge">{count}</span>
     {/if}
 </a>
+
+<style>
+    .local-mail-menu-item:focus {
+        z-index: 3;
+    }
+</style>
