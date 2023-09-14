@@ -248,17 +248,25 @@ class message_search_test extends testcase {
 
         for ($i = 0; $i < self::NUM_USERS; $i++) {
             $user = new user($generator->create_user());
-            $users[] = $user;
             $userlabels[$user->id] = [];
-            if ($i > 0) {
-                foreach (self::random_items($courses, self::NUM_COURSES_PER_USER) as $course) {
-                    $generator->enrol_user($user->id, $course->id, 'student');
-                }
-                foreach (self::random_items(self::WORDS, self::NUM_LABELS_PER_USER) as $name) {
-                    $userlabels[$user->id][] = label::create($user, $name);
-                }
+            // One user with no courses.
+            if ($i == 0) {
+                continue;
             }
+            $users[] = $user;
+            foreach (self::random_items($courses, self::NUM_COURSES_PER_USER) as $course) {
+                $generator->enrol_user($user->id, $course->id, 'student');
+            }
+            foreach (self::random_items(self::WORDS, self::NUM_LABELS_PER_USER) as $name) {
+                $userlabels[$user->id][] = label::create($user, $name);
+            }
+            // One label with no messages.
+            $userlabels[$user->id] = array_slice($userlabels[$user->id], 1);
         }
+
+        // One user and one course with no messages.
+        $users = array_slice($users, 1);
+        $courses = array_slice($courses, 1);
 
         for ($i = 0; $i < self::NUM_MESSAGES; $i++) {
             if (self::random_bool(self::INC_TIME_FREQ)) {

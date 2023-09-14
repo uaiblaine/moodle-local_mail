@@ -332,10 +332,10 @@ class external extends \external_api {
                 'id' => $label->id,
                 'name' => $label->name,
                 'color' => $label->color,
-                'unread' => array_sum($unread[$label->id]),
+                'unread' => array_sum($unread[$label->id] ?? []),
                 'courses' => [],
             ];
-            foreach ($unread[$label->id] as $courseid => $courseunread) {
+            foreach ($unread[$label->id] ?? [] as $courseid => $courseunread) {
                 $labelresult['courses'][] = ['id' => $courseid, 'unread' => $courseunread];
             }
             $result[] = $labelresult;

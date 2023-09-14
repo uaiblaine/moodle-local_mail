@@ -128,7 +128,7 @@ if ($hassiteconfig) {
         'fullname' => get_string('fullname'),
     ];
     $settings->add(new admin_setting_configselect($name, $visiblename, $description, $defaultsetting, $choices));
-   
+
     // Messages.
     $settings->add(new admin_setting_heading('local_mail_messages', get_string('messages', 'local_mail'), ''));
 
