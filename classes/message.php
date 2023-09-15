@@ -200,44 +200,6 @@ class message {
     }
 
     /**
-     * Empties the trash of a user.
-     *
-     * @param user $user User.
-     * @param course[] $courses Courses.
-     */
-    public static function empty_trash(user $user, array $courses): void {
-        global $DB;
-
-        if (!$courses) {
-            return;
-        }
-
-        $courseids = array_column($courses, 'id');
-        list($sqlcourseid, $params) = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, 'courseid');
-        $params['userid'] = $user->id;
-        $params['deleted'] = self::DELETED;
-        $params['deletedforever'] = self::DELETED_FOREVER;
-
-        $transaction = $DB->start_delegated_transaction();
-
-        $sql = 'UPDATE {local_mail_message_users}'
-            . ' SET deleted = :deletedforever'
-            . ' WHERE userid = :userid AND courseid ' . $sqlcourseid
-            . ' AND deleted = :deleted';
-        $DB->execute($sql, $params);
-
-        $labelsql = 'SELECT l.id FROM {local_mail_labels} l WHERE l.userid = :userid';
-        $sql = 'UPDATE {local_mail_message_labels}'
-            . ' SET deleted = :deletedforever'
-            . ' WHERE courseid ' . $sqlcourseid
-            . ' AND deleted = :deleted'
-            . ' AND labelid IN (' . $labelsql . ')';
-        $DB->execute($sql, $params);
-
-        $transaction->allow_commit();
-    }
-
-    /**
      * Fetches a message from the database.
      *
      * @param int $id ID of the message to fetch.

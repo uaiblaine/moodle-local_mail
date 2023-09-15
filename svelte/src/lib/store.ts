@@ -408,11 +408,10 @@ export async function createStore(data: InitialData) {
         patch({ toasts: state.toasts.filter((t) => t != toast) });
     };
 
-    const init = async () => {
-        const params = getViewParamsFromUrl();
-
+    const navigate = async (params?: ViewParams, redirect = false, init = true) => {
         const requests: ServiceRequest[] = [];
-        if (state.settings.incrementalsearch) {
+
+        if (init && state.settings.incrementalsearch) {
             requests.push({
                 methodname: 'search_messages',
                 query: { deleted: false },
@@ -421,25 +420,19 @@ export async function createStore(data: InitialData) {
             });
         }
 
-        const responses = await callServicesAndRefresh(requests, params, true);
-
-        if (state.settings.incrementalsearch) {
-            const messages = responses.pop() as MessageSummary[] | undefined;
-            patch({ incrementalSearchStopId: messages?.[0]?.id });
-        }
-    };
-
-    const navigate = async (params?: ViewParams, redirect = false) => {
-        const requests: ServiceRequest[] = [];
         if (params?.messageid) {
             requests.push({
-                methodname: 'set_unread',
+                methodname: 'view_message',
                 messageid: params.messageid,
-                unread: false,
             });
         }
 
-        await callServicesAndRefresh(requests, params, redirect);
+        const responses = await callServicesAndRefresh(requests, params, redirect);
+
+        if (init && state.settings.incrementalsearch) {
+            const messages = responses.pop() as MessageSummary[] | undefined;
+            patch({ incrementalSearchStopId: messages?.[0]?.id });
+        }
     };
 
     const navigateToList = async (redirect = false) => {
@@ -765,7 +758,7 @@ export async function createStore(data: InitialData) {
         });
     };
 
-    await init();
+    await navigate(getViewParamsFromUrl(), true, true);
 
     return {
         createLabel,

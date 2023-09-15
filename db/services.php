@@ -89,6 +89,14 @@ $functions = [
         'type' => 'read',
         'ajax' => true,
     ],
+    'local_mail_view_message' => [
+        'classname' => 'local_mail\\external',
+        'methodname' => 'view_message',
+        'classpath' => 'local/mail/externallib.php',
+        'description' => 'Marks a message as read and triggers a viewed event.',
+        'type' => 'write',
+        'ajax' => true,
+    ],
     'local_mail_set_unread' => [
         'classname' => 'local_mail\\external',
         'methodname' => 'set_unread',

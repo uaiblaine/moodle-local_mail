@@ -23,6 +23,8 @@
 
 namespace local_mail;
 
+use local_mail\event\message_base;
+
 abstract class testcase extends \advanced_testcase {
 
     public function setUp(): void {
@@ -69,7 +71,6 @@ abstract class testcase extends \advanced_testcase {
         }
         self::assertEquals($expected, $actual);
     }
-
 
     /**
      * Asserts that a message is stored correctly in the database.
@@ -122,6 +123,37 @@ abstract class testcase extends \advanced_testcase {
                 ], $data);
             }
         }
+    }
+
+    /**
+     * Asserts that sink eventc contains an event that matches a name and message.
+     *
+     * @param string $eventname Expected event name.
+     * @param message $message Expected Message.
+     * @param \phpunit_event_sink $sink Event sink.
+     * @throws ExpectationFailedException
+     */
+    protected static function assert_message_event(string $eventname, message $message, \phpunit_event_sink $sink): void {
+        global $USER;
+
+        $events = array_filter(
+            $sink->get_events(),
+            fn (\core\event\base $event) =>  $event->eventname != '\core\event\notification_viewed'
+        );
+
+        self::assertEquals(1, count($events));
+        self::assertEquals($eventname, $events[0]->eventname);
+        self::assertEquals($USER->id, $events[0]->userid);
+        self::assertEquals($message->id, $events[0]->objectid);
+        if ($message->draft) {
+            self::assertEquals(0, $events[0]->courseid);
+            self::assertEquals(\context_user::instance($USER->id)->id, $events[0]->contextid);
+        } else {
+            self::assertEquals($message->course->id, $events[0]->courseid);
+            self::assertEquals($message->course->context()->id, $events[0]->contextid);
+        }
+
+        $sink->close();
     }
 
     /**

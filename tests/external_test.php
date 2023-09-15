@@ -657,6 +657,81 @@ class external_test extends testcase {
         }
     }
 
+    public function test_view_message() {
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $generator->enrol_user($user1->id, $course->id);
+        $generator->enrol_user($user2->id, $course->id);
+        $time = make_timestamp(2021, 10, 11, 12, 0);
+
+        // Message from the user.
+
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $message = message::create($data);
+        $message->send($time);
+        $message->set_unread($user1, true);
+        $this->setUser($user1->id);
+        $eventsink = $this->redirectEvents();
+
+        $result = external::view_message($message->id);
+
+        self::assertNull(external::view_message_returns());
+        $this->assertNull($result);
+        $this->assertFalse(message::fetch($message->id)->unread($user1));
+        self::assert_message_event('\local_mail\event\message_viewed', $message, $eventsink);
+
+        // Message sent to the user.
+
+        $message->set_unread($user2, true);
+        $this->setUser($user2->id);
+        $eventsink = $this->redirectEvents();
+
+        $result = external::view_message($message->id);
+
+        $this->assertNull($result);
+        $this->assertFalse(message::fetch($message->id)->unread($user2));
+        self::assert_message_event('\local_mail\event\message_viewed', $message, $eventsink);
+
+        // Draft from the user.
+
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $draft = message::create($data);
+        $draft->set_unread($user1, true);
+        $this->setUser($user1->id);
+        $eventsink = $this->redirectEvents();
+
+        $result = external::view_message($draft->id);
+
+        $this->assertNull($result);
+        $this->assertFalse(message::fetch($draft->id)->unread($user1));
+        self::assert_message_event('\local_mail\event\draft_viewed', $draft, $eventsink);
+
+        // Draft to the user (no permission).
+
+        $this->setUser($user2->id);
+
+        try {
+            external::view_message($draft->id);
+            $this->fail();
+        } catch (exception $e) {
+            $this->assertEquals('errormessagenotfound', $e->errorcode);
+        }
+
+        // Invalid message.
+
+        try {
+            external::view_message('-1');
+            $this->fail();
+        } catch (exception $e) {
+            $this->assertEquals('errormessagenotfound', $e->errorcode);
+        }
+    }
+
     public function test_set_unread() {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
@@ -869,6 +944,8 @@ class external_test extends testcase {
 
         $this->setUser($user1->id);
 
+        $eventsink = $this->redirectEvents();
+
         $result = external::set_deleted($draft->id, '1');
         $this->assertNull($result);
         $this->assertEquals(message::DELETED, message::fetch($draft->id)->deleted($user1));
@@ -880,6 +957,8 @@ class external_test extends testcase {
         $result = external::set_deleted($draft->id, '2');
         $this->assertNull($result);
         $this->assertNull(message::fetch($draft->id));
+
+        self::assert_message_event('\local_mail\event\draft_deleted', $draft, $eventsink);
 
         // Invalid message.
 
@@ -944,7 +1023,14 @@ class external_test extends testcase {
         $message6->send($time);
         $message6->set_deleted($user1, message::DELETED);
 
+        $draftdata = message_data::new($course1, $user1);
+        $draftdata->subject = 'Draft';
+        $draftdata->to = [$user2];
+        $draft = message::create($draftdata);
+        $draft->set_deleted($user1, message::DELETED);
+
         $this->setUser($user1->id);
+        $eventsink = $this->redirectEvents();
 
         $result = external::empty_trash();
 
@@ -956,6 +1042,8 @@ class external_test extends testcase {
         $this->assertEquals(message::DELETED_FOREVER, message::fetch($message4->id)->deleted($user1));
         $this->assertEquals(message::DELETED_FOREVER, message::fetch($message5->id)->deleted($user1));
         $this->assertEquals(message::DELETED, message::fetch($message6->id)->deleted($user1));
+        $this->assertNull(message::fetch($draft->id));
+        self::assert_message_event('\local_mail\event\draft_deleted', $draft, $eventsink);
     }
 
     public function test_create_label() {
@@ -1452,6 +1540,7 @@ class external_test extends testcase {
         $generator->enrol_user($user->id, $course->id);
         $now = time();
         self::setUser($user->id);
+        $eventsink = $this->redirectEvents();
 
         $result = external::create_message($course->id);
 
@@ -1465,6 +1554,8 @@ class external_test extends testcase {
         self::assertEquals(FORMAT_HTML, $draft->format);
         self::assertEquals($user->id, $draft->sender()->id);
         self::assertGreaterThanOrEqual($now, $draft->time);
+
+        self::assert_message_event('\local_mail\event\draft_created', $draft, $eventsink);
 
         // User not enrolled in course.
 
@@ -1707,6 +1798,7 @@ class external_test extends testcase {
         ];
         self::create_draft_file($data['draftitemid'], 'file1.txt', 'File 1');
         self::create_draft_file($data['draftitemid'], 'file2.txt', 'File 2');
+        $eventsink = $this->redirectEvents();
 
         $result = external::update_message($message->id, $data);
 
@@ -1726,6 +1818,8 @@ class external_test extends testcase {
             'file1.txt' => 'File 1',
             'file2.txt' => 'File 2'
         ], $message);
+
+        self::assert_message_event('\local_mail\event\draft_updated', $message, $eventsink);
 
         // User cannot view message.
 
@@ -1789,7 +1883,8 @@ class external_test extends testcase {
         self::create_draft_file($data->draftitemid, 'file.txt', 'File content');
         $message = message::create($data);
         self::setUser($user1->id);
-        $sink = $this->redirectMessages();
+        $notificationsink = $this->redirectMessages();
+        $eventsink = $this->redirectEvents();
 
         $result = external::send_message($message->id);
 
@@ -1804,7 +1899,8 @@ class external_test extends testcase {
         self::assertTrue($message->unread($user4));
         self::assertTrue($message->unread($user5));
 
-        $notifications = $sink->get_messages();
+        $notificationsink->close();
+        $notifications = $notificationsink->get_messages();
         $recipients = $message->recipients();
         self::assertEquals(count($recipients), count($notifications));
         foreach ($recipients as $i => $user) {
@@ -1822,6 +1918,8 @@ class external_test extends testcase {
             self::assertEquals($expected->contexturl, $notifications[$i]->contexturl);
             self::assertEquals($expected->contexturlname, $notifications[$i]->contexturlname);
         }
+
+        self::assert_message_event('\local_mail\event\message_sent', $message, $eventsink);
 
         // User cannot edit message.
 

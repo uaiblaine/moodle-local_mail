@@ -831,7 +831,6 @@ class external extends \external_api {
         return $result;
     }
 
-
     public static function get_message_returns() {
         return new \external_single_structure([
             'id' => new \external_value(PARAM_INT, 'Id of the message'),
@@ -919,6 +918,35 @@ class external extends \external_api {
         ]);
     }
 
+    public static function view_message_parameters() {
+        return new \external_function_parameters([
+            'messageid' => new \external_value(PARAM_INT, 'ID of the message'),
+        ]);
+    }
+
+    public static function view_message() {
+        $params = self::validate_call(self::view_message_parameters(), func_get_args());
+
+        $user = user::current();
+
+        $message = message::fetch($params['messageid']);
+
+        if (!$message || !$user->can_view_message($message)) {
+            throw new exception('errormessagenotfound');
+        }
+
+        $message->set_unread($user, false);
+
+        if ($message->draft) {
+            event\draft_viewed::create_from_message($message)->trigger();
+        } else {
+            event\message_viewed::create_from_message($message)->trigger();
+        }
+    }
+
+    public static function view_message_returns() {
+        return null;
+    }
 
     public static function set_unread_parameters() {
         return new \external_function_parameters([
@@ -994,6 +1022,10 @@ class external extends \external_api {
 
         $message->set_deleted($user, $params['deleted']);
 
+        if ($message->draft && $params['deleted'] == message::DELETED_FOREVER) {
+            event\draft_deleted::create_from_message($message)->trigger();
+        }
+
         return null;
     }
 
@@ -1010,7 +1042,19 @@ class external extends \external_api {
 
         $user = user::current();
 
-        message::empty_trash($user, course::fetch_by_user($user));
+        $search = new message_search($user);
+        $search->deleted = true;
+        $batchsize = 100;
+
+        do {
+            $messages = $search->fetch(0, $batchsize);
+            foreach ($messages as $message) {
+                $message->set_deleted($user, message::DELETED_FOREVER);
+                if ($message->draft) {
+                    event\draft_deleted::create_from_message($message)->trigger();
+                }
+            }
+        } while (count($messages) >= $batchsize);
 
         return null;
     }
@@ -1411,6 +1455,9 @@ class external extends \external_api {
 
         $data = message_data::new($course, $user);
         $message = message::create($data);
+
+        event\draft_created::create_from_message($message)->trigger();
+
         return $message->id;
     }
 
@@ -1509,6 +1556,8 @@ class external extends \external_api {
             }
         }
         $message->update($data);
+
+        event\draft_updated::create_from_message($message)->trigger();
     }
 
     public static function update_message_returns() {
@@ -1559,6 +1608,8 @@ class external extends \external_api {
         }
 
         $message->send(time());
+
+        event\message_sent::create_from_message($message)->trigger();
 
         $renderer = $PAGE->get_renderer('local_mail');
         foreach ($message->recipients() as $recipient) {

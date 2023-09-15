@@ -20,6 +20,7 @@ export type ServiceRequest =
     | CountMessagesRequest
     | SearchMessagesRequest
     | GetMessageRequest
+    | ViewMessageRequest
     | SetUnreadRequest
     | SetStarredRequest
     | SetDeletedRequest
@@ -97,6 +98,13 @@ export interface GetMessageRequest {
 }
 
 export type GetMessageResponse = Message;
+
+export interface ViewMessageRequest {
+    readonly methodname: 'view_message';
+    readonly messageid: number;
+}
+
+export type ViewMessageResponse = null;
 
 export interface SetUnreadRequest {
     readonly methodname: 'set_unread';
