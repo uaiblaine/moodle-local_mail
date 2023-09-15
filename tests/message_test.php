@@ -245,12 +245,12 @@ class message_test extends testcase {
         $message3 = message::create($data3);
         $message3->send($time3);
 
-        $this->assertEquals(message::fetch_many([]), $message1->fetch_references());
-        $this->assertEquals(message::fetch_many([$message1->id]), $message2->fetch_references());
-        $this->assertEquals(message::fetch_many([$message2->id, $message1->id]), $message3->fetch_references());
-        $this->assertEquals(message::fetch_many([$message3->id, $message2->id]), $message1->fetch_references(true));
-        $this->assertEquals(message::fetch_many([$message3->id]), $message2->fetch_references(true));
-        $this->assertEquals(message::fetch_many([]), $message3->fetch_references(true));
+        self::assertEquals(message::fetch_many([]), $message1->fetch_references());
+        self::assertEquals(message::fetch_many([$message1->id]), $message2->fetch_references());
+        self::assertEquals(message::fetch_many([$message2->id, $message1->id]), $message3->fetch_references());
+        self::assertEquals(message::fetch_many([$message3->id, $message2->id]), $message1->fetch_references(true));
+        self::assertEquals(message::fetch_many([$message3->id]), $message2->fetch_references(true));
+        self::assertEquals(message::fetch_many([]), $message3->fetch_references(true));
     }
 
     public function test_has_label() {
@@ -284,11 +284,11 @@ class message_test extends testcase {
         $data->bcc = [$user4];
         $message = message::create($data);
 
-        $this->assertFalse($message->has_recipient($user1));
-        $this->assertTrue($message->has_recipient($user2));
-        $this->assertTrue($message->has_recipient($user3));
-        $this->assertTrue($message->has_recipient($user4));
-        $this->assertFalse($message->has_recipient($user5));
+        self::assertFalse($message->has_recipient($user1));
+        self::assertTrue($message->has_recipient($user2));
+        self::assertTrue($message->has_recipient($user3));
+        self::assertTrue($message->has_recipient($user4));
+        self::assertFalse($message->has_recipient($user5));
     }
 
     public function test_labels() {
@@ -340,27 +340,27 @@ class message_test extends testcase {
         // All recipients.
         $recipients = [$user2, $user3, $user4, $user5];
         \core_collator::asort_objects_by_method($recipients, 'sortorder');
-        $this->assertEquals(array_values($recipients), $message->recipients());
+        self::assertEquals(array_values($recipients), $message->recipients());
 
         // To recipients.
         $recipients = [$user2, $user3];
         \core_collator::asort_objects_by_method($recipients, 'sortorder');
-        $this->assertEquals(array_values($recipients), $message->recipients(message::ROLE_TO));
+        self::assertEquals(array_values($recipients), $message->recipients(message::ROLE_TO));
 
         // Cc recipients.
         $recipients = [$user4];
         \core_collator::asort_objects_by_method($recipients, 'sortorder');
-        $this->assertEquals(array_values($recipients), $message->recipients(message::ROLE_CC));
+        self::assertEquals(array_values($recipients), $message->recipients(message::ROLE_CC));
 
         // Bcc recipients.
         $recipients = [$user5];
         \core_collator::asort_objects_by_method($recipients, 'sortorder');
-        $this->assertEquals(array_values($recipients), $message->recipients(message::ROLE_BCC));
+        self::assertEquals(array_values($recipients), $message->recipients(message::ROLE_BCC));
 
         // To and Bcc recipients.
         $recipients = [$user2, $user3, $user4];
         \core_collator::asort_objects_by_method($recipients, 'sortorder');
-        $this->assertEquals(array_values($recipients), $message->recipients(message::ROLE_TO, message::ROLE_CC));
+        self::assertEquals(array_values($recipients), $message->recipients(message::ROLE_TO, message::ROLE_CC));
     }
 
     public function test_role() {
@@ -378,11 +378,11 @@ class message_test extends testcase {
         $data->bcc = [$user5];
         $message = message::create($data);
 
-        $this->assertEquals(message::ROLE_FROM, $message->role($user1));
-        $this->assertEquals(message::ROLE_TO, $message->role($user2));
-        $this->assertEquals(message::ROLE_TO, $message->role($user3));
-        $this->assertEquals(message::ROLE_CC, $message->role($user4));
-        $this->assertEquals(message::ROLE_BCC, $message->role($user5));
+        self::assertEquals(message::ROLE_FROM, $message->role($user1));
+        self::assertEquals(message::ROLE_TO, $message->role($user2));
+        self::assertEquals(message::ROLE_TO, $message->role($user3));
+        self::assertEquals(message::ROLE_CC, $message->role($user4));
+        self::assertEquals(message::ROLE_BCC, $message->role($user5));
     }
 
     public function test_send() {
@@ -439,7 +439,7 @@ class message_test extends testcase {
         $data->to = [$user2];
         $message = message::create($data);
 
-        $this->assertEquals($user1, $message->sender());
+        self::assertEquals($user1, $message->sender());
     }
 
     public function test_set_deleted() {

@@ -248,12 +248,12 @@ class message_search_test extends testcase {
 
         for ($i = 0; $i < self::NUM_USERS; $i++) {
             $user = new user($generator->create_user());
+            $users[] = $user;
             $userlabels[$user->id] = [];
-            // One user with no courses.
+            // One user with no courses and no labels.
             if ($i == 0) {
                 continue;
             }
-            $users[] = $user;
             foreach (self::random_items($courses, self::NUM_COURSES_PER_USER) as $course) {
                 $generator->enrol_user($user->id, $course->id, 'student');
             }
@@ -265,7 +265,7 @@ class message_search_test extends testcase {
         }
 
         // One user and one course with no messages.
-        $users = array_slice($users, 1);
+        $participants = array_slice($users, 0, count($users) - 1);
         $courses = array_slice($courses, 1);
 
         for ($i = 0; $i < self::NUM_MESSAGES; $i++) {
@@ -273,7 +273,7 @@ class message_search_test extends testcase {
                 $time++;
             }
 
-            $data = message_data::new(self::random_item($courses), self::random_item($users));
+            $data = message_data::new(self::random_item($courses), self::random_item($participants));
 
             if (self::random_bool(self::ATTACHMENT_FREQ)) {
                 self::create_draft_file($data->draftitemid, 'file.txt', 'text');
@@ -284,7 +284,7 @@ class message_search_test extends testcase {
             $data->time = $time;
 
             if ($data->course) {
-                foreach ($users as $user) {
+                foreach ($participants as $user) {
                     if ($user->id != $data->sender->id && self::random_bool(self::RECIPIENT_FREQ)) {
                         $rolename = self::random_item(['to', 'cc', 'bcc']);
                         $data->{$rolename}[] = $user;

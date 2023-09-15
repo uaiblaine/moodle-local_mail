@@ -43,6 +43,10 @@ function local_mail_pluginfile(
 
     $user = user::current();
 
+    if (!settings::is_installed() || !$user) {
+        return false;
+    }
+
     // Check message.
 
     $messageid = (int) array_shift($args);
@@ -61,7 +65,13 @@ function local_mail_pluginfile(
         return false;
     }
 
-    send_stored_file($file, 0, 0, true, $options);
+    if (PHPUNIT_TEST) {
+        return $file;
+    }
+
+    // @codeCoverageIgnoreStart
+    send_stored_file($file, null, 0, true, $options);
+    // @codeCoverageIgnoreEnd
 }
 
 /**
@@ -105,7 +115,7 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
 
         $data = [
             'userid' => $user->id,
-            'courseid' => array_search($COURSE->id, array_column($courses, 'id')) !== false ? $COURSE->id : 0,
+            'courseid' => array_search($COURSE->id, array_column($courses, 'id')) !== false ? (int) $COURSE->id : 0,
             'settings' => (array) settings::fetch(),
             'strings' => [
                 'allcourses' => $strings['allcourses'],

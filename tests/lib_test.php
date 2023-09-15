@@ -1,0 +1,198 @@
+<?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+namespace local_mail;
+
+defined('MOODLE_INTERNAL') || die;
+
+require_once(__DIR__ . '/testcase.php');
+
+/**
+ * @covers \local_mail_pluginfile
+ * @covers \local_mail_render_navbar_output
+ */
+class lib_test extends testcase {
+
+    public function test_pluginfile() {
+        $generator = $this->getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $user4 = new user($generator->create_user());
+        $generator->enrol_user($user1->id, $course->id);
+        $generator->enrol_user($user2->id, $course->id);
+        $generator->enrol_user($user3->id, $course->id);
+        $generator->enrol_user($user4->id, $course->id);
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        self::create_draft_file($data->draftitemid, 'file1.txt', 'File 1');
+        $message1 = message::create($data);
+        $message1->send(time());
+        $data = message_data::reply($message1, $user2, false);
+        $data->to = [$user1, $user3];
+        self::create_draft_file($data->draftitemid, 'file2.txt', 'File 2');
+        $message2 = message::create($data);
+        $message2->send(time());
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        self::create_draft_file($data->draftitemid, 'file3.txt', 'File 3');
+        $message3 = message::create($data);
+
+        // User can view attachments.
+        self::setUser($user2->id);
+        $result = local_mail_pluginfile(null, null, $course->context(), 'message', [$message1->id, 'file1.txt'], null);
+        self::assertInstanceOf('\stored_file', $result);
+        self::assertEquals($course->context()->id, $result->get_contextid());
+        self::assertEquals('local_mail', $result->get_component());
+        self::assertEquals('message', $result->get_filearea());
+        self::assertEquals($message1->id, $result->get_itemid());
+        self::assertEquals('/', $result->get_filepath());
+        self::assertEquals('file1.txt', $result->get_filename());
+        self::assertEquals('File 1', $result->get_content());
+
+        // User can view attachments.
+        self::setUser($user3->id);
+        $result = local_mail_pluginfile(null, null, $course->context(), 'message', [$message1->id, 'file1.txt'], null);
+        self::assertNotFalse($result);
+
+        // User cannot view message.
+        self::setUser($user4->id);
+        $result = local_mail_pluginfile(null, null, $course->context(), 'message', [$message1->id, 'file1.txt'], null);
+        self::assertFalse($result);
+
+        // User cannot view draft.
+        self::setUser($user2->id);
+        $result = local_mail_pluginfile(null, null, $course->context(), 'message', [$message3->id, 'file3.txt'], null);
+        self::assertFalse($result);
+
+        // Inexistent message.
+        self::setUser($user2->id);
+        $result = local_mail_pluginfile(null, null, $course->context(), 'message', [$message1->id, 'file2.txt'], null);
+        self::assertFalse($result);
+
+        // Inexistent message.
+        self::setUser($user2->id);
+        $result = local_mail_pluginfile(null, null, $course->context(), 'message', [-1, 'file1.txt'], null);
+        self::assertFalse($result);
+
+        // Not installed.
+        unset_config('version', 'local_mail');
+        self::setUser($user2->id);
+        $result = local_mail_pluginfile(null, null, $course->context(), 'message', [$message1->id, 'file1.txt'], null);
+        self::assertFalse($result);
+    }
+
+    public function test_render_navbar_output() {
+        global $PAGE;
+
+        $generator = $this->getDataGenerator();
+        $course1 = new course($generator->create_course());
+        $course2 = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $label1 = label::create($user1, 'Label 1');
+        $label2 = label::create($user1, 'Label 2');
+        $generator->enrol_user($user1->id, $course1->id);
+        $generator->enrol_user($user1->id, $course2->id);
+        $data = message_data::new($course1, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $message1 = message::create($data);
+        $message1->send(time());
+        $data = message_data::new($course1, $user2);
+        $data->to = [$user1];
+        $data->subject = 'Subject';
+        $message2 = message::create($data);
+        $message2->send(time());
+        $data = message_data::new($course1, $user1);
+        message::create($data);
+
+        $PAGE->set_course(get_course($course1->id));
+        $output = new \core_renderer($PAGE, RENDERER_TARGET_GENERAL);
+        $renderer = $PAGE->get_renderer('local_mail');
+
+        // View page.
+
+        $PAGE->set_url(new \moodle_url('/local/mail/view.php'));
+        self::setUser($user1->id);
+
+        $result = local_mail_render_navbar_output($output);
+
+        self::assertStringContainsString('<div id="local-mail-navbar">', $result);
+        self::assertStringNotContainsString('<script>', $result);
+
+        // Course page.
+
+        $PAGE->set_url(new \moodle_url('/course/view.php', ['id' => $course1->id]));
+        self::setUser($user1->id);
+
+        $result = local_mail_render_navbar_output($output);
+
+        self::assertStringContainsString('<div id="local-mail-navbar">', $result);
+        self::assertStringContainsString($renderer->svelte_script('src/navigation.ts'), $result);
+        $expected = \html_writer::script('window.local_mail_navbar_data = ' . json_encode([
+            'userid' => $user1->id,
+            'courseid' => $course1->id,
+            'settings' => (array) settings::fetch(),
+            'strings' => [
+                'allcourses' => get_string('allcourses', 'local_mail'),
+                'bcc' => get_string('bcc', 'local_mail'),
+                'cc' => get_string('cc', 'local_mail'),
+                'compose' => get_string('compose', 'local_mail'),
+                'course' => get_string('course', 'local_mail'),
+                'drafts' => get_string('drafts', 'local_mail'),
+                'inbox' => get_string('inbox', 'local_mail'),
+                'preferences' => get_string('preferences', 'local_mail'),
+                'sendmail' => get_string('sendmail', 'local_mail'),
+                'sentmail' => get_string('sentmail', 'local_mail'),
+                'starredmail' => get_string('starredmail', 'local_mail'),
+                'to' => get_string('to', 'local_mail'),
+                'togglemailmenu' => get_string('togglemailmenu', 'local_mail'),
+                'trash' => get_string('trash', 'local_mail'),
+            ],
+            'courses' => external::get_courses_raw(),
+            'labels' => external::get_labels_raw(),
+        ]));
+        self::assertStringContainsString($expected, $result);
+
+        // User has no courses.
+
+        self::setUser($user2->id);
+
+        $result = local_mail_render_navbar_output($output);
+
+        self::assertEquals('', $result);
+
+        // User not logged in.
+
+        self::setUser(null);
+
+        $result = local_mail_render_navbar_output($output);
+
+        self::assertEquals('', $result);
+
+        // Not installed.
+
+        unset_config('version', 'local_mail');
+        self::setUser($user1->id);
+
+        $result = local_mail_render_navbar_output($output);
+
+        self::assertEquals('', $result);
+    }
+}

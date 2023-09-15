@@ -16,16 +16,14 @@
 
 namespace local_mail;
 
-use moodle_exception;
-
 defined('MOODLE_INTERNAL') || die;
 
-require_once(__DIR__ . '/../testcase.php');
+require_once(__DIR__ . '/testcase.php');
 
 /**
- * @covers \local_mail_renderer
+ * @covers \local_mail\output\renderer
  */
-class renderer_test extends testcase {
+class output_renderer_test extends testcase {
 
     public function test_file_url() {
         global $CFG, $PAGE;
@@ -193,8 +191,8 @@ class renderer_test extends testcase {
         try {
             $renderer->svelte_script('src/inexistent.ts');
             $this->fail();
-        } catch (moodle_exception $e) {
-            $this->assertEquals('codingerror', $e->errorcode);
+        } catch (\moodle_exception $e) {
+            self::assertEquals('codingerror', $e->errorcode);
         }
 
         // Developement server.
