@@ -132,6 +132,7 @@ export type SetDeletedResponse = void;
 
 export interface EmptyTrashRequest {
     readonly methodname: 'empty_trash';
+    readonly courseid?: number;
 }
 
 export type EmptyTrashResponse = void;

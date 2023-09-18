@@ -81,7 +81,7 @@
 
     const confirmEmptyTrash = () => {
         store.hideDialog();
-        store.emptyTrash();
+        store.emptyTrash($store.params.courseid);
     };
 </script>
 

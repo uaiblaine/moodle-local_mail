@@ -1015,7 +1015,7 @@ class external_test extends testcase {
         $message5->set_deleted($user1, message::DELETED);
 
         $data6 = message_data::new($course3, $user2);
-        $data6->subject = 'Subject 5';
+        $data6->subject = 'Subject 6';
         $data6->to = [$user1];
         $message6 = message::create($data6);
         $message6->send($time);
@@ -1042,6 +1042,46 @@ class external_test extends testcase {
         self::assertEquals(message::DELETED, message::fetch($message6->id)->deleted($user1));
         self::assertNull(message::fetch($draft->id));
         self::assert_message_event('\local_mail\event\draft_deleted', $draft, $eventsink);
+
+        // Empty course trash.
+
+        $data7 = message_data::new($course1, $user2);
+        $data7->subject = 'Subject 7';
+        $data7->to = [$user1];
+        $message7 = message::create($data7);
+        $message7->send($time);
+        $message7->set_deleted($user1, message::DELETED);
+
+        $data8 = message_data::new($course2, $user2);
+        $data8->subject = 'Subject 8';
+        $data8->to = [$user1];
+        $message8 = message::create($data8);
+        $message8->send($time);
+        $message8->set_deleted($user1, message::DELETED);
+
+        $result = external::empty_trash($course1->id);
+
+        self::assertNull($result);
+        self::assertEquals(message::DELETED_FOREVER, message::fetch($message7->id)->deleted($user1));
+        self::assertEquals(message::DELETED, message::fetch($message8->id)->deleted($user1));
+
+        // User not enrolled in course.
+
+        try {
+            external::empty_trash($course3->id);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errorcoursenotfound', $e->errorcode);
+        }
+
+        // Inexistent course.
+
+        try {
+            external::empty_trash(-1);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errorcoursenotfound', $e->errorcode);
+        }
     }
 
     public function test_create_label() {

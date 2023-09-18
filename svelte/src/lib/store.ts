@@ -374,9 +374,10 @@ export async function createStore(data: InitialData) {
         await callServicesAndRefresh([request], { tray: 'inbox' });
     };
 
-    const emptyTrash = async () => {
+    const emptyTrash = async (courseid?: number) => {
         const request: EmptyTrashRequest = {
             methodname: 'empty_trash',
+            courseid,
         };
         await callServicesAndRefresh([request]);
     };

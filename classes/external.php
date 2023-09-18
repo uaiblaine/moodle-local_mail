@@ -234,7 +234,7 @@ class external extends \external_api {
         }
 
         if (isset($params['preferences']['notifications'])) {
-            $processornames = array_column(get_message_processors(true) , 'name');
+            $processornames = array_column(get_message_processors(true), 'name');
             if (array_diff($params['preferences']['notifications'],  $processornames)) {
                 throw new \invalid_parameter_exception('"notifications" must contain message processor names');
             }
@@ -1034,15 +1034,26 @@ class external extends \external_api {
     }
 
     public static function empty_trash_parameters() {
-        return new \external_function_parameters([]);
+        return new \external_function_parameters([
+            'courseid' => new \external_value(PARAM_INT, 'ID of the course', VALUE_DEFAULT, 0),
+        ]);
     }
 
     public static function empty_trash() {
-        self::validate_call(self::empty_trash_parameters(), func_get_args());
+        $params = self::validate_call(self::empty_trash_parameters(), func_get_args());
 
         $user = user::current();
 
+        $course = null;
+        if ($params['courseid']) {
+            $course = course::fetch($params['courseid']);
+            if (!$course || !$user->can_use_mail($course)) {
+                throw new exception('errorcoursenotfound');
+            }
+        }
+
         $search = new message_search($user);
+        $search->course = $course;
         $search->deleted = true;
         $batchsize = 100;
 
