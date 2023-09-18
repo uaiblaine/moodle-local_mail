@@ -235,6 +235,8 @@ export type Tray = 'inbox' | 'sent' | 'drafts' | 'starred' | 'course' | 'label' 
 
 export interface User {
     readonly id: number;
+    readonly firstname: string;
+    readonly lastname: string;
     readonly fullname: string;
     readonly pictureurl: string;
     readonly profileurl: string;

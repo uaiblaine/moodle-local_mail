@@ -6,6 +6,7 @@
     import { truncate } from '../actions/truncate';
     import { RecipientType, type Recipient, type User } from '../lib/state';
     import type { Store } from '../lib/store';
+    import UserPicture from './UserPicture.svelte';
 
     export let store: Store;
     export let recipients: ReadonlyMap<number, Recipient>;
@@ -29,14 +30,7 @@
                     >
                         <div class="d-flex m-1 mr-2">
                             {#if user.isvalid}
-                                <img
-                                    aria-hidden="true"
-                                    alt={user.fullname}
-                                    src={user.pictureurl}
-                                    width="35"
-                                    height="35"
-                                    class="rounded-circle"
-                                />
+                                <UserPicture {user} />
                             {:else}
                                 <div
                                     class="m-0 d-flex justify-content-center align-items-center"

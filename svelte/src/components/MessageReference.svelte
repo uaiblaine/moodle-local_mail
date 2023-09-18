@@ -3,6 +3,7 @@
 <script lang="ts">
     import type { Reference } from '../lib/state';
     import MessageAttachments from './MessageAttachments.svelte';
+    import UserPicture from './UserPicture.svelte';
 
     export let reference: Reference;
 </script>
@@ -15,14 +16,7 @@
         <div class="d-sm-flex mb-n1">
             <div class="d-flex mb-3 mb-sm-0">
                 <div class="mr-3">
-                    <img
-                        aria-hidden="true"
-                        alt={reference.sender.fullname}
-                        src={reference.sender.pictureurl}
-                        width="35"
-                        height="35"
-                        class="rounded-circle"
-                    />
+                    <UserPicture user={reference.sender} />
                 </div>
                 <div class="mt-1">
                     <a href={reference.sender.profileurl}>

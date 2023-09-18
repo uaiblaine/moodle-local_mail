@@ -243,13 +243,22 @@ class user_test extends testcase {
 
     public function test_picture_url() {
         global $PAGE;
-        $generator = self::getDataGenerator();
-        $record = $generator->create_user();
-        $user = user::fetch($record->id);
 
-        $userpicture = new \user_picture($record);
+        $generator = self::getDataGenerator();
+        $user1 = new user($generator->create_user(['picture' => 123]));
+        $user2 = new user($generator->create_user(['picture' => 123, 'deleted' => true]));
+        $user3 = new user($generator->create_user());
+
+        // User with picture.
+        $userpicture = new \user_picture((object) (array) $user1);
         $url = $userpicture->get_url($PAGE);
-        self::assertEquals($url->out(false), $user->picture_url());
+        self::assertEquals($url->out(false), $user1->picture_url());
+
+        // Deleted user.
+        self::assertEquals('', $user2->picture_url());
+
+        // User without picture.
+        self::assertEquals('', $user3->picture_url());
     }
 
     public function test_profile_url() {

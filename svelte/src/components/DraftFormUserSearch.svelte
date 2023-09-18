@@ -15,6 +15,7 @@
         type User,
     } from '../lib/state';
     import type { Store } from '../lib/store';
+    import UserPicture from './UserPicture.svelte';
 
     export let store: Store;
     export let course: Course;
@@ -160,7 +161,7 @@
             style="min-width: 18rem"
         >
             <div class="list-group-item d-sm-flex px-2 py-2">
-                <div class="flex-grow-1 mx-2 mb-2 mb-sm-0">
+                <div class="flex-grow-1 mx-2">
                     <select
                         class="form-control text-truncate"
                         bind:value={roleid}
@@ -175,7 +176,7 @@
                     </select>
                 </div>
                 {#if groups.length > 0}
-                    <div class="flex-grow-1 mx-2">
+                    <div class="flex-grow-1 mx-2 mt-2 mt-sm-0">
                         <select
                             class="form-control text-truncate"
                             style="min-width: 0"
@@ -203,39 +204,39 @@
                     {$store.strings.toomanyusersfound}
                 </div>
             {:else}
-                <div class="list-group-item d-flex align-items-center px-3 py-2">
-                    <div use:truncate={$store.strings.allusers}>
-                        {$store.strings.allusers}
+                <div class="list-group-item d-flex align-items-sm-center p-0">
+                    <div class="mx-3 my-2">
+                        <UserPicture icon="fa-users" />
                     </div>
-                    <div class="d-flex ml-auto">
-                        {#each Object.values(RecipientType) as type}
-                            {@const all = users.every(
-                                (user) => recipients.get(user.id)?.type == type,
-                            )}
-                            <button
-                                type="button"
-                                class="btn text-nowrap ml-2"
-                                class:btn-primary={all}
-                                class:btn-secondary={!all}
-                                aria-pressed={all}
-                                on:click={() => onChange(users, all ? null : type)}
-                            >
-                                {$store.strings[type]}
-                            </button>
-                        {/each}
+                    <div class="d-sm-flex align-items-center flex-grow-1">
+                        <div class="py-2 mr-3" use:truncate={$store.strings.allusers}>
+                            {$store.strings.allusers}
+                        </div>
+                        <div class="d-flex ml-auto mr-2">
+                            {#each Object.values(RecipientType) as type}
+                                {@const all = users.every(
+                                    (user) => recipients.get(user.id)?.type == type,
+                                )}
+                                <button
+                                    type="button"
+                                    class="btn text-nowrap mr-2 mb-2 mt-sm-2"
+                                    class:btn-primary={all}
+                                    class:btn-secondary={!all}
+                                    aria-pressed={all}
+                                    on:click={() => onChange(users, all ? null : type)}
+                                >
+                                    {$store.strings[type]}
+                                </button>
+                            {/each}
+                        </div>
                     </div>
                 </div>
                 {#each users as user (user.id)}
                     {@const recipientType = recipients.get(user.id)?.type}
                     <div class="list-group-item d-flex align-items-sm-center p-0">
-                        <img
-                            aria-hidden="true"
-                            alt={user.fullname}
-                            src={user.pictureurl}
-                            width="35"
-                            height="35"
-                            class="rounded-circle mx-3 my-2"
-                        />
+                        <div class="mx-3 my-2">
+                            <UserPicture {user} />
+                        </div>
                         <div class="d-sm-flex align-items-center flex-grow-1">
                             <div use:truncate={user.fullname} class="py-2 mr-3">
                                 {user.fullname}

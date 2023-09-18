@@ -85,13 +85,16 @@
     class:list-group-item={style == 'menu' || style == 'navbar'}
     use:blur={closeDropdown}
 >
-    <div class="position-absolute h-100 d-flex align-items-center px-2" style="top: 0; left: 0">
-        <i class="fa fa-fw fa-graduation-cap ml-2" aria-hidden="true" />
+    <div
+        class="local-mail-course-select-icon position-absolute h-100 d-flex align-items-center"
+        style="top: 0; left: 0"
+    >
+        <i class="fa fa-fw fa-graduation-cap" aria-hidden="true" />
     </div>
 
     {#if readonly}
         <div
-            class="form-control alert-secondary pr-2 text-left"
+            class="form-control alert-secondary px-2 text-left"
             use:truncate={currentCourse?.[nameField] || ''}
         >
             {currentCourse?.[nameField]}
@@ -99,7 +102,7 @@
     {:else if entering}
         <input
             type="text"
-            class="form-control pr-5 text-truncate"
+            class="form-control px-5 text-truncate"
             placeholder={entering ? strings.course : label}
             aria-label={entering ? strings.course : label}
             bind:value={inputText}
@@ -110,7 +113,7 @@
     {:else if !currentCourse}
         <button
             type="button"
-            class="form-control pr-5 text-left"
+            class="form-control px-5 text-left"
             style="border-color: rgba(0, 0, 0, 0.125)"
             class:btn-secondary={style == 'menu' || style == 'navbar'}
             on:click={openDropdown}
@@ -120,7 +123,7 @@
     {:else}
         <button
             type="button"
-            class="form-control pr-5 text-left"
+            class="form-control px-5 text-left"
             class:alert-primary={primary && (style == 'filter-left' || style == 'filter-right')}
             class:btn-secondary={style == 'menu' || style == 'navbar'}
             use:truncate={currentCourse?.[nameField] || ''}
@@ -194,8 +197,16 @@
         color: inherit;
     }
 
-    .local-mail-course-select .form-control {
+    .local-mail-course-select-menu .form-control {
         padding-left: 2.75rem !important;
+    }
+
+    .local-mail-course-select-icon {
+        padding-left: 0.5rem;
+    }
+
+    .local-mail-course-select-menu .local-mail-course-select-icon {
+        padding-left: 1rem;
     }
 
     .local-mail-course-select input.form-control {

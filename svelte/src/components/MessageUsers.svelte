@@ -3,6 +3,7 @@
 <script lang="ts">
     import { RecipientType, type Message } from '../lib/state';
     import type { Store } from '../lib/store';
+    import UserPicture from './UserPicture.svelte';
 
     export let store: Store;
     export let message: Message;
@@ -14,14 +15,7 @@
 
 <div class="local-mail-message-users d-flex mb-n2">
     <div class="mr-3">
-        <img
-            aria-hidden="true"
-            alt={message.sender.fullname}
-            src={message.sender.pictureurl}
-            width="35"
-            height="35"
-            class="rounded-circle"
-        />
+        <UserPicture user={message.sender} />
     </div>
     <div class="d-flex flex-column">
         <div class="mt-1 mb-2">

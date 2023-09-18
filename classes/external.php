@@ -546,6 +546,8 @@ class external extends \external_api {
                 $recipients[] = [
                     'type' => self::ROLES[$message->role($recipient)],
                     'id' => $recipient->id,
+                    'firstname' => $recipient->firstname,
+                    'lastname' => $recipient->lastname,
                     'fullname' => $recipient->fullname(),
                     'pictureurl' => $recipient->picture_url(),
                     'profileurl' => $recipient->profile_url($message->course),
@@ -580,6 +582,8 @@ class external extends \external_api {
                 ],
                 'sender' => [
                     'id' => $sender->id,
+                    'firstname' => $sender->firstname,
+                    'lastname' => $sender->lastname,
                     'fullname' => $sender->fullname(),
                     'pictureurl' => $sender->picture_url(),
                     'profileurl' => $sender->profile_url($message->course),
@@ -615,8 +619,10 @@ class external extends \external_api {
                 ], '', VALUE_OPTIONAL),
                 'sender' => new \external_single_structure([
                     'id' => new \external_value(PARAM_INT, 'Id of the user'),
+                    'firstname' => new \external_value(PARAM_RAW, 'First name of the user'),
+                    'lastname' => new \external_value(PARAM_RAW, 'Last name of the user'),
                     'fullname' => new \external_value(PARAM_RAW, 'Full name of the user'),
-                    'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
+                    'pictureurl' => new \external_value(PARAM_URL, 'User image URL', VALUE_OPTIONAL),
                     'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
                     'sortorder' => new \external_value(PARAM_RAW, 'User sort order'),
                 ]),
@@ -624,6 +630,8 @@ class external extends \external_api {
                     new \external_single_structure([
                         'type' => new \external_value(PARAM_ALPHA, 'Role of the user: "to", "cc" or "bcc"'),
                         'id' => new \external_value(PARAM_INT, 'Id of the user'),
+                        'firstname' => new \external_value(PARAM_RAW, 'First name of the user'),
+                        'lastname' => new \external_value(PARAM_RAW, 'Last name of the user'),
                         'fullname' => new \external_value(PARAM_RAW, 'Full name of the user'),
                         'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
                         'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
@@ -700,6 +708,8 @@ class external extends \external_api {
             ],
             'sender' => [
                 'id' => $sender->id,
+                'firstname' => $sender->firstname,
+                'lastname' => $sender->lastname,
                 'fullname' => $sender->fullname(),
                 'pictureurl' => $sender->picture_url(),
                 'profileurl' => $sender->profile_url($message->course),
@@ -736,6 +746,8 @@ class external extends \external_api {
             $result['recipients'][] = [
                 'type' => self::ROLES[$role],
                 'id' => $recipient->id,
+                'firstname' => $recipient->firstname,
+                'lastname' => $recipient->lastname,
                 'fullname' => $recipient->fullname(),
                 'pictureurl' => $recipient->picture_url(),
                 'profileurl' => $recipient->profile_url($message->course),
@@ -780,6 +792,8 @@ class external extends \external_api {
                 'fulltime' => $renderer->formatted_time($ref->time, true),
                 'sender' => [
                     'id' => $refsender->id,
+                    'firstname' => $refsender->firstname,
+                    'lastname' => $refsender->lastname,
                     'fullname' => $refsender->fullname(),
                     'pictureurl' => $refsender->picture_url(),
                     'profileurl' => $refsender->profile_url($message->course),
@@ -823,6 +837,8 @@ class external extends \external_api {
             ]),
             'sender' => new \external_single_structure([
                 'id' => new \external_value(PARAM_INT, 'Id of the user'),
+                'firstname' => new \external_value(PARAM_RAW, 'First name of the user'),
+                'lastname' => new \external_value(PARAM_RAW, 'Last name of the user'),
                 'fullname' => new \external_value(PARAM_RAW, 'Full name of the user'),
                 'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
                 'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
@@ -832,6 +848,8 @@ class external extends \external_api {
                 new \external_single_structure([
                     'type' => new \external_value(PARAM_ALPHA, 'Role of the user: "to", "cc" or "bcc"'),
                     'id' => new \external_value(PARAM_INT, 'Id of the user'),
+                    'firstname' => new \external_value(PARAM_RAW, 'First name of the user'),
+                    'lastname' => new \external_value(PARAM_RAW, 'Last name of the user'),
                     'fullname' => new \external_value(PARAM_RAW, 'Full name of the user'),
                     'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
                     'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
@@ -860,6 +878,8 @@ class external extends \external_api {
                     'fulltime' => new \external_value(PARAM_TEXT, 'Formatted full time'),
                     'sender' => new \external_single_structure([
                         'id' => new \external_value(PARAM_INT, 'Id of the user'),
+                        'firstname' => new \external_value(PARAM_RAW, 'First name of the user'),
+                        'lastname' => new \external_value(PARAM_RAW, 'Last name of the user'),
                         'fullname' => new \external_value(PARAM_RAW, 'Full name of the user'),
                         'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
                         'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
@@ -1336,6 +1356,8 @@ class external extends \external_api {
         foreach ($users as $user) {
             $result[] = [
                 'id' => $user->id,
+                'firstname' => $user->firstname,
+                'lastname' => $user->lastname,
                 'fullname' => $user->fullname(),
                 'pictureurl' => $user->picture_url(),
                 'profileurl' => $user->profile_url($course),
@@ -1350,6 +1372,8 @@ class external extends \external_api {
         return new \external_multiple_structure(
             new \external_single_structure([
                 'id' => new \external_value(PARAM_INT, 'Id of the user'),
+                'firstname' => new \external_value(PARAM_RAW, 'First name of the user'),
+                'lastname' => new \external_value(PARAM_RAW, 'Last name of the user'),
                 'fullname' => new \external_value(PARAM_RAW, 'Full name of the user'),
                 'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
                 'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),

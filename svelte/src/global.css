@@ -24,13 +24,12 @@
     --local-mail-color-cyan-fg: #055160;
 }
 
-
 .local-mail .dropdown-menu,
 .local-mail .dropdown-menu .list-group-item:not(.list-group-item-primary) {
     background-color: var(--light);
 }
 
-.local-mail .dropdown-item:not(:focus):hover{
+.local-mail .dropdown-item:not(:focus):hover {
     color: inherit;
     background-color: #eee;
 }
@@ -50,7 +49,7 @@
     box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-#page-local-mail-view #topofscroll{
+#page-local-mail-view #topofscroll {
     padding: 0;
     margin-bottom: 0;
 }

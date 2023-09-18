@@ -194,10 +194,12 @@ class user {
      *
      * @return string
      */
-    public function picture_url(): string {
+    public function picture_url(): ?string {
         global $PAGE;
         $userpicture = new \user_picture((object) (array) $this);
-        return $userpicture->get_url($PAGE)->out(false);
+        $url = $userpicture->get_url($PAGE)->out(false);
+        $defaulturl = $PAGE->get_renderer('core')->image_url('u/f2')->out(false);
+        return $url == $defaulturl ? '' : $url;
     }
 
     /**
