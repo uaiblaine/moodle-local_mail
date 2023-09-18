@@ -133,7 +133,7 @@ class renderer extends \plugin_renderer_base {
         $notification->name = 'mail';
         $notification->userfrom = $message->sender()->id;
         $notification->userto = $recipient->id;
-        $notification->subject = get_string('notificationsubject', 'local_mail', $SITE->shortname);
+        $notification->subject = strings::get('notificationsubject', $SITE->shortname);
         $notification->fullmessage = $this->render_from_template('local_mail/notification_text', [
             'coursename' => $message->course->fullname,
             'sendername' => $message->sender()->fullname(),
@@ -157,7 +157,7 @@ class renderer extends \plugin_renderer_base {
             'attachments' => $attachments,
             'viewurl' => $url->out(false),
         ]);
-        $notification->smallmessage = get_string('notificationsmallmessage', 'local_mail', [
+        $notification->smallmessage = strings::get('notificationsmallmessage', [
             'user' => $message->sender()->fullname(),
             'course' => $message->course->fullname,
         ]);

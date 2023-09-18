@@ -35,7 +35,7 @@ class draft_deleted extends \core\event\base {
     }
 
     public static function get_name() {
-        return get_string('eventdraftdeleted', 'local_mail');
+        return \local_mail\output\strings::get('eventdraftdeleted');
     }
 
     public function get_description() {

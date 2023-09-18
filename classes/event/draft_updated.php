@@ -35,7 +35,7 @@ class draft_updated extends \core\event\base {
     }
 
     public static function get_name() {
-        return get_string('eventdraftupdated', 'local_mail');
+        return \local_mail\output\strings::get('eventdraftupdated');
     }
 
     public function get_description() {

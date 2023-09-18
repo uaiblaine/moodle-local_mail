@@ -24,7 +24,7 @@
 use local_mail\course;
 use local_mail\external;
 use local_mail\message;
-use local_mail\message_search;
+use local_mail\output\strings;
 use local_mail\settings;
 use local_mail\user;
 
@@ -91,7 +91,7 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
 
     // Fallback link to avoid layout changes during page load.
     $url = new moodle_url('/local/mail/view.php', ['t' => 'inbox']);
-    $title = get_string('pluginname', 'local_mail');
+    $title = strings::get('pluginname');
     $class = 'btn h-100 d-flex align-items-center px-2 py-0';
 
     $viewurl = new moodle_url('/local/mail/view.php');
@@ -109,36 +109,37 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
         $container = html_writer::div($link, '', ['id' => 'local-mail-navbar']);
 
         // Pass all data via a script tag to avoid web service requests.
-        $strings = external::get_strings_raw();
-
         $courses = external::get_courses_raw();
-
+        $courseid = 0;
+        if (array_search($COURSE->id, array_column($courses, 'id')) !== false) {
+            $courseid = (int) $COURSE->id;
+        }
         $data = [
             'userid' => $user->id,
-            'courseid' => array_search($COURSE->id, array_column($courses, 'id')) !== false ? (int) $COURSE->id : 0,
+            'courseid' => $courseid,
             'settings' => (array) settings::fetch(),
-            'strings' => [
-                'allcourses' => $strings['allcourses'],
-                'bcc' => $strings['bcc'],
-                'cc' => $strings['cc'],
-                'compose' => $strings['compose'],
-                'course' => $strings['course'],
-                'drafts' => $strings['drafts'],
-                'inbox' => $strings['inbox'],
-                'preferences' => $strings['preferences'],
-                'sendmail' => $strings['sendmail'],
-                'sentmail' => $strings['sentmail'],
-                'starredmail' => $strings['starredmail'],
-                'to' => $strings['to'],
-                'togglemailmenu' => $strings['togglemailmenu'],
-                'trash' => $strings['trash'],
-            ],
+            'strings' => strings::get_many([
+                'allcourses',
+                'bcc',
+                'cc',
+                'compose',
+                'course',
+                'drafts',
+                'inbox',
+                'preferences',
+                'sendmail',
+                'sentmail',
+                'starredmail',
+                'to',
+                'togglemailmenu',
+                'trash',
+            ]),
             'courses' => $courses,
             'labels' => external::get_labels_raw(),
         ];
         $datascript = html_writer::script('window.local_mail_navbar_data = ' . json_encode($data));
         $renderer = $PAGE->get_renderer('local_mail');
         $sveltescript = $renderer->svelte_script('src/navigation.ts');
-        return  $container . $datascript . $sveltescript;
+        return $container . $datascript . $sveltescript;
     }
 }

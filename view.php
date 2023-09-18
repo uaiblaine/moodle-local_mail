@@ -16,6 +16,7 @@
 
 use local_mail\course;
 use local_mail\external;
+use local_mail\output\strings;
 use local_mail\settings;
 use local_mail\user;
 
@@ -58,7 +59,7 @@ if ($type == 'label') {
 $PAGE->set_url($url);
 $PAGE->set_context(context_system::instance());
 $PAGE->set_pagelayout($appid != '' ? 'embedded' : 'base');
-$PAGE->set_title(get_string('pluginname', 'local_mail'));
+$PAGE->set_title(strings::get('pluginname'));
 
 $user = user::current();
 if ($user && course::fetch_by_user($user)) {
@@ -67,7 +68,7 @@ if ($user && course::fetch_by_user($user)) {
         'userid' => $user->id,
         'settings' => (array) settings::fetch(),
         'preferences' => external::get_preferences_raw(),
-        'strings' => external::get_strings_raw(),
+        'strings' => strings::get_all(),
         'mobile' => $appid != '',
     ];
 
@@ -84,6 +85,6 @@ if ($user && course::fetch_by_user($user)) {
 } else {
     // Print error.
     echo $OUTPUT->header();
-    echo $OUTPUT->notification(get_string('errornocourses', 'local_mail'), 'warning', false);
+    echo $OUTPUT->notification(strings::get('errornocourses'), 'warning', false);
     echo $OUTPUT->footer();
 }

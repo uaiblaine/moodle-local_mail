@@ -35,7 +35,7 @@ class message_viewed extends \core\event\base {
     }
 
     public static function get_name() {
-        return get_string('eventmessageviewed', 'local_mail');
+        return \local_mail\output\strings::get('eventmessageviewed');
     }
 
     public function get_description() {

@@ -41,7 +41,7 @@ class event_test extends testcase {
 
         $event = event\draft_created::create_from_message($draft);
 
-        self::assertEquals(get_string('eventdraftcreated', 'local_mail'), event\draft_created::get_name());
+        self::assertEquals(output\strings::get('eventdraftcreated'), event\draft_created::get_name());
         self::assertEquals(
             "The user with id '$user->id' has created the draft with id '$draft->id'.",
             $event->get_description()
@@ -67,7 +67,7 @@ class event_test extends testcase {
 
         $event = event\draft_deleted::create_from_message($draft);
 
-        self::assertEquals(get_string('eventdraftdeleted', 'local_mail'), event\draft_deleted::get_name());
+        self::assertEquals(output\strings::get('eventdraftdeleted'), event\draft_deleted::get_name());
         self::assertEquals(
             "The user with id '$user->id' has deleted the draft with id '$draft->id'.",
             $event->get_description()
@@ -93,7 +93,7 @@ class event_test extends testcase {
 
         $event = event\draft_updated::create_from_message($draft);
 
-        self::assertEquals(get_string('eventdraftupdated', 'local_mail'), event\draft_updated::get_name());
+        self::assertEquals(output\strings::get('eventdraftupdated'), event\draft_updated::get_name());
         self::assertEquals(
             "The user with id '$user->id' has updated the draft with id '$draft->id'.",
             $event->get_description()
@@ -119,7 +119,7 @@ class event_test extends testcase {
 
         $event = event\draft_viewed::create_from_message($draft);
 
-        self::assertEquals(get_string('eventdraftviewed', 'local_mail'), event\draft_viewed::get_name());
+        self::assertEquals(output\strings::get('eventdraftviewed'), event\draft_viewed::get_name());
         self::assertEquals(
             "The user with id '$user->id' has viewed the draft with id '$draft->id'.",
             $event->get_description()
@@ -148,7 +148,7 @@ class event_test extends testcase {
 
         $event = event\message_sent::create_from_message($message);
 
-        self::assertEquals(get_string('eventmessagesent', 'local_mail'), event\message_sent::get_name());
+        self::assertEquals(output\strings::get('eventmessagesent'), event\message_sent::get_name());
         self::assertEquals(
             "The user with id '$user1->id' has sent the message with id '$message->id'.",
             $event->get_description()
@@ -177,7 +177,7 @@ class event_test extends testcase {
 
         $event = event\message_viewed::create_from_message($message);
 
-        self::assertEquals(get_string('eventmessageviewed', 'local_mail'), event\message_viewed::get_name());
+        self::assertEquals(output\strings::get('eventmessageviewed'), event\message_viewed::get_name());
         self::assertEquals(
             "The user with id '$user2->id' has viewed the message with id '$message->id'.",
             $event->get_description()

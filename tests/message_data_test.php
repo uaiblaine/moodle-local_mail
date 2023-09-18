@@ -89,12 +89,12 @@ class message_data_test extends testcase {
         self::assertEquals('FW: Subject', $data->subject);
         $expected = '<p><br></p>'
             . '<p>'
-            . '--------- ' . get_string('forwardedmessage', 'local_mail') . ' ---------<br>'
-            . get_string('from', 'local_mail') . ': '
+            . '--------- ' . output\strings::get('forwardedmessage') . ' ---------<br>'
+            . output\strings::get('from') . ': '
             . $message->sender()->fullname() . '<br>'
-            . get_string('date', 'local_mail') . ': '
+            . output\strings::get('date') . ': '
             . userdate($message->time, get_string('strftimedatetime', 'langconfig')) . '<br>'
-            . get_string('subject', 'local_mail') . ': '
+            . output\strings::get('subject') . ': '
             . format_text($message->subject, FORMAT_PLAIN, ['filter' => false])
             . '</p>'
             . format_text($message->content, $message->format, ['filter' => false]);

@@ -142,12 +142,12 @@ class external_test extends testcase {
         $user = $generator->create_user();
         $this->setUser($user);
 
-        make_writable_directory("$CFG->langlocalroot/en_local");
+        make_writable_directory("$CFG->langlocalroot/es_local");
         $content = "<?php
             defined('MOODLE_INTERNAL') || die();
-            \$string['forward'] = 'Share';
+            \$string['forward'] = 'Compartir';
         ";
-        file_put_contents("$CFG->langlocalroot/en_local/local_mail.php", $content);
+        file_put_contents("$CFG->langlocalroot/es_local/local_mail.php", $content);
 
         make_writable_directory("$CFG->langlocalroot/ca_local");
         $content = "<?php
@@ -156,22 +156,24 @@ class external_test extends testcase {
         ";
         file_put_contents("$CFG->langlocalroot/ca_local/local_mail.php", $content);
 
-        // English.
+        // Spanish.
+
+        $SESSION->forcelang = 'es';
 
         $result = external::get_strings();
 
         external::validate_parameters(external::get_strings_returns(), $result);
-        self::assertEquals(external::get_strings_raw(), $result);
-        self::assertEquals('Share', $result['forward']);
+        self::assertEquals(output\strings::get_all(), $result);
+        self::assertEquals('Compartir', $result['forward']);
 
         // Catalan.
 
-        $SESSION->lang = 'ca';
+        $SESSION->forcelang = 'ca';
 
         $result = external::get_strings();
 
         external::validate_parameters(external::get_strings_returns(), $result);
-        self::assertEquals(external::get_strings_raw(), $result);
+        self::assertEquals(output\strings::get_all(), $result);
         self::assertEquals('Comparteix', $result['forward']);
     }
 
@@ -1745,12 +1747,12 @@ class external_test extends testcase {
         self::assertEquals('FW: ' . $data->subject, $draft->subject);
         $expected = '<p><br></p>'
             . '<p>'
-            . '--------- ' . get_string('forwardedmessage', 'local_mail') . ' ---------<br>'
-            . get_string('from', 'local_mail') . ': '
+            . '--------- ' . output\strings::get('forwardedmessage') . ' ---------<br>'
+            . output\strings::get('from') . ': '
             . $message->sender()->fullname() . '<br>'
-            . get_string('date', 'local_mail') . ': '
+            . output\strings::get('date') . ': '
             . userdate($message->time, get_string('strftimedatetime', 'langconfig')) . '<br>'
-            . get_string('subject', 'local_mail') . ': '
+            . output\strings::get('subject') . ': '
             . format_text($message->subject, FORMAT_PLAIN, ['filter' => false])
             . '</p>'
             . format_text($message->content, $message->format, ['filter' => false]);

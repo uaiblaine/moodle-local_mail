@@ -131,7 +131,7 @@ class output_renderer_test extends testcase {
         self::assertEquals('mail', $notification->name);
         self::assertEquals($user1->id, $notification->userfrom);
         self::assertEquals($user2->id, $notification->userto);
-        self::assertEquals(get_string('notificationsubject', 'local_mail', $SITE->shortname), $notification->subject);
+        self::assertEquals(output\strings::get('notificationsubject', $SITE->shortname), $notification->subject);
         self::assertStringContainsString($url->out(false), $notification->fullmessage);
         self::assertStringContainsString($course->fullname, $notification->fullmessage);
         self::assertStringContainsString($user1->fullname(), $notification->fullmessage);
@@ -152,7 +152,7 @@ class output_renderer_test extends testcase {
         self::assertStringContainsString('file2.html', $notification->fullmessagehtml);
         self::assertEquals(1, $notification->notification);
         $a = ['user' => $user1->fullname(), 'course' => $course->fullname];
-        self::assertEquals(get_string('notificationsmallmessage', 'local_mail', $a), $notification->smallmessage);
+        self::assertEquals(output\strings::get('notificationsmallmessage', $a), $notification->smallmessage);
         $contexturl = new \moodle_url('/local/mail/view.php', array('t' => 'inbox', 'm' => $message->id));
         self::assertEquals($contexturl->out(false), $notification->contexturl);
         self::assertEquals('Subject', $notification->contexturlname);

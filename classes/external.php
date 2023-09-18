@@ -111,43 +111,12 @@ class external extends \external_api {
     public static function get_strings() {
         self::validate_call(self::get_strings_parameters(), func_get_args());
 
-        return self::get_strings_raw();
-    }
-
-    public static function get_strings_raw() {
-        global $CFG;
-
-        $lang ??= current_language();
-
-        // Ignore language packages from AMOS for Catalan and Spanish.
-        if ($lang == 'ca' || $lang == 'es') {
-            $string = [];
-
-            // First load english pack.
-            include("$CFG->dirroot/local/mail/lang/en/local_mail.php");
-
-            // And then corresponding local english if present.
-            if (file_exists("$CFG->langlocalroot/en_local/local_mail.php")) {
-                include("$CFG->langlocalroot/en_local/local_mail.php");
-            }
-
-            // Legacy location - used by contrib only.
-            include("$CFG->dirroot/local/mail/lang/$lang/local_mail.php");
-
-            // Local customisations.
-            if (file_exists("$CFG->langlocalroot/{$lang}_local/local_mail.php")) {
-                include("$CFG->langlocalroot/{$lang}_local/local_mail.php");
-            }
-
-            return $string;
-        }
-
-        return get_string_manager()->load_component_strings('local_mail', $lang);
+        return output\strings::get_all();
     }
 
     public static function get_strings_returns() {
         $stringkeys = [];
-        foreach (array_keys(get_string_manager()->load_component_strings('local_mail', 'en')) as $id) {
+        foreach (output\strings::get_ids() as $id) {
             $stringkeys[$id] = new \external_value(PARAM_RAW, 'Localized content of language string "' . $id . '"');
         }
         return new \external_single_structure($stringkeys);
