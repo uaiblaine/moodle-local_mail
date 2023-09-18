@@ -166,7 +166,6 @@ export type SelectAllType = 'all' | 'none' | 'read' | 'unread' | 'starred' | 'un
 
 export interface ServiceError {
     readonly message: string;
-    readonly errorcode: string;
     readonly debuginfo?: string;
     readonly stacktrace?: string;
 }

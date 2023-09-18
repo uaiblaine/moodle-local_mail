@@ -252,13 +252,13 @@ export type SendMessageResponse = void;
  */
 export async function callServices(requests: ServiceRequest[]): Promise<unknown[]> {
     const ajax = (await require('core/ajax')) as CoreAjax;
-    const responses = await Promise.all(
-        ajax.call(
-            Array.from(requests).map(({ methodname, ...args }) => ({
-                methodname: `local_mail_${methodname}`,
-                args,
-            })),
-        ),
-    );
-    return responses;
+    const ajaxRequests = Array.from(requests).map(({ methodname, ...args }) => ({
+        methodname: `local_mail_${methodname}`,
+        args,
+    }));
+    try {
+        return await Promise.all(ajax.call(ajaxRequests));
+    } catch (error) {
+        throw typeof error == 'string' ? { message: error } : error;
+    }
 }
