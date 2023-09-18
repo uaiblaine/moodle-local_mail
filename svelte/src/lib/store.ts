@@ -55,7 +55,7 @@ export async function createStore(data: InitialData) {
         strings: data.strings,
         mobile: data.mobile,
 
-        /* Params */
+        /* URL parameters */
         params: {},
 
         /* Data */
@@ -91,22 +91,17 @@ export async function createStore(data: InitialData) {
 
         const messageid = state.message?.id;
         const draftData = state.draftData;
-        let params = newParams || state.params;
+        const params = newParams || state.params;
+        const prevParams =
+            !redirect &&
+            (params.tray != state.params.tray ||
+                params.messageid != state.params.messageid ||
+                params.courseid != state.params.courseid ||
+                params.labelid != state.params.labelid ||
+                params.search != state.params.search)
+                ? { ...state.params, dialog: undefined }
+                : state.prevParams;
         const perpage = state.preferences.perpage;
-
-        if (params.courseid) {
-            if (['fullname', 'shortname'].includes(state.settings.filterbycourse)) {
-                // Course tray is not allowed when course filter is enabled.
-                if (params?.tray == 'course') {
-                    params = { ...params, tray: 'inbox' };
-                }
-            } else {
-                // Only course tray is allowed when course filter is enabled.
-                if (params?.tray != 'course') {
-                    params = { ...params, courseid: undefined };
-                }
-            }
-        }
 
         patch({ loading: true, error: undefined });
 
@@ -288,6 +283,7 @@ export async function createStore(data: InitialData) {
         // Update state with fetched data.
         patch({
             params,
+            prevParams,
             unread: courses.reduce((total, course) => total + course.unread, 0),
             drafts: courses.reduce((total, course) => total + course.drafts, 0),
             courses,
@@ -528,11 +524,11 @@ export async function createStore(data: InitialData) {
             messageid: state.message.id,
         };
 
-        const newParams: ViewParams = {
-            tray: 'inbox',
-            courseid: state.params.courseid ? state.message.course.id : undefined,
-        };
-
+        const newParams: ViewParams =
+            state.prevParams ??
+            (['shortname', 'fullname'].includes(state.settings.filterbycourse)
+                ? { tray: 'inbox', courseid: state.message.course.id }
+                : { tray: 'course', courseid: state.message.course.id });
         await callServicesAndRefresh([request], newParams);
 
         showToast({ text: state.strings.messagesent });

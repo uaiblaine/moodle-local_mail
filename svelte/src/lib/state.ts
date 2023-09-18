@@ -194,8 +194,9 @@ export interface State {
     readonly incrementalSearchStopId?: number;
     readonly mobile: boolean;
 
-    /* Parameters of the current view. */
+    /* URL parameters of the current and previous view. */
     readonly params: ViewParams;
+    readonly prevParams?: ViewParams;
 
     /* Data fetched using web services for the current view.  */
     readonly unread: number;
