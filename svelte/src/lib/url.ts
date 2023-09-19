@@ -19,6 +19,14 @@ export function createUrl(courseid: number, recipients: number[] = [], role?: st
     return url.toString();
 }
 
+export function downloadAllUrl(messageid: number): string {
+    const url = new URL(baseUrl() + 'download.php');
+
+    url.searchParams.set('m', String(messageid));
+
+    return url.toString();
+}
+
 export function getViewParamsFromUrl(): ViewParams {
     const url = new URL(window.location.href);
     const params: ViewParams = {

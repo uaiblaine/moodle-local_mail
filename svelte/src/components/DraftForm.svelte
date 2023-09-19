@@ -226,6 +226,6 @@
         {$store.strings.references}
     </div>
     {#each message.references as reference (reference.id)}
-        <MessageReference {reference} />
+        <MessageReference strings={$store.strings} {reference} />
     {/each}
 {/if}

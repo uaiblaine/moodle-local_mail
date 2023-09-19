@@ -47,7 +47,7 @@
         </div>
         {#if message.attachments.length > 0}
             <hr />
-            <MessageAttachments {message} />
+            <MessageAttachments strings={$store.strings} {message} />
         {/if}
         <hr />
         <div class="mt-3 d-flex mr-n3 mb-n3 flex-column flex-sm-row justify-content-end">
@@ -61,7 +61,7 @@
         {$store.strings.references}
     </div>
     {#each message.references as reference (reference.id)}
-        <MessageReference {reference} />
+        <MessageReference strings={$store.strings} {reference} />
     {/each}
 {/if}
 

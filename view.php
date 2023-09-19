@@ -21,13 +21,10 @@ use local_mail\settings;
 use local_mail\user;
 
 require_once('../../config.php');
+require_once("$CFG->libdir/filelib.php");
 
 global $PAGE;
 
-$type = optional_param('t', 'inbox', PARAM_ALPHA);
-$messageid = optional_param('m', 0, PARAM_INT);
-$courseid = optional_param('c', SITEID, PARAM_INT);
-$labelid = optional_param('l', 0, PARAM_INT);
 $appid = optional_param('appid', '', PARAM_NOTAGS);
 $applang = optional_param('applang', '', PARAM_LANG);
 
@@ -36,32 +33,20 @@ if ($appid != '' && $applang != '') {
     force_current_language($applang);
 }
 
+require_login(null, false);
+
 if (!settings::is_installed()) {
     throw new moodle_exception('pluginnotinstalled', 'local_mail');
 }
 
-require_login(null, false);
-
-// Check capabilities.
-if ($courseid != SITEID) {
-    $context = context_course::instance($courseid);
-    require_capability('local/mail:usemail', $context);
-}
-
-// Set up page.
-$url = new moodle_url('/local/mail/view.php', array('t' => $type));
-if ($type == 'course') {
-    $url->param('c', $courseid);
-}
-if ($type == 'label') {
-    $url->param('l', $labelid);
-}
+$url = new moodle_url('/local/mail/view.php');
 $PAGE->set_url($url);
 $PAGE->set_context(context_system::instance());
 $PAGE->set_pagelayout($appid != '' ? 'embedded' : 'base');
 $PAGE->set_title(strings::get('pluginname'));
 
 $user = user::current();
+
 if ($user && course::fetch_by_user($user)) {
     // Initial data passed via a script tag.
     $data = [
