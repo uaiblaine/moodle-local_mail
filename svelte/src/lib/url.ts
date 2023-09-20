@@ -76,7 +76,7 @@ export function viewUrl(params: ViewParams): string {
     if (params.messageid) {
         url.searchParams.set('m', String(params.messageid));
     }
-    if (params.search && params.offset) {
+    if (params.offset) {
         url.searchParams.set('o', String(params.offset));
     }
     if (params.search?.content) {

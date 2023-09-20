@@ -436,10 +436,9 @@ export async function createStore(data: InitialData) {
         const params: ViewParams = {
             ...state.params,
             messageid: undefined,
-            offset: state.params.search
-                ? Math.floor((state.messageOffset || 0) / state.preferences.perpage) *
-                  state.preferences.perpage
-                : undefined,
+            offset:
+                Math.floor((state.params.offset || 0) / state.preferences.perpage) *
+                    state.preferences.perpage || undefined,
         };
 
         await callServicesAndRefresh([], params, redirect);
@@ -524,11 +523,17 @@ export async function createStore(data: InitialData) {
             messageid: state.message.id,
         };
 
-        const newParams: ViewParams =
-            state.prevParams ??
-            (['shortname', 'fullname'].includes(state.settings.filterbycourse)
-                ? { tray: 'inbox', courseid: state.message.course.id }
-                : { tray: 'course', courseid: state.message.course.id });
+        const newParams: ViewParams = state.prevParams
+            ? {
+                  ...state.prevParams,
+                  messageid: undefined,
+                  offset:
+                      Math.floor((state.prevParams.offset || 0) / state.preferences.perpage) *
+                          state.preferences.perpage || undefined,
+              }
+            : ['shortname', 'fullname'].includes(state.settings.filterbycourse)
+            ? { tray: 'inbox', courseid: state.message.course.id }
+            : { tray: 'course', courseid: state.message.course.id };
         await callServicesAndRefresh([request], newParams);
 
         showToast({ text: state.strings.messagesent });
