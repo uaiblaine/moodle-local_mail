@@ -40,7 +40,7 @@
             type="button"
             class="btn"
             aria-expanded={expanded}
-            title={$store.strings.moreactions}
+            title={$store.strings.more}
             on:click={toggleMenu}
         >
             <i class="fa fa-fw fa-ellipsis-v align-middle" />

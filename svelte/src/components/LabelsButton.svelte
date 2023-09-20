@@ -120,7 +120,7 @@
                     class="dropdown-item local-mail-action-label-button-item"
                     on:click={applyLabels}
                 >
-                    {$store.strings.applychanges}
+                    {$store.strings.apply}
                 </button>
             {:else}
                 <button

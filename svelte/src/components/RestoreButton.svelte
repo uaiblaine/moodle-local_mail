@@ -38,6 +38,6 @@
         onCancel={() => store.hideDialog()}
         onConfirm={confirm}
     >
-        {$store.strings.messagerestoreconfirm}
+        {$store.strings.restoremessageconfirm}
     </ModalDialog>
 {/if}

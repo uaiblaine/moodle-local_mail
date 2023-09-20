@@ -88,8 +88,8 @@ if ($hassiteconfig) {
         $defaultsetting[$tray] = 1;
     }
     $choices = [
-        'starred' => strings::get('starredmail'),
-        'sent' => strings::get('sentmail'),
+        'starred' => strings::get('starredplural'),
+        'sent' => strings::get('sentplural'),
         'drafts' => strings::get('drafts'),
         'trash' => strings::get('trash'),
     ];

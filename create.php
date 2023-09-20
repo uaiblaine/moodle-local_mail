@@ -43,8 +43,8 @@ $PAGE->set_pagelayout('base');
 // Check permission.
 $user = user::current();
 $course = course::fetch($courseid);
-if (!$course  || !$user->can_use_mail($course)) {
-    throw new exception('coursenotfound');
+if (!$course || !$user->can_use_mail($course)) {
+    throw new exception('errorcoursenotfound');
 }
 
 // Create message.

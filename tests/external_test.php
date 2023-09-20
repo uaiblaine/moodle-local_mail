@@ -131,7 +131,7 @@ class external_test extends testcase {
             external::get_settings();
             $this->fail();
         } catch (exception $e) {
-            self::assertEquals('pluginnotinstalled', $e->errorcode);
+            self::assertEquals('errorpluginnotinstalled', $e->errorcode);
         }
     }
 
@@ -1135,7 +1135,7 @@ class external_test extends testcase {
             external::create_label('Label 3', 'invalid');
             $this->fail();
         } catch (exception $e) {
-            self::assertEquals('errorinvalidcolor', $e->errorcode);
+            self::assertEquals('errorinvalidlabelcolor', $e->errorcode);
         }
     }
 
@@ -1220,7 +1220,7 @@ class external_test extends testcase {
             external::update_label($label1->id, 'Label 1', 'invalid');
             $this->fail();
         } catch (exception $e) {
-            self::assertEquals('errorinvalidcolor', $e->errorcode);
+            self::assertEquals('errorinvalidlabelcolor', $e->errorcode);
         }
     }
 

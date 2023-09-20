@@ -129,19 +129,19 @@
             use:truncate={currentCourse?.[nameField] || ''}
             on:click={toggleDropdown}
         >
-            {currentCourse?.[nameField]}
+            {currentCourse?.[nameField] || ''}
         </button>
     {/if}
     {#if !readonly}
         <button
             type="button"
             aria-expanded={entering}
+            title={strings.changecourse}
             class="btn position-absolute h-100 d-flex align-items-center px-2"
             style="top: 0; right: 0"
             on:click={toggleDropdown}
         >
             <i class="fa fa-fw {dropdownIconClass}" aria-hidden="true" />
-            <span class="sr-only">{strings.togglefilterresults}n</span>
         </button>
     {/if}
 
@@ -176,7 +176,7 @@
                 </button>
             {:else}
                 <div class="px-4 text-danger">
-                    {strings.emptycoursefilterresults}
+                    {strings.nocoursematchestext}
                 </div>
             {/each}
         </div>

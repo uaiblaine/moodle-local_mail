@@ -36,7 +36,7 @@ if ($appid != '' && $applang != '') {
 require_login(null, false);
 
 if (!settings::is_installed()) {
-    throw new moodle_exception('pluginnotinstalled', 'local_mail');
+    throw new moodle_exception('errorpluginnotinstalled', 'local_mail');
 }
 
 $url = new moodle_url('/local/mail/view.php');

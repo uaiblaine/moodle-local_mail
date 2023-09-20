@@ -26,7 +26,7 @@ $messageid = required_param('m', PARAM_INT);
 require_login(null, false);
 
 if (!settings::is_installed()) {
-    throw new moodle_exception('pluginnotinstalled', 'local_mail');
+    throw new moodle_exception('errorpluginnotinstalled', 'local_mail');
 }
 
 $user = user::current();

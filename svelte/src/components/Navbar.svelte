@@ -61,9 +61,9 @@
 >
     <a
         aria-expanded={expanded}
-        aria-label={strings.togglemailmenu}
         class="btn h-100 position-relative d-flex align-items-center px-2 py-0 rounded-0"
         href={viewUrl({ tray: 'inbox' })}
+        title={strings.pluginname}
         on:click={handleIconClick}
     >
         <i class="fa fa-fw fa-envelope-o" aria-label={strings.plugginname} />

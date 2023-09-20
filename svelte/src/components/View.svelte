@@ -30,9 +30,9 @@
         tray == 'inbox'
             ? $store.strings.inbox
             : tray == 'starred'
-            ? $store.strings.starredmail
+            ? $store.strings.starredplural
             : tray == 'sent'
-            ? $store.strings.sentmail
+            ? $store.strings.sentplural
             : tray == 'drafts'
             ? $store.strings.drafts
             : tray == 'trash'

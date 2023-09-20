@@ -39,6 +39,10 @@
         onCancel={() => store.hideDialog()}
         onConfirm={confirm}
     >
-        {$store.strings.messagedeleteconfirm}
+        {$store.strings[
+            $store.selectedMessages.size == 1
+                ? 'deleteforevermessageconfirm'
+                : 'deleteforeverselectedconfirm'
+        ]}
     </ModalDialog>
 {/if}

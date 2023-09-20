@@ -145,7 +145,7 @@
             type="button"
             aria-expanded={expanded}
             class="btn px-2"
-            title={$store.strings.cancel}
+            title={$store.strings.addrecipients}
             on:click|preventDefault={handleToggleClick}
         >
             <i

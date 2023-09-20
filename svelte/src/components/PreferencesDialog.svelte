@@ -70,7 +70,7 @@
             on:click={toggleMarkAsRead}
         />
         <label for="local-mail-preferences-markasread" class="custom-control-label pl-1">
-            {$store.strings.markmessageasread}
+            {$store.strings.markmessagesasread}
         </label>
     </div>
 </ModalDialog>

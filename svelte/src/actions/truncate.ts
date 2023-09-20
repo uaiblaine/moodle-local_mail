@@ -13,6 +13,9 @@ export function truncate(node: HTMLElement, tooltip: string) {
     node.addEventListener('mouseenter', handleMouseEnter);
 
     return {
+        update(newTooltip: string) {
+            tooltip = newTooltip;
+        },
         destroy() {
             node.removeEventListener('mouseenter', handleMouseEnter, true);
         },

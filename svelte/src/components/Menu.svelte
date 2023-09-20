@@ -79,7 +79,7 @@
     {#if trayVisible('starred')}
         <MenuItem
             icon="fa-star"
-            text={strings.starredmail}
+            text={strings.starredplural}
             params={{ tray: 'starred', courseid, search }}
             active={params.tray == 'starred'}
             {onClick}
@@ -88,7 +88,7 @@
     {#if trayVisible('sent')}
         <MenuItem
             icon="fa-paper-plane"
-            text={strings.sentmail}
+            text={strings.sentplural}
             params={{ tray: 'sent', courseid, search }}
             active={params.tray == 'sent'}
             {onClick}

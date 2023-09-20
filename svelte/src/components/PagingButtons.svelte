@@ -67,11 +67,11 @@
         : $store.listMessages.length == 0
         ? ''
         : $store.params.search
-        ? replaceStringParams($store.strings.pagingsearch, {
+        ? replaceStringParams($store.strings.pagingrange, {
               first: ($store.params.offset || 0) + 1,
               last: ($store.params.offset || 0) + $store.listMessages.length,
           })
-        : replaceStringParams($store.strings.pagingmultiple, {
+        : replaceStringParams($store.strings.pagingrangetotal, {
               first: ($store.params.offset || 0) + 1,
               last: ($store.params.offset || 0) + $store.listMessages.length,
               total: $store.totalCount,

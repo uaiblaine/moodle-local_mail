@@ -1088,7 +1088,7 @@ class external extends \external_api {
         }
 
         if ($params['color'] && !in_array($params['color'], label::COLORS)) {
-            throw new exception('errorinvalidcolor');
+            throw new exception('errorinvalidlabelcolor');
         }
 
         $label = label::create($user, $normalizedname, $params['color']);
@@ -1131,7 +1131,7 @@ class external extends \external_api {
         }
 
         if ($params['color'] && !in_array($params['color'], label::COLORS)) {
-            throw new exception('errorinvalidcolor');
+            throw new exception('errorinvalidlabelcolor');
         }
 
         $label->update($normalizedname, $params['color']);
@@ -1638,7 +1638,7 @@ class external extends \external_api {
     private static function validate_call(\external_function_parameters $description, array $args): array {
         self::validate_context(\context_system::instance());
         if (!settings::is_installed()) {
-            throw new exception('pluginnotinstalled');
+            throw new exception('errorpluginnotinstalled');
         }
         $keys = array_slice(array_keys($description->keys), 0, count($args));
         $values = array_slice($args, 0, count($description->keys));

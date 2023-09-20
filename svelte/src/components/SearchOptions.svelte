@@ -57,7 +57,7 @@
     </div>
     <div class="form-group row">
         <label for="local-mail-search-input-maxdate" class="col-3 col-form-label">
-            {$store.strings.filterbydate}
+            {$store.strings.date}
         </label>
         <div class="col-9">
             <input
@@ -80,7 +80,7 @@
                 bind:checked={unread}
             />
             <label class="form-check-label" for="local-mail-search-input-unread">
-                {$store.strings.searchbyunread}
+                {$store.strings.unreadonly}
             </label>
         </div>
         <div class="form-check">
@@ -91,7 +91,7 @@
                 bind:checked={withfilesonly}
             />
             <label class="form-check-label" for="local-mail-search-input-withfilesonly">
-                {$store.strings.searchbyattach}
+                {$store.strings.hasattachments}
             </label>
         </div>
         <input

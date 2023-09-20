@@ -554,11 +554,11 @@ export async function createStore(data: InitialData) {
         if (deleted != DeletedStatus.DeletedForever) {
             const string = deleted
                 ? ids.length > 1
-                    ? 'undodeletemany'
-                    : 'undodeleteone'
+                    ? 'messagesmovedtotrash'
+                    : 'messagemovedtotrash'
                 : ids.length > 1
-                ? 'undorestoremany'
-                : 'undorestoreone';
+                ? 'messagesrestored'
+                : 'messagerestored';
             const text = replaceStringParams(state.strings[string], ids.length);
             const undo = () => {
                 setDeleted(ids, deleted ? DeletedStatus.NotDeleted : DeletedStatus.Deleted, false);
