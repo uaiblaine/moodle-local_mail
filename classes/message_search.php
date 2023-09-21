@@ -198,13 +198,13 @@ class message_search {
     }
 
     /**
-     * Fetch messages that match the search parameters.
+     * Gets messages that match the search parameters.
      *
-     * @param int $offset Start fetching from this offset.
-     * @param int $limit Limit number of messages to fetch, 0 means no limit.
+     * @param int $offset Skip this number of messages.
+     * @param int $limit Maximum number of messages, 0 means no limit.
      * @return message[] Found messages, ordered from newer to older (unless reversed), and indexed by ID.
      */
-    public function fetch(int $offset = 0, int $limit = 0): array {
+    public function get(int $offset = 0, int $limit = 0): array {
         global $DB;
 
         list($fromsql, $wheresql, $ordersql, $params) = $this->get_base_sql();
@@ -213,7 +213,7 @@ class message_search {
 
         $records = $DB->get_records_sql($sql, $params, $offset, $limit);
 
-        $result = message::fetch_many(array_keys($records));
+        $result = message::get_many(array_keys($records));
 
         return $this->reverse ? array_reverse($result, true) : $result;
     }
@@ -228,13 +228,13 @@ class message_search {
     private function get_base_sql(bool $countperlabel = false) {
         global $CFG, $DB;
 
-        assert(!$this->label || $this->label->user->id == $this->user->id);
+        assert(!$this->label || $this->label->userid == $this->user->id);
 
         $selects = [];
         $params = [];
 
         $conditions = [
-            'courseid' => $this->course->id ?? array_keys(course::fetch_by_user(($this->user))),
+            'courseid' => $this->course->id ?? array_keys(course::get_by_user(($this->user))),
             'draft' => $this->draft ?? [0, 1],
             'role' => $this->roles ?: [message::ROLE_FROM, message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC],
             'unread' => $this->unread ?? [0, 1],
@@ -244,7 +244,7 @@ class message_search {
 
         if ($this->label || $countperlabel) {
             $fromsql = 'FROM {local_mail_message_labels} i';
-            $conditions['labelid'] = $this->label->id ?? array_keys(label::fetch_by_user($this->user));
+            $conditions['labelid'] = $this->label->id ?? array_keys(label::get_by_user($this->user));
         } else {
             $fromsql = 'FROM {local_mail_message_users} i';
             $conditions['userid'] = $this->user->id;

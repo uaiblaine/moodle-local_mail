@@ -27,7 +27,7 @@ class mobile {
 
         $user = user::current();
 
-        if (!settings::is_installed() || !$user || !course::fetch_by_user($user)) {
+        if (!settings::is_installed() || !$user || !course::get_by_user($user)) {
             return ['disabled' => true];
         }
 

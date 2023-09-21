@@ -190,7 +190,7 @@ class output_renderer_test extends testcase {
 
         try {
             $renderer->svelte_script('src/inexistent.ts');
-            $this->fail();
+            self::fail();
         } catch (\moodle_exception $e) {
             self::assertEquals('codingerror', $e->errorcode);
         }

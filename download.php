@@ -30,14 +30,14 @@ if (!settings::is_installed()) {
 }
 
 $user = user::current();
-$message = message::fetch($messageid);
-
-if (!$user || !$message || !$user->can_view_files($message)) {
+$message = message::get($messageid, IGNORE_MISSING);
+$context = $message->get_course()->get_context() ?? null;
+if (!$user || !$message || !$context || !$user->can_view_files($message)) {
     send_file_not_found();
 }
 
 $files = get_file_storage()->get_area_files(
-    $message->course->context()->id,
+    $context->id,
     'local_mail',
     'message',
     $message->id,
@@ -55,7 +55,7 @@ $zipper = new zip_packer();
 $tempzip = tempnam($CFG->tempdir . '/', 'local_mail_');
 
 if ($zipper->archive_to_pathname($zipfiles, $tempzip)) {
-    $filename = clean_filename($message->sender()->fullname() . ' - ' . $message->subject . '.zip');
+    $filename = clean_filename($message->get_sender()->fullname() . ' - ' . $message->subject . '.zip');
     send_temp_file($tempzip, $filename);
 } else {
     send_file_not_found();

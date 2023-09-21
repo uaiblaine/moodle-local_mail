@@ -154,7 +154,7 @@ class event_test extends testcase {
             $event->get_description()
         );
         self::assertEquals(
-            new \moodle_url('/local/mail/view.php', ['t' => 'course', 'c' => $message->course->id, 'm' => $message->id]),
+            new \moodle_url('/local/mail/view.php', ['t' => 'course', 'c' => $message->courseid, 'm' => $message->id]),
             $event->get_url()
         );
         self::assertEquals(
@@ -183,7 +183,7 @@ class event_test extends testcase {
             $event->get_description()
         );
         self::assertEquals(
-            new \moodle_url('/local/mail/view.php', ['t' => 'course', 'c' => $message->course->id, 'm' => $message->id]),
+            new \moodle_url('/local/mail/view.php', ['t' => 'course', 'c' => $message->courseid, 'm' => $message->id]),
             $event->get_url()
         );
         self::assertEquals(

@@ -74,6 +74,78 @@ class user {
     }
 
     /**
+     * Cache of users, indexed by ID.
+     *
+     * @return \cache
+     */
+    public static function cache(): \cache {
+        return \cache::make('local_mail', 'users');
+    }
+
+    /**
+     * Returns the current logged in user.
+     *
+     * @return ?self The current or null if not logged in or is guest.
+     */
+    public static function current(): ?self {
+        global $USER;
+
+        if (!isloggedin() || isguestuser() || \core_user::awaiting_action()) {
+            return null;
+        }
+
+        $user = new self($USER);
+        self::cache()->set($user->id, $user);
+
+        return $user;
+    }
+
+    /**
+     * Gets a user from the database.
+     *
+     * @param int $strictness MUST_EXIST or IGNORE_MISSING.
+     * @param int $id ID of the user to get.
+     * @return ?self
+     */
+    public static function get(int $id, int $strictness = MUST_EXIST): ?self {
+        $users = self::get_many([$id], $strictness);
+
+        return $users[$id] ?? null;
+    }
+
+    /**
+     * Gets multiple users from the database.
+     *
+     * @param int[] $ids IDs of the users to get.
+     * @param int $strictness MUST_EXIST or IGNORE_MISSING.
+     * @return self[] Array of users indexed by ID.
+     */
+    public static function get_many(array $ids, int $strictness = MUST_EXIST): array {
+        global $CFG, $DB;
+
+        $users = self::cache()->get_many($ids);
+        $missingids = array_filter($ids, fn($id) => !$users[$id]);
+
+        if ($missingids) {
+            list($sqlid, $params) = $DB->get_in_or_equal($missingids, SQL_PARAMS_NAMED, 'userid');
+            $select = "id $sqlid AND id <> :guestid AND deleted = 0";
+            $params['guestid'] = $CFG->siteguest;
+            $fields = implode(',', \core_user\fields::get_picture_fields());
+            $records = $DB->get_records_select('user', $select, $params, '', $fields);
+            foreach ($missingids as $id) {
+                if (isset($records[$id])) {
+                    $users[$id] = new self($records[$id]);
+                    self::cache()->set($id, $users[$id]);
+                } else if ($strictness == MUST_EXIST) {
+                    throw new exception('errorusernotfound', $id);
+                }
+            }
+        }
+
+        return array_filter($users);
+    }
+
+    /**
      * Returns whether the user can edit the message.
      *
      * @param message $message Message.
@@ -81,9 +153,9 @@ class user {
      */
     public function can_edit_message(message $message): bool {
         return $message->draft &&
-            $this->id == $message->sender()->id &&
+            $this->id == $message->get_sender()->id &&
             $message->deleted($this) != message::DELETED_FOREVER &&
-            $this->can_use_mail($message->course);
+            $this->can_use_mail($message->get_course());
     }
 
     /**
@@ -93,8 +165,8 @@ class user {
      * @return bool
      */
     public function can_use_mail(course $course) {
-        return is_enrolled($course->context(), $this->id, 'local/mail:usemail', true) &&
-            ($course->visible || has_capability('moodle/course:viewhiddencourses', $course->context(), $this->id, false));
+        return is_enrolled($course->get_context(), $this->id, 'local/mail:usemail', true) &&
+            ($course->visible || has_capability('moodle/course:viewhiddencourses', $course->get_context(), $this->id, false));
     }
 
     /**
@@ -107,7 +179,7 @@ class user {
         if ($this->can_view_message($message)) {
             return true;
         }
-        foreach ($message->fetch_references(true) as $reference) {
+        foreach ($message->get_references(true) as $reference) {
             if ($this->can_view_message($reference)) {
                 return true;
             }
@@ -122,62 +194,9 @@ class user {
      * @return bool
      */
     public function can_view_message(message $message): bool {
-        return ($message->sender()->id == $this->id || !$message->draft && $message->has_recipient($this)) &&
+        return ($message->get_sender()->id == $this->id || !$message->draft && $message->has_recipient($this)) &&
             $message->deleted($this) != message::DELETED_FOREVER &&
-            $this->can_use_mail($message->course);
-    }
-
-    /**
-     * Returns the current logged in user.
-     *
-     * @return ?self The current or null if not logged in or is guest.
-     */
-    public static function current(): ?self {
-        global $USER;
-
-        return isloggedin() && !isguestuser() && !\core_user::awaiting_action() ? new self($USER) : null;
-    }
-
-    /**
-     * Fetches a user from the database.
-     *
-     * @param int $id ID of the user to fetch.
-     * @return ?self The fetched user or null if not found.
-     */
-    public static function fetch(int $id): ?self {
-        $users = self::fetch_many([$id]);
-        return isset($users[$id]) ? $users[$id] : null;
-    }
-
-    /**
-     * Fetches multiple users from the database.
-     *
-     * @param int[] $ids IDs of the users to fetch.
-     * @return self[] The fetched users, indexed by ID.
-     */
-    public static function fetch_many(array $ids): array {
-        global $CFG, $DB;
-
-        if (!$ids) {
-            return [];
-        }
-
-        $ids = array_unique($ids);
-        list($sqlid, $params) = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'userid');
-        $select = "id $sqlid AND id <> :guestid AND deleted = 0";
-        $params['guestid'] = $CFG->siteguest;
-        $fields = implode(',', \core_user\fields::get_picture_fields());
-
-        $records = $DB->get_records_select('user', $select, $params, '', $fields);
-
-        $users = [];
-        foreach ($ids as $id) {
-            if (isset($records[$id])) {
-                $users[$id] = new self($records[$id]);
-            }
-        }
-
-        return $users;
+            $this->can_use_mail($message->get_course());
     }
 
     /**

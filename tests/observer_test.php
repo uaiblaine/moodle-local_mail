@@ -28,8 +28,8 @@ class observer_test extends testcase {
 
     public function test_course_deleted() {
         list($users, $messages) = message_search_test::generate_data();
-        $course = $messages[0]->course;
-        $context = $course->context();
+        $course = $messages[0]->get_course();
+        $context = $course->get_context();
 
         $fs = get_file_storage();
 
@@ -39,7 +39,7 @@ class observer_test extends testcase {
         self::assert_record_count(0, 'message_users', ['courseid' => $course->id]);
         self::assert_record_count(0, 'message_labels', ['courseid' => $course->id]);
         foreach ($messages as $message) {
-            if ($message->course->id == $course->id) {
+            if ($message->courseid == $course->id) {
                 self::assert_record_count(0, 'message_refs', ['messageid' => $message->id]);
                 self::assert_record_count(0, 'message_refs', ['reference' => $message->id]);
             } else {

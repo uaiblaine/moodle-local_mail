@@ -36,7 +36,7 @@ class external extends \external_api {
     public static function get_settings() {
         self::validate_call(self::get_settings_parameters(), func_get_args());
 
-        return (array) settings::fetch();
+        return (array) settings::get();
     }
 
     public static function get_settings_returns() {
@@ -230,7 +230,7 @@ class external extends \external_api {
 
     public static function get_courses_raw() {
         $user = user::current();
-        $courses = course::fetch_by_user($user);
+        $courses = course::get_by_user($user);
 
         if (!$courses) {
             return [];
@@ -296,7 +296,7 @@ class external extends \external_api {
         $search->unread = true;
         $unread = $search->count_per_label();
 
-        foreach (label::fetch_by_user($user) as $label) {
+        foreach (label::get_by_user($user) as $label) {
             $labelresult = [
                 'id' => $label->id,
                 'name' => $label->name,
@@ -428,16 +428,16 @@ class external extends \external_api {
         $search = new message_search($user);
 
         if ($query['courseid']) {
-            $search->course = course::fetch($query['courseid']);
-            if (!$search->course || !$user->can_use_mail($search->course)) {
-                throw new exception('errorcoursenotfound');
+            $search->course = course::get($query['courseid']);
+            if (!$user->can_use_mail($search->course)) {
+                throw new exception('errorcoursenotfound', $search->course->id);
             }
         }
 
         if ($query['labelid']) {
-            $search->label = label::fetch($query['labelid']);
-            if (!$search->label || $search->label->user->id != $user->id) {
-                throw new exception('errorlabelnotfound');
+            $search->label = label::get($query['labelid']);
+            if ($search->label->userid != $user->id) {
+                throw new exception('errorlabelnotfound', $search->label->id);
             }
         }
 
@@ -469,17 +469,11 @@ class external extends \external_api {
         $search->maxtime = $query['maxtime'];
 
         if ($query['startid']) {
-            $search->start = message::fetch($query['startid']);
-            if (!$search->start) {
-                throw new \invalid_parameter_exception('invalid startid: ' . $query['startid']);
-            }
+            $search->start = message::get($query['startid']);
         }
 
         if ($query['stopid']) {
-            $search->stop = message::fetch($query['stopid']);
-            if (!$search->stop) {
-                throw new \invalid_parameter_exception('invalid stopid: ' . $query['stopid']);
-            }
+            $search->stop = message::get($query['stopid']);
         }
 
         $search->reverse = $query['reverse'];
@@ -528,7 +522,7 @@ class external extends \external_api {
 
         $search = self::validate_query_parameter($params['query']);
 
-        $messages = $search->fetch($params['offset'], $params['limit']);
+        $messages = $search->get($params['offset'], $params['limit']);
 
         return self::search_messages_response($search->user, $messages);
     }
@@ -540,9 +534,10 @@ class external extends \external_api {
         $result = [];
 
         foreach ($messages as $message) {
-            $sender = $message->sender();
+            $course = $message->get_course();
+            $sender = $message->get_sender();
             $recipients = [];
-            foreach ($message->recipients(message::ROLE_TO, message::ROLE_CC) as $recipient) {
+            foreach ($message->get_recipients(message::ROLE_TO, message::ROLE_CC) as $recipient) {
                 $recipients[] = [
                     'type' => self::ROLES[$message->role($recipient)],
                     'id' => $recipient->id,
@@ -550,12 +545,12 @@ class external extends \external_api {
                     'lastname' => $recipient->lastname,
                     'fullname' => $recipient->fullname(),
                     'pictureurl' => $recipient->picture_url(),
-                    'profileurl' => $recipient->profile_url($message->course),
+                    'profileurl' => $recipient->profile_url($course),
                     'sortorder' => $recipient->sortorder(),
                 ];
             }
             $labels = [];
-            foreach ($message->labels($user) as $label) {
+            foreach ($message->get_labels($user) as $label) {
                 $labels[] = [
                     'id' => $label->id,
                     'name' => $label->name,
@@ -574,11 +569,11 @@ class external extends \external_api {
                 'starred' => $message->starred($user),
                 'deleted' => $message->deleted($user) != message::NOT_DELETED,
                 'course' => [
-                    'id' => $message->course->id,
-                    'shortname' => $message->course->shortname,
-                    'fullname' => $message->course->fullname,
-                    'visible' => $message->course->visible,
-                    'groupmode' => $message->course->groupmode,
+                    'id' => $course->id,
+                    'shortname' => $course->shortname,
+                    'fullname' => $course->fullname,
+                    'visible' => $course->visible,
+                    'groupmode' => $course->groupmode,
                 ],
                 'sender' => [
                     'id' => $sender->id,
@@ -586,7 +581,7 @@ class external extends \external_api {
                     'lastname' => $sender->lastname,
                     'fullname' => $sender->fullname(),
                     'pictureurl' => $sender->picture_url(),
-                    'profileurl' => $sender->profile_url($message->course),
+                    'profileurl' => $sender->profile_url($course),
                     'sortorder' => $sender->sortorder(),
                 ],
                 'recipients' => $recipients,
@@ -660,10 +655,10 @@ class external extends \external_api {
 
         $user = user::current();
 
-        $message = message::fetch($params['messageid']);
+        $message = message::get($params['messageid']);
 
-        if (!$message || !$user->can_view_message($message)) {
-            throw new exception('errormessagenotfound');
+        if (!$user->can_view_message($message)) {
+            throw new exception('errormessagenotfound', $message->id);
         }
 
         return self::get_message_response($user, $message);
@@ -673,18 +668,18 @@ class external extends \external_api {
         global $PAGE;
         $renderer = $PAGE->get_renderer('local_mail');
 
-        $contextid = $message->course->context()->id;
+        $course = $message->get_course();
+        $context = $course->get_context();
+        $sender = $message->get_sender();
 
         list($content, $format) = \external_format_text(
             $message->content,
             $message->format,
-            $contextid,
+            $context->id,
             'local_mail',
             'message',
             $message->id
         );
-
-        $sender = $message->sender();
 
         $result = [
             'id' => $message->id,
@@ -700,11 +695,11 @@ class external extends \external_api {
             'starred' => $message->starred($user),
             'deleted' => (bool) $message->deleted($user),
             'course' => [
-                'id' => $message->course->id,
-                'shortname' => $message->course->shortname,
-                'fullname' => $message->course->fullname,
-                'visible' => $message->course->visible,
-                'groupmode' => $message->course->groupmode,
+                'id' => $course->id,
+                'shortname' => $course->shortname,
+                'fullname' => $course->fullname,
+                'visible' => $course->visible,
+                'groupmode' => $course->groupmode,
             ],
             'sender' => [
                 'id' => $sender->id,
@@ -712,7 +707,7 @@ class external extends \external_api {
                 'lastname' => $sender->lastname,
                 'fullname' => $sender->fullname(),
                 'pictureurl' => $sender->picture_url(),
-                'profileurl' => $sender->profile_url($message->course),
+                'profileurl' => $sender->profile_url($course),
                 'sortorder' => $sender->sortorder(),
             ],
             'recipients' => [],
@@ -722,7 +717,7 @@ class external extends \external_api {
         ];
 
         $fs = get_file_storage();
-        $files = $fs->get_area_files($contextid, 'local_mail', 'message', $message->id, 'filename', false);
+        $files = $fs->get_area_files($context->id, 'local_mail', 'message', $message->id, 'filename', false);
         foreach ($files as $file) {
             $result['attachments'][] = [
                 'filepath' => $file->get_filepath(),
@@ -734,11 +729,11 @@ class external extends \external_api {
             ];
         }
 
-        $search = new user_search($user, $message->course);
-        $search->include = array_column($message->recipients(), 'id');
-        $validrecipients = $search->fetch();
+        $search = new user_search($user, $course);
+        $search->include = array_column($message->get_recipients(), 'id');
+        $validrecipients = $search->get();
 
-        foreach ($message->recipients() as $recipient) {
+        foreach ($message->get_recipients() as $recipient) {
             $role = $message->role($recipient);
             if ($role == message::ROLE_BCC && $user->id != $recipient->id && $user->id != $sender->id) {
                 continue;
@@ -750,24 +745,24 @@ class external extends \external_api {
                 'lastname' => $recipient->lastname,
                 'fullname' => $recipient->fullname(),
                 'pictureurl' => $recipient->picture_url(),
-                'profileurl' => $recipient->profile_url($message->course),
+                'profileurl' => $recipient->profile_url($course),
                 'sortorder' => $recipient->sortorder(),
                 'isvalid' => isset($validrecipients[$recipient->id]),
             ];
         }
 
-        foreach ($message->fetch_references() as $ref) {
+        foreach ($message->get_references() as $ref) {
             list($content, $format) = \external_format_text(
                 $ref->content,
                 $ref->format,
-                $contextid,
+                $context->id,
                 'local_mail',
                 'message',
                 $ref->id
             );
 
             $attachments = [];
-            $files = $fs->get_area_files($contextid, 'local_mail', 'message', $ref->id, 'filename', false);
+            $files = $fs->get_area_files($context->id, 'local_mail', 'message', $ref->id, 'filename', false);
 
             foreach ($files as $file) {
                 $attachments[] = [
@@ -780,7 +775,7 @@ class external extends \external_api {
                 ];
             }
 
-            $refsender = $ref->sender();
+            $refsender = $ref->get_sender();
 
             $result['references'][] = [
                 'id' => $ref->id,
@@ -796,14 +791,14 @@ class external extends \external_api {
                     'lastname' => $refsender->lastname,
                     'fullname' => $refsender->fullname(),
                     'pictureurl' => $refsender->picture_url(),
-                    'profileurl' => $refsender->profile_url($message->course),
+                    'profileurl' => $refsender->profile_url($course),
                     'sortorder' => $sender->sortorder(),
                 ],
                 'attachments' => $attachments,
             ];
         }
 
-        foreach ($message->labels($user) as $label) {
+        foreach ($message->get_labels($user) as $label) {
             $result['labels'][] = [
                 'id' => $label->id,
                 'name' => $label->name,
@@ -918,10 +913,10 @@ class external extends \external_api {
 
         $user = user::current();
 
-        $message = message::fetch($params['messageid']);
+        $message = message::get($params['messageid']);
 
-        if (!$message || !$user->can_view_message($message)) {
-            throw new exception('errormessagenotfound');
+        if (!$user->can_view_message($message)) {
+            throw new exception('errormessagenotfound', $message->id);
         }
 
         $message->set_unread($user, false);
@@ -948,10 +943,10 @@ class external extends \external_api {
         $params = self::validate_call(self::set_unread_parameters(), func_get_args());
 
         $user = user::current();
-        $message = message::fetch($params['messageid']);
+        $message = message::get($params['messageid']);
 
-        if (!$message || !$user->can_view_message($message)) {
-            throw new exception('errormessagenotfound');
+        if (!$user->can_view_message($message)) {
+            throw new exception('errormessagenotfound', $message->id);
         }
 
         $message->set_unread($user, $params['unread']);
@@ -974,10 +969,10 @@ class external extends \external_api {
         $params = self::validate_call(self::set_starred_parameters(), func_get_args());
 
         $user = user::current();
-        $message = message::fetch($params['messageid']);
+        $message = message::get($params['messageid']);
 
-        if (!$message || !$user->can_view_message($message)) {
-            throw new exception('errormessagenotfound');
+        if (!$user->can_view_message($message)) {
+            throw new exception('errormessagenotfound', $message->id);
         }
 
         $message->set_starred($user, $params['starred']);
@@ -1003,10 +998,10 @@ class external extends \external_api {
         $params = self::validate_call(self::set_deleted_parameters(), func_get_args());
 
         $user = user::current();
-        $message = message::fetch($params['messageid']);
+        $message = message::get($params['messageid']);
 
-        if (!$message || !$user->can_view_message($message)) {
-            throw new exception('errormessagenotfound');
+        if (!$user->can_view_message($message)) {
+            throw new exception('errormessagenotfound', $message->id);
         }
 
         $message->set_deleted($user, $params['deleted']);
@@ -1035,9 +1030,9 @@ class external extends \external_api {
 
         $course = null;
         if ($params['courseid']) {
-            $course = course::fetch($params['courseid']);
-            if (!$course || !$user->can_use_mail($course)) {
-                throw new exception('errorcoursenotfound');
+            $course = course::get($params['courseid']);
+            if (!$user->can_use_mail($course)) {
+                throw new exception('errorcoursenotfound', $course->id);
             }
         }
 
@@ -1047,7 +1042,7 @@ class external extends \external_api {
         $batchsize = 100;
 
         do {
-            $messages = $search->fetch(0, $batchsize);
+            $messages = $search->get(0, $batchsize);
             foreach ($messages as $message) {
                 $message->set_deleted($user, message::DELETED_FOREVER);
                 if ($message->draft) {
@@ -1081,14 +1076,14 @@ class external extends \external_api {
             throw new exception('erroremptylabelname');
         }
 
-        foreach (label::fetch_by_user($user) as $label) {
+        foreach (label::get_by_user($user) as $label) {
             if ($label->name == $normalizedname) {
                 throw new exception('errorrepeatedlabelname');
             }
         }
 
         if ($params['color'] && !in_array($params['color'], label::COLORS)) {
-            throw new exception('errorinvalidlabelcolor');
+            throw new \invalid_parameter_exception('invalid color: ' . $params['color']);
         }
 
         $label = label::create($user, $normalizedname, $params['color']);
@@ -1114,9 +1109,9 @@ class external extends \external_api {
 
         $user = user::current();
 
-        $label = label::fetch($params['labelid']);
-        if (!$label || $label->user->id != $user->id) {
-            throw new exception('errorlabelnotfound');
+        $label = label::get($params['labelid']);
+        if ($label->userid != $user->id) {
+            throw new exception('errorlabelnotfound', $label->id);
         }
 
         $normalizedname = label::nromalized_name($params['name']);
@@ -1124,14 +1119,14 @@ class external extends \external_api {
             throw new exception('erroremptylabelname');
         }
 
-        foreach ($label::fetch_by_user($user) as $userlabel) {
+        foreach ($label::get_by_user($user) as $userlabel) {
             if ($userlabel->id != $params['labelid'] && $userlabel->name == $normalizedname) {
                 throw new exception('errorrepeatedlabelname');
             }
         }
 
         if ($params['color'] && !in_array($params['color'], label::COLORS)) {
-            throw new exception('errorinvalidlabelcolor');
+            throw new \invalid_parameter_exception('invalid color: ' . $params['color']);
         }
 
         $label->update($normalizedname, $params['color']);
@@ -1154,9 +1149,9 @@ class external extends \external_api {
 
         $user = user::current();
 
-        $label = label::fetch($params['labelid']);
-        if (!$label || $label->user->id != $user->id) {
-            throw new exception('errorlabelnotfound');
+        $label = label::get($params['labelid']);
+        if ($label->userid != $user->id) {
+            throw new exception('errorlabelnotfound', $label->id);
         }
 
         $label->delete();
@@ -1184,16 +1179,16 @@ class external extends \external_api {
         $params = self::validate_call(self::set_labels_parameters(), func_get_args());
 
         $user = user::current();
-        $message = message::fetch($params['messageid']);
+        $message = message::get($params['messageid']);
 
-        if (!$message || !$user->can_view_message($message)) {
-            throw new exception('errormessagenotfound');
+        if (!$user->can_view_message($message)) {
+            throw new exception('errormessagenotfound', $message->id);
         }
 
-        $labels = label::fetch_many($params['labelids']);
+        $labels = label::get_many($params['labelids']);
         foreach ($params['labelids'] as $id) {
-            if (!isset($labels[$id]) || $labels[$id]->user->id != $user->id) {
-                throw new exception('errorlabelnotfound');
+            if (!isset($labels[$id]) || $labels[$id]->userid != $user->id) {
+                throw new exception('errorlabelnotfound', $id);
             }
         }
 
@@ -1216,10 +1211,10 @@ class external extends \external_api {
         $params = self::validate_call(self::get_roles_parameters(), func_get_args());
 
         $user = user::current();
-        $course = course::fetch($params['courseid']);
+        $course = course::get($params['courseid']);
 
-        if (!$course || !$user->can_use_mail($course)) {
-            throw new exception('errorcoursenotfound');
+        if (!$user->can_use_mail($course)) {
+            throw new exception('errorcoursenotfound', $course->id);
         }
 
         $result = [];
@@ -1248,10 +1243,10 @@ class external extends \external_api {
         $params = self::validate_call(self::get_groups_parameters(), func_get_args());
 
         $user = user::current();
-        $course = course::fetch($params['courseid']);
+        $course = course::get($params['courseid']);
 
-        if (!$course || !$user->can_use_mail($course)) {
-            throw new exception('errorcoursenotfound');
+        if (!$user->can_use_mail($course)) {
+            throw new exception('errorcoursenotfound', $course->id);
         }
 
         $result = [];
@@ -1322,9 +1317,9 @@ class external extends \external_api {
         $params = self::validate_call(self::search_users_parameters(), func_get_args());
 
         $user = user::current();
-        $course = course::fetch($params['query']['courseid']);
-        if (!$course || !$user->can_use_mail($course)) {
-            throw new exception('errorcoursenotfound');
+        $course = course::get($params['query']['courseid']);
+        if (!$user->can_use_mail($course)) {
+            throw new exception('errorcoursenotfound', $course->id);
         }
 
         $search = new user_search($user, $course);
@@ -1345,7 +1340,7 @@ class external extends \external_api {
             $search->include = $params['query']['include'];
         }
 
-        $users = $search->fetch($params['offset'], $params['limit']);
+        $users = $search->get($params['offset'], $params['limit']);
 
         return self::search_users_response($course, $users);
     }
@@ -1397,9 +1392,9 @@ class external extends \external_api {
         $params = self::validate_call(self::get_message_form_parameters(), func_get_args());
 
         $user = user::current();
-        $message = message::fetch($params['messageid']);
-        if (!$message || !$user->can_edit_message($message)) {
-            throw new exception('errormessagenotfound');
+        $message = message::get($params['messageid']);
+        if (!$user->can_edit_message($message)) {
+            throw new exception('errormessagenotfound', $message->id);
         }
         $options = message_data::file_options();
         $data = message_data::draft($message);
@@ -1452,9 +1447,9 @@ class external extends \external_api {
         $params = self::validate_call(self::create_message_parameters(), func_get_args());
 
         $user = user::current();
-        $course = course::fetch($params['courseid']);
-        if (!$course || !$user->can_use_mail($course)) {
-            throw new exception('errorcoursenotfound');
+        $course = course::get($params['courseid']);
+        if (!$user->can_use_mail($course)) {
+            throw new exception('errorcoursenotfound', $course->id);
         }
 
         $data = message_data::new($course, $user);
@@ -1480,9 +1475,9 @@ class external extends \external_api {
         $params = self::validate_call(self::reply_message_parameters(), func_get_args());
 
         $user = user::current();
-        $message = message::fetch($params['messageid']);
-        if (!$message || !$user->can_view_message($message) || !$user->can_use_mail($message->course)) {
-            throw new exception('errormessagenotfound');
+        $message = message::get($params['messageid']);
+        if (!$user->can_view_message($message) || !$user->can_use_mail($message->get_course())) {
+            throw new exception('errormessagenotfound', $message->id);
         }
 
         $data = message_data::reply($message, $user, $params['all']);
@@ -1504,9 +1499,9 @@ class external extends \external_api {
         $params = self::validate_call(self::forward_message_parameters(), func_get_args());
 
         $user = user::current();
-        $message = message::fetch($params['messageid']);
-        if (!$message || !$user->can_view_message($message) || !$user->can_use_mail($message->course)) {
-            throw new exception('errormessagenotfound');
+        $message = message::get($params['messageid']);
+        if (!$user->can_view_message($message) || !$user->can_use_mail($message->get_course())) {
+            throw new exception('errormessagenotfound', $message->id);
         }
 
         $data = message_data::forward($message, $user);
@@ -1539,14 +1534,14 @@ class external extends \external_api {
 
         $user = user::current();
 
-        $message = message::fetch($params['messageid']);
-        if (!$message || !$user->can_edit_message($message)) {
-            throw new exception('errormessagenotfound');
+        $message = message::get($params['messageid']);
+        if (!$user->can_edit_message($message)) {
+            throw new exception('errormessagenotfound', $message->id);
         }
 
-        $course = course::fetch($params['data']['courseid']);
-        if (!$course || !$user->can_use_mail($course)) {
-            throw new exception('errorcoursenotfound');
+        $course = course::get($params['data']['courseid']);
+        if (!$user->can_use_mail($course)) {
+            throw new exception('errorcoursenotfound', $course->id);
         }
 
         $data = message_data::new($course, $user);
@@ -1556,7 +1551,7 @@ class external extends \external_api {
         $data->draftitemid = $params['data']['draftitemid'];
         foreach (['to', 'cc', 'bcc'] as $rolename) {
             if ($params['data'][$rolename]) {
-                $data->$rolename = user::fetch_many($params['data'][$rolename]);
+                $data->$rolename = user::get_many($params['data'][$rolename]);
             }
         }
         $message->update($data);
@@ -1581,20 +1576,20 @@ class external extends \external_api {
 
         $user = user::current();
 
-        $message = message::fetch($params['messageid']);
-        if (!$message || !$user->can_edit_message($message)) {
-            throw new exception('errormessagenotfound');
+        $message = message::get($params['messageid']);
+        if (!$user->can_edit_message($message)) {
+            throw new exception('errormessagenotfound', $message->id);
         }
 
-        $recipients = $message->recipients();
+        $recipients = $message->get_recipients();
 
         if (!$recipients) {
             throw new exception('erroremptyrecipients');
         }
 
-        $search = new user_search($user, $message->course);
+        $search = new user_search($user, $message->get_course());
         $search->include = array_column($recipients, 'id');
-        $validrecipients = $search->fetch();
+        $validrecipients = $search->get();
 
         foreach ($recipients as $recipient) {
             if (!isset($validrecipients[$recipient->id])) {
@@ -1616,7 +1611,7 @@ class external extends \external_api {
         event\message_sent::create_from_message($message)->trigger();
 
         $renderer = $PAGE->get_renderer('local_mail');
-        foreach ($message->recipients() as $recipient) {
+        foreach ($message->get_recipients() as $recipient) {
             $notificationid = message_send($renderer->notification($message, $recipient));
             if ($notificationid && get_user_preferences('local_mail_markasread', false, $recipient->id)) {
                 $message->set_unread($recipient, false);

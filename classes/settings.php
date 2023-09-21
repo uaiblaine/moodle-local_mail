@@ -83,7 +83,7 @@ class settings {
      *
      * @return self
      */
-    public static function fetch(): self {
+    public static function get(): self {
         $settings = new self();
 
         $config = get_config('local_mail');

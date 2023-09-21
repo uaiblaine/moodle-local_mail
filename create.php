@@ -42,16 +42,16 @@ $PAGE->set_pagelayout('base');
 
 // Check permission.
 $user = user::current();
-$course = course::fetch($courseid);
-if (!$course || !$user->can_use_mail($course)) {
-    throw new exception('errorcoursenotfound');
+$course = course::get($courseid);
+if (!$user->can_use_mail($course)) {
+    throw new exception('errorcoursenotfound', $courseid);
 }
 
 // Create message.
 $data = message_data::new($course, $user);
 if ($recipients) {
     $role = in_array($role, ['to', 'cc', 'bcc']) ? $role : 'to';
-    $data->$role = user::fetch_many(explode(',', $recipients));
+    $data->$role = user::get_many(explode(',', $recipients));
 }
 $message = message::create($data);
 

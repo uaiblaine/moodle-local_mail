@@ -24,7 +24,7 @@ class message_sent extends \core\event\base {
         return self::create([
             'userid' => $USER->id,
             'objectid' => $message->id,
-            'context' => $message->course->context(),
+            'context' => $message->get_course()->get_context(),
         ]);
     }
 

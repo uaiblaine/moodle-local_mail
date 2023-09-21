@@ -105,8 +105,11 @@ class renderer extends \plugin_renderer_base {
 
         require_once("$CFG->libdir/filelib.php");
 
+        $course = $message->get_course();
+        $context = $course->get_context();
+        $sender = $message->get_sender();
+
         $url = new \moodle_url('/local/mail/view.php', array('t' => 'inbox', 'm' => $message->id));
-        $context = $message->course->context();
         $content = file_rewrite_pluginfile_urls(
             $message->content,
             'pluginfile.php',
@@ -128,15 +131,15 @@ class renderer extends \plugin_renderer_base {
         }
 
         $notification = new \core\message\message();
-        $notification->courseid = $message->course->id;
+        $notification->courseid = $message->courseid;
         $notification->component = 'local_mail';
         $notification->name = 'mail';
-        $notification->userfrom = $message->sender()->id;
+        $notification->userfrom = $sender->id;
         $notification->userto = $recipient->id;
         $notification->subject = strings::get('notificationsubject', $SITE->shortname);
         $notification->fullmessage = $this->render_from_template('local_mail/notification_text', [
-            'coursename' => $message->course->fullname,
-            'sendername' => $message->sender()->fullname(),
+            'coursename' => $course->fullname,
+            'sendername' => $sender->fullname(),
             'date' => $this->formatted_time($message->time, true),
             'subject' => $message->subject,
             'content' => format_text_email($content, $message->format),
@@ -146,10 +149,10 @@ class renderer extends \plugin_renderer_base {
         ]);
         $notification->fullmessageformat = FORMAT_PLAIN;
         $notification->fullmessagehtml = $this->render_from_template('local_mail/notification_html', [
-            'coursename' => $message->course->fullname,
-            'courseurl' => $message->course->url(),
-            'sendername' => $message->sender()->fullname(),
-            'senderurl' => $message->sender()->profile_url($message->course),
+            'coursename' => $course->fullname,
+            'courseurl' => $course->url(),
+            'sendername' => $sender->fullname(),
+            'senderurl' => $sender->profile_url($course),
             'date' => $this->formatted_time($message->time, true),
             'subject' => $message->subject,
             'content' => format_text($content, $message->format, ['filter' => false]),
@@ -158,8 +161,8 @@ class renderer extends \plugin_renderer_base {
             'viewurl' => $url->out(false),
         ]);
         $notification->smallmessage = strings::get('notificationsmallmessage', [
-            'user' => $message->sender()->fullname(),
-            'course' => $message->course->fullname,
+            'user' => $sender->fullname(),
+            'course' => $course->fullname,
         ]);
         $notification->notification = 1;
         $notification->contexturl = $url->out(false);

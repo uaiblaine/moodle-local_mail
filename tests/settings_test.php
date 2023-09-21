@@ -45,7 +45,7 @@ class settings_test extends testcase {
         self::assertEquals(1000, $settings->incrementalsearchlimit);
     }
 
-    public function test_fetch() {
+    public function test_get() {
         set_config('maxbytes', 123000);
         set_config('enablebackup', '0', 'local_mail');
         set_config('maxrecipients', '20', 'local_mail');
@@ -63,7 +63,7 @@ class settings_test extends testcase {
         set_config('message_provider_local_mail_mail_enabled', 'popup,email', 'message');
         set_config('email_provider_local_mail_mail_locked', '1', 'message');
 
-        $settings = settings::fetch();
+        $settings = settings::get();
 
         self::assertFalse($settings->enablebackup);
         self::assertEquals(20, $settings->maxrecipients);
@@ -96,7 +96,7 @@ class settings_test extends testcase {
         // Empty global trays.
 
         set_config('globaltrays', '', 'local_mail');
-        $settings = settings::fetch();
+        $settings = settings::get();
         self::assertEquals([], $settings->globaltrays);
     }
 

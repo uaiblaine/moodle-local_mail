@@ -55,9 +55,9 @@ class lib_test extends testcase {
 
         // User can view attachments.
         self::setUser($user2->id);
-        $result = local_mail_pluginfile(null, null, $course->context(), 'message', [$message1->id, 'file1.txt'], null);
+        $result = local_mail_pluginfile(null, null, $course->get_context(), 'message', [$message1->id, 'file1.txt'], null);
         self::assertInstanceOf('\stored_file', $result);
-        self::assertEquals($course->context()->id, $result->get_contextid());
+        self::assertEquals($course->get_context()->id, $result->get_contextid());
         self::assertEquals('local_mail', $result->get_component());
         self::assertEquals('message', $result->get_filearea());
         self::assertEquals($message1->id, $result->get_itemid());
@@ -67,33 +67,33 @@ class lib_test extends testcase {
 
         // User can view attachments.
         self::setUser($user3->id);
-        $result = local_mail_pluginfile(null, null, $course->context(), 'message', [$message1->id, 'file1.txt'], null);
+        $result = local_mail_pluginfile(null, null, $course->get_context(), 'message', [$message1->id, 'file1.txt'], null);
         self::assertNotFalse($result);
 
         // User cannot view message.
         self::setUser($user4->id);
-        $result = local_mail_pluginfile(null, null, $course->context(), 'message', [$message1->id, 'file1.txt'], null);
+        $result = local_mail_pluginfile(null, null, $course->get_context(), 'message', [$message1->id, 'file1.txt'], null);
         self::assertFalse($result);
 
         // User cannot view draft.
         self::setUser($user2->id);
-        $result = local_mail_pluginfile(null, null, $course->context(), 'message', [$message3->id, 'file3.txt'], null);
+        $result = local_mail_pluginfile(null, null, $course->get_context(), 'message', [$message3->id, 'file3.txt'], null);
         self::assertFalse($result);
 
         // Inexistent message.
         self::setUser($user2->id);
-        $result = local_mail_pluginfile(null, null, $course->context(), 'message', [$message1->id, 'file2.txt'], null);
+        $result = local_mail_pluginfile(null, null, $course->get_context(), 'message', [$message1->id, 'file2.txt'], null);
         self::assertFalse($result);
 
         // Inexistent message.
         self::setUser($user2->id);
-        $result = local_mail_pluginfile(null, null, $course->context(), 'message', [-1, 'file1.txt'], null);
+        $result = local_mail_pluginfile(null, null, $course->get_context(), 'message', [-1, 'file1.txt'], null);
         self::assertFalse($result);
 
         // Not installed.
         unset_config('version', 'local_mail');
         self::setUser($user2->id);
-        $result = local_mail_pluginfile(null, null, $course->context(), 'message', [$message1->id, 'file1.txt'], null);
+        $result = local_mail_pluginfile(null, null, $course->get_context(), 'message', [$message1->id, 'file1.txt'], null);
         self::assertFalse($result);
     }
 
@@ -148,7 +148,7 @@ class lib_test extends testcase {
         $expected = \html_writer::script('window.local_mail_navbar_data = ' . json_encode([
             'userid' => $user1->id,
             'courseid' => $course1->id,
-            'settings' => (array) settings::fetch(),
+            'settings' => (array) settings::get(),
             'strings' => output\strings::get_many([
                 'allcourses',
                 'bcc',

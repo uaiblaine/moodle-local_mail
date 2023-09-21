@@ -47,11 +47,11 @@ $PAGE->set_title(strings::get('pluginname'));
 
 $user = user::current();
 
-if ($user && course::fetch_by_user($user)) {
+if ($user && course::get_by_user($user)) {
     // Initial data passed via a script tag.
     $data = [
         'userid' => $user->id,
-        'settings' => (array) settings::fetch(),
+        'settings' => (array) settings::get(),
         'preferences' => external::get_preferences_raw(),
         'strings' => strings::get_all(),
         'mobile' => $appid != '',

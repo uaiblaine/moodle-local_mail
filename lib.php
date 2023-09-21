@@ -48,15 +48,13 @@ function local_mail_pluginfile(
     }
 
     // Check message.
-
     $messageid = (int) array_shift($args);
-    $message = message::fetch($messageid);
+    $message = message::get($messageid, IGNORE_MISSING);
     if ($filearea != 'message' || !$message || !$user || !$user->can_view_files($message)) {
         return false;
     }
 
-    // Fetch file info.
-
+    // Get file.
     $fs = get_file_storage();
     $relativepath = implode('/', $args);
     $fullpath = "/$context->id/local_mail/$filearea/$messageid/$relativepath";
@@ -85,7 +83,7 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
 
     $user = user::current();
 
-    if (!settings::is_installed() || !$user || !course::fetch_by_user($user)) {
+    if (!settings::is_installed() || !$user || !course::get_by_user($user)) {
         return '';
     }
 
@@ -117,7 +115,7 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
         $data = [
             'userid' => $user->id,
             'courseid' => $courseid,
-            'settings' => (array) settings::fetch(),
+            'settings' => (array) settings::get(),
             'strings' => strings::get_many([
                 'allcourses',
                 'bcc',

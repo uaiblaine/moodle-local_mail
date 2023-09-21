@@ -58,70 +58,104 @@ class course {
     }
 
     /**
-     * Context of the course.
+     * Cache of courses, indexed by ID.
      *
-     * @return \context_course
+     * @return \cache
      */
-    public function context(): \context_course {
-        return \context_course::instance($this->id);
+    public static function cache(): \cache {
+        return \cache::make('local_mail', 'courses');
     }
 
     /**
-     * Fetches a course from the database
+     * Gets a course from the database.
      *
-     * @param int $id ID of the course to fetch.
-     * @return ?self The fetched course or null if not found.
+     * @param int $id ID of the course to get.
+     * @param int $strictness MUST_EXIST or IGNORE_MISSING.
+     * @return ?self
      */
-    public static function fetch(int $id): ?self {
-        $courses = self::fetch_many([$id]);
-        return isset($courses[$id]) ? $courses[$id] : null;
+    public static function get(int $id, int $strictness = MUST_EXIST): ?self {
+        $courses = self::get_many([$id], $strictness);
+
+        return $courses[$id] ?? null;
     }
 
     /**
-     * Fetches courses in which the given user can use mail.
+     * Gets courses in which the given user can use mail.
      *
      * @param user $user User.
-     * @return self[] The fetched courses.
+     * @return self[] Array of courses indexed by ID.
      */
-    public static function fetch_by_user(user $user): array {
+    public static function get_by_user(user $user): array {
         $courses = [];
 
-        foreach (enrol_get_users_courses($user->id, true) as $record) {
-            $context = \context_course::instance($record->id);
-            if (has_capability('local/mail:usemail', $context, $user->id, false)) {
-                $courses[$record->id] = new self($record);
+        $ids = self::user_cache()->get($user->id);
+
+        if ($ids === false) {
+            $courses = [];
+            foreach (enrol_get_users_courses($user->id, true) as $record) {
+                $context = \context_course::instance($record->id);
+                if (has_capability('local/mail:usemail', $context, $user->id, false)) {
+                    $courses[$record->id] = new self($record);
+                }
+            }
+
+            self::cache()->set_many($courses);
+            self::user_cache()->set($user->id, array_keys($courses));
+
+            return $courses;
+        } else {
+            return self::get_many($ids);
+        }
+    }
+
+    /**
+     * Gets multiple courses from the database.
+     *
+     * @param int[] $ids IDs of the courses to get.
+     * @param int $strictness MUST_EXIST or IGNORE_MISSING.
+     * @return self[] Array of courses indexed by ID.
+     */
+    public static function get_many(array $ids, int $strictness = MUST_EXIST): array {
+        global $DB;
+
+        $courses = self::cache()->get_many($ids);
+        $missingids = array_filter($ids, fn($id) => !$courses[$id]);
+
+        if ($missingids) {
+            list($sqlid, $params) = $DB->get_in_or_equal($missingids, SQL_PARAMS_NAMED, 'courseid');
+            $select = "id $sqlid AND id <> :siteid";
+            $params['siteid'] = SITEID;
+            $fields = 'id, shortname, fullname, visible, groupmode, defaultgroupingid';
+            $records = $DB->get_records_select('course', $select, $params, '', $fields);
+            foreach ($missingids as $id) {
+                if (isset($records[$id])) {
+                    $courses[$id] = new self($records[$id]);
+                    self::cache()->set($id, $courses[$id]);
+                } else if ($strictness == MUST_EXIST) {
+                    throw new exception('errorcoursenotfound', $id);
+                }
             }
         }
 
-        return $courses;
+        return array_filter($courses);
     }
 
     /**
-     * Fetches multiple courses from the database.
+     * Cache of user course IDs, indexed by user ID.
      *
-     * @param int[] $ids IDs of the courses to fetch.
-     * @return self[] The fetched courses, indexed by ID.
+     * @return \cache
      */
-    public static function fetch_many(array $ids): array {
-        global $DB;
+    public static function user_cache(): \cache {
+        return \cache::make('local_mail', 'usercourseids');
+    }
 
-        if (!$ids) {
-            return [];
-        }
-
-        list($sqlid, $params) = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'courseid');
-        $select = "id $sqlid AND id <> :siteid";
-        $params['siteid'] = SITEID;
-        $fields = 'id, shortname, fullname, visible, groupmode, defaultgroupingid';
-        $sort = \enrol_get_courses_sortingsql();
-        $records = $DB->get_records_select('course', $select, $params, $sort, $fields);
-
-        $courses = [];
-        foreach ($records as $record) {
-            $courses[$record->id] = new self($record);
-        }
-
-        return $courses;
+    /**
+     * Gets the context of the course.
+     *
+     * @return \context_course
+     */
+    public function get_context(): \context_course {
+        return \context_course::instance($this->id);
     }
 
     /**
@@ -154,8 +188,8 @@ class course {
      */
     public function get_viewable_roles(user $user): array {
         $result = [];
-        list($needed, $forbidden) = get_roles_with_cap_in_context($this->context(), 'local/mail:usemail');
-        foreach (get_viewable_roles($this->context(), $user->id) as $roleid => $rolename) {
+        list($needed, $forbidden) = get_roles_with_cap_in_context($this->get_context(), 'local/mail:usemail');
+        foreach (get_viewable_roles($this->get_context(), $user->id) as $roleid => $rolename) {
             if (isset($needed[$roleid]) && !isset($forbidden[$roleid])) {
                 $result[$roleid] = $rolename;
             }

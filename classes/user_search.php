@@ -81,13 +81,13 @@ class user_search {
     }
 
     /**
-     * Fetch users that match the search parameters.
+     * Gets users that match the search parameters.
      *
-     * @param int $offset Start fetching from this offset.
-     * @param int $limit Limit number of users to fetch, 0 means no limit.
+     * @param int $offset Skip this number of users.
+     * @param int $limit Maximum number of users, 0 means no limit.
      * @return user[] Found users, indexed by ID.
      */
-    public function fetch(int $offset = 0, int $limit = 0): array {
+    public function get(int $offset = 0, int $limit = 0): array {
         global $DB;
 
         $fields = \core_user\fields::get_picture_fields();
@@ -118,7 +118,7 @@ class user_search {
         global $DB;
 
         // Enrolled.
-        $context = $this->course->context();
+        $context = $this->course->get_context();
         $ejoin = get_enrolled_join($context, 'u.id', true);
         $joins = $ejoin->joins;
         $wheres = $ejoin->wheres;

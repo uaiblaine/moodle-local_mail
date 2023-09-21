@@ -64,7 +64,7 @@ class message_search_test extends testcase {
         foreach (self::cases($users, $messages) as $search) {
             $expected = [];
             foreach (self::search_result($messages, $search) as $message) {
-                $expected[$message->course->id] = ($expected[$message->course->id] ?? 0) + 1;
+                $expected[$message->courseid] = ($expected[$message->courseid] ?? 0) + 1;
             }
             self::assertEquals($expected, $search->count_per_course(), $search);
         }
@@ -75,9 +75,9 @@ class message_search_test extends testcase {
         foreach (self::cases($users, $messages) as $search) {
             $expected = [];
             foreach (self::search_result($messages, $search) as $message) {
-                foreach ($message->labels($search->user) as $label) {
+                foreach ($message->get_labels($search->user) as $label) {
                     if (!$search->label || $search->label->id == $label->id) {
-                        $expected[$label->id][$message->course->id] = ($expected[$label->id][$message->course->id] ?? 0) + 1;
+                        $expected[$label->id][$message->courseid] = ($expected[$label->id][$message->courseid] ?? 0) + 1;
                     }
                 }
             }
@@ -85,17 +85,17 @@ class message_search_test extends testcase {
         }
     }
 
-    public function test_fetch() {
+    public function test_get() {
         list($users, $messages) = self::generate_data();
         foreach (self::cases($users, $messages) as $search) {
             $expected = self::search_result($messages, $search);
-            $result = $search->fetch(0, 0);
+            $result = $search->get(0, 0);
             self::assertEquals($expected, $result, $search);
             self::assertEquals(array_keys($expected), array_keys($result), $search);
 
             // Offset and limit.
             $expected = array_slice($expected, 5, 20, true);
-            $result = $search->fetch(5, 20);
+            $result = $search->get(5, 20);
             self::assertEquals($expected, $result, $search);
             self::assertEquals(array_keys($expected), array_keys($result), $search);
         }
@@ -151,14 +151,14 @@ class message_search_test extends testcase {
             $result[] = $search;
 
             // Course.
-            foreach (course::fetch_by_user($user) as $course) {
+            foreach (course::get_by_user($user) as $course) {
                 $search = new message_search($user);
                 $search->course = $course;
                 $result[] = $search;
             }
 
             // Label.
-            foreach (label::fetch_by_user($user) as $label) {
+            foreach (label::get_by_user($user) as $label) {
                 $search = new message_search($user);
                 $search->label = $label;
                 $result[] = $search;
@@ -299,7 +299,7 @@ class message_search_test extends testcase {
 
             $messages[] = $message;
 
-            if (self::random_bool(self::DRAFT_FREQ) || !$message->recipients()) {
+            if (self::random_bool(self::DRAFT_FREQ) || !$message->get_recipients()) {
                 continue;
             }
 
@@ -308,7 +308,7 @@ class message_search_test extends testcase {
 
             $message->set_unread($data->sender, self::random_bool(self::UNREAD_FREQ));
 
-            foreach ([$data->sender, ...$message->recipients()] as $user) {
+            foreach ([$data->sender, ...$message->get_recipients()] as $user) {
                 $message->set_unread($user, self::random_bool(self::UNREAD_FREQ));
                 if ($user->id != $data->sender->id) {
                     $message->set_starred($user, self::random_bool(self::STARRED_FREQ));
@@ -334,15 +334,15 @@ class message_search_test extends testcase {
      * @return message[] Found messages, ordered from newer to older and indexed by ID.
      */
     protected static function search_result(array $messages, message_search $search): array {
-        $courseids = $search->course ? [$search->course->id] : array_keys(course::fetch_by_user($search->user));
+        $courseids = $search->course ? [$search->course->id] : array_keys(course::get_by_user($search->user));
 
         $result = [];
 
         foreach (array_reverse($messages) as $message) {
             if (
-                !in_array($message->course->id, $courseids) ||
-                $search->user->id != $message->sender()->id && !$message->has_recipient($search->user) ||
-                $search->user->id != $message->sender()->id && $message->draft ||
+                !in_array($message->courseid, $courseids) ||
+                $search->user->id != $message->get_sender()->id && !$message->has_recipient($search->user) ||
+                $search->user->id != $message->get_sender()->id && $message->draft ||
                 $search->label && !$message->has_label($search->label) ||
                 $search->draft !== null && $search->draft != $message->draft ||
                 $search->roles && !in_array($message->role($search->user), $search->roles) ||
@@ -368,7 +368,7 @@ class message_search_test extends testcase {
                 if (\core_text::strpos(message::normalize_text($message->content), $pattern) !== false) {
                     $found = true;
                 }
-                foreach ([$message->sender(), ...$message->recipients(message::ROLE_TO, message::ROLE_CC)] as $user) {
+                foreach ([$message->get_sender(), ...$message->get_recipients(message::ROLE_TO, message::ROLE_CC)] as $user) {
                     if (\core_text::strpos($user->fullname(), $pattern) !== false) {
                         $found = true;
                     }
@@ -379,14 +379,14 @@ class message_search_test extends testcase {
             }
             if ($search->sendername != '') {
                 $pattern = message::normalize_text($search->sendername);
-                if (\core_text::strpos($message->sender()->fullname(), $pattern) === false) {
+                if (\core_text::strpos($message->get_sender()->fullname(), $pattern) === false) {
                     continue;
                 }
             }
             if ($search->recipientname != '') {
                 $found = false;
                 $pattern = message::normalize_text($search->recipientname);
-                foreach ($message->recipients(message::ROLE_TO, message::ROLE_CC) as $user) {
+                foreach ($message->get_recipients(message::ROLE_TO, message::ROLE_CC) as $user) {
                     if (\core_text::strpos($user->fullname(), $pattern) !== false) {
                         $found = true;
                     }

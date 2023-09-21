@@ -44,7 +44,7 @@ abstract class testcase extends \advanced_testcase {
      */
     protected static function assert_attachments(array $expected, message $message) {
         $fs = get_file_storage();
-        $contextid = $message->course->context()->id;
+        $contextid = $message->get_course()->get_context()->id;
         $files = $fs->get_area_files($contextid, 'local_mail', 'message', $message->id, 'id', false);
         $actual = [];
         foreach ($files as $file) {
@@ -82,7 +82,7 @@ abstract class testcase extends \advanced_testcase {
         self::assert_record_data('messages', [
             'id' => $message->id,
         ], [
-            'courseid' => $message->course->id ?? 0,
+            'courseid' => $message->courseid,
             'subject' => $message->subject,
             'content' => $message->content,
             'format' => $message->format,
@@ -93,18 +93,18 @@ abstract class testcase extends \advanced_testcase {
             'normalizedcontent' => message::normalize_text($message->content),
         ]);
 
-        $numusers = count($message->recipients()) + 1;
+        $numusers = count($message->get_recipients()) + 1;
         self::assert_record_count($numusers, 'message_users', ['messageid' => $message->id]);
 
-        $numlabels = count($message->labels($message->sender()));
-        foreach ($message->recipients() as $user) {
-            $numlabels += count($message->labels($user));
+        $numlabels = count($message->get_labels($message->get_sender()));
+        foreach ($message->get_recipients() as $user) {
+            $numlabels += count($message->get_labels($user));
         }
         self::assert_record_count($numlabels, 'message_labels', ['messageid' => $message->id]);
 
-        foreach ([$message->sender(), ...$message->recipients()] as $user) {
+        foreach ([$message->get_sender(), ...$message->get_recipients()] as $user) {
             $data = [
-                'courseid' => $message->course->id ?? 0,
+                'courseid' => $message->courseid,
                 'draft' => (int) $message->draft,
                 'time' => $message->time,
                 'role' => $message->role($user),
@@ -116,7 +116,7 @@ abstract class testcase extends \advanced_testcase {
                 'messageid' => $message->id,
                 'userid' => $user->id
             ], $data);
-            foreach ($message->labels($user) as $label) {
+            foreach ($message->get_labels($user) as $label) {
                 self::assert_record_data('message_labels', [
                     'messageid' => $message->id,
                     'labelid' => $label->id,
@@ -149,8 +149,8 @@ abstract class testcase extends \advanced_testcase {
             self::assertEquals(0, $events[0]->courseid);
             self::assertEquals(\context_user::instance($USER->id)->id, $events[0]->contextid);
         } else {
-            self::assertEquals($message->course->id, $events[0]->courseid);
-            self::assertEquals($message->course->context()->id, $events[0]->contextid);
+            self::assertEquals($message->courseid, $events[0]->courseid);
+            self::assertEquals($message->get_course()->get_context()->id, $events[0]->contextid);
         }
 
         $sink->close();

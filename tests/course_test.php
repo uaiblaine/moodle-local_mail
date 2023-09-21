@@ -25,28 +25,14 @@ require_once(__DIR__ . '/testcase.php');
  */
 class course_test extends testcase {
 
-    public function test_context() {
-        $generator = self::getDataGenerator();
-        $record1 = $generator->create_course();
-        $record2 = $generator->create_course();
-
-        $course1 = course::fetch($record1->id);
-        $course2 = course::fetch($record2->id);
-
-        self::assertEquals(\context_course::instance($record1->id), $course1->context());
-        self::assertEquals(\context_course::instance($record2->id), $course2->context());
-    }
-
-    public function test_fetch() {
+    public function test_get() {
         $generator = self::getDataGenerator();
         $record = $generator->create_course(['groupmode' => SEPARATEGROUPS]);
         $grouping = $generator->create_grouping(['courseid' => $record->id]);
         $record->defaultgroupingid = $grouping->id;
         update_course($record);
 
-        self::assertNull(course::fetch(0));
-
-        $course = course::fetch($record->id);
+        $course = course::get($record->id);
 
         self::assertInstanceOf(course::class, $course);
         self::assertEquals((int) $record->id, $course->id);
@@ -55,46 +41,87 @@ class course_test extends testcase {
         self::assertEquals((bool) $record->visible, $course->visible);
         self::assertEquals((int) $record->groupmode, $course->groupmode);
         self::assertEquals((int) $record->defaultgroupingid, $course->defaultgroupingid);
+        self::assertEquals($course, course::cache()->get($course->id));
+
+        // Missing course.
+        try {
+            course::get(123);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errorcoursenotfound', $e->errorcode);
+            self::assertEquals(123, $e->a);
+        }
+
+        // Ignored missing course.
+        self::assertNull(course::get(123, IGNORE_MISSING));
     }
 
-    public function test_fetch_by_course() {
+    public function test_get_by_course() {
         $generator = self::getDataGenerator();
-        $record1 = $generator->create_course();
-        $record2 = $generator->create_course();
-        $record3 = $generator->create_course();
-        $record4 = $generator->create_course();
-        $record5 = $generator->create_course(['visible' => false]);
-        $record6 = $generator->create_course();
+        $course1 = new course($generator->create_course());
+        $course2 = new course($generator->create_course());
+        $course3 = new course($generator->create_course());
+        $course4 = new course($generator->create_course());
+        $course5 = new course($generator->create_course(['visible' => false]));
+        $course6 = new course($generator->create_course());
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
+        $generator->enrol_user($user1->id, $course1->id);
+        $generator->enrol_user($user1->id, $course2->id);
+        $generator->enrol_user($user2->id, $course3->id);
+        $generator->enrol_user($user1->id, $course4->id);
+        $generator->enrol_user($user1->id, $course5->id);
+        $generator->enrol_user($user1->id, $course6->id, 'guest');
 
-        $generator->enrol_user($user1->id, $record1->id);
-        $generator->enrol_user($user1->id, $record2->id);
-        $generator->enrol_user($user2->id, $record3->id);
-        $generator->enrol_user($user1->id, $record4->id);
-        $generator->enrol_user($user1->id, $record5->id);
-        $generator->enrol_user($user1->id, $record6->id, 'guest');
+        $result = course::get_by_user($user1);
 
-        $courses = course::fetch_by_user($user1);
-
-        self::assertEquals(course::fetch_many([$record4->id, $record2->id, $record1->id]), $courses);
+        self::assertEquals([$course4->id => $course4, $course2->id => $course2, $course1->id => $course1], $result);
+        self::assertEquals($course1, course::cache()->get($course1->id));
+        self::assertEquals($course2, course::cache()->get($course2->id));
+        self::assertEquals($course4, course::cache()->get($course4->id));
+        self::assertFalse(course::cache()->has($course3->id));
+        self::assertFalse(course::cache()->has($course5->id));
+        self::assertFalse(course::cache()->has($course6->id));
+        self::assertEquals([$course4->id, $course2->id, $course1->id], course::user_cache()->get($user1->id));
     }
 
-    public function test_fetch_many() {
+    public function test_get_context() {
         $generator = self::getDataGenerator();
-        $record1 = $generator->create_course();
-        $record2 = $generator->create_course();
-        $record3 = $generator->create_course();
+        $course1 = new course($generator->create_course());
+        $course2 = new course($generator->create_course());
 
-        self::assertEquals([], course::fetch_many([]));
+        self::assertEquals(\context_course::instance($course1->id), $course1->get_context());
+        self::assertEquals(\context_course::instance($course2->id), $course2->get_context());
+    }
 
-        $courses = course::fetch_many([$record1->id, 0, $record2->id, $record1->id, $record3->id]);
+    public function test_get_many() {
+        $generator = self::getDataGenerator();
+        $course1 = new course($generator->create_course());
+        $course2 = new course($generator->create_course());
+        $course3 = new course($generator->create_course());
 
-        self::assertIsArray($courses);
-        self::assertEquals([$record3->id, $record2->id, $record1->id], array_keys($courses));
-        self::assertEquals(course::fetch($record1->id), $courses[$record1->id]);
-        self::assertEquals(course::fetch($record2->id), $courses[$record2->id]);
-        self::assertEquals(course::fetch($record3->id), $courses[$record3->id]);
+        $result = course::get_many([$course2->id, $course3->id, $course1->id, $course3->id]);
+
+        self::assertEquals([$course2->id => $course2, $course3->id => $course3, $course1->id => $course1], $result);
+        self::assertEquals($course1, course::cache()->get($course1->id));
+        self::assertEquals($course2, course::cache()->get($course2->id));
+        self::assertEquals($course3, course::cache()->get($course3->id));
+
+        // Missing course.
+        try {
+            course::get_many([$course1->id, 123, $course2->id]);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errorcoursenotfound', $e->errorcode);
+            self::assertEquals(123, $e->a);
+        }
+
+        // Ignored missing course.
+        $result = course::get_many([$course1->id, 123, $course2->id], IGNORE_MISSING);
+        self::assertEquals([$course1->id => $course1, $course2->id => $course2], $result);
+
+        // No IDs.
+        self::assertEquals([], course::get_many([]));
     }
 
     public function test_get_viewable_groups() {
@@ -154,7 +181,7 @@ class course_test extends testcase {
 
         $roles = get_roles_with_capability('local/mail:usemail');
         $expected = [];
-        foreach (get_viewable_roles($course->context(), $user->id) as $roleid => $rolename) {
+        foreach (get_viewable_roles($course->get_context(), $user->id) as $roleid => $rolename) {
             if (isset($roles[$roleid])) {
                 $expected[$roleid] = $rolename;
             }

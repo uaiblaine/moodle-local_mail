@@ -73,7 +73,7 @@ if ($hassiteconfig) {
     $description = strings::get('configmaxattachmentsizedesc');
     $defaultsetting = $defaults->maxbytes;
     $paramtype = PARAM_INT;
-    $choices = get_max_upload_sizes($CFG->maxbytes ?? 0, 0, 0, settings::fetch()->maxbytes);
+    $choices = get_max_upload_sizes($CFG->maxbytes ?? 0, 0, 0, settings::get()->maxbytes);
     $settings->add(new admin_setting_configselect($name, $visiblename, $description, $defaultsetting, $choices));
 
     // Trays.
