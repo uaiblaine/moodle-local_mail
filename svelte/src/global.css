@@ -24,8 +24,7 @@
     --local-mail-color-cyan-fg: #055160;
 }
 
-.local-mail .dropdown-menu,
-.local-mail .dropdown-menu .list-group-item:not(.list-group-item-primary) {
+.local-mail .dropdown-menu {
     background-color: var(--light);
 }
 

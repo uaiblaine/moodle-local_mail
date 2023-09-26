@@ -18,7 +18,6 @@
     export let onCourseChange: (courseid?: number) => void;
 
     let expanded = false;
-    let viewportWidth: number;
 
     $: unread = courses.reduce((acc, course) => acc + course.unread, 0);
 
@@ -52,11 +51,9 @@
     };
 </script>
 
-<svelte:window bind:innerWidth={viewportWidth} />
-
 <div
-    class="local-mail local-mail-navbar pop-over-region dropdown h-100"
-    class:position-static={viewportWidth < 768}
+    class="local-mail local-mail-navbar pop-over-region h-100"
+    class:popover-region-toggle={expanded}
     use:blur={closeMenu}
 >
     <a
@@ -72,7 +69,7 @@
         {/if}
     </a>
     {#if expanded}
-        <div class="local-mail-navbar-dropdown dropdown-menu dropdown-menu-right show p-0">
+        <div class="local-mail-navbar-popover popover-region-container">
             <div class="d-flex justify-content-between p-2">
                 <ComposeButton {strings} onClick={handleComposeClick} />
                 <PreferencesButton {strings} onClick={handlePreferencesClick} />
@@ -96,8 +93,22 @@
         top: 50% !important;
         transform: translateY(-16px);
     }
-    .local-mail-navbar-dropdown {
-        width: 100vw;
-        max-width: 20rem;
+
+    .local-mail-navbar.popover-region-toggle::after {
+        border-bottom-color: var(--light);
+    }
+
+    .local-mail-navbar-popover {
+        width: 20rem;
+        overflow-y: auto;
+        background-color: var(--light);
+    }
+
+    .local-mail-navbar-popover .list-group-item:not(.list-group-item-primary) {
+        background-color: transparent;
+    }
+
+    .local-mail-navbar-popover .list-group-item:not(.list-group-item-primary):hover {
+        background-color: rgba(0, 0, 0, 0.025);
     }
 </style>

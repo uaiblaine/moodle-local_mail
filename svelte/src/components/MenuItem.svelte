@@ -14,8 +14,6 @@
     export let color: string | undefined = undefined;
     export let onClick: ((params: ViewParams) => void) | undefined = undefined;
 
-    $: styleColor = color && !active ? `color: var(--local-mail-color-${color}-fg)` : '';
-
     const handleClick = (event: Event) => {
         if (onClick) {
             event.preventDefault();
@@ -33,9 +31,13 @@
     role="tab"
     href={viewUrl(params)}
     on:click={handleClick}
-    style={styleColor}
+    style={color && !active ? `color: var(--local-mail-color-${color}-fg)` : ''}
 >
-    <i class="fa {icon} fa-fw" aria-hidden="true" style={styleColor} />
+    <i
+        class="fa {icon} fa-fw"
+        aria-hidden="true"
+        style={color && !active ? `color: var(--local-mail-color-${color}-bg)` : ''}
+    />
     <span class="flex-fill px-2" use:truncate={text}>{text}</span>
     {#if count > 0}
         <span class="badge">{count}</span>
