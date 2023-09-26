@@ -24,6 +24,7 @@ require_once(__DIR__ . '/user_search_test.php');
 
 /**
  * @covers \local_mail\external
+ * @runTestsInSeparateProcesses
  */
 class external_test extends testcase {
 

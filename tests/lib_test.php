@@ -23,6 +23,7 @@ require_once(__DIR__ . '/testcase.php');
 /**
  * @covers \local_mail_pluginfile
  * @covers \local_mail_render_navbar_output
+ * @runTestsInSeparateProcesses
  */
 class lib_test extends testcase {
 
