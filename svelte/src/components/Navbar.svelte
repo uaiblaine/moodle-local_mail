@@ -55,18 +55,18 @@
 <svelte:window bind:innerWidth={viewportWidth} />
 
 <div
-    class="local-mail local-mail-navbar dropdown h-100"
+    class="local-mail local-mail-navbar pop-over-region dropdown h-100"
     class:position-static={viewportWidth < 768}
     use:blur={closeMenu}
 >
     <a
         aria-expanded={expanded}
-        class="btn h-100 position-relative d-flex align-items-center px-2 py-0 rounded-0"
+        class="nav-link btn h-100 position-relative d-flex align-items-center px-2 py-0 rounded-0"
         href={viewUrl({ tray: 'inbox' })}
         title={strings.pluginname}
         on:click={handleIconClick}
     >
-        <i class="fa fa-fw fa-envelope-o" aria-label={strings.plugginname} />
+        <i class="icon fa fa-fw fa-envelope-o m-0" aria-label={strings.plugginname} />
         {#if unread > 0}
             <div class="local-mail-navbar-count count-container">{unread}</div>
         {/if}

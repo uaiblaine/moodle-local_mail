@@ -80,7 +80,7 @@
 
 <div
     class="local-mail-course-select position-relative d-flex p-0"
-    class:local-mail-course-select-menu={style == 'menu'}
+    class:local-mail-course-select-menu={style == 'menu' || style == 'navbar'}
     class:local-mail-course-select-navbar={style == 'navbar'}
     class:list-group-item={style == 'menu' || style == 'navbar'}
     use:blur={closeDropdown}
@@ -230,8 +230,7 @@
         z-index: 3;
     }
 
-    .local-mail-course-select-menu > .form-control,
-    .local-mail-course-select-navbar > .form-control {
+    .local-mail-course-select-menu > .form-control {
         font-size: inherit;
         height: auto;
         border-width: 0;

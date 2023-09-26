@@ -90,21 +90,21 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
     // Fallback link to avoid layout changes during page load.
     $url = new moodle_url('/local/mail/view.php', ['t' => 'inbox']);
     $title = strings::get('pluginname');
-    $class = 'btn h-100 d-flex align-items-center px-2 py-0';
+    $class = 'nav-link btn h-100 d-flex align-items-center px-2 py-0';
 
     $viewurl = new moodle_url('/local/mail/view.php');
     if ($PAGE->url->compare($viewurl, URL_MATCH_BASE)) {
         // Menu is handled from the view page.
-        $icon = html_writer::tag('i', '', ['class' => 'fa fa-fw fa-spinner fa-pulse', 'style' => "font-size: 16px"]);
+        $icon = html_writer::tag('i', '', ['class' => 'icon fa fa-fw fa-spinner fa-pulse m-0', 'style' => "font-size: 16px"]);
         $spinner = html_writer::tag('div', $icon, ['class' => $class]);
-        $container = html_writer::div($spinner, '', ['id' => 'local-mail-navbar']);
+        $container = html_writer::div($spinner, 'popover-region', ['id' => 'local-mail-navbar']);
         return $container;
     } else {
         // Other page in the site.
-        $icon = html_writer::tag('i', '', ['class' => 'fa fa-fw fa-envelope-o', 'style' => "font-size: 16px"]);
+        $icon = html_writer::tag('i', '', ['class' => 'icon fa fa-fw fa-envelope-o m-0', 'style' => "font-size: 16px"]);
         $attributes = ['href' => $url, 'class' => $class, 'title' => $title];
         $link = html_writer::tag('a', $icon, $attributes);
-        $container = html_writer::div($link, '', ['id' => 'local-mail-navbar']);
+        $container = html_writer::div($link, 'popover-region', ['id' => 'local-mail-navbar']);
 
         // Pass all data via a script tag to avoid web service requests.
         $courses = external::get_courses_raw();
