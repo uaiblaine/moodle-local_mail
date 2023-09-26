@@ -38,6 +38,7 @@ class message_search_test extends testcase {
     private const NUM_COURSES_PER_USER = 4;
     private const NUM_LABELS_PER_USER = 3;
     private const NUM_MESSAGES = 1000;
+    private const REPLY_FREQ = 0.5;
     private const DRAFT_FREQ = 0.2;
     private const RECIPIENT_FREQ = 0.2;
     private const UNREAD_FREQ = 0.2;
@@ -48,7 +49,7 @@ class message_search_test extends testcase {
     private const INC_TIME_FREQ = 0.9;
     private const WORDS = [
         'Xiuxiuejar', 'Aixopluc', 'Caliu', 'Tendresa', 'Llibertat',
-        'Moixaina', 'Amanyagar', 'Enraonar', 'Ginesta', 'Atzavara'
+        'Moixaina', 'Amanyagar', 'Enraonar', 'Ginesta', 'Atzavara', 'Paral·lel',
     ];
 
     public function test_count() {
@@ -273,10 +274,17 @@ class message_search_test extends testcase {
                 $time++;
             }
 
-            $data = message_data::new(self::random_item($courses), self::random_item($participants));
+            if (count($sentmessages) > 0 && self::random_bool(self::REPLY_FREQ)) {
+                $reference = self::random_item($sentmessages);
+                $data = message_data::reply($reference, self::random_item($reference->get_recipients()), false);
+            } else {
+                $data = message_data::new(self::random_item($courses), self::random_item($participants));
+            }
 
             if (self::random_bool(self::ATTACHMENT_FREQ)) {
-                self::create_draft_file($data->draftitemid, 'file.txt', 'text');
+                $filename = self::random_item(self::WORDS) . '.txt';
+                $content = self::random_item(self::WORDS) . ' ' . self::random_item(self::WORDS);
+                self::create_draft_file($data->draftitemid, $filename, $content);
             }
 
             $data->subject = self::random_item(self::WORDS);

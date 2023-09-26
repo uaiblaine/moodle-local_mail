@@ -22,13 +22,6 @@ require_once("$CFG->libdir/externallib.php");
 
 class external extends \external_api {
 
-    const ROLES = [
-        message::ROLE_FROM => 'from',
-        message::ROLE_TO => 'to',
-        message::ROLE_CC => 'cc',
-        message::ROLE_BCC => 'bcc',
-    ];
-
     public static function get_settings_parameters() {
         return new \external_function_parameters([]);
     }
@@ -446,7 +439,7 @@ class external extends \external_api {
         }
 
         foreach ($query['roles'] as $rolename) {
-            $role = array_search($rolename, self::ROLES);
+            $role = array_search($rolename, message::role_names());
             if ($role === false) {
                 throw new \invalid_parameter_exception('invalid role: ' . $rolename);
             }
@@ -539,7 +532,7 @@ class external extends \external_api {
             $recipients = [];
             foreach ($message->get_recipients(message::ROLE_TO, message::ROLE_CC) as $recipient) {
                 $recipients[] = [
-                    'type' => self::ROLES[$message->role($recipient)],
+                    'type' => message::role_names()[$message->role($recipient)],
                     'id' => $recipient->id,
                     'firstname' => $recipient->firstname,
                     'lastname' => $recipient->lastname,
@@ -739,7 +732,7 @@ class external extends \external_api {
                 continue;
             }
             $result['recipients'][] = [
-                'type' => self::ROLES[$role],
+                'type' => message::role_names()[$role],
                 'id' => $recipient->id,
                 'firstname' => $recipient->firstname,
                 'lastname' => $recipient->lastname,

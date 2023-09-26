@@ -383,7 +383,7 @@ class external_test extends testcase {
             if ($search->roles) {
                 $query['roles'] = [];
                 foreach ($search->roles as $role) {
-                    $query['roles'][] = external::ROLES[$role];
+                    $query['roles'][] = message::role_names()[$role];
                 }
             }
             if ($search->unread !== null) {
@@ -502,7 +502,7 @@ class external_test extends testcase {
             if ($search->roles) {
                 $query['roles'] = [];
                 foreach ($search->roles as $role) {
-                    $query['roles'][] = external::ROLES[$role];
+                    $query['roles'][] = message::role_names()[$role];
                 }
             }
             if ($search->unread !== null) {

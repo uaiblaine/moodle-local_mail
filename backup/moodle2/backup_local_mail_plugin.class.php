@@ -30,14 +30,14 @@ class backup_local_mail_plugin extends backup_local_plugin {
         // Elements.
         $pluginwrapper = new backup_nested_element($this->get_recommended_name());
         $messages = new backup_nested_element('messages');
-        $elements = array('courseid', 'subject', 'content', 'format', 'attachments', 'draft', 'time');
-        $message = new backup_nested_element('message', array('id'), $elements);
+        $elements = ['courseid', 'subject', 'content', 'format', 'attachments', 'draft', 'time'];
+        $message = new backup_nested_element('message', ['id'], $elements);
         $refs = new backup_nested_element('refs');
-        $ref = new backup_nested_element('ref', array('id'), array('reference'));
+        $ref = new backup_nested_element('ref', ['id'], ['reference']);
         $users = new backup_nested_element('users');
-        $user = new backup_nested_element('user', array('id'), array('userid', 'role', 'unread', 'starred', 'deleted'));
+        $user = new backup_nested_element('user', ['id'], ['userid', 'role', 'unread', 'starred', 'deleted']);
         $labels = new backup_nested_element('labels');
-        $label = new backup_nested_element('label', array('id'), array('userid', 'name', 'color'));
+        $label = new backup_nested_element('label', ['id'], ['userid', 'name', 'color']);
 
         // Tree.
         $plugin->add_child($pluginwrapper);
@@ -50,15 +50,30 @@ class backup_local_mail_plugin extends backup_local_plugin {
         $message->add_child($labels);
         $labels->add_child($label);
 
-        // Sources.
-        $message->set_source_table('local_mail_messages', array('courseid' => backup::VAR_COURSEID), 'id');
-        $ref->set_source_table('local_mail_message_refs', array('messageid' => '../../id'));
-        $user->set_source_table('local_mail_message_users', array('messageid' => '../../id'));
+        // Messages source.
+        $message->set_source_table('local_mail_messages', ['courseid' => backup::VAR_COURSEID], 'id');
+
+        // Users source.
+        // Roles are stored by name, for compatibility with older versions of the plugin.
+        $ref->set_source_table('local_mail_message_refs', ['messageid' => '../../id'], 'id');
+        $rolesql = 'CASE';
+        foreach (\local_mail\message::role_names() as $role => $name) {
+            $rolesql .= " WHEN role = $role THEN '$name'";
+        }
+        $rolesql .= ' END';
+        $sql = "SELECT id, userid, $rolesql AS role, unread, starred, deleted
+                FROM {local_mail_message_users}
+                WHERE messageid = ?
+                ORDER BY id";
+
+        // Labels source.
+        $user->set_source_sql($sql, ['messageid' => '../../id']);
         $sql = 'SELECT ml.id, l.userid, l.name, l.color
                 FROM {local_mail_message_labels} ml
                 JOIN {local_mail_labels} l ON l.id = ml.labelid
-                WHERE ml.messageid = ?';
-        $label->set_source_sql($sql, array('messageid' => '../../id'));
+                WHERE ml.messageid = ?
+                ORDER BY ml.id';
+        $label->set_source_sql($sql, ['messageid' => '../../id']);
 
         // ID annotations.
         $user->annotate_ids('user', 'userid');

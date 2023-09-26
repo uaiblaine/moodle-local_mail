@@ -286,6 +286,20 @@ class message {
     }
 
     /**
+     * Returns all the role names.
+     *
+     * @return string[] Array of role names indexed by value.
+     */
+    public static function role_names(): array {
+        return [
+            self::ROLE_FROM => 'from',
+            self::ROLE_TO => 'to',
+            self::ROLE_CC => 'cc',
+            self::ROLE_BCC => 'bcc',
+        ];
+    }
+
+    /**
      * Returns the deleted status of the message.
      *
      * @param user $user User.
