@@ -113,6 +113,11 @@ class label_test extends testcase {
         // User with no labels.
         self::assertEquals([], label::get_by_user($user3));
         self::assertEquals([], label::user_cache()->get($user3->id));
+
+        // Get from cache.
+        label::user_cache()->set($user1->id, [$label1->id, $label3->id]);
+        $result = label::get_by_user($user1);
+        self::assertEquals([$label1->id => $label1, $label3->id => $label3], $result);
     }
 
     public function test_get_many() {

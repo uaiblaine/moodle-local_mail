@@ -75,7 +75,9 @@ class strings {
         }
 
         if ($instance != null && !PHPUNIT_TEST) {
+            // @codeCoverageIgnoreStart
             return $instance;
+            // @codeCoverageIgnoreEnd
         }
 
         $instance = new class($CFG->langotherroot, $CFG->langlocalroot, []) extends \core_string_manager_standard {
@@ -84,7 +86,9 @@ class strings {
                 global $CFG;
 
                 if ($component != 'local_mail' || ($lang != 'ca' && $lang != 'es')) {
+                    // @codeCoverageIgnoreStart
                     throw new \coding_exception('Internal local_mail error: unexpected use of the string manager');
+                    // @codeCoverageIgnoreEnd
                 }
 
                 // Use a different cache key than the standard string manager.

@@ -178,7 +178,7 @@ class message_test extends testcase {
             self::assertEquals(123, $e->a);
         }
 
-         // Ignored missing message.
+        // Ignored missing message.
         self::assertNull(message::get(123, IGNORE_MISSING));
     }
 
@@ -437,6 +437,16 @@ class message_test extends testcase {
         self::assertEquals(message::ROLE_TO, $message->role($user3));
         self::assertEquals(message::ROLE_CC, $message->role($user4));
         self::assertEquals(message::ROLE_BCC, $message->role($user5));
+    }
+
+    public function test_role_names() {
+        $expected = [
+            message::ROLE_FROM => 'from',
+            message::ROLE_TO => 'to',
+            message::ROLE_CC => 'cc',
+            message::ROLE_BCC => 'bcc',
+        ];
+        self::assertEquals($expected, message::role_names());
     }
 
     public function test_send() {

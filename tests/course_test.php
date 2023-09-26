@@ -56,7 +56,7 @@ class course_test extends testcase {
         self::assertNull(course::get(123, IGNORE_MISSING));
     }
 
-    public function test_get_by_course() {
+    public function test_get_by_user() {
         $generator = self::getDataGenerator();
         $course1 = new course($generator->create_course());
         $course2 = new course($generator->create_course());
@@ -66,6 +66,7 @@ class course_test extends testcase {
         $course6 = new course($generator->create_course());
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
         $generator->enrol_user($user1->id, $course1->id);
         $generator->enrol_user($user1->id, $course2->id);
         $generator->enrol_user($user2->id, $course3->id);
@@ -83,6 +84,15 @@ class course_test extends testcase {
         self::assertFalse(course::cache()->has($course5->id));
         self::assertFalse(course::cache()->has($course6->id));
         self::assertEquals([$course4->id, $course2->id, $course1->id], course::user_cache()->get($user1->id));
+
+        // Use with no courses.
+        self::assertEquals([], course::get_by_user($user3));
+        self::assertEquals([], course::user_cache()->get($user3->id));
+
+        // Get from cache.
+        course::user_cache()->set($user1->id, [$course1->id, $course3->id]);
+        $result = course::get_by_user($user1);
+        self::assertEquals([$course1->id => $course1, $course3->id => $course3], $result);
     }
 
     public function test_get_context() {
