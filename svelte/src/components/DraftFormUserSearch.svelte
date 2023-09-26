@@ -264,7 +264,7 @@
     {/if}
 </div>
 
-<style>
+<style global>
     .local-mail-message-form-search-users-input {
         width: 100%;
         max-width: 100%;

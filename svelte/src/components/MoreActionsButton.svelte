@@ -176,8 +176,8 @@
     {/if}
 {/if}
 
-<style>
+<style global>
     .local-mail-action-more-button::after {
-        display: none;
+        display: none !important;
     }
 </style>

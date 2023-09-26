@@ -53,7 +53,7 @@
     {/if}
 </div>
 
-<style>
+<style global>
     .local-mail-message-attachments a {
         min-width: 0;
         min-height: 3rem;

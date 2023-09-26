@@ -114,7 +114,7 @@
     </div>
 </div>
 
-<style>
+<style global>
     .local-mail-paging-buttons {
         min-width: 0;
         column-gap: 1rem;

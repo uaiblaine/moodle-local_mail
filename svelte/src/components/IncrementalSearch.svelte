@@ -148,7 +148,7 @@
     </div>
 {/if}
 
-<style>
+<style global>
     .local-mail-incremental-search-muted {
         opacity: 0.6;
     }

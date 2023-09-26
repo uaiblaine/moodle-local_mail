@@ -183,14 +183,14 @@
     {/if}
 </div>
 
-<style>
+<style global>
     .local-mail-course-select {
         min-width: 0;
         flex-grow: 1;
         width: 100%;
     }
 
-    .local-mail-course-select .dropdown-item :global(mark) {
+    .local-mail-course-select .dropdown-item mark {
         padding-left: 0;
         padding-right: 0;
         background-color: rgba(255, 255, 0, 0.2);

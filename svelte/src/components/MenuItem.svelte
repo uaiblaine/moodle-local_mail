@@ -42,7 +42,7 @@
     {/if}
 </a>
 
-<style>
+<style global>
     .local-mail-menu-item:focus {
         z-index: 3;
     }

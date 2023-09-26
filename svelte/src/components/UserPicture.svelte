@@ -26,7 +26,7 @@
     </span>
 {/if}
 
-<style>
+<style global>
     .local-mail-user-picture-fallback {
         width: 35px;
         height: 35px;

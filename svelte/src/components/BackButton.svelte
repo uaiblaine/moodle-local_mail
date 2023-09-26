@@ -15,7 +15,7 @@
     <i class="fa fa fa-fw fa-arrow-left" />
 </button>
 
-<style>
+<style global>
     .local-mail-back-button {
         margin-right: 13px;
     }

@@ -213,7 +213,7 @@
     <ErrorModal {store} />
 </div>
 
-<style>
+<style global>
     .local-mail-view {
         max-width: 100rem;
     }
@@ -240,7 +240,7 @@
         margin-right: auto;
     }
 
-    .local-mail-loading :global(*) {
+    .local-mail-loading * {
         cursor: wait;
     }
 

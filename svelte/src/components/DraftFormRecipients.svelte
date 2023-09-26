@@ -59,7 +59,7 @@
     {/if}
 {/each}
 
-<style>
+<style global>
     .local-mail-message-form-recipients-type {
         width: 3rem;
     }

@@ -21,7 +21,7 @@
     </span>
 {/if}
 
-<style>
+<style global>
     .local-mail-course-badge {
         font-size: inherit;
         font-weight: inherit;

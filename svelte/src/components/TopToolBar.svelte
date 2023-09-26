@@ -62,7 +62,7 @@
     {/if}
 </div>
 
-<style>
+<style global>
     .local-mail-toolbar {
         column-gap: 1rem;
     }

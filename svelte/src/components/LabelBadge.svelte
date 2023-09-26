@@ -17,7 +17,7 @@
     {label.name}
 </span>
 
-<style>
+<style global>
     .local-mail-label-badge {
         font-size: inherit;
         font-weight: inherit;

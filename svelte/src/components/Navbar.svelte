@@ -91,9 +91,9 @@
     {/if}
 </div>
 
-<style>
+<style global>
     .local-mail-navbar-count {
-        top: 50%;
+        top: 50% !important;
         transform: translateY(-16px);
     }
     .local-mail-navbar-dropdown {

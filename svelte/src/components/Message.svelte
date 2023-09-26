@@ -65,7 +65,7 @@
     {/each}
 {/if}
 
-<style>
+<style global>
     .local-mail-message-content {
         max-width: 60rem;
     }

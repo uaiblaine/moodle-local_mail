@@ -109,7 +109,7 @@ export async function createStore(data: InitialData) {
 
         // Save draft.
         if (messageid && draftData) {
-            clearTimeout(draftTimeoutId);
+            window.clearTimeout(draftTimeoutId);
             requests.unshift({
                 methodname: 'update_message',
                 messageid,
@@ -662,7 +662,7 @@ export async function createStore(data: InitialData) {
     const showToast = async (toast: Toast) => {
         patch({ toasts: [toast] });
         if (toast) {
-            setTimeout(() => hideToast(toast), 10000);
+            window.setTimeout(() => hideToast(toast), 10000);
         }
     };
 
@@ -703,9 +703,9 @@ export async function createStore(data: InitialData) {
         } else if (prevData) {
             delay = Math.max(0, message.time * 1000 + delay - Date.now());
         }
-        clearTimeout(draftTimeoutId);
+        window.clearTimeout(draftTimeoutId);
 
-        draftTimeoutId = setTimeout(async () => {
+        draftTimeoutId = window.setTimeout(async () => {
             const requests: ServiceRequest[] = [
                 {
                     methodname: 'update_message',

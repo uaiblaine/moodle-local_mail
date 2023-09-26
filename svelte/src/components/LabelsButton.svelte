@@ -138,8 +138,8 @@
     {/if}
 </div>
 
-<style>
+<style global>
     .local-mail-action-label-button::after {
-        display: none;
+        display: none !important;
     }
 </style>

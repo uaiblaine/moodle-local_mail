@@ -16,7 +16,7 @@
     {message.shorttime}
 </span>
 
-<style>
+<style global>
     .local-mail-list-message-time-md {
         min-width: 5rem;
     }

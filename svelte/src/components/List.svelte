@@ -97,13 +97,13 @@
     </div>
 {/key}
 
-<style>
+<style global>
     .local-mail-list-message {
         color: var(--dark) !important;
     }
 
     .local-mail-list-message:focus,
-    .local-mail-list-message :global(.btn:focus) {
+    .local-mail-list-message .btn:focus {
         z-index: 3;
     }
 </style>

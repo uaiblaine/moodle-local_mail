@@ -41,7 +41,7 @@
     </div>
 </div>
 
-<style>
+<style global>
     .local-mail-message-reference-content {
         max-width: 60rem;
     }

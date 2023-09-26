@@ -232,7 +232,7 @@
     {/if}
 </form>
 
-<style>
+<style global>
     .local-mail-search-box {
         width: 100%;
         max-width: 100%;

@@ -1,33 +1,33 @@
 {
-  "_global-ddee650a.js": {
+  "_global-e98f3790.js": {
     "css": [
-      "global-d63f57e8.css"
+      "global-06e1c897.css"
     ],
-    "file": "global-ddee650a.js"
+    "file": "global-e98f3790.js"
   },
   "global.css": {
-    "file": "global-d63f57e8.css",
+    "file": "global-06e1c897.css",
     "src": "global.css"
   },
   "src/navigation.ts": {
-    "file": "navigation-23beda44.js",
+    "file": "navigation-8fbe4657.js",
     "imports": [
-      "_global-ddee650a.js"
+      "_global-e98f3790.js"
     ],
     "isEntry": true,
     "src": "src/navigation.ts"
   },
   "src/view.css": {
-    "file": "view-aa985fd0.css",
+    "file": "view-09acf303.css",
     "src": "src/view.css"
   },
   "src/view.ts": {
     "css": [
-      "view-aa985fd0.css"
+      "view-09acf303.css"
     ],
-    "file": "view-5b925a8c.js",
+    "file": "view-0bd91032.js",
     "imports": [
-      "_global-ddee650a.js"
+      "_global-e98f3790.js"
     ],
     "isEntry": true,
     "src": "src/view.ts"

@@ -90,7 +90,7 @@
     </form>
 </ModalDialog>
 
-<style>
+<style global>
     .local-mail-label-modal-color {
         display: flex;
         flex-wrap: wrap;
