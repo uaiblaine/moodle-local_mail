@@ -55,8 +55,9 @@ class output_renderer_test extends testcase {
 
         $renderer = $PAGE->get_renderer('local_mail');
 
-        self::assertEquals("$CFG->wwwroot/theme/image.php/_s/boost/core/1/f/text-24", $renderer->file_icon_url($file1));
-        self::assertEquals("$CFG->wwwroot/theme/image.php/_s/boost/core/1/f/html-24", $renderer->file_icon_url($file2));
+        $size = $CFG->branch >= 403 ? null : 24; // Size is deprecated since Moodle 4.3.
+        self::assertEquals($renderer->image_url(file_extension_icon('file1.txt', $size)), $renderer->file_icon_url($file1));
+        self::assertEquals($renderer->image_url(file_extension_icon('file2.html', $size)), $renderer->file_icon_url($file2));
     }
 
     public function test_formatted_time() {

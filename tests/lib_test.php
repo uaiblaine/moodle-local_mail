@@ -134,7 +134,7 @@ class lib_test extends testcase {
 
         $result = local_mail_render_navbar_output($output);
 
-        self::assertStringContainsString('<div id="local-mail-navbar">', $result);
+        self::assertStringContainsString('<div class="popover-region" id="local-mail-navbar">', $result);
         self::assertStringNotContainsString('<script>', $result);
 
         // Course page.
@@ -144,7 +144,7 @@ class lib_test extends testcase {
 
         $result = local_mail_render_navbar_output($output);
 
-        self::assertStringContainsString('<div id="local-mail-navbar">', $result);
+        self::assertStringContainsString('<div class="popover-region" id="local-mail-navbar">', $result);
         self::assertStringContainsString($renderer->svelte_script('src/navigation.ts'), $result);
         $expected = \html_writer::script('window.local_mail_navbar_data = ' . json_encode([
             'userid' => $user1->id,

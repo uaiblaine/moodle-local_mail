@@ -205,7 +205,7 @@ class user {
      * @return string
      */
     public function fullname(): string {
-        return fullname((object) $this);
+        return fullname((object) (array) $this);
     }
 
     /**
