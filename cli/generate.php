@@ -84,6 +84,7 @@ function main() {
         if (!$admin) {
             cli_error('User not found.');
         }
+        $admin = new user($admin);
     }
     cli_writeln('');
 
@@ -96,12 +97,12 @@ function main() {
     $starttime = time();
 
     $fs = get_file_storage();
-    $courses = course::get_many(array_keys(get_courses('all', 'c.sortorder', 'c.id')));
+    $courses = course::get_many(array_keys(get_courses('all', 'c.sortorder', 'c.id')), IGNORE_MISSING);
 
     delete_messages($courses);
     generate_user_labels();
     foreach ($courses as $course) {
-        generate_course_messages($fs, $course, new user($admin), $countperuser);
+        generate_course_messages($fs, $course, $admin, $countperuser);
     }
 
     $seconds = (int) (time() - $starttime);
@@ -268,7 +269,7 @@ function generate_user_labels() {
     global $DB;
 
     $records = $DB->get_records('user', null, '', 'id');
-    $users = user::get_many(array_keys($records));
+    $users = user::get_many(array_keys($records), IGNORE_MISSING);
 
     foreach ($users as $user) {
         print_progress('Generating user labels', count($users));
