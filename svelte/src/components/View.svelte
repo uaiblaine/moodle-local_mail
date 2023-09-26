@@ -64,7 +64,13 @@
     afterUpdate(() => {
         if (prevNavigationId != $store.navigationId) {
             prevNavigationId = $store.navigationId;
-            viewNode.scrollIntoView();
+            let parent = viewNode.parentElement;
+            while (parent) {
+                if (parent.scrollTop > 0) {
+                    parent.scrollTo({ top: 0 });
+                }
+                parent = parent.parentElement;
+            }
         }
     });
 
