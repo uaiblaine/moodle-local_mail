@@ -8,10 +8,7 @@ new item in the navigation block called "My Mail".
 
 Project page: https://gitlab.com/reskity/moodle-local_mail
 
-## Authors
 
-- Marc Català <reskit@gmail.com>
-- Albert Gasset <albertgasset@fsfe.org>
 
 ## Installation
 
@@ -80,19 +77,32 @@ WARNING: The script deletes all existing mail data.
 php local/mail/cli/generate.php
 ```
 
+## Credits
+
+Maintainers:
+
+- Marc Català <reskit@gmail.com>
+- Albert Gasset <albertgasset@fsfe.org>
+
+Contributors:
+
+- Daniel Barnett
+- Manuel Cagigas
+- Russell Smith
+
 ## Copyright
 
-Copyright © 2012,2013 Institut Obert de Catalunya
+© 2012-2014 Institut Obert de Catalunya <https://ioc.gencat.cat>
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+© 2014-2022 Marc Català <reskit@gmail.com>
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
+© 2016-2018 Albert Gasset <albertgasset@fsfe.org>
 
-You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+© 2023 SEIDOR <https://www.seidor.com>
+
+# License
+
+This plugin is distributed under the terms of the GNU General Public License,
+version 3 or later.
+
+See the [LICENSES/GPL-3.0-or-later.txt](LICENSES/GPL-3.0-or-later.txt) file for details.

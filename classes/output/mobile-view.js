@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2023 SEIDOR <https://www.seidor.com>
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 const that = this;
 
 const getPluginElement = () => {

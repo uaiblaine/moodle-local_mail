@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2023 SEIDOR <https://www.seidor.com>
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 export function blur(node: HTMLElement, handler: () => void) {
     function listener(event: Event) {
         if (event.target instanceof Element && !node.contains(event.target)) {

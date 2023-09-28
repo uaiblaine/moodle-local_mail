@@ -1,6 +1,12 @@
+/*
+ * SPDX-FileCopyrightText: 2023 SEIDOR <https://www.seidor.com>
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import type * as TinyMCE from '../../../../../lib/editor/tiny/js/tinymce/tinymce.d.ts';
 
-/** Moduule "core/ajax" */
+/** Module "core/ajax" */
 export interface CoreAjax {
     /**
      * Make a series of ajax requests and return all the responses.
@@ -16,7 +22,7 @@ export interface CoreAjaxRequest {
     args: Record<string, unknown>;
 }
 
-/** Moduule "core/fragment" */
+/** Module "core/fragment" */
 export interface CoreFragment {
     /**
      * Converts the JS that was received from collecting JS requirements on the $PAGE
@@ -28,7 +34,7 @@ export interface CoreFragment {
     processCollectedJavascript: (html: string) => string;
 }
 
-/** Moduule "core/pubsub" */
+/** Module "core/pubsub" */
 export interface CorePubSub {
     subscribe: (eventName: string, callback: () => void) => void;
     unsubscribe: (eventName: string, callback: () => void) => void;
