@@ -1,12 +1,15 @@
-# Local mail plugin for Moodle
+# Local Mail plugin for Moodle
 
 This plugin allows users to send messages to each other, using an
-interface and features similar to webmail clients. Messages are tied
-to courses, so users can only contact other participants in courses
-the user is enrolled in. Reading/sending of messages is done through a
-new item in the navigation block called "My Mail".
+interface and features similar to web-based mail clients.
 
-Project page: https://gitlab.com/reskity/moodle-local_mail
+Messages are tied to courses, so users can only send messages to other
+participants in courses they are enrolled in.
+
+Users can access all mail features through the the envelope icon
+present in the header of the site, or the main menu of the Moodle app.
+
+Project page: https://moodle.org/plugins/local_mail
 
 ## Installation
 
@@ -31,6 +34,11 @@ Contributors:
 - Daniel Barnett
 - Manuel Cagigas
 - Russell Smith
+
+Sponsors:
+
+- Institut Obert de Catalunya <https://ioc.gencat.cat>
+- Universidad de Valladolid <https://www.uva.es>
 
 ## Copyright
 
