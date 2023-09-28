@@ -85,7 +85,7 @@ class external extends \external_api {
                     'enabled' => new \external_value(PARAM_BOOL, 'Message processor is enabled'),
                     'locked' => new \external_value(PARAM_BOOL, 'Message processor is locked'),
                 ])
-            )
+            ),
         ]);
     }
 
@@ -144,7 +144,7 @@ class external extends \external_api {
             'markasread' => new \external_value(PARAM_BOOL, 'Mark new messages as read if a notification is sent'),
             'notifications' => new \external_multiple_structure(
                 new \external_value(PARAM_PLUGIN, 'Name of the message processor')
-            )
+            ),
         ]);
     }
 
@@ -165,7 +165,7 @@ class external extends \external_api {
                     new \external_value(PARAM_PLUGIN, 'Name of the message processor'),
                     'Notifications',
                     VALUE_OPTIONAL
-                )
+                ),
             ]),
         ]);
     }
@@ -1156,7 +1156,7 @@ class external extends \external_api {
                     PARAM_INT,
                     'ID of a label'
                 ),
-            )
+            ),
         ]);
     }
 

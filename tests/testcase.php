@@ -100,7 +100,7 @@ abstract class testcase extends \advanced_testcase {
             ];
             self::assert_record_data('message_users', [
                 'messageid' => $message->id,
-                'userid' => $user->id
+                'userid' => $user->id,
             ], $data);
             foreach ($message->get_labels($user) as $label) {
                 self::assert_record_data('message_labels', [

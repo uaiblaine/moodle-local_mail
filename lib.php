@@ -22,7 +22,7 @@ function local_mail_pluginfile(
     $filearea,
     $args,
     $forcedownload,
-    array $options = array()
+    array $options = []
 ) {
     global $SITE;
 

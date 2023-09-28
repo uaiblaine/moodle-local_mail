@@ -108,7 +108,7 @@ class renderer extends \plugin_renderer_base {
         $context = $course->get_context();
         $sender = $message->get_sender();
 
-        $url = new \moodle_url('/local/mail/view.php', array('t' => 'inbox', 'm' => $message->id));
+        $url = new \moodle_url('/local/mail/view.php', ['t' => 'inbox', 'm' => $message->id]);
         $content = file_rewrite_pluginfile_urls(
             $message->content,
             'pluginfile.php',

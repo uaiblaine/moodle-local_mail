@@ -101,7 +101,7 @@ class label {
 
         if ($ids === false) {
             $labels = [];
-            $records = $DB->get_records('local_mail_labels', array('userid' => $user->id));
+            $records = $DB->get_records('local_mail_labels', ['userid' => $user->id]);
             foreach ($records as $id => $record) {
                 $labels[$id] = new self($record, $user);
             }
@@ -171,8 +171,8 @@ class label {
         global $DB;
 
         $transaction = $DB->start_delegated_transaction();
-        $DB->delete_records('local_mail_labels', array('id' => $this->id));
-        $DB->delete_records('local_mail_message_labels', array('labelid' => $this->id));
+        $DB->delete_records('local_mail_labels', ['id' => $this->id]);
+        $DB->delete_records('local_mail_message_labels', ['labelid' => $this->id]);
         $transaction->allow_commit();
 
         self::cache()->delete($this->id);

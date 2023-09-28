@@ -17,7 +17,7 @@ function xmldb_local_mail_upgrade($oldversion) {
 
         // Define index type_messageid_item (not unique) to be added to local_mail_index.
         $table = new xmldb_table('local_mail_index');
-        $index = new xmldb_index('type_messageid_item', XMLDB_INDEX_NOTUNIQUE, array('type', 'messageid', 'item'));
+        $index = new xmldb_index('type_messageid_item', XMLDB_INDEX_NOTUNIQUE, ['type', 'messageid', 'item']);
 
         // Conditionally launch add index type_messageid_item.
         if (!$dbman->index_exists($table, $index)) {
@@ -60,14 +60,14 @@ function xmldb_local_mail_upgrade($oldversion) {
                 AND f.filearea = :filearea
                 AND f.filename <> :filename
                 GROUP BY f.itemid';
-        $params = array(
+        $params = [
             'component' => 'local_mail',
             'filearea' => 'message',
             'filename' => '.',
-        );
+        ];
         $rs = $DB->get_recordset_sql($sql, $params);
         foreach ($rs as $record) {
-            $DB->set_field('local_mail_messages', 'attachments', $record->numfiles, array('id' => $record->itemid));
+            $DB->set_field('local_mail_messages', 'attachments', $record->numfiles, ['id' => $record->itemid]);
         }
         $rs->close();
 
@@ -79,7 +79,7 @@ function xmldb_local_mail_upgrade($oldversion) {
 
         // Delete attachment records from local_mail_index, 1000 at a time.
         while (true) {
-            $records = $DB->get_records('local_mail_index', array('type' => 'attachment'), '', 'id', 0, 1000);
+            $records = $DB->get_records('local_mail_index', ['type' => 'attachment'], '', 'id', 0, 1000);
             if (!$records) {
                 break;
             }
@@ -106,7 +106,7 @@ function xmldb_local_mail_upgrade($oldversion) {
 
         // Define index type_messageid_item (not unique) to be dropped form local_mail_index.
         $table = new xmldb_table('local_mail_index');
-        $index = new xmldb_index('type_messageid_item', XMLDB_INDEX_NOTUNIQUE, array('type', 'messageid', 'item'));
+        $index = new xmldb_index('type_messageid_item', XMLDB_INDEX_NOTUNIQUE, ['type', 'messageid', 'item']);
 
         // Conditionally launch drop index type_messageid_item.
         if ($dbman->index_exists($table, $index)) {
@@ -190,7 +190,7 @@ function xmldb_local_mail_upgrade($oldversion) {
 
         // Define index userid_type_item_time (not unique) to be dropped form local_mail_index.
         $table = new xmldb_table('local_mail_index');
-        $index = new xmldb_index('userid_type_item_time', XMLDB_INDEX_NOTUNIQUE, array('userid', 'type', 'item', 'time'));
+        $index = new xmldb_index('userid_type_item_time', XMLDB_INDEX_NOTUNIQUE, ['userid', 'type', 'item', 'time']);
 
         // Conditionally launch drop index userid_type_item_time.
         if ($dbman->index_exists($table, $index)) {
@@ -224,7 +224,7 @@ function xmldb_local_mail_upgrade($oldversion) {
         $index = new xmldb_index(
             'userid_type_item_time_messageid',
             XMLDB_INDEX_UNIQUE,
-            array('userid', 'type', 'item', 'time', 'messageid')
+            ['userid', 'type', 'item', 'time', 'messageid']
         );
 
         // Conditionally launch add index userid_type_item_time_messageid.

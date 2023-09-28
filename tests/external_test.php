@@ -237,7 +237,7 @@ class external_test extends testcase {
         $result = external::set_preferences([
             'perpage' => '20',
             'markasread' => true,
-            'notifications' => ['email']
+            'notifications' => ['email'],
         ]);
 
         self::assertNull(external::set_preferences_returns());
@@ -1895,7 +1895,7 @@ class external_test extends testcase {
         self::assertEqualsCanonicalizing([$user5], $message->get_recipients(message::ROLE_BCC));
         self::assert_attachments([
             'file1.txt' => 'File 1',
-            'file2.txt' => 'File 2'
+            'file2.txt' => 'File 2',
         ], $message);
 
         self::assert_message_event('\local_mail\event\draft_updated', $message, $eventsink);

@@ -145,7 +145,7 @@ class output_renderer_test extends testcase {
         self::assertEquals(1, $notification->notification);
         $a = ['user' => $user1->fullname(), 'course' => $course->fullname];
         self::assertEquals(output\strings::get('notificationsmallmessage', $a), $notification->smallmessage);
-        $contexturl = new \moodle_url('/local/mail/view.php', array('t' => 'inbox', 'm' => $message->id));
+        $contexturl = new \moodle_url('/local/mail/view.php', ['t' => 'inbox', 'm' => $message->id]);
         self::assertEquals($contexturl->out(false), $notification->contexturl);
         self::assertEquals('Subject', $notification->contexturlname);
     }

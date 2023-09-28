@@ -17,8 +17,8 @@ $capabilities = [
             'student'        => CAP_ALLOW,
             'teacher'        => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
-            'manager'        => CAP_ALLOW
-        ]
+            'manager'        => CAP_ALLOW,
+        ],
     ],
     'local/mail:mailsamerole' => [
         'riskbitmask'  => RISK_SPAM,
@@ -28,7 +28,7 @@ $capabilities = [
             'student'        => CAP_ALLOW,
             'teacher'        => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
-            'manager'        => CAP_ALLOW
-        ]
+            'manager'        => CAP_ALLOW,
+        ],
     ],
 ];
