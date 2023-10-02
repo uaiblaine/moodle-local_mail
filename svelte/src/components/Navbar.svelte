@@ -105,6 +105,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     .local-mail-navbar-popover {
         width: 20rem;
+        height: auto;
+        max-height: 80vh;
         overflow-y: auto;
         background-color: var(--light);
     }
@@ -115,5 +117,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     .local-mail-navbar-popover .list-group-item:not(.list-group-item-primary):hover {
         background-color: rgba(0, 0, 0, 0.025);
+    }
+
+    @media (max-width: 480px) {
+        .local-mail-navbar-popover {
+            max-height: none;
+        }
     }
 </style>

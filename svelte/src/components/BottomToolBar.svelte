@@ -63,3 +63,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </div>
     </div>
 </div>
+
+<style>
+    .local-mail-toolbar.position-fixed {
+        z-index: 1020;
+    }
+</style>
