@@ -8,8 +8,13 @@
 defined('MOODLE_INTERNAL') || die();
 
 class local_mail_coverage extends phpunit_coverage_info {
+
     protected $includelistfolders = [
         'backup',
+    ];
+
+    protected $includelistfiles = [
+        'db/upgrade.php',
     ];
 }
 

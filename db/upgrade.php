@@ -9,7 +9,7 @@
  */
 
 function xmldb_local_mail_upgrade($oldversion) {
-    global $CFG, $DB;
+    global $DB;
 
     $dbman = $DB->get_manager(); // Loads ddl manager and xmldb classes.
 
@@ -31,7 +31,8 @@ function xmldb_local_mail_upgrade($oldversion) {
     if ($oldversion < 2015121400) {
 
         // Clean obsolete local_mail_fullmessage preference.
-        $DB->execute('DELETE FROM {user_preferences} WHERE name="local_mail_fullmessage"');
+        $params = ['name' => 'local_mail_fullmessage'];
+        $DB->execute('DELETE FROM {user_preferences} WHERE name = :name', $params);
 
         upgrade_plugin_savepoint(true, 2015121400, 'local', 'mail');
     }
@@ -304,9 +305,11 @@ function xmldb_local_mail_upgrade($oldversion) {
         }
 
         // Copy data from local_mail_messages.
-        $sql = 'UPDATE {local_mail_message_users} mu'
-            . ' JOIN {local_mail_messages} m ON m.id = mu.messageid'
-            . ' SET mu.courseid = m.courseid, mu.draft = m.draft, mu.time = m.time';
+        $fromsql = 'FROM {local_mail_messages} m WHERE m.id = mu.messageid';
+        $sql = 'UPDATE {local_mail_message_users} mu SET'
+            . " courseid = (SELECT m.courseid $fromsql),"
+            . " draft = (SELECT m.draft $fromsql),"
+            . " time = (SELECT m.time $fromsql)";
         $DB->execute($sql);
 
         // Remove default value from field courseid.
@@ -372,16 +375,22 @@ function xmldb_local_mail_upgrade($oldversion) {
         }
 
         // Copy courseid, draft and time from local_mail_messages.
-        $sql = 'UPDATE {local_mail_message_labels} ml'
-            . ' JOIN {local_mail_messages} m ON m.id = ml.messageid'
-            . ' SET ml.courseid = m.courseid, ml.draft = m.draft, ml.time = m.time';
+        $fromsql = 'FROM {local_mail_messages} m WHERE m.id = ml.messageid';
+        $sql = 'UPDATE {local_mail_message_labels} ml SET'
+            . " courseid = (SELECT m.courseid $fromsql),"
+            . " draft = (SELECT m.draft $fromsql),"
+            . " time = (SELECT m.time $fromsql)";
         $DB->execute($sql);
 
         // Copy role, unread, starred and deleted from local_mail_message_users.
-        $sql = 'UPDATE {local_mail_message_labels} ml'
-            . ' JOIN {local_mail_labels} l ON l.id = ml.labelid'
-            . ' JOIN {local_mail_message_users} mu ON mu.messageid = ml.messageid AND mu.userid = l.userid'
-            . ' SET ml.role = mu.role, ml.unread = mu.unread, ml.starred = mu.starred, ml.deleted = mu.deleted';
+        $fromsql = 'FROM {local_mail_message_users} mu'
+            . ' JOIN {local_mail_labels} l ON l.userid = mu.userid'
+            . ' WHERE l.id = ml.labelid AND mu.messageid = ml.messageid';
+        $sql = 'UPDATE {local_mail_message_labels} ml SET'
+            . " role = (SELECT mu.role $fromsql),"
+            . " unread = (SELECT mu.unread $fromsql),"
+            . " starred = (SELECT mu.starred $fromsql),"
+            . " deleted = (SELECT mu.deleted $fromsql)";
         $DB->execute($sql);
 
         // Remove default value from field courseid.

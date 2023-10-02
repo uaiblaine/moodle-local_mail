@@ -174,9 +174,11 @@ abstract class testcase extends \advanced_testcase {
         self::assertCount(1, $records);
 
         foreach ($records as $record) {
-            foreach ($data as $field => $value) {
-                self::assertEquals($value, $record->$field);
+            $actualdata = [];
+            foreach (array_keys($data) as $field) {
+                $actualdata[$field] = $record->$field;
             }
+            self::assertEquals($data, $actualdata);
         }
     }
 
