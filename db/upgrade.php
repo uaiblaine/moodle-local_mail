@@ -13,21 +13,6 @@ function xmldb_local_mail_upgrade($oldversion) {
 
     $dbman = $DB->get_manager(); // Loads ddl manager and xmldb classes.
 
-    if ($oldversion < 2014030600) {
-
-        // Define index type_messageid_item (not unique) to be added to local_mail_index.
-        $table = new xmldb_table('local_mail_index');
-        $index = new xmldb_index('type_messageid_item', XMLDB_INDEX_NOTUNIQUE, ['type', 'messageid', 'item']);
-
-        // Conditionally launch add index type_messageid_item.
-        if (!$dbman->index_exists($table, $index)) {
-            $dbman->add_index($table, $index);
-        }
-
-        // Mail savepoint reached.
-        upgrade_plugin_savepoint(true, 2014030600, 'local', 'mail');
-    }
-
     if ($oldversion < 2015121400) {
 
         // Clean obsolete local_mail_fullmessage preference.
@@ -76,22 +61,6 @@ function xmldb_local_mail_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2016070101, 'local', 'mail');
     }
 
-    if ($oldversion < 2016070102) {
-
-        // Delete attachment records from local_mail_index, 1000 at a time.
-        while (true) {
-            $records = $DB->get_records('local_mail_index', ['type' => 'attachment'], '', 'id', 0, 1000);
-            if (!$records) {
-                break;
-            }
-            list($sqlid, $params) = $DB->get_in_or_equal(array_keys($records));
-            $DB->delete_records_select('local_mail_index', "id $sqlid", $params);
-        }
-
-        // Mail savepoint reached.
-        upgrade_plugin_savepoint(true, 2016070102, 'local', 'mail');
-    }
-
     if ($oldversion < 2016070103) {
 
         // Clean obsolete settings.
@@ -101,21 +70,6 @@ function xmldb_local_mail_upgrade($oldversion) {
         unset_config('cronduration', 'local_mail');
 
         upgrade_plugin_savepoint(true, 2016070103, 'local', 'mail');
-    }
-
-    if ($oldversion < 2016070104) {
-
-        // Define index type_messageid_item (not unique) to be dropped form local_mail_index.
-        $table = new xmldb_table('local_mail_index');
-        $index = new xmldb_index('type_messageid_item', XMLDB_INDEX_NOTUNIQUE, ['type', 'messageid', 'item']);
-
-        // Conditionally launch drop index type_messageid_item.
-        if ($dbman->index_exists($table, $index)) {
-            $dbman->drop_index($table, $index);
-        }
-
-        // Mail savepoint reached.
-        upgrade_plugin_savepoint(true, 2016070104, 'local', 'mail');
     }
 
     if ($oldversion < 2017070400) {
@@ -185,56 +139,6 @@ function xmldb_local_mail_upgrade($oldversion) {
         }
 
         upgrade_plugin_savepoint(true, 2017070402, 'local', 'mail');
-    }
-
-    if ($oldversion < 2017070403) {
-
-        // Define index userid_type_item_time (not unique) to be dropped form local_mail_index.
-        $table = new xmldb_table('local_mail_index');
-        $index = new xmldb_index('userid_type_item_time', XMLDB_INDEX_NOTUNIQUE, ['userid', 'type', 'item', 'time']);
-
-        // Conditionally launch drop index userid_type_item_time.
-        if ($dbman->index_exists($table, $index)) {
-            $dbman->drop_index($table, $index);
-        }
-
-        // Mail savepoint reached.
-        upgrade_plugin_savepoint(true, 2017070403, 'local', 'mail');
-    }
-
-    if ($oldversion < 2017070404) {
-
-        // Remove duplicate entries, so the unique index can be created.
-        $sql = 'SELECT t1.id
-                FROM {local_mail_index} t1
-                JOIN {local_mail_index} t2
-                ON t1.id > t2.id
-                AND t1.userid = t2.userid
-                AND t1.type = t2.type
-                AND t1.item = t2.item
-                AND t1.time = t2.time
-                AND t1.messageid = t2.messageid';
-        $rs = $DB->get_recordset_sql($sql, []);
-        foreach ($rs as $record) {
-            $DB->delete_records('local_mail_index', ['id' => $record->id]);
-        }
-        $rs->close();
-
-        // Define index userid_type_item_time_messageid (unique) to be added to local_mail_index.
-        $table = new xmldb_table('local_mail_index');
-        $index = new xmldb_index(
-            'userid_type_item_time_messageid',
-            XMLDB_INDEX_UNIQUE,
-            ['userid', 'type', 'item', 'time', 'messageid']
-        );
-
-        // Conditionally launch add index userid_type_item_time_messageid.
-        if (!$dbman->index_exists($table, $index)) {
-            $dbman->add_index($table, $index);
-        }
-
-        // Mail savepoint reached.
-        upgrade_plugin_savepoint(true, 2017070404, 'local', 'mail');
     }
 
     // Version 2.0.
