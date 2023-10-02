@@ -81,7 +81,7 @@ class external extends \external_api {
             'messageprocessors' => new \external_multiple_structure(
                 new \external_single_structure([
                     'name' => new \external_value(PARAM_PLUGIN, 'Name of the message processor'),
-                    'displayname' => new \external_value(PARAM_TEXT, 'Display name of the message processor'),
+                    'displayname' => new \external_value(PARAM_RAW, 'Display name of the message processor'),
                     'enabled' => new \external_value(PARAM_BOOL, 'Message processor is enabled'),
                     'locked' => new \external_value(PARAM_BOOL, 'Message processor is locked'),
                 ])
@@ -251,8 +251,8 @@ class external extends \external_api {
         return new \external_multiple_structure(
             new \external_single_structure([
                 'id' => new \external_value(PARAM_INT, 'Id of the course'),
-                'shortname' => new \external_value(PARAM_TEXT, 'Short name of the course'),
-                'fullname' => new \external_value(PARAM_TEXT, 'Full name of the course'),
+                'shortname' => new \external_value(PARAM_RAW, 'Short name of the course'),
+                'fullname' => new \external_value(PARAM_RAW, 'Full name of the course'),
                 'visible' => new \external_value(PARAM_BOOL, 'Course visibility'),
                 'groupmode' => new \external_value(PARAM_INT, 'Group mode: 0 (no), 1 (separate) or 2 (visible)'),
                 'unread' => new \external_value(PARAM_INT, 'Number of unread messages'),
@@ -302,7 +302,7 @@ class external extends \external_api {
         return new \external_multiple_structure(
             new \external_single_structure([
                 'id' => new \external_value(PARAM_INT, 'Id of the label'),
-                'name' => new \external_value(PARAM_TEXT, 'Nane of the label'),
+                'name' => new \external_value(PARAM_RAW, 'Nane of the label'),
                 'color' => new \external_value(PARAM_ALPHA, 'Color of the label'),
                 'unread' => new \external_value(PARAM_INT, 'Number of unread messages'),
                 'courses' => new \external_multiple_structure(
@@ -357,19 +357,19 @@ class external extends \external_api {
                 false
             ),
             'content' => new \external_value(
-                PARAM_TEXT,
+                PARAM_RAW,
                 'Search messages with this text in ',
                 VALUE_DEFAULT,
                 ''
             ),
             'sendername' => new \external_value(
-                PARAM_TEXT,
+                PARAM_RAW,
                 'Text to search the name of the sender',
                 VALUE_DEFAULT,
                 ''
             ),
             'recipientname' => new \external_value(
-                PARAM_TEXT,
+                PARAM_RAW,
                 'Text to search the names of the recipients',
                 VALUE_DEFAULT,
                 ''
@@ -581,19 +581,19 @@ class external extends \external_api {
         return new \external_multiple_structure(
             new \external_single_structure([
                 'id' => new \external_value(PARAM_INT, 'Id of the message'),
-                'subject' => new \external_value(PARAM_TEXT, 'Subject of the message'),
+                'subject' => new \external_value(PARAM_RAW, 'Subject of the message'),
                 'numattachments' => new \external_value(PARAM_INT, 'Number of attachments'),
                 'draft' => new \external_value(PARAM_BOOL, 'Draft status'),
                 'time' => new \external_value(PARAM_INT, 'Time of the message'),
-                'shorttime' => new \external_value(PARAM_TEXT, 'Formatted short time'),
-                'fulltime' => new \external_value(PARAM_TEXT, 'Formatted full time'),
+                'shorttime' => new \external_value(PARAM_RAW, 'Formatted short time'),
+                'fulltime' => new \external_value(PARAM_RAW, 'Formatted full time'),
                 'unread' => new \external_value(PARAM_BOOL, 'Unread status'),
                 'starred' => new \external_value(PARAM_BOOL, 'Starred status'),
                 'deleted' => new \external_value(PARAM_BOOL, 'Deleted status'),
                 'course' => new \external_single_structure([
                     'id' => new \external_value(PARAM_INT, 'Id of the course'),
-                    'shortname' => new \external_value(PARAM_TEXT, 'Short name of the course'),
-                    'fullname' => new \external_value(PARAM_TEXT, 'Full name of the course'),
+                    'shortname' => new \external_value(PARAM_RAW, 'Short name of the course'),
+                    'fullname' => new \external_value(PARAM_RAW, 'Full name of the course'),
                     'visible' => new \external_value(PARAM_BOOL, 'Course visibility'),
                     'groupmode' => new \external_value(PARAM_INT, 'Group mode: 0 (no), 1 (separate) or 2 (visible)'),
                 ], '', VALUE_OPTIONAL),
@@ -621,7 +621,7 @@ class external extends \external_api {
                 'labels' => new \external_multiple_structure(
                     new \external_single_structure([
                         'id' => new \external_value(PARAM_INT, 'Id of the label'),
-                        'name' => new \external_value(PARAM_TEXT, 'Name of the label'),
+                        'name' => new \external_value(PARAM_RAW, 'Name of the label'),
                         'color' => new \external_value(PARAM_ALPHA, 'Color of the label'),
                     ])
                 ),
@@ -663,7 +663,8 @@ class external extends \external_api {
             $context->id,
             'local_mail',
             'message',
-            $message->id
+            $message->id,
+            ['filter' => false],
         );
 
         $result = [
@@ -743,7 +744,8 @@ class external extends \external_api {
                 $context->id,
                 'local_mail',
                 'message',
-                $ref->id
+                $ref->id,
+                ['filter' => false],
             );
 
             $attachments = [];
@@ -797,21 +799,21 @@ class external extends \external_api {
     public static function get_message_returns() {
         return new \external_single_structure([
             'id' => new \external_value(PARAM_INT, 'Id of the message'),
-            'subject' => new \external_value(PARAM_TEXT, 'Subject of the message'),
+            'subject' => new \external_value(PARAM_RAW, 'Subject of the message'),
             'content' => new \external_value(PARAM_RAW, 'Content of the message'),
             'format' => new \external_format_value('Format of the message content'),
             'numattachments' => new \external_value(PARAM_INT, 'Number of attachments'),
             'draft' => new \external_value(PARAM_BOOL, 'Draft status'),
             'time' => new \external_value(PARAM_INT, 'Time of the message'),
-            'shorttime' => new \external_value(PARAM_TEXT, 'Formatted short time'),
-            'fulltime' => new \external_value(PARAM_TEXT, 'Formatted full time'),
+            'shorttime' => new \external_value(PARAM_RAW, 'Formatted short time'),
+            'fulltime' => new \external_value(PARAM_RAW, 'Formatted full time'),
             'unread' => new \external_value(PARAM_BOOL, 'Unread status'),
             'starred' => new \external_value(PARAM_BOOL, 'Starred status'),
             'deleted' => new \external_value(PARAM_BOOL, 'Deleted status'),
             'course' => new \external_single_structure([
                 'id' => new \external_value(PARAM_INT, 'Id of the course'),
-                'shortname' => new \external_value(PARAM_TEXT, 'Short name of the course'),
-                'fullname' => new \external_value(PARAM_TEXT, 'Full name of the course'),
+                'shortname' => new \external_value(PARAM_RAW, 'Short name of the course'),
+                'fullname' => new \external_value(PARAM_RAW, 'Full name of the course'),
                 'visible' => new \external_value(PARAM_BOOL, 'Course visibility'),
                 'groupmode' => new \external_value(PARAM_INT, 'Group mode: 0 (no), 1 (separate) or 2 (visible)'),
             ]),
@@ -850,12 +852,12 @@ class external extends \external_api {
             'references' => new \external_multiple_structure(
                 new \external_single_structure([
                     'id' => new \external_value(PARAM_INT, 'Id of the message'),
-                    'subject' => new \external_value(PARAM_TEXT, 'Subject of the message'),
+                    'subject' => new \external_value(PARAM_RAW, 'Subject of the message'),
                     'content' => new \external_value(PARAM_RAW, 'Content of the message'),
                     'format' => new \external_format_value('Format of the message content'),
                     'time' => new \external_value(PARAM_INT, 'Time of the message'),
-                    'shorttime' => new \external_value(PARAM_TEXT, 'Formatted short time'),
-                    'fulltime' => new \external_value(PARAM_TEXT, 'Formatted full time'),
+                    'shorttime' => new \external_value(PARAM_RAW, 'Formatted short time'),
+                    'fulltime' => new \external_value(PARAM_RAW, 'Formatted full time'),
                     'sender' => new \external_single_structure([
                         'id' => new \external_value(PARAM_INT, 'Id of the user'),
                         'firstname' => new \external_value(PARAM_RAW, 'First name of the user'),
@@ -880,7 +882,7 @@ class external extends \external_api {
             'labels' => new \external_multiple_structure(
                 new \external_single_structure([
                     'id' => new \external_value(PARAM_INT, 'Id of the label'),
-                    'name' => new \external_value(PARAM_TEXT, 'Name of the label'),
+                    'name' => new \external_value(PARAM_RAW, 'Name of the label'),
                     'color' => new \external_value(PARAM_ALPHA, 'Color of the label'),
                 ])
             ),
@@ -1046,7 +1048,7 @@ class external extends \external_api {
     public static function create_label_parameters() {
         $colors = implode(', ', label::COLORS);
         return new \external_function_parameters([
-            'name' => new \external_value(PARAM_TEXT, 'Name of the label'),
+            'name' => new \external_value(PARAM_RAW, 'Name of the label'),
             'color' => new \external_value(PARAM_ALPHA, "Color of the label. Valid values: $colors", VALUE_DEFAULT, ''),
         ]);
     }
@@ -1084,7 +1086,7 @@ class external extends \external_api {
         $colors = implode(', ', label::COLORS);
         return new \external_function_parameters([
             'labelid' => new \external_value(PARAM_INT, 'ID of the label'),
-            'name' => new \external_value(PARAM_TEXT, 'Name of the label'),
+            'name' => new \external_value(PARAM_RAW, 'Name of the label'),
             'color' => new \external_value(PARAM_ALPHA, "Color of the label: $colors", VALUE_DEFAULT, ''),
         ]);
     }
@@ -1213,7 +1215,7 @@ class external extends \external_api {
         return new \external_multiple_structure(
             new \external_single_structure([
                 'id' => new \external_value(PARAM_INT, 'ID of the role'),
-                'name' => new \external_value(PARAM_TEXT, 'Name of the role'),
+                'name' => new \external_value(PARAM_RAW, 'Name of the role'),
             ])
         );
     }
@@ -1245,7 +1247,7 @@ class external extends \external_api {
         return new \external_multiple_structure(
             new \external_single_structure([
                 'id' => new \external_value(PARAM_INT, 'ID of the group'),
-                'name' => new \external_value(PARAM_TEXT, 'Name of the group'),
+                'name' => new \external_value(PARAM_RAW, 'Name of the group'),
             ])
         );
     }
@@ -1271,7 +1273,7 @@ class external extends \external_api {
                     0
                 ),
                 'fullname' => new \external_value(
-                    PARAM_TEXT,
+                    PARAM_RAW,
                     'Search users with a full name that contains this text',
                     VALUE_DEFAULT,
                     ''
@@ -1506,7 +1508,7 @@ class external extends \external_api {
                 'to' => new \external_multiple_structure(new \external_value(PARAM_INT), 'Ids of TO recipients.'),
                 'cc' => new \external_multiple_structure(new \external_value(PARAM_INT), 'Ids of CC recipients.'),
                 'bcc' => new \external_multiple_structure(new \external_value(PARAM_INT), 'Ids of BCC recipients.'),
-                'subject' => new \external_value(PARAM_TEXT, 'Subject of the message'),
+                'subject' => new \external_value(PARAM_RAW, 'Subject of the message'),
                 'content' => new \external_value(PARAM_RAW, 'Content of the message'),
                 'format' => new \external_format_value('Format of the message'),
                 'draftitemid' => new \external_value(PARAM_INT, 'Id of the file draft item.'),
