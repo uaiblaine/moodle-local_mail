@@ -272,7 +272,8 @@ class message_search_test extends testcase {
             }
 
             $data->subject = self::random_item(self::WORDS);
-            $data->content = self::random_item(self::WORDS);
+            $data->content = ' <p> ' . self::random_item(self::WORDS) . '   ' . self::random_item(self::WORDS) . ' </p> ';
+            $data->format = FORMAT_HTML;
             $data->time = $time;
 
             if ($data->course) {
@@ -353,11 +354,11 @@ class message_search_test extends testcase {
             }
             if ($search->content != '') {
                 $found = false;
-                $pattern = message::normalize_text($search->content);
-                if (\core_text::strpos(message::normalize_text($message->subject), $pattern) !== false) {
+                $pattern = message::normalize_text($search->content, FORMAT_PLAIN);
+                if (\core_text::strpos(message::normalize_text($message->subject, FORMAT_PLAIN), $pattern) !== false) {
                     $found = true;
                 }
-                if (\core_text::strpos(message::normalize_text($message->content), $pattern) !== false) {
+                if (\core_text::strpos(message::normalize_text($message->content, FORMAT_PLAIN), $pattern) !== false) {
                     $found = true;
                 }
                 foreach ([$message->get_sender(), ...$message->get_recipients(message::ROLE_TO, message::ROLE_CC)] as $user) {
@@ -370,14 +371,14 @@ class message_search_test extends testcase {
                 }
             }
             if ($search->sendername != '') {
-                $pattern = message::normalize_text($search->sendername);
+                $pattern = message::normalize_text($search->sendername, FORMAT_PLAIN);
                 if (\core_text::strpos($message->get_sender()->fullname(), $pattern) === false) {
                     continue;
                 }
             }
             if ($search->recipientname != '') {
                 $found = false;
-                $pattern = message::normalize_text($search->recipientname);
+                $pattern = message::normalize_text($search->recipientname, FORMAT_PLAIN);
                 foreach ($message->get_recipients(message::ROLE_TO, message::ROLE_CC) as $user) {
                     if (\core_text::strpos($user->fullname(), $pattern) !== false) {
                         $found = true;

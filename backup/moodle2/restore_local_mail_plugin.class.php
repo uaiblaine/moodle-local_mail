@@ -37,8 +37,8 @@ class restore_local_mail_plugin extends restore_local_plugin {
         $record->attachments = $data['attachments'];
         $record->draft = $data['draft'];
         $record->time = $this->apply_date_offset($data['time']);
-        $record->normalizedsubject = \local_mail\message::normalize_text($data['subject']);
-        $record->normalizedcontent = \local_mail\message::normalize_text($data['content']);
+        $record->normalizedsubject = \local_mail\message::normalize_text($data['subject'], FORMAT_PLAIN);
+        $record->normalizedcontent = \local_mail\message::normalize_text($data['content'], $data['format']);
         $newid = $DB->insert_record('local_mail_messages', $record);
 
         $this->set_mapping('local_mail_message', $data['id'], $newid, true);

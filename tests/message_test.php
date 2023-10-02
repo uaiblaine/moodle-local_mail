@@ -37,8 +37,8 @@ class message_test extends testcase {
         $data->cc = [$user4];
         $data->bcc = [$user5];
         $data->subject = 'Subject';
-        $data->content = 'Content';
-        $data->format = (int) FORMAT_PLAIN;
+        $data->content = ' <p> Content of   the  message </p>  ';
+        $data->format = (int) FORMAT_HTML;
         $data->time = $time;
         self::create_draft_file($data->draftitemid, 'file1.txt', 'File 1');
         self::create_draft_file($data->draftitemid, 'file2.txt', 'File 2');
@@ -398,10 +398,11 @@ class message_test extends testcase {
     }
 
     public function test_normalize_text() {
-        self::assertEquals('', message::normalize_text(''));
-        self::assertEquals('text', message::normalize_text('   text   '));
-        self::assertEquals('text text', message::normalize_text('text     text'));
-        self::assertEquals('text text', message::normalize_text('text😛😛text'));
+        self::assertEquals('', message::normalize_text('', FORMAT_PLAIN));
+        self::assertEquals('text', message::normalize_text('   text   ', FORMAT_PLAIN));
+        self::assertEquals('text text', message::normalize_text('text     text', FORMAT_PLAIN));
+        self::assertEquals('text text', message::normalize_text('text😛😛text', FORMAT_PLAIN));
+        self::assertEquals('text text', message::normalize_text(' <p> text    text </p>', FORMAT_HTML));
     }
 
     public function test_role() {
@@ -680,8 +681,8 @@ class message_test extends testcase {
         $data->cc = [$user3];
         $data->bcc = [$user5, $user2, $user3, $user1];
         $data->subject = 'Updated subject';
-        $data->content = 'Updated content';
-        $data->format = (int) FORMAT_PLAIN;
+        $data->content = '    <p>   Updated     content   </p>  ';
+        $data->format = (int) FORMAT_HTML;
         $data->time = make_timestamp(2021, 10, 11, 13, 0);
 
         self::delete_draft_files($data->draftitemid);

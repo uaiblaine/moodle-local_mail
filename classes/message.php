@@ -262,12 +262,16 @@ class message {
     /**
      * Normalizes text for searching.
      *
-     * Replaces non-alphanumeric characters with a space.
+     * Converts to plain text and replaces non-alphanumeric characters with a space.
      *
      * @param string $text Text to normalize.
+     * @param int|string $format Format of the text to normalize.
      * @return string
      */
-    public static function normalize_text(string $text): string {
+    public static function normalize_text(string $text, int|string $format): string {
+        // Formats and convert to plain text.
+        $text = html_to_text(format_text($text, $format, ['filter' => false]), 0, false);
+
         // Replaces non-alphanumeric characters with a space.
         return trim(preg_replace('/(*UTF8)[^\p{L}\p{N}]+/', ' ', $text));
     }
@@ -698,8 +702,8 @@ class message {
         $messagerecord->format = $this->format;
         $messagerecord->attachments = $this->attachments;
         $messagerecord->time = $this->time;
-        $messagerecord->normalizedsubject = self::normalize_text($this->subject);
-        $messagerecord->normalizedcontent = self::normalize_text($this->content);
+        $messagerecord->normalizedsubject = self::normalize_text($this->subject, FORMAT_PLAIN);
+        $messagerecord->normalizedcontent = self::normalize_text($this->content, $data->format);
         $DB->update_record('local_mail_messages', $messagerecord);
 
         // User records.

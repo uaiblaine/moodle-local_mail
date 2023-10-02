@@ -269,7 +269,7 @@ class message_search {
             $subjectsql = $DB->sql_like('m.normalizedsubject', ':contentsubject', false, false);
             $contentsql = $DB->sql_like('m.normalizedcontent', ':contentcontent', false, false);
             $selects[] = "(($subjectsql) OR ($contentsql) OR i.messageid IN ($usersql))";
-            $pattern = '%' . $DB->sql_like_escape(message::normalize_text($this->content)) . '%';
+            $pattern = '%' . $DB->sql_like_escape(message::normalize_text($this->content, FORMAT_PLAIN)) . '%';
             $params['contentguestid'] = $CFG->siteguest;;
             $params['contentfullname'] = $pattern;
             $params['contentrolefrom'] = message::ROLE_FROM;
@@ -287,7 +287,7 @@ class message_search {
                 . " AND mu.role = :sendernamerolefrom"
                 . " AND " . $DB->sql_like($fullnamefield, ':sendernamefullname', false, false);
             $selects[] = "i.messageid IN ($usersql)";
-            $pattern = '%' . $DB->sql_like_escape(message::normalize_text($this->sendername)) . '%';
+            $pattern = '%' . $DB->sql_like_escape(message::normalize_text($this->sendername, FORMAT_PLAIN)) . '%';
             $params['sendernameguestid'] = $CFG->siteguest;
             $params['sendernamefullname'] = $pattern;
             $params['sendernamerolefrom'] = message::ROLE_FROM;
@@ -301,7 +301,7 @@ class message_search {
                 . " AND mu.role IN (:recipientnameroleto, :recipientnamerolecc)"
                 . " AND " . $DB->sql_like($fullnamefield, ':recipientnamefullname', false, false);
             $selects[] = "i.messageid IN ($usersql)";
-            $pattern = '%' . $DB->sql_like_escape(message::normalize_text($this->recipientname)) . '%';
+            $pattern = '%' . $DB->sql_like_escape(message::normalize_text($this->recipientname, FORMAT_PLAIN)) . '%';
             $params['recipientnameguestid'] = $CFG->siteguest;
             $params['recipientnamefullname'] = $pattern;
             $params['recipientnameroleto'] = message::ROLE_TO;

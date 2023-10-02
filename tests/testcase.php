@@ -75,8 +75,8 @@ abstract class testcase extends \advanced_testcase {
             'attachments' => $message->attachments,
             'draft' => (int) $message->draft,
             'time' => $message->time,
-            'normalizedsubject' => message::normalize_text($message->subject),
-            'normalizedcontent' => message::normalize_text($message->content),
+            'normalizedsubject' => message::normalize_text($message->subject, FORMAT_PLAIN),
+            'normalizedcontent' => message::normalize_text($message->content, $message->subject),
         ]);
 
         $numusers = count($message->get_recipients()) + 1;
