@@ -99,7 +99,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     {#if readonly}
         <div
-            class="form-control alert-secondary px-2 text-left"
+            class="form-control alert-secondary pl-5 pr-2 text-left"
             use:truncate={currentCourse?.[nameField] || ''}
         >
             {currentCourse?.[nameField]}

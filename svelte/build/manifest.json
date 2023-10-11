@@ -1,18 +1,18 @@
 {
-  "_global-04614b6a.js": {
+  "_global-bac9d3e2.js": {
     "css": [
       "global-693a8989.css"
     ],
-    "file": "global-04614b6a.js"
+    "file": "global-bac9d3e2.js"
   },
   "global.css": {
     "file": "global-693a8989.css",
     "src": "global.css"
   },
   "src/navigation.ts": {
-    "file": "navigation-664f6cde.js",
+    "file": "navigation-805bb36e.js",
     "imports": [
-      "_global-04614b6a.js"
+      "_global-bac9d3e2.js"
     ],
     "isEntry": true,
     "src": "src/navigation.ts"
@@ -25,9 +25,9 @@
     "css": [
       "view-1f120ad1.css"
     ],
-    "file": "view-a0df54ec.js",
+    "file": "view-2a19f9f0.js",
     "imports": [
-      "_global-04614b6a.js"
+      "_global-bac9d3e2.js"
     ],
     "isEntry": true,
     "src": "src/view.ts"
