@@ -160,11 +160,11 @@ class output_renderer_test extends testcase {
         $html = $renderer->svelte_script('src/view.ts');
         $head = $OUTPUT->standard_head_html();
 
-        $url = preg_quote($CFG->wwwroot . '/local/mail/svelte/build/', '/') . 'view-[0-9a-f]+\\.js';
+        $url = preg_quote($CFG->wwwroot . '/local/mail/svelte/build/', '/') . 'view-\w+\.js';
         $pattern = '/^<script type="module" src="' . $url . '"><\/script>$/';
         self::assertMatchesRegularExpression($pattern, $html);
 
-        $url = preg_quote($CFG->wwwroot . '/local/mail/svelte/build/', '/') . 'view-[0-9a-f]+\\.css';
+        $url = preg_quote($CFG->wwwroot . '/local/mail/svelte/build/', '/') . 'view-\w+\.css';
         $pattern = '/<link rel="stylesheet" type="text\/css" href="' . $url . '" \/>/';
         self::assertMatchesRegularExpression($pattern, $head);
 
@@ -173,8 +173,8 @@ class output_renderer_test extends testcase {
         $html = $renderer->svelte_script('src/view.ts');
 
         $head = $OUTPUT->standard_head_html();
-        $jsurl = preg_quote($CFG->wwwroot . '/local/mail/svelte/build/', '/') . 'view-[0-9a-f]+\\.js';
-        $cssurl = preg_quote($CFG->wwwroot . '/local/mail/svelte/build/', '/') . 'view-[0-9a-f]+\\.css';
+        $jsurl = preg_quote($CFG->wwwroot . '/local/mail/svelte/build/', '/') . 'view-\w+\.js';
+        $cssurl = preg_quote($CFG->wwwroot . '/local/mail/svelte/build/', '/') . 'view-\w+\.css';
         $pattern = '/^<script>.*"' . $cssurl . '".*<\/script>\s*<script type="module" src="' . $jsurl . '"><\/script>$/s';
         self::assertMatchesRegularExpression($pattern, $html);
 
