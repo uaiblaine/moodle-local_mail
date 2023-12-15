@@ -111,11 +111,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
         background-color: var(--light);
     }
 
-    .local-mail-navbar-popover .list-group-item:not(.list-group-item-primary) {
+    .local-mail-navbar-popover :global(.list-group-item:not(.list-group-item-primary)) {
         background-color: transparent;
     }
 
-    .local-mail-navbar-popover .list-group-item:not(.list-group-item-primary):hover {
+    .local-mail-navbar-popover :global(.list-group-item:not(.list-group-item-primary):hover) {
         background-color: rgba(0, 0, 0, 0.025);
     }
 

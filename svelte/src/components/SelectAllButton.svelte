@@ -31,8 +31,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
         $store.selectedMessages.size == 0
             ? 'fa-square-o'
             : $store.selectedMessages.size < $store.listMessages.length
-            ? 'fa-minus-square-o'
-            : 'fa-check-square-o';
+              ? 'fa-minus-square-o'
+              : 'fa-check-square-o';
 </script>
 
 <div class="btn-group" role="group" use:blur={closeMenu}>

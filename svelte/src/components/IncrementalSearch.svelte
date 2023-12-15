@@ -54,8 +54,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
                     params.tray == 'inbox'
                         ? Object.values(RecipientType)
                         : params.tray == 'sent'
-                        ? ['from']
-                        : undefined,
+                          ? ['from']
+                          : undefined,
                 starred: params.tray == 'starred' ? true : undefined,
                 deleted: params.tray == 'trash',
                 content: content.trim(),

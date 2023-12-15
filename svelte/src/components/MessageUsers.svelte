@@ -33,7 +33,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 <div class="mb-2">
                     <span> {$store.strings[type]}: </span>
                     {#each recipients(type) as user, i (user.id)}
-                        {#if i > 0}, {/if}
+                        {#if i > 0},
+                        {/if}
                         <a href={user.profileurl}>{user.fullname}</a>
                     {/each}
                 </div>

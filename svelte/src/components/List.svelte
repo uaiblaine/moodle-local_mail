@@ -108,7 +108,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     }
 
     .local-mail-list-message:focus,
-    .local-mail-list-message .btn:focus {
+    .local-mail-list-message :global(.btn:focus) {
         z-index: 3;
     }
 </style>

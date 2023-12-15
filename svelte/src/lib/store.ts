@@ -142,8 +142,8 @@ export async function createStore(data: InitialData) {
                     params.tray == 'inbox'
                         ? ['to', 'cc', 'bcc']
                         : params.tray == 'sent'
-                        ? ['from']
-                        : undefined,
+                          ? ['from']
+                          : undefined,
                 starred: params.tray == 'starred' ? true : undefined,
                 deleted: params.tray == 'trash',
             };
@@ -307,10 +307,10 @@ export async function createStore(data: InitialData) {
                 message
                     ? [[message.id, message]]
                     : state.message
-                    ? []
-                    : listMessages
-                          .filter((message) => state.selectedMessages.has(message.id))
-                          .map((message) => [message.id, message]),
+                      ? []
+                      : listMessages
+                            .filter((message) => state.selectedMessages.has(message.id))
+                            .map((message) => [message.id, message]),
             ),
             loading: false,
             // Scroll to top and prevent animations if changing page.
@@ -538,8 +538,8 @@ export async function createStore(data: InitialData) {
                           state.preferences.perpage || undefined,
               }
             : ['shortname', 'fullname'].includes(state.settings.filterbycourse)
-            ? { tray: 'inbox', courseid: state.message.course.id }
-            : { tray: 'course', courseid: state.message.course.id };
+              ? { tray: 'inbox', courseid: state.message.course.id }
+              : { tray: 'course', courseid: state.message.course.id };
         await callServicesAndRefresh([request], newParams);
 
         showToast({ text: state.strings.messagesent });
@@ -568,8 +568,8 @@ export async function createStore(data: InitialData) {
                     ? 'messagesmovedtotrash'
                     : 'messagemovedtotrash'
                 : ids.length > 1
-                ? 'messagesrestored'
-                : 'messagerestored';
+                  ? 'messagesrestored'
+                  : 'messagerestored';
             const text = replaceStringParams(state.strings[string], ids.length);
             const undo = () => {
                 setDeleted(ids, deleted ? DeletedStatus.NotDeleted : DeletedStatus.Deleted, false);

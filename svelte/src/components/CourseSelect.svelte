@@ -195,7 +195,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         width: 100%;
     }
 
-    .local-mail-course-select .dropdown-item mark {
+    .local-mail-course-select .dropdown-item :global(mark) {
         padding-left: 0;
         padding-right: 0;
         background-color: rgba(255, 255, 0, 0.2);

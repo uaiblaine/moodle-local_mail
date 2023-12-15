@@ -70,17 +70,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
                   total: $store.totalCount,
               })
         : $store.listMessages.length == 0
-        ? ''
-        : $store.params.search
-        ? replaceStringParams($store.strings.pagingrange, {
-              first: ($store.params.offset || 0) + 1,
-              last: ($store.params.offset || 0) + $store.listMessages.length,
-          })
-        : replaceStringParams($store.strings.pagingrangetotal, {
-              first: ($store.params.offset || 0) + 1,
-              last: ($store.params.offset || 0) + $store.listMessages.length,
-              total: $store.totalCount,
-          });
+          ? ''
+          : $store.params.search
+            ? replaceStringParams($store.strings.pagingrange, {
+                  first: ($store.params.offset || 0) + 1,
+                  last: ($store.params.offset || 0) + $store.listMessages.length,
+              })
+            : replaceStringParams($store.strings.pagingrangetotal, {
+                  first: ($store.params.offset || 0) + 1,
+                  last: ($store.params.offset || 0) + $store.listMessages.length,
+                  total: $store.totalCount,
+              });
 </script>
 
 <div class="local-mail-paging-buttons d-flex" class:ml-auto={!compact}>

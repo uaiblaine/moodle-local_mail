@@ -35,18 +35,18 @@ SPDX-License-Identifier: GPL-3.0-or-later
         tray == 'inbox'
             ? $store.strings.inbox
             : tray == 'starred'
-            ? $store.strings.starredplural
-            : tray == 'sent'
-            ? $store.strings.sentplural
-            : tray == 'drafts'
-            ? $store.strings.drafts
-            : tray == 'trash'
-            ? $store.strings.trash
-            : tray == 'label'
-            ? $store.labels.find((l) => l.id == $store.params.labelid)?.name || ''
-            : tray == 'course'
-            ? $store.courses.find((c) => c.id == $store.params.courseid)?.fullname || ''
-            : '';
+              ? $store.strings.starredplural
+              : tray == 'sent'
+                ? $store.strings.sentplural
+                : tray == 'drafts'
+                  ? $store.strings.drafts
+                  : tray == 'trash'
+                    ? $store.strings.trash
+                    : tray == 'label'
+                      ? $store.labels.find((l) => l.id == $store.params.labelid)?.name || ''
+                      : tray == 'course'
+                        ? $store.courses.find((c) => c.id == $store.params.courseid)?.fullname || ''
+                        : '';
 
     $: title = $store.message ? $store.message.subject.trim() || $store.strings.nosubject : heading;
 

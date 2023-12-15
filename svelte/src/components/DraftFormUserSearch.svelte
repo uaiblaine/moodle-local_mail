@@ -98,8 +98,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 groupid = groups.find((group) => group.id == groupid)
                     ? groupid
                     : course.groupmode == GroupMode.Separate
-                    ? groups[0]?.id || 0
-                    : 0;
+                      ? groups[0]?.id || 0
+                      : 0;
                 roles = responses.pop() as ReadonlyArray<Role>;
                 roleid = roles.find((role) => role.id == roleid) ? roleid : 0;
                 loading = false;

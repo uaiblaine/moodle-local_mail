@@ -28,8 +28,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 messages.length == 0
                     ? 'false'
                     : messages.length < $store.selectedMessages.size
-                    ? 'mixed'
-                    : 'true',
+                      ? 'mixed'
+                      : 'true',
             ];
         }),
     );
