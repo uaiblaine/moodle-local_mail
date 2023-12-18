@@ -92,7 +92,7 @@ export async function createStore(data: InitialData) {
         requests: ServiceRequest[],
         newParams?: ViewParams,
         redirect = false,
-    ): Promise<unknown[]> => {
+    ): Promise<unknown[] | null> => {
         const actionId = ++currentActionId;
 
         const messageid = state.message?.id;
@@ -212,7 +212,7 @@ export async function createStore(data: InitialData) {
             responses = await callServices(requests);
         } catch (error) {
             setError(error as ServiceError);
-            return [];
+            return null;
         }
 
         let message: Message | undefined;
@@ -276,7 +276,7 @@ export async function createStore(data: InitialData) {
                 draftResponses = await callServices(draftRequests);
             } catch (error) {
                 setError(error as ServiceError);
-                return responses;
+                return null;
             }
             draftForm = draftResponses.pop() as GetMessageFormeResponse;
         }
@@ -342,7 +342,7 @@ export async function createStore(data: InitialData) {
 
         const responses = await callServicesAndRefresh([request]);
 
-        return responses.pop() as number | undefined;
+        return responses?.pop() as number | undefined;
     };
 
     const createMessage = async (courseid?: number) => {
@@ -394,11 +394,13 @@ export async function createStore(data: InitialData) {
 
         const responses = await callServicesAndRefresh([request]);
 
-        await navigate({
-            tray: 'drafts',
-            messageid: responses.pop() as number,
-            courseid: oldParams.courseid ? message.course.id : undefined,
-        });
+        if (responses != null) {
+            await navigate({
+                tray: 'drafts',
+                messageid: responses.pop() as number,
+                courseid: oldParams.courseid ? message.course.id : undefined,
+            });
+        }
     };
 
     const hideDialog = () => {
@@ -432,9 +434,9 @@ export async function createStore(data: InitialData) {
 
         const responses = await callServicesAndRefresh(requests, params, redirect);
 
-        if (init && state.settings.incrementalsearch) {
-            const messages = responses.pop() as MessageSummary[] | undefined;
-            patch({ incrementalSearchStopId: messages?.[0]?.id });
+        if (responses != null && init && state.settings.incrementalsearch) {
+            const messages = responses[0] as MessageSummary[];
+            patch({ incrementalSearchStopId: messages[0]?.id });
         }
     };
 
@@ -465,11 +467,13 @@ export async function createStore(data: InitialData) {
 
         const responses = await callServicesAndRefresh([request]);
 
-        await navigate({
-            tray: 'drafts',
-            messageid: responses.pop() as number,
-            courseid: oldParams.courseid ? message.course.id : undefined,
-        });
+        if (responses != null) {
+            await navigate({
+                tray: 'drafts',
+                messageid: responses.pop() as number,
+                courseid: oldParams.courseid ? message.course.id : undefined,
+            });
+        }
     };
 
     const savePreferences = async (preferences: Partial<Preferences>) => {
@@ -540,9 +544,12 @@ export async function createStore(data: InitialData) {
             : ['shortname', 'fullname'].includes(state.settings.filterbycourse)
               ? { tray: 'inbox', courseid: state.message.course.id }
               : { tray: 'course', courseid: state.message.course.id };
-        await callServicesAndRefresh([request], newParams);
 
-        showToast({ text: state.strings.messagesent });
+        const responses = await callServicesAndRefresh([request], newParams);
+
+        if (responses != null) {
+            showToast({ text: state.strings.messagesent });
+        }
     };
 
     const setDeleted = async (
@@ -560,9 +567,9 @@ export async function createStore(data: InitialData) {
 
         // Redirect if deleting message in single view.
         const params: ViewParams = { ...state.params, messageid: undefined };
-        await callServicesAndRefresh(requests, params, true);
+        const responses = await callServicesAndRefresh(requests, params, true);
 
-        if (deleted != DeletedStatus.DeletedForever) {
+        if (responses != null && deleted != DeletedStatus.DeletedForever) {
             const string = deleted
                 ? ids.length > 1
                     ? 'messagesmovedtotrash'
