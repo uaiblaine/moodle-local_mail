@@ -122,7 +122,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 </script>
 
 <div
-    class="local-mail-message-form-search-users-input form-group position-relative"
+    class="local-mail-draft-form-user-search-input form-group position-relative"
     use:blur={handleBlur}
 >
     <div
@@ -162,7 +162,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     {#if expanded}
         <div
-            class="local-mail-message-form-search-users-dropdown dropdown-menu dropdown-menu-left list-group show p-0 w-100"
+            class="local-mail-draft-form-user-search-dropdown dropdown-menu dropdown-menu-left list-group show p-0 w-100"
             style="min-width: 18rem"
         >
             <div class="list-group-item d-sm-flex px-2 py-2">
@@ -238,15 +238,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 </div>
                 {#each users as user (user.id)}
                     {@const recipientType = recipients.get(user.id)?.type}
-                    <div class="list-group-item d-flex align-items-sm-center p-0">
+                    <div class="list-group-item d-flex p-0">
                         <div class="mx-3 my-2">
                             <UserPicture {user} />
                         </div>
-                        <div class="d-sm-flex align-items-center flex-grow-1">
-                            <div use:truncate={user.fullname} class="py-2 mr-3">
+                        <div class="d-sm-flex flex-grow-1">
+                            <div class="py-2 mr-3 align-self-center">
                                 {user.fullname}
                             </div>
-                            <div class="d-flex ml-auto mr-2">
+                            <div class="d-flex ml-auto mr-2 align-self-start">
                                 {#each Object.values(RecipientType) as type}
                                     <button
                                         type="button"
@@ -270,16 +270,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 </div>
 
 <style global>
-    .local-mail-message-form-search-users-input {
+    .local-mail-draft-form-user-search-input {
         width: 100%;
         max-width: 100%;
     }
 
-    .local-mail-message-form-search-users-input input.is-invalid {
+    .local-mail-draft-form-user-search-input input.is-invalid {
         background-image: none;
     }
 
-    .local-mail-message-form-search-users-dropdown {
+    .local-mail-draft-form-user-search-dropdown {
         max-height: 50vh;
         max-width: 50rem;
         overflow-y: scroll;
