@@ -35,10 +35,7 @@ Contributors:
 - Manuel Cagigas
 - Russell Smith
 
-Sponsors:
-
-- Institut Obert de Catalunya <https://ioc.gencat.cat>
-- Universidad de Valladolid <https://www.uva.es>
+Version 2.0 of the project implemented by the "Recovery, Transformation and Resilience Plan". Funded by the European Union - Next Generation EU. Produced by the UNIMOODLE University Group: Universities of Valladolid, Complutense de Madrid, UPV/EHU, León, Salamanca, Illes Balears, València, Rey Juan Carlos, La Laguna, Zaragoza, Málaga, Córdoba, Extremadura, Vigo, Las Palmas de Gran Canaria and Burgos.
 
 ## Copyright
 
@@ -48,7 +45,7 @@ Sponsors:
 
 © 2016-2018 Albert Gasset <albertgasset@fsfe.org>
 
-© 2023 SEIDOR <https://www.seidor.com>
+© 2023 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
 
 # License
 
