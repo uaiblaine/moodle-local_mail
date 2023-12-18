@@ -38,8 +38,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
     let groups: ReadonlyArray<Group> = [];
     let users: ReadonlyArray<User> = [];
     let tooManyUsers = false;
+    let oldCourseId = course.id;
     let roleid = 0;
     let groupid = 0;
+
+    // Reset role and group when course changes.
+    $: if (oldCourseId != course.id) {
+        oldCourseId = course.id;
+        roleid = 0;
+        groupid = 0;
+    }
 
     const handleToggleClick = async () => {
         if (expanded) {
