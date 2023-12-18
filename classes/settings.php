@@ -48,6 +48,9 @@ class settings {
     /** @var int Maximum number of recent messages included in incremental search. */
     public int $incrementalsearchlimit = 1000;
 
+    /** @var string Type of course name displayed in the course link: "hidden", "shortname" or "fullname". */
+    public string $courselink = 'hidden';
+
     /** @var array Array of message providers (name, displayname, locked, enabled). */
     public array $messageprocessors = [];
 
@@ -121,6 +124,9 @@ class settings {
         }
         if (isset($config->incrementalsearchlimit)) {
             $settings->incrementalsearchlimit = (int) $config->incrementalsearchlimit;
+        }
+        if (isset($config->courselink)) {
+            $settings->courselink = $config->courselink;
         }
         if (!get_config('message', 'local_mail_mail_disable')) {
             $enabled = explode(',', get_config('message', 'message_provider_local_mail_mail_enabled'));

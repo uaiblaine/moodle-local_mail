@@ -158,5 +158,20 @@ if ($hassiteconfig) {
     $paramtype = PARAM_INT;
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
 
+    // Navigation.
+    $settings->add(new admin_setting_heading('local_mail_navigation', strings::get('navigation'), ''));
+
+    // Course link.
+    $name = 'local_mail/courselink';
+    $visiblename = strings::get('configcourselink');
+    $description = strings::get('configcourselinkdesc');
+    $defaultsetting = $defaults->courselink;
+    $choices = [
+        'hidden' => get_string('hide'),
+        'shortname' => get_string('shortname'),
+        'fullname' => get_string('fullname'),
+    ];
+    $settings->add(new admin_setting_configselect($name, $visiblename, $description, $defaultsetting, $choices));
+
     $ADMIN->add('localplugins', $settings);
 }

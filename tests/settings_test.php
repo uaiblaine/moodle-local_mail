@@ -34,6 +34,7 @@ class settings_test extends testcase {
         self::assertEquals('fullname', $settings->filterbycourse);
         self::assertFalse($settings->incrementalsearch);
         self::assertEquals(1000, $settings->incrementalsearchlimit);
+        self::assertEquals('hidden', $settings->courselink);
     }
 
     public function test_get() {
@@ -51,6 +52,7 @@ class settings_test extends testcase {
         set_config('filterbycourse', 'hidden', 'local_mail');
         set_config('incrementalsearch', '1', 'local_mail');
         set_config('incrementalsearchlimit', '2000', 'local_mail');
+        set_config('courselink', 'fullname', 'local_mail');
         set_config('message_provider_local_mail_mail_enabled', 'popup,email', 'message');
         set_config('email_provider_local_mail_mail_locked', '1', 'message');
 
@@ -69,6 +71,7 @@ class settings_test extends testcase {
         self::assertEquals('hidden', $settings->filterbycourse);
         self::assertTrue($settings->incrementalsearch);
         self::assertEquals(2000, $settings->incrementalsearchlimit);
+        self::assertEquals('fullname', $settings->courselink);
         self::assertEquals([
             [
                 'name' => 'popup',

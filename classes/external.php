@@ -78,6 +78,10 @@ class external extends \external_api {
                 PARAM_INT,
                 'Maximum number of recent messages included in incremental search',
             ),
+            'courselink' => new \external_value(
+                PARAM_ALPHA,
+                'Type of course name displayed in the course link: "hidden", "shortname" or "fullname"'
+            ),
             'messageprocessors' => new \external_multiple_structure(
                 new \external_single_structure([
                     'name' => new \external_value(PARAM_PLUGIN, 'Name of the message processor'),

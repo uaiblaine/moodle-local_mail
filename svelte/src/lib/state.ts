@@ -177,17 +177,18 @@ export interface ServiceError {
 }
 
 export interface Settings {
-    maxrecipients: number;
-    usersearchlimit: number;
-    globaltrays: ReadonlyArray<string>;
-    coursetrays: 'none' | 'unread' | 'all';
-    coursetraysname: 'shortname' | 'fullname';
-    coursebadges: 'hidden' | 'shortname' | 'fullname';
-    coursebadgeslength: number;
-    filterbycourse: 'hidden' | 'shortname' | 'fullname';
-    incrementalsearch: boolean;
-    incrementalsearchlimit: number;
-    messageprocessors: ReadonlyArray<MessageProcessor>;
+    readonly maxrecipients: number;
+    readonly usersearchlimit: number;
+    readonly globaltrays: ReadonlyArray<string>;
+    readonly coursetrays: 'none' | 'unread' | 'all';
+    readonly coursetraysname: 'shortname' | 'fullname';
+    readonly coursebadges: 'hidden' | 'shortname' | 'fullname';
+    readonly coursebadgeslength: number;
+    readonly filterbycourse: 'hidden' | 'shortname' | 'fullname';
+    readonly incrementalsearch: boolean;
+    readonly incrementalsearchlimit: number;
+    readonly courselink: 'hidden' | 'shortname' | 'fullname';
+    readonly messageprocessors: ReadonlyArray<MessageProcessor>;
 }
 
 export interface State {

@@ -37,6 +37,7 @@ class external_test extends testcase {
         set_config('filterbycourse', 'hidden', 'local_mail');
         set_config('incrementalsearch', '1', 'local_mail');
         set_config('incrementalsearchlimit', '2000', 'local_mail');
+        set_config('courselink', 'fullname', 'local_mail');
         set_config('message_provider_local_mail_mail_enabled', 'popup,email', 'message');
         set_config('email_provider_local_mail_mail_locked', '1', 'message');
         $this->setUser($user);
@@ -58,6 +59,7 @@ class external_test extends testcase {
             'filterbycourse' => 'hidden',
             'incrementalsearch' => true,
             'incrementalsearchlimit' => 2000,
+            'courselink' => 'fullname',
             'messageprocessors' => [
                 [
                     'name' => 'popup',
@@ -91,6 +93,7 @@ class external_test extends testcase {
         unset_config('filterbycourse', 'local_mail');
         unset_config('incrementalsearch', 'local_mail');
         unset_config('incrementalsearchlimit', 'local_mail');
+        unset_config('courselink', 'local_mail');
 
         $result = external::get_settings();
 
@@ -106,6 +109,7 @@ class external_test extends testcase {
         self::assertEquals('fullname', $result['coursebadges']);
         self::assertEquals(20, $result['coursebadgeslength']);
         self::assertEquals('fullname', $result['filterbycourse']);
+        self::assertEquals('hidden', $result['courselink']);
         self::assertEquals(false, $result['incrementalsearch']);
         self::assertEquals(1000, $result['incrementalsearchlimit']);
 
