@@ -36,7 +36,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <div class="dropdown-menu dropdown-menu-left show p-3 w-100" style="min-width: 18rem">
     <div class="form-group row">
         <label for="local-mail-search-input-sendername" class="col-4 col-form-label pr-0">
-            {$store.strings.from}
+            {$store.strings.searchfrom}
         </label>
         <div class="col-8">
             <input
@@ -50,7 +50,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </div>
     <div class="form-group row">
         <label for="local-mail-search-input-recipientname" class="col-4 col-form-label pr-0">
-            {$store.strings.to}
+            {$store.strings.searchto}
         </label>
         <div class="col-8 p">
             <input
@@ -63,7 +63,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </div>
     <div class="form-group row">
         <label for="local-mail-search-input-maxdate" class="col-4 col-form-label pr-0">
-            {$store.strings.date}
+            {$store.strings.searchdate}
             <HelpPopover {store} message={$store.strings.searchdatehelp} />
         </label>
         <div class="col-8">
@@ -87,7 +87,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 bind:checked={unread}
             />
             <label class="form-check-label" for="local-mail-search-input-unread">
-                {$store.strings.unreadonly}
+                {$store.strings.searchunreadonly}
             </label>
         </div>
         <div class="form-check">
@@ -98,7 +98,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 bind:checked={withfilesonly}
             />
             <label class="form-check-label" for="local-mail-search-input-withfilesonly">
-                {$store.strings.hasattachments}
+                {$store.strings.searchhasattachments}
             </label>
         </div>
         <input

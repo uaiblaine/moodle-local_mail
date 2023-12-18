@@ -61,14 +61,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     $: searchFields = [
         { label: '', value: content },
-        { label: $store.strings.from, value: sendername },
-        { label: $store.strings.to, value: recipientname },
+        { label: $store.strings.searchfrom, value: sendername },
+        { label: $store.strings.searchto, value: recipientname },
         {
-            label: $store.strings.date,
+            label: $store.strings.searchdate,
             value: maxtime > 0 ? new Date(maxtime * 1000).toLocaleDateString() : '',
         },
-        { label: $store.strings.unreadonly, value: unread },
-        { label: $store.strings.hasattachments, value: withfilesonly },
+        { label: $store.strings.searchunreadonly, value: unread },
+        { label: $store.strings.searchhasattachments, value: withfilesonly },
     ].filter(({ value }) => Boolean(value));
 
     const startEntering = async () => {
