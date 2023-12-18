@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <script lang="ts">
     import type { Store } from '../lib/store';
     import { dateFromTimestamp, timestampFromDate } from '../lib/utils';
+    import HelpPopover from './HelpPopover.svelte';
 
     export let store: Store;
     export let sendername = '';
@@ -34,10 +35,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <div class="dropdown-menu dropdown-menu-left show p-3 w-100" style="min-width: 18rem">
     <div class="form-group row">
-        <label for="local-mail-search-input-sendername" class="col-3 col-form-label">
+        <label for="local-mail-search-input-sendername" class="col-4 col-form-label pr-0">
             {$store.strings.from}
         </label>
-        <div class="col-9">
+        <div class="col-8">
             <input
                 type="text"
                 class="form-control"
@@ -48,10 +49,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </div>
     </div>
     <div class="form-group row">
-        <label for="local-mail-search-input-recipientname" class="col-3 col-form-label">
+        <label for="local-mail-search-input-recipientname" class="col-4 col-form-label pr-0">
             {$store.strings.to}
         </label>
-        <div class="col-9">
+        <div class="col-8 p">
             <input
                 type="text"
                 class="form-control"
@@ -61,10 +62,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </div>
     </div>
     <div class="form-group row">
-        <label for="local-mail-search-input-maxdate" class="col-3 col-form-label">
+        <label for="local-mail-search-input-maxdate" class="col-4 col-form-label pr-0">
             {$store.strings.date}
+            <HelpPopover {store} message={$store.strings.searchdatehelp} />
         </label>
-        <div class="col-9">
+        <div class="col-8">
             <input
                 type="date"
                 class="form-control"
