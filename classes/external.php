@@ -237,10 +237,11 @@ class external extends \external_api {
 
         $result = [];
         foreach ($courses as $course) {
+            $context = $course->get_context();
             $result[] = [
                 'id' => $course->id,
-                'shortname' => $course->shortname,
-                'fullname' => $course->fullname,
+                'shortname' => external_format_string($course->shortname, $context),
+                'fullname' => external_format_string($course->fullname, $context),
                 'visible' => $course->visible,
                 'groupmode' => $course->groupmode,
                 'unread' => $unread[$course->id] ?? 0,
@@ -524,6 +525,7 @@ class external extends \external_api {
 
         foreach ($messages as $message) {
             $course = $message->get_course();
+            $context = $course->get_context();
             $sender = $message->get_sender();
             $recipients = [];
             foreach ($message->get_recipients(message::ROLE_TO, message::ROLE_CC) as $recipient) {
@@ -559,8 +561,8 @@ class external extends \external_api {
                 'deleted' => $message->deleted($user) != message::NOT_DELETED,
                 'course' => [
                     'id' => $course->id,
-                    'shortname' => $course->shortname,
-                    'fullname' => $course->fullname,
+                    'shortname' => external_format_string($course->shortname, $context),
+                    'fullname' => external_format_string($course->fullname, $context),
                     'visible' => $course->visible,
                     'groupmode' => $course->groupmode,
                 ],
@@ -686,8 +688,8 @@ class external extends \external_api {
             'deleted' => (bool) $message->deleted($user),
             'course' => [
                 'id' => $course->id,
-                'shortname' => $course->shortname,
-                'fullname' => $course->fullname,
+                'shortname' => external_format_string($course->shortname, $context),
+                'fullname' => external_format_string($course->fullname, $context),
                 'visible' => $course->visible,
                 'groupmode' => $course->groupmode,
             ],

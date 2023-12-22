@@ -109,6 +109,8 @@ class renderer extends \plugin_renderer_base {
         $sender = $message->get_sender();
 
         $url = new \moodle_url('/local/mail/view.php', ['t' => 'inbox', 'm' => $message->id]);
+        $sitename = format_string($SITE->shortname, true, ['context' => \context_system::instance()]);
+        $coursename = format_string($course->fullname, true, ['context' => $context]);
         $content = file_rewrite_pluginfile_urls(
             $message->content,
             'pluginfile.php',
@@ -135,9 +137,9 @@ class renderer extends \plugin_renderer_base {
         $notification->name = 'mail';
         $notification->userfrom = $sender->id;
         $notification->userto = $recipient->id;
-        $notification->subject = strings::get('notificationsubject', $SITE->shortname);
+        $notification->subject = strings::get('notificationsubject', $sitename);
         $notification->fullmessage = $this->render_from_template('local_mail/notification_text', [
-            'coursename' => $course->fullname,
+            'coursename' => $coursename,
             'sendername' => $sender->fullname(),
             'date' => $this->formatted_time($message->time, true),
             'subject' => $message->subject,
@@ -148,7 +150,7 @@ class renderer extends \plugin_renderer_base {
         ]);
         $notification->fullmessageformat = FORMAT_PLAIN;
         $notification->fullmessagehtml = $this->render_from_template('local_mail/notification_html', [
-            'coursename' => $course->fullname,
+            'coursename' => $coursename,
             'courseurl' => $course->url(),
             'sendername' => $sender->fullname(),
             'senderurl' => $sender->profile_url($course),
