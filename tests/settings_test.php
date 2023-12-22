@@ -27,12 +27,12 @@ class settings_test extends testcase {
         self::assertEquals(20, $settings->maxfiles);
         self::assertEquals(123000, $settings->maxbytes);
         self::assertEquals(['starred', 'sent', 'drafts', 'trash'], $settings->globaltrays);
-        self::assertEquals('all', $settings->coursetrays);
+        self::assertEquals('none', $settings->coursetrays);
         self::assertEquals('fullname', $settings->coursetraysname);
         self::assertEquals('fullname', $settings->coursebadges);
         self::assertEquals(20, $settings->coursebadgeslength);
         self::assertEquals('fullname', $settings->filterbycourse);
-        self::assertFalse($settings->incrementalsearch);
+        self::assertTrue($settings->incrementalsearch);
         self::assertEquals(1000, $settings->incrementalsearchlimit);
         self::assertEquals('hidden', $settings->courselink);
     }
@@ -50,7 +50,7 @@ class settings_test extends testcase {
         set_config('coursebadges', 'hidden', 'local_mail');
         set_config('coursebadgeslength', '10', 'local_mail');
         set_config('filterbycourse', 'hidden', 'local_mail');
-        set_config('incrementalsearch', '1', 'local_mail');
+        set_config('incrementalsearch', '0', 'local_mail');
         set_config('incrementalsearchlimit', '2000', 'local_mail');
         set_config('courselink', 'fullname', 'local_mail');
         set_config('message_provider_local_mail_mail_enabled', 'popup,email', 'message');
@@ -69,7 +69,7 @@ class settings_test extends testcase {
         self::assertEquals('hidden', $settings->coursebadges);
         self::assertEquals(10, $settings->coursebadgeslength);
         self::assertEquals('hidden', $settings->filterbycourse);
-        self::assertTrue($settings->incrementalsearch);
+        self::assertFalse($settings->incrementalsearch);
         self::assertEquals(2000, $settings->incrementalsearchlimit);
         self::assertEquals('fullname', $settings->courselink);
         self::assertEquals([

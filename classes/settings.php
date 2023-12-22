@@ -28,7 +28,7 @@ class settings {
     public array $globaltrays = ['starred', 'sent', 'drafts', 'trash'];
 
     /** @var string Course trays displayed in menus: "none", "unread" or "all". */
-    public string $coursetrays = 'all';
+    public string $coursetrays = 'none';
 
     /** @var string Type of course name displayed in menus: "shortname" or "fullname". */
     public string $coursetraysname = 'fullname';
@@ -43,7 +43,7 @@ class settings {
     public string $filterbycourse = 'fullname';
 
     /** @var bool Incremental search enabled. */
-    public bool $incrementalsearch = false;
+    public bool $incrementalsearch = true;
 
     /** @var int Maximum number of recent messages included in incremental search. */
     public int $incrementalsearchlimit = 1000;

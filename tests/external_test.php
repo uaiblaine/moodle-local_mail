@@ -35,7 +35,7 @@ class external_test extends testcase {
         set_config('coursebadges', 'hidden', 'local_mail');
         set_config('coursebadgeslength', '10', 'local_mail');
         set_config('filterbycourse', 'hidden', 'local_mail');
-        set_config('incrementalsearch', '1', 'local_mail');
+        set_config('incrementalsearch', '0', 'local_mail');
         set_config('incrementalsearchlimit', '2000', 'local_mail');
         set_config('courselink', 'fullname', 'local_mail');
         set_config('message_provider_local_mail_mail_enabled', 'popup,email', 'message');
@@ -57,7 +57,7 @@ class external_test extends testcase {
             'coursebadges' => 'hidden',
             'coursebadgeslength' => 10,
             'filterbycourse' => 'hidden',
-            'incrementalsearch' => true,
+            'incrementalsearch' => false,
             'incrementalsearchlimit' => 2000,
             'courselink' => 'fullname',
             'messageprocessors' => [
@@ -104,13 +104,13 @@ class external_test extends testcase {
         self::assertEquals(20, $result['maxfiles']);
         self::assertEquals(123000, $result['maxbytes']);
         self::assertEquals(['starred', 'sent', 'drafts', 'trash'], $result['globaltrays']);
-        self::assertEquals('all', $result['coursetrays']);
+        self::assertEquals('none', $result['coursetrays']);
         self::assertEquals('fullname', $result['coursetraysname']);
         self::assertEquals('fullname', $result['coursebadges']);
         self::assertEquals(20, $result['coursebadgeslength']);
         self::assertEquals('fullname', $result['filterbycourse']);
         self::assertEquals('hidden', $result['courselink']);
-        self::assertEquals(false, $result['incrementalsearch']);
+        self::assertEquals(true, $result['incrementalsearch']);
         self::assertEquals(1000, $result['incrementalsearchlimit']);
 
         // Empty global trays.
