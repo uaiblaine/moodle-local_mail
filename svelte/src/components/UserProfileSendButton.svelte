@@ -19,7 +19,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 </script>
 
 {#if id != userid && course}
-    <a class="btn" href={createUrl(courseid, [id], 'to')}>
+    <a class="btn" role="button" href={createUrl(courseid, [id], 'to')}>
         <i class="fa fa-envelope-o mr-1" aria-hidden="true" />
         {strings.sendmail}
     </a>

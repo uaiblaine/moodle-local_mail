@@ -82,8 +82,14 @@ function initUserList(data: Record<string, unknown>, courseid: number) {
 }
 
 function initUserProfile(data: Record<string, unknown>, id: number, courseid: number) {
-    const target = document.querySelector('.userprofile .header-button-group');
-    if (id && courseid && target) {
+    const header = document.querySelector('.userprofile .page-context-header');
+    if (id && courseid && header) {
+        let target = header.querySelector('.header-button-group');
+        if (!target) {
+            target = document.createElement('div');
+            target.classList.add('btn-group', 'header-button-group');
+            header.append(target);
+        }
         new UserProfileSendButton({
             target,
             props: {
