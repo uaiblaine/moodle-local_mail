@@ -119,6 +119,7 @@ class renderer extends \plugin_renderer_base {
             'message',
             $message->id
         );
+        $content = format_text($content, $message->format, ['context' => $context, 'filter' => false]);
         $fs = get_file_storage();
         $files = $fs->get_area_files($context->id, 'local_mail', 'message', $message->id, 'filepath, filename', false);
         $attachments = [];
@@ -143,7 +144,7 @@ class renderer extends \plugin_renderer_base {
             'sendername' => $sender->fullname(),
             'date' => $this->formatted_time($message->time, true),
             'subject' => $message->subject,
-            'content' => format_text_email($content, $message->format),
+            'content' => format_text_email($content, FORMAT_HTML),
             'hasattachments' => count($attachments) > 0,
             'attachments' => $attachments,
             'viewurl' => $url->out(false),
@@ -156,7 +157,7 @@ class renderer extends \plugin_renderer_base {
             'senderurl' => $sender->profile_url($course),
             'date' => $this->formatted_time($message->time, true),
             'subject' => $message->subject,
-            'content' => format_text($content, $message->format, ['filter' => false]),
+            'content' => $content,
             'hasattachments' => count($attachments) > 0,
             'attachments' => $attachments,
             'viewurl' => $url->out(false),
