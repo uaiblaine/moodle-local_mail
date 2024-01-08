@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import { ViewportSize } from '../lib/state';
     import type { Store } from '../lib/store';
     import { getViewParamsFromUrl } from '../lib/url';
+    import { formatCourseName } from '../lib/utils';
     import ComposeButton from './ComposeButton.svelte';
     import CourseLink from './CourseLink.svelte';
     import ErrorModal from './ErrorModal.svelte';
@@ -31,6 +32,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
     let prevNavigationId = 0;
 
     $: tray = $store.params.tray;
+    $: course = $store.courses.find((c) => c.id == $store.params.courseid);
+    $: label = $store.labels.find((l) => l.id == $store.params.labelid);
 
     $: heading =
         tray == 'inbox'
@@ -44,9 +47,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
                   : tray == 'trash'
                     ? $store.strings.trash
                     : tray == 'label'
-                      ? $store.labels.find((l) => l.id == $store.params.labelid)?.name || ''
+                      ? label?.name || ''
                       : tray == 'course'
-                        ? $store.courses.find((c) => c.id == $store.params.courseid)?.fullname || ''
+                        ? formatCourseName(course, 'fullname')
                         : '';
 
     $: title = $store.message ? $store.message.subject.trim() || $store.strings.nosubject : heading;

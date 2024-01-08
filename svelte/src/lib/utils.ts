@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import type { Course } from './state';
+
 /**
  * List of supported colors for labels.
  */
@@ -22,6 +24,18 @@ export const colors: ReadonlyArray<string> = [
 ];
 
 /**
+ * Converts HTML to plain text.
+ *
+ * @param html The HTML string to convert.
+ * @returns The plain text representation of the HTML.
+ */
+export function convertHtmlToText(html: string): string {
+    const el = document.createElement('DIV');
+    el.innerHTML = html;
+    return el.innerText || '';
+}
+
+/**
  * Converts a timestamp to a date string.
  *
  * @param time UNIX Timestamp.
@@ -37,6 +51,26 @@ export function dateFromTimestamp(time: number): string {
         String(date.getMonth() + 1).padStart(2, '0'),
         String(date.getDate()).padStart(2, '0'),
     ].join('-');
+}
+
+/**
+ * Formats the course name based on the specified field.
+ *
+ * @param course The course object.
+ * @param field The field to format the course name ('shortname' or 'fullname').
+ * @returns The formatted course name.
+ */
+export function formatCourseName(
+    course: Course | undefined,
+    field?: 'shortname' | 'fullname' | 'hidden',
+): string {
+    if (!course) {
+        return '';
+    } else if (field == 'shortname') {
+        return convertHtmlToText(course.shortname);
+    } else {
+        return convertHtmlToText(course.fullname);
+    }
 }
 
 /**

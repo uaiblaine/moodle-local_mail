@@ -8,11 +8,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <script lang="ts">
     import { truncate } from '../actions/truncate';
     import type { Course, Settings } from '../lib/state';
+    import { formatCourseName } from '../lib/utils';
 
     export let course: Course;
     export let settings: Settings;
 
-    $: text = settings.coursebadges == 'shortname' ? course.shortname : course.fullname;
+    $: text = formatCourseName(course, settings.coursebadges);
     $: length = settings.coursebadgeslength || 20;
 </script>
 

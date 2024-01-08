@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script lang="ts">
     import type { Store } from '../lib/store';
-    import { replaceStringParams } from '../lib/utils';
+    import { formatCourseName, replaceStringParams } from '../lib/utils';
 
     export let store: Store;
 
@@ -21,9 +21,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 <a
                     class="text-truncate"
                     href={window.M.cfg.wwwroot + '/course/view.php?id=' + $store.params.courseid}
-                    title={replaceStringParams($store.strings.gotocourse, course.fullname)}
+                    title={replaceStringParams(
+                        $store.strings.gotocourse,
+                        formatCourseName(course, 'fullname'),
+                    )}
                 >
-                    {$store.settings.courselink == 'shortname' ? course.shortname : course.fullname}
+                    {formatCourseName(course, $store.settings.courselink)}
                 </a>
             </nav>
         {:else}

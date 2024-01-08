@@ -14,6 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         type Tray,
         type ViewParams,
     } from '../lib/state';
+    import { formatCourseName } from '../lib/utils';
     import CourseSelect from './CourseSelect.svelte';
     import MenuItem from './MenuItem.svelte';
 
@@ -133,7 +134,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         {#if courseVisible(course) && (!filterenabled || course.id != courseid)}
             <MenuItem
                 icon="fa-graduation-cap"
-                text={settings.coursetraysname == 'fullname' ? course.fullname : course.shortname}
+                text={formatCourseName(course, settings.coursetraysname)}
                 count={course.unread}
                 params={filterenabled
                     ? { tray: 'inbox', courseid: course.id, search }
