@@ -82,8 +82,8 @@ class user_search_test extends testcase {
     /**
      * Returns thee generated users filtered by search parameters.
      *
-     * @param users[] $message Array of messages.
-     * @param search_users $search Search parameters.
+     * @param message[] $message Array of messages.
+     * @param user_search $search Search parameters.
      * @return user[] Found users, indexed by ID.
      */
     protected static function filter_users(array $users, user_search $search): array {

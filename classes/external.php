@@ -919,6 +919,8 @@ class external extends \external_api {
         } else {
             event\message_viewed::create_from_message($message)->trigger();
         }
+
+        return null;
     }
 
     public static function view_message_returns() {
@@ -1550,6 +1552,8 @@ class external extends \external_api {
         $message->update($data);
 
         event\draft_updated::create_from_message($message)->trigger();
+
+        return null;
     }
 
     public static function update_message_returns() {
@@ -1610,6 +1614,8 @@ class external extends \external_api {
                 $message->set_unread($recipient, false);
             }
         }
+
+        return null;
     }
 
     public static function send_message_returns() {

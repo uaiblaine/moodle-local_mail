@@ -67,7 +67,7 @@ class label {
         $record->color = $color;
         $record->id = $DB->insert_record('local_mail_labels', $record);
 
-        $label = new self($record, $user);
+        $label = new self($record);
 
         self::cache()->set($label->id, $label);
         self::user_cache()->delete($user->id);
@@ -103,7 +103,7 @@ class label {
             $labels = [];
             $records = $DB->get_records('local_mail_labels', ['userid' => $user->id]);
             foreach ($records as $id => $record) {
-                $labels[$id] = new self($record, $user);
+                $labels[$id] = new self($record);
             }
             \core_collator::asort_objects_by_property($labels, 'name', \core_collator::SORT_NATURAL);
 

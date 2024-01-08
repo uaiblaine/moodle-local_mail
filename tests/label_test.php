@@ -166,7 +166,7 @@ class label_test extends testcase {
      * Asserts that a label is stored correctly in the database.
      *
      * @param label $label Label.
-     * @throws ExpectationFailedException
+     * @throws \PHPUnit\Framework\ExpectationFailedException
      */
     protected static function assert_label(label $label): void {
         self::assert_record_data('labels', [

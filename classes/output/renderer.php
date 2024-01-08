@@ -18,7 +18,7 @@ class renderer extends \plugin_renderer_base {
     /**
      * Returns the URL of the icon representing the format of a file.
      *
-     * @param stored_file $file File object.
+     * @param \stored_file $file File object.
      * @return string
      */
     public function file_icon_url(\stored_file $file): string {
@@ -33,7 +33,7 @@ class renderer extends \plugin_renderer_base {
     /**
      * Returns the URL of a file.
      *
-     * @param stored_file $file File object.
+     * @param \stored_file $file File object.
      * @return string
      */
     public function file_url(\stored_file $file): string {

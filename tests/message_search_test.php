@@ -91,7 +91,7 @@ class message_search_test extends testcase {
      * Returns different search casses for the givem users and messages.
      *
      * @param user[] $users All users.
-     * @param messages[] $messages All messages.
+     * @param message[] $messages All messages.
      * @return message_search[] Array of search parameters.
      */
     public static function cases(array $users, array $messages): array {

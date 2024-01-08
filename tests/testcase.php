@@ -26,7 +26,7 @@ abstract class testcase extends \advanced_testcase {
      * @param string $component Component.
      * @param string $filearea File area.
      * @param string $itemid Item ID.
-     * @throws ExpectationFailedException
+     * @throws \PHPUnit\Framework\ExpectationFailedException
      */
     protected static function assert_attachments(array $expected, message $message) {
         $fs = get_file_storage();
@@ -44,7 +44,7 @@ abstract class testcase extends \advanced_testcase {
      *
      * @param string[] $expected Files: filename => content.
      * @param int $userid Draft item ID.
-     * @throws ExpectationFailedException
+     * @throws \PHPUnit\Framework\ExpectationFailedException
      */
     protected static function assert_draft_files(array $expected, int $draftitemid) {
         global $USER;
@@ -62,7 +62,7 @@ abstract class testcase extends \advanced_testcase {
      * Asserts that a message is stored correctly in the database.
      *
      * @param message $message Message.
-     * @throws ExpectationFailedException
+     * @throws \PHPUnit\Framework\ExpectationFailedException
      */
     protected static function assert_message(message $message): void {
         self::assert_record_data('messages', [
@@ -117,7 +117,7 @@ abstract class testcase extends \advanced_testcase {
      * @param string $eventname Expected event name.
      * @param message $message Expected Message.
      * @param \phpunit_event_sink $sink Event sink.
-     * @throws ExpectationFailedException
+     * @throws \PHPUnit\Framework\ExpectationFailedException
      */
     protected static function assert_message_event(string $eventname, message $message, \phpunit_event_sink $sink): void {
         global $USER;
@@ -148,7 +148,7 @@ abstract class testcase extends \advanced_testcase {
      * @param int $expected Expected number of rows.
      * @param string $table Table name without the "local_mail_" prefix.
      * @param mixed[] $conditions Array of field => value.
-     * @throws ExpectationFailedException
+     * @throws \PHPUnit\Framework\ExpectationFailedException
      */
     protected static function assert_record_count(int $expected, string $table, array $conditions = []) {
         global $DB;
@@ -164,7 +164,7 @@ abstract class testcase extends \advanced_testcase {
      * @param string $table Table name without the "local_mail_" prefix.
      * @param mixed[] $conditions Array of field => value.
      * @param mixed[] $data Array of field => value.
-     * @throws ExpectationFailedException
+     * @throws \PHPUnit\Framework\ExpectationFailedException
      */
     protected static function assert_record_data($table, array $conditions, array $data): void {
         global $DB;
@@ -188,7 +188,7 @@ abstract class testcase extends \advanced_testcase {
      * @param int $draftitemid Draft item ID.
      * @param string $filename File name.
      * @param string $content Content of the file.
-     * @return stored_file
+     * @return \stored_file
      */
     protected static function create_draft_file(int $draftitemid, string $filename, string $content): \stored_file {
         global $USER;
