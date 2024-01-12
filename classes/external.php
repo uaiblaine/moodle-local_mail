@@ -663,21 +663,11 @@ class external extends \external_api {
         $context = $course->get_context();
         $sender = $message->get_sender();
 
-        list($content, $format) = \external_format_text(
-            $message->content,
-            $message->format,
-            $context->id,
-            'local_mail',
-            'message',
-            $message->id,
-            ['filter' => false],
-        );
-
         $result = [
             'id' => $message->id,
             'subject' => $message->subject,
-            'content' => $content,
-            'format' => $format,
+            'content' => $renderer->formatted_message_content($message),
+            'format' => FORMAT_HTML,
             'numattachments' => $message->attachments,
             'draft' => $message->draft,
             'time' => $message->time,
@@ -744,16 +734,6 @@ class external extends \external_api {
         }
 
         foreach ($message->get_references() as $ref) {
-            list($content, $format) = \external_format_text(
-                $ref->content,
-                $ref->format,
-                $context->id,
-                'local_mail',
-                'message',
-                $ref->id,
-                ['filter' => false],
-            );
-
             $attachments = [];
             $files = $fs->get_area_files($context->id, 'local_mail', 'message', $ref->id, 'filename', false);
 
@@ -773,8 +753,8 @@ class external extends \external_api {
             $result['references'][] = [
                 'id' => $ref->id,
                 'subject' => $ref->subject,
-                'content' => $content,
-                'format' => $format,
+                'content' => $renderer->formatted_message_content($message),
+                'format' => FORMAT_HTML,
                 'time' => $ref->time,
                 'shorttime' => $renderer->formatted_time($ref->time),
                 'fulltime' => $renderer->formatted_time($ref->time, true),

@@ -49,6 +49,30 @@ class renderer extends \plugin_renderer_base {
     }
 
     /**
+     * Returns the formatted content of a message.
+     *
+     * @param message $message Message.
+     * @return string
+     */
+    public function formatted_message_content(message $message): string {
+        global $CFG;
+
+        require_once("$CFG->libdir/filelib.php");
+
+        $context = $message->get_course()->get_context();
+        $content = file_rewrite_pluginfile_urls(
+            $message->content,
+            'pluginfile.php',
+            $context->id,
+            'local_mail',
+            'message',
+            $message->id
+        );
+
+        return format_text($content, $message->format, ['context' => $context, 'filter' => true, 'para' => false]);
+    }
+
+    /**
      * Returns a formatted date and time.
      *
      * The format used depends on the current date:
@@ -111,15 +135,7 @@ class renderer extends \plugin_renderer_base {
         $url = new \moodle_url('/local/mail/view.php', ['t' => 'inbox', 'm' => $message->id]);
         $sitename = format_string($SITE->shortname, true, ['context' => \context_system::instance()]);
         $coursename = format_string($course->fullname, true, ['context' => $context]);
-        $content = file_rewrite_pluginfile_urls(
-            $message->content,
-            'pluginfile.php',
-            $context->id,
-            'local_mail',
-            'message',
-            $message->id
-        );
-        $content = format_text($content, $message->format, ['context' => $context, 'filter' => false]);
+        $content = $this->formatted_message_content($message);
         $fs = get_file_storage();
         $files = $fs->get_area_files($context->id, 'local_mail', 'message', $message->id, 'filepath, filename', false);
         $attachments = [];

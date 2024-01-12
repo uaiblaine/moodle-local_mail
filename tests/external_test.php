@@ -1793,9 +1793,9 @@ class external_test extends testcase {
             . output\strings::get('date') . ': '
             . userdate($message->time, get_string('strftimedatetime', 'langconfig')) . '<br>'
             . output\strings::get('subject') . ': '
-            . format_text($message->subject, FORMAT_PLAIN, ['filter' => false])
+            . s($message->subject)
             . '</p>'
-            . format_text($message->content, $message->format, ['filter' => false]);
+            . format_text($message->content, $message->format, ['filter' => false, 'para' => false]);
         self::assertEquals($expected, $draft->content);
         self::assertEquals(FORMAT_HTML, $draft->format);
         self::assertEquals($user2, $draft->get_sender());

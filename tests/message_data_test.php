@@ -86,9 +86,9 @@ class message_data_test extends testcase {
             . output\strings::get('date') . ': '
             . userdate($message->time, get_string('strftimedatetime', 'langconfig')) . '<br>'
             . output\strings::get('subject') . ': '
-            . format_text($message->subject, FORMAT_PLAIN, ['filter' => false])
+            . s($message->subject)
             . '</p>'
-            . format_text($message->content, $message->format, ['filter' => false]);
+            . format_text($message->content, $message->format, ['filter' => false, 'para' => false]);
         self::assertEquals($expected, $data->content);
         self::assertEquals((int) FORMAT_HTML, $data->format);
         self::assertGreaterThan(0, $data->draftitemid);

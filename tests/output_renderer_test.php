@@ -51,6 +51,27 @@ class output_renderer_test extends testcase {
         self::assertEquals($renderer->image_url(file_extension_icon('file2.html', $size)), $renderer->file_icon_url($file2));
     }
 
+    public function test_formatted_message_content() {
+        global $PAGE;
+
+        $renderer = $PAGE->get_renderer('local_mail');
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user = new user($generator->create_user());
+        $data = message_data::new($course, $user);
+        $data->subject = 'Subject';
+        $data->content = '<p>@@PLUGINFILE@@/file.txt</p>';
+        self::create_draft_file($data->draftitemid, 'file.txt', 'File content');
+        $message = message::create($data);
+
+        $result = $renderer->formatted_message_content($message);
+
+        $context = $message->get_course()->get_context();
+        $fileurl = new \moodle_url("/pluginfile.php/$context->id/local_mail/message/$message->id/file.txt");
+        $filelink = '<a href="' . $fileurl->out() . '" class="_blanktarget">' . $fileurl->out(false) . '</a>';
+        self::assertEquals("<p>$filelink</p>", $result);
+    }
+
     public function test_formatted_time() {
         global $PAGE;
 
