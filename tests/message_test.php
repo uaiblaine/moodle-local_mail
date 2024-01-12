@@ -402,6 +402,7 @@ class message_test extends testcase {
         self::assertEquals('text', message::normalize_text('   text   ', FORMAT_PLAIN));
         self::assertEquals('text text', message::normalize_text('text     text', FORMAT_PLAIN));
         self::assertEquals('text text', message::normalize_text('text😛😛text', FORMAT_PLAIN));
+        self::assertEquals('text text', message::normalize_text('text @@PLUGINFILE@@/ text', FORMAT_HTML));
         self::assertEquals('text text', message::normalize_text(' <p> text    text </p>', FORMAT_HTML));
     }
 

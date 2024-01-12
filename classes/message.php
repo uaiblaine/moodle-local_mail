@@ -269,8 +269,12 @@ class message {
      * @return string
      */
     public static function normalize_text(string $text, int|string $format): string {
-        // Formats and convert to plain text.
-        $text = html_to_text(format_text($text, $format, ['filter' => false]), 0, false);
+        // Removes @@PLUGINFILE@@/ from text.
+        $text = str_replace('@@PLUGINFILE@@/', '', $text);
+
+        // Formats text and converts HTML to plain text.
+        $text = format_text($text, $format, ['filter' => false, 'para' => false]);
+        $text = html_to_text($text, 0, false);
 
         // Replaces non-alphanumeric characters with a space.
         return trim(preg_replace('/(*UTF8)[^\p{L}\p{N}]+/', ' ', $text));
