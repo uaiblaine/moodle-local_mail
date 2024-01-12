@@ -7,7 +7,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte';
-    import { require, type CorePubSub } from '../lib/amd';
+    import { loadModule, type CorePubSub } from '../lib/amd';
     import type { Course, Strings } from '../lib/state';
     import { createUrl } from '../lib/url';
 
@@ -21,13 +21,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
     let recipients: number[] = [];
 
     onMount(async () => {
-        const pubsub = (await require('core/pubsub')) as CorePubSub;
+        const pubsub = await loadModule<CorePubSub>('core/pubsub');
         pubsub.subscribe('core/checkbox-toggleall:checkboxToggled', updateRecipients);
         updateRecipients();
     });
 
     onDestroy(async () => {
-        const pubsub = (await require('core/pubsub')) as CorePubSub;
+        const pubsub = await loadModule<CorePubSub>('core/pubsub');
         pubsub.unsubscribe('core/checkbox-toggleall:checkboxToggled', updateRecipients);
     });
 

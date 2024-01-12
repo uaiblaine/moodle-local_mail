@@ -6,8 +6,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import { onMount, tick } from 'svelte';
-    import { require, type CoreFragment, type EditorTinyLoader, type TinyMCE } from '../lib/amd';
+    import { onMount } from 'svelte';
+    import { loadModule, type EditorTinyLoader, type TinyMCE } from '../lib/amd';
     import {
         ViewportSize,
         type Message,
@@ -22,6 +22,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import DraftFormRecipients from './DraftFormRecipients.svelte';
     import DraftFormTimeAndLabels from './DraftFormTimeAndLabels.svelte';
     import DraftFormUserSearch from './DraftFormUserSearch.svelte';
+    import HtmlHead from './HtmlHead.svelte';
     import MessageReference from './MessageReference.svelte';
     import SendButton from './SendButton.svelte';
 
@@ -29,21 +30,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
     export let message: Message;
     export let form: MessageForm;
 
-    let jsNode: Element | undefined;
     let formNode: HTMLFormElement | undefined;
 
     $: course = message.course;
     $: subject = message.subject;
     $: recipients = new Map(message.recipients.map((user) => [user.id, user]));
 
-    $: updateJavascript(form.javascript);
-
     onMount(() => {
         formNode?.addEventListener('core_form/uploadChanged', () => save(false));
         const disableTinyEventHandlers = enableTinyEventHandlers();
 
         return () => {
-            jsNode?.remove();
             disableTinyEventHandlers();
         };
     });
@@ -67,8 +64,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
             }
         };
 
-        require('editor_tiny/loader').then(async (loader) => {
-            tiny = await (loader as EditorTinyLoader).getTinyMCE();
+        loadModule<EditorTinyLoader>('editor_tiny/loader').then(async (loader) => {
+            tiny = await loader.getTinyMCE();
             tiny.EditorManager.get().forEach((editor) => handleEditor({ editor }));
             tiny.EditorManager.on('SetupEditor', handleEditor);
         });
@@ -78,16 +75,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
             tinyEditor?.off('input', handleChange);
             tinyEditor?.off('ExecCommand', handleChange);
         };
-    };
-
-    const updateJavascript = async (javascript: string) => {
-        const fragment = (await require('core/fragment')) as CoreFragment;
-        jsNode?.remove();
-        await tick();
-        jsNode = document.createElement('script');
-        jsNode.setAttribute('type', 'text/javascript');
-        jsNode.innerHTML = fragment.processCollectedJavascript(javascript);
-        document.head.append(jsNode);
     };
 
     const handleCourseChange = (id?: number) => {
@@ -142,6 +129,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
         await store.updateDraft(data, force);
     };
 </script>
+
+<HtmlHead javascript={form.javascript} />
 
 <hr class="d-lg-none mt-0 mb-3 mb-sm-2" />
 <form

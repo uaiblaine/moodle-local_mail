@@ -75,6 +75,7 @@ export interface Message extends MessageSummary {
     readonly format: number;
     readonly attachments: ReadonlyArray<Attachment>;
     readonly references: ReadonlyArray<Reference>;
+    readonly javascript: string;
 }
 
 export interface MessageData {

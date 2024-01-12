@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <script lang="ts">
     import type { Reference, Strings } from '../lib/state';
     import MessageAttachments from './MessageAttachments.svelte';
+    import MessageContent from './MessageContent.svelte';
     import UserPicture from './UserPicture.svelte';
 
     export let strings: Strings;
@@ -35,19 +36,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
             </div>
         </div>
         <hr />
-        <div class="local-mail-message-reference-content">
-            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-            {@html reference.content}
-        </div>
+        <MessageContent content={reference.content} />
         {#if reference.attachments.length > 0}
             <hr />
             <MessageAttachments {strings} message={reference} />
         {/if}
     </div>
 </div>
-
-<style global>
-    .local-mail-message-reference-content {
-        max-width: 60rem;
-    }
-</style>

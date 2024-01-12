@@ -659,6 +659,9 @@ class external extends \external_api {
         global $PAGE;
         $renderer = $PAGE->get_renderer('local_mail');
 
+        $PAGE->initialise_theme_and_output();
+        $PAGE->start_collecting_javascript_requirements();
+
         $course = $message->get_course();
         $context = $course->get_context();
         $sender = $message->get_sender();
@@ -779,6 +782,9 @@ class external extends \external_api {
             ];
         }
 
+        $result['javascript'] = $PAGE->requires->get_end_code();
+        $PAGE->end_collecting_javascript_requirements();
+
         return $result;
     }
 
@@ -872,6 +878,7 @@ class external extends \external_api {
                     'color' => new \external_value(PARAM_ALPHA, 'Color of the label'),
                 ])
             ),
+            'javascript' => new \external_value(PARAM_RAW, 'Required Javascript HTML elements'),
         ]);
     }
 

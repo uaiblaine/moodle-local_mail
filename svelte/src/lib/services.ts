@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { require, type CoreAjax } from './amd';
+import { loadModule, type CoreAjax } from './amd';
 import {
     DeletedStatus,
     type Course,
@@ -257,7 +257,7 @@ export type SendMessageResponse = void;
  * @returns A promise to the web service responses.
  */
 export async function callServices(requests: ServiceRequest[]): Promise<unknown[]> {
-    const ajax = (await require('core/ajax')) as CoreAjax;
+    const ajax = await loadModule<CoreAjax>('core/ajax');
     const ajaxRequests = Array.from(requests).map(({ methodname, ...args }) => ({
         methodname: `local_mail_${methodname}`,
         args,

@@ -3,27 +3,27 @@
     "file": "global-n0M6ZrFR.css",
     "src": "_global-!~{003}~.js"
   },
-  "_global-tKP1ARur.js": {
+  "_global-wUePOHC_.js": {
     "css": [
       "global-n0M6ZrFR.css"
     ],
-    "file": "global-tKP1ARur.js"
+    "file": "global-wUePOHC_.js"
   },
   "src/navigation.ts": {
-    "file": "navigation-kibbt1KH.js",
+    "file": "navigation-lDuXYTI7.js",
     "imports": [
-      "_global-tKP1ARur.js"
+      "_global-wUePOHC_.js"
     ],
     "isEntry": true,
     "src": "src/navigation.ts"
   },
   "src/view.ts": {
     "css": [
-      "view-JNHfrkpn.css"
+      "view-TpUUiCFR.css"
     ],
-    "file": "view-4IjSUE3Z.js",
+    "file": "view-Efio-FbT.js",
     "imports": [
-      "_global-tKP1ARur.js"
+      "_global-wUePOHC_.js"
     ],
     "isEntry": true,
     "src": "src/view.ts"

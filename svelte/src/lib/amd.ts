@@ -22,6 +22,17 @@ export interface CoreAjaxRequest {
     args: Record<string, unknown>;
 }
 
+/** Module "core_filters/events" */
+export interface CoreFiltersEvents {
+    /**
+     * Trigger an event to indicate that the specified nodes were updated and
+     * should be processed by the filter system.
+     *
+     * @param nodes Nodes with updated content.
+     */
+    notifyFilterContentUpdated: (nodes: Element[]) => void;
+}
+
 /** Module "core/fragment" */
 export interface CoreFragment {
     /**
@@ -50,16 +61,16 @@ export type { TinyMCE };
 const modules: Record<string, unknown> = {};
 
 /**
- * Loads an AMD modules with require().
+ * Loads an AMD module with require().
  *
  * @param name Name of the module, e.g. "core/ajax".
  * @returns The module.
  */
-export async function require(name: string): Promise<unknown> {
+export async function loadModule<T>(name: string): Promise<T> {
     if (modules[name] == null) {
         modules[name] = await new Promise((resolve) => {
             window.require([name], resolve);
         });
     }
-    return modules[name];
+    return modules[name] as T;
 }
