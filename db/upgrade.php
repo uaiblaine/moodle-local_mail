@@ -103,10 +103,6 @@ function xmldb_local_mail_upgrade($oldversion) {
     }
 
     if ($oldversion < 2017070402) {
-
-        $normalize = function ($text) {
-            return trim(preg_replace('/(*UTF8)[^\p{L}\p{N}]+/', ' ', $text));
-        };
         $lastid = 0;
         while (true) {
             $transaction = $DB->start_delegated_transaction();
@@ -115,20 +111,10 @@ function xmldb_local_mail_upgrade($oldversion) {
             $fields = 'id, courseid, subject, content, format';
             $records = $DB->get_records_select('local_mail_messages', $select, $params, 'id', $fields, 0, 100);
             foreach ($records as $record) {
-                $context = context_course::instance($record->courseid);
-                $content = file_rewrite_pluginfile_urls(
-                    $record->content,
-                    'pluginfile.php',
-                    $context->id,
-                    'local_mail',
-                    'message',
-                    $record->id
-                );
-                $content = format_text($record->content, $record->format, ['filter' => false, 'nocache' => true]);
                 $data = new stdClass;
                 $data->id = $record->id;
-                $data->normalizedsubject = $normalize($record->subject);
-                $data->normalizedcontent = $normalize(html_to_text($content, 0, false));
+                $data->normalizedsubject = \local_mail\message::normalize_text($record->subject, FORMAT_PLAIN);
+                $data->normalizedcontent = \local_mail\message::normalize_text($record->content, $record->format);
                 $DB->update_record('local_mail_messages', $data);
                 $lastid = $record->id;
             }
