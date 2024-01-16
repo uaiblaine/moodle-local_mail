@@ -22,7 +22,7 @@ class output_strings_test extends testcase {
         $user = $generator->create_user();
         $this->setUser($user);
 
-        foreach (['en', 'ca', 'es'] as $lang) {
+        foreach (['en', 'ca', 'es', 'eu', 'gl'] as $lang) {
             $SESSION->forcelang = $lang;
 
             $strings = self::setup_strings($lang);

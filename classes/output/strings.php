@@ -60,7 +60,7 @@ class strings {
 
         static $instance = null;
 
-        if ($lang != 'ca' && $lang != 'es') {
+        if (!in_array($lang, ['ca', 'es', 'eu', 'gl'])) {
             return get_string_manager();
         }
 
@@ -74,7 +74,7 @@ class strings {
             public function load_component_strings($component, $lang, $disablecache = false, $disablelocal = false) {
                 global $CFG;
 
-                if ($component != 'local_mail' || ($lang != 'ca' && $lang != 'es')) {
+                if ($component != 'local_mail' || !in_array($lang, ['ca', 'es', 'eu', 'gl'])) {
                     // @codeCoverageIgnoreStart
                     throw new \coding_exception('Internal local_mail error: unexpected use of the string manager');
                     // @codeCoverageIgnoreEnd
