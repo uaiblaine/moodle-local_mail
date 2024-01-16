@@ -656,10 +656,11 @@ class external extends \external_api {
     }
 
     public static function get_message_response(user $user, message $message) {
-        global $PAGE;
+        global $OUTPUT, $PAGE;
         $renderer = $PAGE->get_renderer('local_mail');
 
         $PAGE->initialise_theme_and_output();
+        $OUTPUT->header(); // Hack alert: Forcing bootstrap_renderer to initiate moodle page.
         $PAGE->start_collecting_javascript_requirements();
 
         $course = $message->get_course();
@@ -1366,7 +1367,7 @@ class external extends \external_api {
     }
 
     public static function get_message_form() {
-        global $CFG, $PAGE;
+        global $CFG, $OUTPUT, $PAGE;
 
         require_once("$CFG->libdir/form/editor.php");
         require_once("$CFG->libdir/form/filemanager.php");
@@ -1396,6 +1397,7 @@ class external extends \external_api {
         $filemanager->setValue($data->draftitemid);
 
         $PAGE->initialise_theme_and_output();
+        $OUTPUT->header(); // Hack alert: Forcing bootstrap_renderer to initiate moodle page.
         $PAGE->start_collecting_javascript_requirements();
         $editorhtml = $editor->toHtml();
         $filemanagerhtml = $filemanager->toHtml();
