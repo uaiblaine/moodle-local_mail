@@ -18,8 +18,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
         {#if $store.error?.debuginfo}
             <p>{$store.error?.debuginfo}</p>
         {/if}
-        {#if $store.error?.stacktrace}
-            <pre>{$store.error?.stacktrace}</pre>
+        {#if $store.error?.backtrace || $store.error?.stacktrace}
+            <pre>{$store.error?.backtrace || $store.error?.stacktrace}</pre>
         {/if}
     </ModalDialog>
 {/if}
