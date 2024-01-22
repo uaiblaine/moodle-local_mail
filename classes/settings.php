@@ -130,6 +130,9 @@ class settings {
         if (!get_config('message', 'local_mail_mail_disable')) {
             $enabled = explode(',', get_config('message', 'message_provider_local_mail_mail_enabled'));
             foreach (get_message_processors(true) as $processor) {
+                if ($processor->name == 'localmail') {
+                    continue;
+                }
                 $locked = (bool) get_config('message', "{$processor->name}_provider_local_mail_mail_locked");
                 $settings->messageprocessors[] = [
                     'name' => $processor->name,
