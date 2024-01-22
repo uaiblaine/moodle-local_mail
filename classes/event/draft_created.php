@@ -8,7 +8,6 @@
 namespace local_mail\event;
 
 class draft_created extends \core\event\base {
-
     public static function create_from_message(\local_mail\message $message): \core\event\base {
         global $USER;
 

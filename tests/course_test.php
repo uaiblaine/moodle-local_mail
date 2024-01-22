@@ -15,7 +15,6 @@ require_once(__DIR__ . '/testcase.php');
  * @covers \local_mail\course
  */
 class course_test extends testcase {
-
     public function test_get() {
         $generator = self::getDataGenerator();
         $record = $generator->create_course(['groupmode' => SEPARATEGROUPS]);

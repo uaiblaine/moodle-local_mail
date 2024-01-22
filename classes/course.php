@@ -8,7 +8,6 @@
 namespace local_mail;
 
 class course {
-
     /** @var int Course ID. */
     public int $id;
 
@@ -106,7 +105,7 @@ class course {
         $missingids = array_filter($ids, fn($id) => !$courses[$id]);
 
         if ($missingids) {
-            list($sqlid, $params) = $DB->get_in_or_equal($missingids, SQL_PARAMS_NAMED, 'courseid');
+            [$sqlid, $params] = $DB->get_in_or_equal($missingids, SQL_PARAMS_NAMED, 'courseid');
             $select = "id $sqlid AND id <> :siteid";
             $params['siteid'] = SITEID;
             $fields = 'id, shortname, fullname, visible, groupmode, defaultgroupingid';
@@ -172,7 +171,7 @@ class course {
      */
     public function get_viewable_roles(user $user): array {
         $result = [];
-        list($needed, $forbidden) = get_roles_with_cap_in_context($this->get_context(), 'local/mail:usemail');
+        [$needed, $forbidden] = get_roles_with_cap_in_context($this->get_context(), 'local/mail:usemail');
         foreach (get_viewable_roles($this->get_context(), $user->id) as $roleid => $rolename) {
             if (isset($needed[$roleid]) && !isset($forbidden[$roleid])) {
                 $result[$roleid] = $rolename;

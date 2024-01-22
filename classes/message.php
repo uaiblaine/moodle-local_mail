@@ -11,7 +11,6 @@
 namespace local_mail;
 
 class message {
-
     // Deleted stataus constants.
     const NOT_DELETED = 0;
     const DELETED = 1;
@@ -101,7 +100,7 @@ class message {
 
         $transaction = $DB->start_delegated_transaction();
 
-        $messagerecord = new \stdClass;
+        $messagerecord = new \stdClass();
         $messagerecord->courseid = $data->course->id;
         $messagerecord->subject = '';
         $messagerecord->content = '';
@@ -120,7 +119,7 @@ class message {
         $message->starred[$data->sender->id] = false;
         $message->deleted[$data->sender->id] = self::NOT_DELETED;
         $message->labelids[$data->sender->id] = [];
-        $userrecord = new \stdClass;
+        $userrecord = new \stdClass();
         $userrecord->messageid = $message->id;
         $userrecord->courseid = $data->course->id;
         $userrecord->draft = 1;
@@ -209,7 +208,7 @@ class message {
 
         if ($missingids) {
             // Get message records.
-            list($sqlid, $params) = $DB->get_in_or_equal($missingids);
+            [$sqlid, $params] = $DB->get_in_or_equal($missingids);
             $fields = 'id, courseid, subject, content, format, attachments, draft, time';
             $messagerecords = $DB->get_records_select('local_mail_messages', "id $sqlid", $params, '', $fields);
 
@@ -547,7 +546,7 @@ class message {
 
         foreach ($labels as $label) {
             if (!isset($this->labelids[$user->id][$label->id])) {
-                $record = new \stdClass;
+                $record = new \stdClass();
                 $record->messageid = $this->id;
                 $record->courseid = $this->courseid;
                 $record->draft = $this->draft;
@@ -698,7 +697,7 @@ class message {
         $this->time = (int) $data->time;
 
         // Message record.
-        $messagerecord = new \stdClass;
+        $messagerecord = new \stdClass();
         $messagerecord->id = $this->id;
         $messagerecord->courseid = $this->courseid;
         $messagerecord->subject = $this->subject;
@@ -757,7 +756,7 @@ class message {
                     $this->deleted[$user->id] = self::NOT_DELETED;
                     $this->labelids[$user->id] = [];
 
-                    $userrecord = new \stdClass;
+                    $userrecord = new \stdClass();
                     $userrecord->messageid = $this->id;
                     $userrecord->courseid = $this->courseid;
                     $userrecord->draft = 1;

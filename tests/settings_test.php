@@ -15,7 +15,6 @@ require_once(__DIR__ . '/testcase.php');
  * @covers \local_mail\settings
  */
 class settings_test extends testcase {
-
     public function test_defaults() {
         set_config('maxbytes', 123000);
 

@@ -14,7 +14,6 @@ use local_mail\message;
 use local_mail\user;
 
 class renderer extends \plugin_renderer_base {
-
     /**
      * Returns the URL of the icon representing the format of a file.
      *

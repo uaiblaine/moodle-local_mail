@@ -8,7 +8,6 @@
 namespace local_mail;
 
 class exception extends \moodle_exception {
-
     /**
      * Constructor.
      *

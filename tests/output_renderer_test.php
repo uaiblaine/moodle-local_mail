@@ -15,7 +15,6 @@ require_once(__DIR__ . '/testcase.php');
  * @covers \local_mail\output\renderer
  */
 class output_renderer_test extends testcase {
-
     public function test_file_url() {
         global $CFG, $PAGE;
 

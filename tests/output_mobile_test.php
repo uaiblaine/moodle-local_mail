@@ -15,7 +15,6 @@ require_once(__DIR__ . '/testcase.php');
  * @covers \local_mail\output\mobile
  */
 class output_mobile_test extends testcase {
-
     public function test_init() {
         global $CFG;
 

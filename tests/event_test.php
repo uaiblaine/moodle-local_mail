@@ -20,7 +20,6 @@ require_once(__DIR__ . '/testcase.php');
  * @covers \local_mail\event\message_viewed
  */
 class event_test extends testcase {
-
     public function test_draft_created() {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());

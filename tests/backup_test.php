@@ -21,7 +21,6 @@ require_once(__DIR__ . '/testcase.php');
  * @covers \restore_local_mail_plugin
  */
 class backup_test extends testcase {
-
     public function test_backup_and_restore() {
         global $DB;
 

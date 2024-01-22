@@ -8,7 +8,6 @@
 namespace local_mail\output;
 
 class strings {
-
     /**
      * Returns a language string with parameters replaced.
      *
@@ -71,8 +70,7 @@ class strings {
             // @codeCoverageIgnoreEnd
         }
 
-        $instance = new class($CFG->langotherroot, $CFG->langlocalroot, []) extends \core_string_manager_standard {
-
+        $instance = new class ($CFG->langotherroot, $CFG->langlocalroot, []) extends \core_string_manager_standard {
             public function load_component_strings($component, $lang, $disablecache = false, $disablelocal = false) {
                 global $CFG;
 

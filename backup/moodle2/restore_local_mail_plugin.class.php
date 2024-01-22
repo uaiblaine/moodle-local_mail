@@ -8,7 +8,6 @@
  */
 
 class restore_local_mail_plugin extends restore_local_plugin {
-
     protected function define_course_plugin_structure() {
         if (!get_config('local_mail', 'enablebackup')) {
             return [];
@@ -29,7 +28,7 @@ class restore_local_mail_plugin extends restore_local_plugin {
     public function process_local_mail_message($data) {
         global $DB;
 
-        $record = new \stdClass;
+        $record = new \stdClass();
         $record->courseid = $this->get_mappingid('course', $data['courseid']);
         $record->subject = $data['subject'];
         $record->content = $data['content'];
@@ -47,7 +46,7 @@ class restore_local_mail_plugin extends restore_local_plugin {
     public function process_local_mail_message_ref($data) {
         global $DB;
 
-        $record = new \stdClass;
+        $record = new \stdClass();
         $record->messageid = $this->get_new_parentid('local_mail_message');
         $record->reference = $this->get_mappingid('local_mail_message', $data['reference']);
         $DB->insert_record('local_mail_message_refs', $record);
@@ -62,7 +61,7 @@ class restore_local_mail_plugin extends restore_local_plugin {
         $userid = $this->get_mappingid('user', $data['userid']);
         $message = $DB->get_record('local_mail_messages', ['id' => $messageid], '*', MUST_EXIST);
 
-        $record = new \stdClass;
+        $record = new \stdClass();
         $record->messageid = $message->id;
         $record->courseid = $message->courseid;
         $record->draft = $message->draft;
@@ -86,14 +85,14 @@ class restore_local_mail_plugin extends restore_local_plugin {
         $messageuser = $DB->get_record('local_mail_message_users', $conditions, '*', MUST_EXIST);
 
         if (!$labelid) {
-            $record = new \stdClass;
+            $record = new \stdClass();
             $record->userid = $userid;
             $record->name = $data['name'];
             $record->color = $data['color'];
             $labelid = $DB->insert_record('local_mail_labels', $record);
         }
 
-        $record = new \stdClass;
+        $record = new \stdClass();
         $record->messageid = $messageid;
         $record->courseid = $messageuser->courseid;
         $record->draft = $messageuser->draft;

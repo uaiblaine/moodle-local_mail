@@ -8,7 +8,6 @@
 namespace local_mail;
 
 class message_search {
-
     /** @var user Search messages sent or received by this user. */
     public user $user;
 
@@ -141,7 +140,7 @@ class message_search {
     public function count(): int {
         global $DB;
 
-        list($fromsql, $wheresql, $ordersql, $params) = $this->get_base_sql();
+        [$fromsql, $wheresql, $ordersql, $params] = $this->get_base_sql();
 
         $sql = "SELECT COUNT(*) $fromsql $wheresql";
 
@@ -156,7 +155,7 @@ class message_search {
     public function count_per_course(): array {
         global $DB;
 
-        list($fromsql, $wheresql, $ordersql, $params) = $this->get_base_sql();
+        [$fromsql, $wheresql, $ordersql, $params] = $this->get_base_sql();
 
         $sql = "SELECT i.courseid, COUNT(*) AS num $fromsql $wheresql GROUP BY i.courseid";
 
@@ -176,7 +175,7 @@ class message_search {
     public function count_per_label(): array {
         global $DB;
 
-        list($fromsql, $wheresql, $ordersql, $params) = $this->get_base_sql(true);
+        [$fromsql, $wheresql, $ordersql, $params] = $this->get_base_sql(true);
 
         $sql = "SELECT MIN(i.id), i.labelid, i.courseid, COUNT(*) AS num $fromsql $wheresql GROUP BY i.labelid, i.courseid";
 
@@ -198,7 +197,7 @@ class message_search {
     public function get(int $offset = 0, int $limit = 0): array {
         global $DB;
 
-        list($fromsql, $wheresql, $ordersql, $params) = $this->get_base_sql();
+        [$fromsql, $wheresql, $ordersql, $params] = $this->get_base_sql();
 
         $sql = "SELECT i.messageid $fromsql $wheresql $ordersql";
 
@@ -246,7 +245,7 @@ class message_search {
                 // No courses or labels, return an empty result.
                 $selects[] = '1 = 0';
             } else {
-                list($condsql, $condparams) = $DB->get_in_or_equal($items, SQL_PARAMS_NAMED, $field);
+                [$condsql, $condparams] = $DB->get_in_or_equal($items, SQL_PARAMS_NAMED, $field);
                 $selects[] = 'i.' . $field . ' ' . $condsql;
                 $params = array_merge($params, $condparams);
             }
@@ -270,7 +269,7 @@ class message_search {
             $contentsql = $DB->sql_like('m.normalizedcontent', ':contentcontent', false, false);
             $selects[] = "(($subjectsql) OR ($contentsql) OR i.messageid IN ($usersql))";
             $pattern = '%' . $DB->sql_like_escape(message::normalize_text($this->content, FORMAT_PLAIN)) . '%';
-            $params['contentguestid'] = $CFG->siteguest;;
+            $params['contentguestid'] = $CFG->siteguest;
             $params['contentfullname'] = $pattern;
             $params['contentrolefrom'] = message::ROLE_FROM;
             $params['contentroleto'] = message::ROLE_TO;

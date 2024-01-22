@@ -17,7 +17,6 @@ require_once(__DIR__ . '/testcase.php');
  * @runTestsInSeparateProcesses
  */
 class lib_test extends testcase {
-
     public function test_pluginfile() {
         $generator = $this->getDataGenerator();
         $course = new course($generator->create_course());

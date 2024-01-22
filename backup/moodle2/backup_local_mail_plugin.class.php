@@ -8,7 +8,6 @@
  */
 
 class backup_local_mail_plugin extends backup_local_plugin {
-
     protected function define_course_plugin_structure() {
         if (!get_config('local_mail', 'enablebackup')) {
             return;

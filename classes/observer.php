@@ -12,7 +12,6 @@
  * Event observer for local_mail.
  */
 class observer {
-
     /**
      * Triggered via course_deleted event.
      *

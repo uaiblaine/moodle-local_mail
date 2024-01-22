@@ -13,7 +13,6 @@ defined('MOODLE_INTERNAL') || die;
 require_once("$CFG->libdir/externallib.php");
 
 class external extends \external_api {
-
     public static function get_settings_parameters() {
         return new \external_function_parameters([]);
     }
@@ -193,7 +192,7 @@ class external extends \external_api {
 
         if (isset($params['preferences']['notifications'])) {
             $processornames = array_column(get_message_processors(true), 'name');
-            if (array_diff($params['preferences']['notifications'],  $processornames)) {
+            if (array_diff($params['preferences']['notifications'], $processornames)) {
                 throw new \invalid_parameter_exception('"notifications" must contain message processor names');
             }
             $enabled = implode(',', $params['preferences']['notifications']);
@@ -1386,7 +1385,7 @@ class external extends \external_api {
             $data->format = FORMAT_HTML;
         }
 
-        $PAGE->set_url(new \moodle_url('/local/mail/view.php',  ['t' => 'drafts', 'm' => $message->id]));
+        $PAGE->set_url(new \moodle_url('/local/mail/view.php', ['t' => 'drafts', 'm' => $message->id]));
         $PAGE->set_context(\context_system::instance());
         $options['autosave'] = false;
         $attributes = ['id' => 'local-mail-compose-editor-' . $message->id];

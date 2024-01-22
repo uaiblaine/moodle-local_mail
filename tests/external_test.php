@@ -20,7 +20,6 @@ require_once(__DIR__ . '/user_search_test.php');
  * @runTestsInSeparateProcesses
  */
 class external_test extends testcase {
-
     public function test_get_settings() {
         $generator = $this->getDataGenerator();
         $user = $generator->create_user();
@@ -286,7 +285,7 @@ class external_test extends testcase {
 
     public function test_get_courses() {
         $generator = $this->getDataGenerator();
-        list($users) = message_search_test::generate_data();
+        [$users] = message_search_test::generate_data();
 
         foreach ($users as $user) {
             $this->setUser($user->id);
@@ -326,7 +325,7 @@ class external_test extends testcase {
 
     public function test_get_labels() {
         $generator = $this->getDataGenerator();
-        list($users) = message_search_test::generate_data();
+        [$users] = message_search_test::generate_data();
 
         foreach ($users as $user) {
             $this->setUser($user->id);
@@ -364,7 +363,7 @@ class external_test extends testcase {
     public function test_count_messages() {
         $generator = self::getDataGenerator();
 
-        list($users, $messages) = message_search_test::generate_data();
+        [$users, $messages] = message_search_test::generate_data();
 
         foreach (message_search_test::cases($users, $messages) as $search) {
             $this->setUser($search->user->id);
@@ -483,7 +482,7 @@ class external_test extends testcase {
     public function test_search_messages() {
         $generator = self::getDataGenerator();
 
-        list($users, $messages) = message_search_test::generate_data();
+        [$users, $messages] = message_search_test::generate_data();
 
         foreach (message_search_test::cases($users, $messages) as $search) {
             $this->setUser($search->user->id);

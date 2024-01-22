@@ -19,7 +19,6 @@ require_once(__DIR__ . '/message_search_test.php');
  * @covers \local_mail\message
  */
 class message_test extends testcase {
-
     public function test_create() {
         $generator = self::getDataGenerator();
         $user1 = new user($generator->create_user());
@@ -100,7 +99,7 @@ class message_test extends testcase {
     }
 
     public function test_delete_course() {
-        list($users, $messages) = message_search_test::generate_data();
+        [$users, $messages] = message_search_test::generate_data();
         $course = $messages[0]->get_course();
         $context = $course->get_context();
 

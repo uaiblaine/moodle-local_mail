@@ -8,7 +8,6 @@
 namespace local_mail;
 
 class settings {
-
     /** @var bool Backup and restore enabled. */
     public bool $enablebackup = true;
 
@@ -152,7 +151,7 @@ class settings {
     public static function is_installed(): bool {
         global $CFG;
 
-        $plugin = new \stdClass;
+        $plugin = new \stdClass();
         include("$CFG->dirroot/local/mail/version.php");
 
         $version = get_config('local_mail', 'version');

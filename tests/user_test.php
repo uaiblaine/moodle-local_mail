@@ -15,7 +15,6 @@ require_once(__DIR__ . '/testcase.php');
  * @covers \local_mail\user
  */
 class user_test extends testcase {
-
     public function test_can_view_files() {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());

@@ -17,7 +17,6 @@ require_once(__DIR__ . '/testcase.php');
  * @covers \local_mail\label
  */
 class label_test extends testcase {
-
     public function test_create() {
         $generator = self::getDataGenerator();
         $user = new user($generator->create_user());

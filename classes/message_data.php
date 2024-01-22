@@ -15,7 +15,6 @@ require_once("$CFG->dirroot/repository/lib.php");
  * Data for creating and updating messages.
  */
 class message_data {
-
     /** @var user Sender. Ignored for updates. */
     public user $sender;
 
@@ -104,7 +103,7 @@ class message_data {
 
         $configmaxbytes = get_config('local_mail', 'maxbytes') ?: $CFG->maxbytes;
         $configmaxfiles = get_config('local_mail', 'maxfiles');
-        $maxbytes = get_user_max_upload_file_size($context,  $CFG->maxbytes, 0, $configmaxbytes);
+        $maxbytes = get_user_max_upload_file_size($context, $CFG->maxbytes, 0, $configmaxbytes);
         $maxfiles = is_numeric($configmaxfiles) ? (int) $configmaxfiles : 20;
         return [
             'accepted_types' => '*',

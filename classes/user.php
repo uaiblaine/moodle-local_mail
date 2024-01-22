@@ -8,7 +8,6 @@
 namespace local_mail;
 
 class user {
-
     /** @var int User ID. */
     public int $id;
 
@@ -111,7 +110,7 @@ class user {
         $missingids = array_filter($ids, fn($id) => !$users[$id]);
 
         if ($missingids) {
-            list($sqlid, $params) = $DB->get_in_or_equal($missingids, SQL_PARAMS_NAMED, 'userid');
+            [$sqlid, $params] = $DB->get_in_or_equal($missingids, SQL_PARAMS_NAMED, 'userid');
             $select = "id $sqlid AND id <> :guestid AND deleted = 0";
             $params['guestid'] = $CFG->siteguest;
             $fields = implode(',', \core_user\fields::get_picture_fields());

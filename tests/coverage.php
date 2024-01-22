@@ -8,7 +8,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 class local_mail_coverage extends phpunit_coverage_info {
-
     protected $includelistfolders = [
         'backup',
     ];
@@ -18,4 +17,4 @@ class local_mail_coverage extends phpunit_coverage_info {
     ];
 }
 
-return new local_mail_coverage;
+return new local_mail_coverage();

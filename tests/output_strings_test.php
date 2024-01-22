@@ -15,7 +15,6 @@ require_once(__DIR__ . '/testcase.php');
  * @covers \local_mail\output\strings
  */
 class output_strings_test extends testcase {
-
     public function test_get() {
         global $SESSION;
 

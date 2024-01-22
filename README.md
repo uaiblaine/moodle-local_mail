@@ -47,7 +47,7 @@ Version 2.0 of the project implemented by the "Recovery, Transformation and Resi
 
 © 2023 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
 
-# License
+## License
 
 This plugin is distributed under the terms of the GNU General Public License,
 version 3 or later.

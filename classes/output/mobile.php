@@ -12,7 +12,6 @@ use local_mail\settings;
 use local_mail\user;
 
 class mobile {
-
     public static function init() {
         global $CFG;
 
@@ -42,5 +41,4 @@ class mobile {
             'javascript' => file_get_contents("$CFG->dirroot/local/mail/classes/output/mobile-view.js"),
         ];
     }
-
 }

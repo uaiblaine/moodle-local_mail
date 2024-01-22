@@ -144,7 +144,7 @@ function add_random_attachments(\file_storage $fs, message_data $data) {
 }
 
 function add_random_recipients(message_data $data, array $users): void {
-    $counts = new \stdClass;
+    $counts = new \stdClass();
     $maxcount = count($users) - 1;
     $counts->to = min($maxcount, random_count(1, TO_RECIPIENTS_EX, TO_RECIPIENTS_SD));
     $maxcount -= $counts->to;

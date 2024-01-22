@@ -15,7 +15,6 @@ require_once(__DIR__ . '/testcase.php');
  * @covers \local_mail\message_data
  */
 class message_data_test extends testcase {
-
     public function test_draft() {
         $generator = self::getDataGenerator();
         $user1 = new user($generator->create_user());
