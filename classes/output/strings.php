@@ -15,7 +15,7 @@ class strings {
      * @param string|object|array $param A string, a number or an object to replace parameters with.
      * @return string The localized string.
      */
-    public static function get(string $id, mixed $param = null): string {
+    public static function get(string $id, $param = null): string {
         return self::manager(current_language())->get_string($id, 'local_mail', $param);
     }
 

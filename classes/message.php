@@ -264,10 +264,10 @@ class message {
      * Converts to plain text and replaces non-alphanumeric characters with a space.
      *
      * @param string $text Text to normalize.
-     * @param int|string $format Format of the text to normalize.
+     * @param int $format Format of the text to normalize.
      * @return string
      */
-    public static function normalize_text(string $text, int|string $format): string {
+    public static function normalize_text(string $text, int $format): string {
         // Removes @@PLUGINFILE@@/ from text.
         $text = str_replace('@@PLUGINFILE@@/', '', $text);
 

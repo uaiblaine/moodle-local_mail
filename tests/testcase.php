@@ -75,7 +75,7 @@ abstract class testcase extends \advanced_testcase {
             'draft' => (int) $message->draft,
             'time' => $message->time,
             'normalizedsubject' => message::normalize_text($message->subject, FORMAT_PLAIN),
-            'normalizedcontent' => message::normalize_text($message->content, $message->subject),
+            'normalizedcontent' => message::normalize_text($message->content, $message->format),
         ]);
 
         $numusers = count($message->get_recipients()) + 1;
@@ -227,9 +227,9 @@ abstract class testcase extends \advanced_testcase {
      * Returns a random item of an array.
      *
      * @param mixed[] $items Array of items
-     * @return ?mixed
+     * @return mixed
      */
-    protected static function random_item(array $items): mixed {
+    protected static function random_item(array $items) {
         $items = array_values($items);
         return $items ? $items[rand(0, count($items) - 1)] : null;
     }
