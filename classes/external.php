@@ -141,7 +141,7 @@ class external extends \external_api {
         return $result;
     }
 
-    public static function get_preferencs_returns() {
+    public static function get_preferences_returns() {
         return new \external_single_structure([
             'perpage' => new \external_value(PARAM_INT, 'Number of messages to display per page (5-100)'),
             'markasread' => new \external_value(PARAM_BOOL, 'Mark new messages as read if a notification is sent'),

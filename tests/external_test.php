@@ -185,7 +185,7 @@ class external_test extends testcase {
 
         $result = external::get_preferences();
 
-        external::validate_parameters(external::get_preferencs_returns(), $result);
+        external::validate_parameters(external::get_preferences_returns(), $result);
 
         $expected = [
             'perpage' => 20,
@@ -202,7 +202,7 @@ class external_test extends testcase {
 
         $result = external::get_preferences();
 
-        external::validate_parameters(external::get_preferencs_returns(), $result);
+        external::validate_parameters(external::get_preferences_returns(), $result);
 
         $expected = [
             'perpage' => 10,
@@ -217,14 +217,14 @@ class external_test extends testcase {
 
         $result = external::get_preferences();
 
-        external::validate_parameters(external::get_preferencs_returns(), $result);
+        external::validate_parameters(external::get_preferences_returns(), $result);
         self::assertEquals(5, $result['perpage']);
 
         set_user_preference('local_mail_mailsperpage', 101);
 
         $result = external::get_preferences();
 
-        external::validate_parameters(external::get_preferencs_returns(), $result);
+        external::validate_parameters(external::get_preferences_returns(), $result);
         self::assertEquals(100, $result['perpage']);
     }
 
