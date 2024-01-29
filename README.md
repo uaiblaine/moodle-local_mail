@@ -41,11 +41,11 @@ Version 2.0 of the project implemented by the "Recovery, Transformation and Resi
 
 © 2012-2014 Institut Obert de Catalunya <https://ioc.gencat.cat>
 
-© 2014-2022 Marc Català <reskit@gmail.com>
+© 2014-2023 Marc Català <reskit@gmail.com>
 
 © 2016-2018 Albert Gasset <albertgasset@fsfe.org>
 
-© 2023 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+© 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
 
 ## License
 
