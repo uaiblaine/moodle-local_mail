@@ -1,6 +1,6 @@
 <?php
 /*
- * SPDX-FileCopyrightText: 2017 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2017-2024 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -756,7 +756,7 @@ class external extends \external_api {
             $result['references'][] = [
                 'id' => $ref->id,
                 'subject' => $ref->subject,
-                'content' => $renderer->formatted_message_content($message),
+                'content' => $renderer->formatted_message_content($ref),
                 'format' => FORMAT_HTML,
                 'time' => $ref->time,
                 'shorttime' => $renderer->formatted_time($ref->time),
@@ -768,7 +768,7 @@ class external extends \external_api {
                     'fullname' => $refsender->fullname(),
                     'pictureurl' => $refsender->picture_url(),
                     'profileurl' => $refsender->profile_url($course),
-                    'sortorder' => $sender->sortorder(),
+                    'sortorder' => $refsender->sortorder(),
                 ],
                 'attachments' => $attachments,
             ];

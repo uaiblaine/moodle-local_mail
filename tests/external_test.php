@@ -1,6 +1,6 @@
 <?php
 /*
- * SPDX-FileCopyrightText: 2017 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2017-2024 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2021 Marc Català <reskit@gmail.com>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
  *
@@ -596,14 +596,19 @@ class external_test extends testcase {
     }
 
     public function test_get_message() {
+        global $PAGE;
+
+        $fs = get_file_storage();
+        $renderer = $PAGE->get_renderer('local_mail');
         $generator = $this->getDataGenerator();
         $course = new course($generator->create_course());
-        $user1 = new user($generator->create_user());
-        $user2 = new user($generator->create_user());
-        $user3 = new user($generator->create_user());
-        $user4 = new user($generator->create_user());
-        $user5 = new user($generator->create_user());
-        $user6 = new user($generator->create_user());
+        $context = $course->get_context();
+        $user1 = new user($generator->create_user(['firstname' => 'Ada']));
+        $user2 = new user($generator->create_user(['firstname' => 'Bob']));
+        $user3 = new user($generator->create_user(['firstname' => 'Chloe']));
+        $user4 = new user($generator->create_user(['firstname' => 'David']));
+        $user5 = new user($generator->create_user(['firstname' => 'Emma']));
+        $user6 = new user($generator->create_user(['firstname' => 'Felix']));
         $label1 = label::create($user1, 'Label 1');
         $label2 = label::create($user1, 'Label 2');
         $label3 = label::create($user2, 'Label 3');
@@ -640,7 +645,132 @@ class external_test extends testcase {
         $result = external::get_message($message2->id);
 
         external::validate_parameters(external::get_message_returns(), $result);
-        self::assertEquals(external::get_message_response($user1, message::get($message2->id)), $result);
+
+        [$file1] = array_values($fs->get_area_files($context->id, 'local_mail', 'message', $message1->id, '', false));
+        [$file2] = array_values($fs->get_area_files($context->id, 'local_mail', 'message', $message2->id, '', false));
+
+        $PAGE->start_collecting_javascript_requirements();
+        $expected = [
+            'id' => $message2->id,
+            'subject' => $message2->subject,
+            'content' => $renderer->formatted_message_content($message2),
+            'format' => FORMAT_HTML,
+            'numattachments' => $message2->attachments,
+            'draft' => $message2->draft,
+            'time' => $message2->time,
+            'shorttime' => $renderer->formatted_time($message2->time),
+            'fulltime' => $renderer->formatted_time($message2->time, true),
+            'unread' => $message2->unread($user1),
+            'starred' => $message2->starred($user1),
+            'deleted' => (bool) $message2->deleted($user1),
+            'course' => [
+                'id' => $course->id,
+                'shortname' => external_format_string($course->shortname, $course->get_context()),
+                'fullname' => external_format_string($course->fullname, $course->get_context()),
+                'visible' => $course->visible,
+                'groupmode' => $course->groupmode,
+            ],
+            'sender' => [
+                'id' => $user2->id,
+                'firstname' => $user2->firstname,
+                'lastname' => $user2->lastname,
+                'fullname' => $user2->fullname(),
+                'pictureurl' => $user2->picture_url(),
+                'profileurl' => $user2->profile_url($course),
+                'sortorder' => $user2->sortorder(),
+            ],
+            'recipients' => [
+                [
+                    'type' => 'to',
+                    'id' => $user1->id,
+                    'firstname' => $user1->firstname,
+                    'lastname' => $user1->lastname,
+                    'fullname' => $user1->fullname(),
+                    'pictureurl' => $user1->picture_url(),
+                    'profileurl' => $user1->profile_url($course),
+                    'sortorder' => $user1->sortorder(),
+                    'isvalid' => false,
+                ],
+                [
+                    'type' => 'to',
+                    'id' => $user3->id,
+                    'firstname' => $user3->firstname,
+                    'lastname' => $user3->lastname,
+                    'fullname' => $user3->fullname(),
+                    'pictureurl' => $user3->picture_url(),
+                    'profileurl' => $user3->profile_url($course),
+                    'sortorder' => $user3->sortorder(),
+                    'isvalid' => true,
+                ],
+                [
+                    'type' => 'cc',
+                    'id' => $user4->id,
+                    'firstname' => $user4->firstname,
+                    'lastname' => $user4->lastname,
+                    'fullname' => $user4->fullname(),
+                    'pictureurl' => $user4->picture_url(),
+                    'profileurl' => $user4->profile_url($course),
+                    'sortorder' => $user4->sortorder(),
+                    'isvalid' => true,
+                ],
+            ],
+            'attachments' => [
+                [
+                    'filepath' => $file2->get_filepath(),
+                    'filename' => $file2->get_filename(),
+                    'filesize' => (int) $file2->get_filesize(),
+                    'mimetype' => $file2->get_mimetype(),
+                    'fileurl' => $renderer->file_url($file2),
+                    'iconurl' => $renderer->file_icon_url($file2),
+                ],
+            ],
+            'references' => [
+                [
+                    'id' => $message1->id,
+                    'subject' => $message1->subject,
+                    'content' => $renderer->formatted_message_content($message1),
+                    'format' => FORMAT_HTML,
+                    'time' => $message1->time,
+                    'shorttime' => $renderer->formatted_time($message1->time),
+                    'fulltime' => $renderer->formatted_time($message1->time, true),
+                    'sender' => [
+                        'id' => $user1->id,
+                        'firstname' => $user1->firstname,
+                        'lastname' => $user1->lastname,
+                        'fullname' => $user1->fullname(),
+                        'pictureurl' => $user1->picture_url(),
+                        'profileurl' => $user1->profile_url($course),
+                        'sortorder' => $user1->sortorder(),
+                    ],
+                    'attachments' => [
+                        [
+                            'filepath' => $file1->get_filepath(),
+                            'filename' => $file1->get_filename(),
+                            'filesize' => (int) $file1->get_filesize(),
+                            'mimetype' => $file1->get_mimetype(),
+                            'fileurl' => $renderer->file_url($file1),
+                            'iconurl' => $renderer->file_icon_url($file1),
+                        ],
+                    ],
+                ],
+            ],
+            'labels' => [
+                [
+                    'id' => $label1->id,
+                    'name' => $label1->name,
+                    'color' => $label1->color,
+                ],
+                [
+                    'id' => $label2->id,
+                    'name' => $label2->name,
+                    'color' => $label2->color,
+                ],
+            ],
+            'javascript' => $PAGE->requires->get_end_code(),
+        ];
+        $PAGE->end_collecting_javascript_requirements();
+
+        self::assertEquals($expected, $result);
 
         // User cannot view message.
 
