@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.1] - 2024-02-02
+
+### Fixed
+
+- Content of references.
+
 ## [2.0] - 2024-01-29
 
 ### Added
