@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.2] - 2024-02-03
+
+### Fixed
+
+- Displaying messages sent or received by deleted users.
+
 ## [2.1] - 2024-02-02
 
 ### Fixed
