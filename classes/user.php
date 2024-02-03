@@ -1,6 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -111,7 +112,7 @@ class user {
 
         if ($missingids) {
             [$sqlid, $params] = $DB->get_in_or_equal($missingids, SQL_PARAMS_NAMED, 'userid');
-            $select = "id $sqlid AND id <> :guestid AND deleted = 0";
+            $select = "id $sqlid AND id <> :guestid";
             $params['guestid'] = $CFG->siteguest;
             $fields = implode(',', \core_user\fields::get_picture_fields());
             $records = $DB->get_records_select('user', $select, $params, '', $fields);

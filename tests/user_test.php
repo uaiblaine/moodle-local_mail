@@ -1,6 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -215,6 +216,15 @@ class user_test extends testcase {
         self::assertEquals($record->alternatename, $user->alternatename);
         self::assertEquals($user, user::cache()->get($user->id));
 
+        // Deleted user.
+
+        $record = $generator->create_user(['deleted' => 1]);
+
+        $user = user::get($record->id);
+
+        self::assertInstanceOf(user::class, $user);
+        self::assertEquals((int) $record->id, $user->id);
+
         // Missing user.
         try {
             user::get(123);
@@ -232,7 +242,7 @@ class user_test extends testcase {
         $generator = self::getDataGenerator();
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
-        $user3 = new user($generator->create_user());
+        $user3 = new user($generator->create_user(['deleted' => 1]));
 
         $result = user::get_many([$user3->id, $user1->id, $user3->id, $user2->id, $user3->id]);
 
