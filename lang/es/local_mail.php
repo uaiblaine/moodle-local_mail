@@ -2,7 +2,7 @@
 /*
  * SPDX-FileCopyrightText: 2014 Institut Obert de Catalunya <https://ioc.gencat.cat>
  * SPDX-FileCopyrightText: 2014-2017 Marc Català <reskit@gmail.com>
- * SPDX-FileCopyrightText: 2016-2017 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2016-2024 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -18,6 +18,12 @@ $string['allroles'] = 'Todos los roles';
 $string['allusers'] = 'Todos los usuarios';
 $string['apply'] = 'Aplicar';
 $string['bcc'] = 'Cco';
+$string['cachedef_courses'] = 'Información de los cursos';
+$string['cachedef_labels'] = 'Información de las etiquetas';
+$string['cachedef_messages'] = 'Información de los mensajes';
+$string['cachedef_usercourseids'] = 'IDs de los cursos de los usuarios';
+$string['cachedef_userlabelids'] = 'IDs de las etiquetas de los usuarios';
+$string['cachedef_users'] = 'Información de los usuarios';
 $string['cancel'] = 'Cancelar';
 $string['cannotsendmailtouser'] = 'No puede enviar correo a este usuario en este curso';
 $string['cc'] = 'Cc';

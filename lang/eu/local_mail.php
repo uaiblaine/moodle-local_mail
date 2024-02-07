@@ -1,6 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -15,6 +16,12 @@ $string['allroles'] = 'Erabiltzaile mota guztiak';
 $string['allusers'] = 'Erabiltzaile guztiak';
 $string['apply'] = 'Aplikatu';
 $string['bcc'] = 'Cco';
+$string['cachedef_courses'] = 'Ikastaroen informazioa';
+$string['cachedef_labels'] = 'Etiketen informazioa';
+$string['cachedef_messages'] = 'Mezuen informazioa';
+$string['cachedef_usercourseids'] = 'Erabiltzaileen ikastaro IDak';
+$string['cachedef_userlabelids'] = 'Erabiltzaileen etiketa IDak';
+$string['cachedef_users'] = 'Erabiltzaileen informazioa';
 $string['cancel'] = 'Ezeztatu';
 $string['cannotsendmailtouser'] = 'Ezin da mezu hau bidali erabiltzaile honi ikastaro honetan';
 $string['cc'] = 'Cc';
