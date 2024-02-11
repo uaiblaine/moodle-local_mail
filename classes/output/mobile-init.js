@@ -40,13 +40,14 @@ class AddonLocalMaiMainMenuHandler {
             icon: 'far-envelope',
             page: 'siteplugins/content/local_mail/view/0',
             get pageParams() {
+                const zoomLevel = document.documentElement.style.getPropertyValue('--zoom-level');
                 return {
                     title: 'plugin.local_mail.pluginname',
                     args: {
-                        appzoom: document.documentElement.style.getPropertyValue('--zoom-level'),
-                    }
+                        appzoom: parseInt(zoomLevel) / 100,
+                    },
                 };
-            }
+            },
         };
     }
 }

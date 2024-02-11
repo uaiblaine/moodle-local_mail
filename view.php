@@ -21,7 +21,7 @@ global $PAGE;
 
 $appid = optional_param('appid', '', PARAM_NOTAGS);
 $applang = optional_param('applang', '', PARAM_LANG);
-$appzoom = optional_param('appzoom', '', PARAM_NOTAGS);
+$appzoom = optional_param('appzoom', 0, PARAM_FLOAT);
 
 // Use languuage from the app.
 if ($appid != '' && $applang != '') {
@@ -29,8 +29,12 @@ if ($appid != '' && $applang != '') {
 }
 
 // Use text size from the app.
-if ($appzoom) {
-    $PAGE->requires->js_init_code('document.documentElement.style.zoom = ' . json_encode($appzoom));
+if ($appzoom > 0) {
+    $PAGE->requires->js_init_code(
+        'const style = document.documentElement.style;' .
+        'style.setProperty("--appzoom", "' . $appzoom . '");' .
+        'style.setProperty("zoom", "var(--appzoom)");'
+    );
 }
 
 require_login(null, false);

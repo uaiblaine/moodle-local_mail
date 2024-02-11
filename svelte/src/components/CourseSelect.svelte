@@ -227,7 +227,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     }
 
     .local-mail-course-select .dropdown-menu {
-        max-width: 90vw;
+        max-width: calc(100vw / var(--appzoom, 1) - 30px);
     }
 
     .local-mail-course-select .dropdown-item:not(:focus):hover {
