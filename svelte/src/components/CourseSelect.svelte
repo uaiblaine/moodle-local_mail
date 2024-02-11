@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import { blur } from '../actions/blur';
     import { truncate } from '../actions/truncate';
     import type { Course, Settings, Strings } from '../lib/state';
-    import { formatCourseName } from '../lib/utils';
+    import { formatCourseName, formatNumber } from '../lib/utils';
 
     export let settings: Settings;
     export let strings: Strings;
@@ -169,12 +169,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
             {#each dropdownCourses as course (course.id)}
                 <button
                     type="button"
-                    class="dropdown-item text-truncate"
+                    class="dropdown-item d-flex align-items-center"
                     class:px-3={style == 'navbar'}
                     on:click={() => selectCourse(course)}
                 >
                     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-                    {@html courseHtml(course)}
+                    <span class="text-truncate">
+                        {@html courseHtml(course)}
+                    </span>
+                    {#if course.unread > 0}
+                        <span class="badge pl-3 ml-auto">{formatNumber(course.unread)}</span>
+                    {/if}
                 </button>
             {:else}
                 <div class="px-4 text-danger">
