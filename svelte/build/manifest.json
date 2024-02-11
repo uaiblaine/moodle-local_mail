@@ -3,27 +3,27 @@
     "file": "global-fqcnemFB.css",
     "src": "_global-!~{003}~.js"
   },
-  "_global-j_oZBe5r.js": {
+  "_global-FLvzx3dx.js": {
     "css": [
       "global-fqcnemFB.css"
     ],
-    "file": "global-j_oZBe5r.js"
+    "file": "global-FLvzx3dx.js"
   },
   "src/navigation.ts": {
-    "file": "navigation-P-8FUwsz.js",
+    "file": "navigation-XAMFmPxj.js",
     "imports": [
-      "_global-j_oZBe5r.js"
+      "_global-FLvzx3dx.js"
     ],
     "isEntry": true,
     "src": "src/navigation.ts"
   },
   "src/view.ts": {
     "css": [
-      "view-TpUUiCFR.css"
+      "view-yJkClHa8.css"
     ],
-    "file": "view-o51DjdOg.js",
+    "file": "view-x1hnbWVD.js",
     "imports": [
-      "_global-j_oZBe5r.js"
+      "_global-FLvzx3dx.js"
     ],
     "isEntry": true,
     "src": "src/view.ts"

@@ -123,9 +123,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 </svelte:head>
 
 <div
-    class="local-mail local-mail-view container-fluid pt-2"
-    class:p-4={!$store.mobile}
+    class="local-mail local-mail-view container-fluid d-flex flex-column pt-2"
+    class:pt-3={!$store.mobile}
+    class:p-md-4={!$store.mobile && $store.viewportSize >= ViewportSize.MD}
     class:local-mail-loading={$store.loading}
+    class:min-vh-100={$store.viewportSize < ViewportSize.MD}
     bind:this={viewNode}
 >
     {#if !$store.mobile}
@@ -137,7 +139,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         {#if $store.mobile && $store.viewportSize < ViewportSize.LG}
             <div class="local-mail-view-side-column" />
         {:else}
-            <h1 class="h2 local-mail-view-side-column text-truncate mb-4">
+            <h1 class="h2 local-mail-view-side-column text-truncate mb-3 mb-md-4">
                 {$store.strings.pluginname}
                 {#if heading && $store.viewportSize < ViewportSize.LG}
                     <i class="fa fa-angle-right mx-1" aria-hidden="true" />
