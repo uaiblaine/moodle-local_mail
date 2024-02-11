@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -11,7 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import ModalDialog from './ModalDialog.svelte';
 
     export let store: Store;
-    export let transparent = false;
+    export let bottom = false;
 
     const confirm = () => {
         store.hideDialog();
@@ -26,8 +27,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <button
     type="button"
     class="local-mail-action-delete btn"
-    class:btn-secondary={!transparent}
-    class:disabled={!$store.selectedMessages.size}
+    class:btn-secondary={!bottom}
+    class:btn-light={bottom}
     disabled={!$store.selectedMessages.size}
     title={$store.strings.restore}
     on:click={() => store.showDialog('restore')}

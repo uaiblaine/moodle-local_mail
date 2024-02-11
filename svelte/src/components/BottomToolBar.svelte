@@ -18,17 +18,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
     export let store: Store;
 </script>
 
-<div role="toolbar" class="local-mail-toolbar d-flex py-3 bg-light border-top border-bottom">
-    <div class=" w-100 d-flex justify-content-around" role="group">
+<div role="toolbar" class="local-mail-toolbar py-3 bg-light border-top border-bottom">
+    <div class="d-flex justify-content-around" role="group">
         {#if $store.params.tray == 'trash'}
-            <RestoreButton {store} transparent={true} />
-            <DeleteForeverButton {store} transparent={true} />
+            <RestoreButton {store} bottom={true} />
+            <DeleteForeverButton {store} bottom={true} />
         {:else}
-            <LabelsButton {store} transparent={true} dropup={true} />
-            <DeleteButton {store} transparent={true} />
+            <LabelsButton {store} bottom={true} />
+            <DeleteButton {store} bottom={true} />
         {/if}
-        <MoreActionsButton {store} transparent={true} dropup={true} />
-        <PagingButtons {store} transparent={true} compact={true} />
+        <MoreActionsButton {store} bottom={true} />
+        <PagingButtons {store} bottom={true} />
     </div>
 </div>
 

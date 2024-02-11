@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -10,8 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import { replaceStringParams } from '../lib/utils';
 
     export let store: Store;
-    export let transparent = false;
-    export let compact = false;
+    export let bottom = false;
 
     $: hasNext =
         $store.nextMessageId ||
@@ -83,25 +83,26 @@ SPDX-License-Identifier: GPL-3.0-or-later
               });
 </script>
 
-<div class="local-mail-paging-buttons d-flex" class:ml-auto={!compact}>
-    {#if !compact}
+<div class="local-mail-paging-buttons d-flex" class:ml-auto={!bottom}>
+    {#if !bottom}
         <div class="align-self-center text-nowrap">
             {pagingText}
         </div>
     {/if}
 
-    <div class="btn-group d-flex" class:btn-group={!compact} role="group">
+    <div class="btn-group d-flex" class:btn-group={!bottom} role="group">
         <button
             type="button"
             class="btn btn-secondary"
-            class:btn-secondary={!transparent}
+            class:btn-secondary={!bottom}
+            class:btn-light={bottom}
             disabled={!prevParams}
             title={$store.strings[$store.message ? 'previousmessage' : 'previouspage']}
             on:click|preventDefault={() => store.navigate(prevParams)}
         >
-            <i class="fa fa-w fa-chevron-left" aria-label={$store.strings.previouspage} />
+            <i class="fa fa-fw fa-chevron-left" aria-label={$store.strings.previouspage} />
         </button>
-        {#if compact}
+        {#if bottom}
             <div class="text-truncate align-self-center mx-2">
                 {pagingText}
             </div>
@@ -109,12 +110,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <button
             type="button"
             class="btn"
-            class:btn-secondary={!transparent}
+            class:btn-secondary={!bottom}
+            class:btn-light={bottom}
             disabled={!nextParams}
             title={$store.strings[$store.message ? 'nextmessage' : 'nextpage']}
             on:click|preventDefault={() => store.navigate(nextParams)}
         >
-            <i class="fa fa-w fa-chevron-right" aria-label={$store.strings.nextpage} />
+            <i class="fa fa-fw fa-chevron-right" aria-label={$store.strings.nextpage} />
         </button>
     </div>
 </div>

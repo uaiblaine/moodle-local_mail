@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -13,8 +14,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import LabelModal from './LabelModal.svelte';
 
     export let store: Store;
-    export let transparent = false;
-    export let dropup = false;
+    export let bottom = false;
 
     let expanded = false;
 
@@ -90,11 +90,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
     };
 </script>
 
-<div class="btn-group" class:dropup use:blur={closeMenu}>
+<div class="btn-group" class:dropup={bottom} use:blur={closeMenu}>
     <button
         type="button"
         class="local-mail-action-more-button btn dropdown-toggle"
-        class:btn-secondary={!transparent}
+        class:btn-secondary={!bottom}
+        class:btn-light={bottom}
         class:disabled
         {disabled}
         aria-expanded={expanded}
