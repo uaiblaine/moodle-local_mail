@@ -39,9 +39,14 @@ class AddonLocalMaiMainMenuHandler {
             title: 'plugin.local_mail.pluginname',
             icon: 'far-envelope',
             page: 'siteplugins/content/local_mail/view/0',
-            pageParam: {
-                title: 'plugin.local_mail.pluginname',
-            },
+            get pageParams() {
+                return {
+                    title: 'plugin.local_mail.pluginname',
+                    args: {
+                        appzoom: document.documentElement.style.getPropertyValue('--zoom-level'),
+                    }
+                };
+            }
         };
     }
 }

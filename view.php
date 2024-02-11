@@ -3,6 +3,7 @@
  * SPDX-FileCopyrightText: 2012-2014 Institut Obert de Catalunya <https://ioc.gencat.cat>
  * SPDX-FileCopyrightText: 2014-2019 Marc Català <reskit@gmail.com>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -20,10 +21,16 @@ global $PAGE;
 
 $appid = optional_param('appid', '', PARAM_NOTAGS);
 $applang = optional_param('applang', '', PARAM_LANG);
+$appzoom = optional_param('appzoom', '', PARAM_NOTAGS);
 
 // Use languuage from the app.
 if ($appid != '' && $applang != '') {
     force_current_language($applang);
+}
+
+// Use text size from the app.
+if ($appzoom) {
+    $PAGE->requires->js_init_code('document.documentElement.style.zoom = ' . json_encode($appzoom));
 }
 
 require_login(null, false);
