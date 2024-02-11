@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -26,4 +27,24 @@ class AddonLocalMailLinkHandler extends that.CoreContentLinksHandlerBase {
     }
 }
 
+class AddonLocalMaiMainMenuHandler {
+    name = 'AddonLocalMailMainMenuHandler';
+
+    async isEnabled() {
+        return true;
+    }
+
+    getDisplayData() {
+        return {
+            title: 'plugin.local_mail.pluginname',
+            icon: 'far-envelope',
+            page: 'siteplugins/content/local_mail/view/0',
+            pageParam: {
+                title: 'plugin.local_mail.pluginname',
+            },
+        };
+    }
+}
+
+that.CoreMainMenuDelegate.registerHandler(new AddonLocalMaiMainMenuHandler());
 that.CoreContentLinksDelegate.registerHandler(new AddonLocalMailLinkHandler());
