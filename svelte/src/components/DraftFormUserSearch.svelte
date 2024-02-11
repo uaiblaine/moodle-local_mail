@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -134,15 +135,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
     use:blur={handleBlur}
 >
     <div
-        class="position-absolute h-100 d-flex justify-content-center align-items-center px-2"
-        style="top: 0; left: 0;"
+        class="local-mail-draft-form-user-search-icon position-absolute h-100 d-flex justify-content-center align-items-center pr-2"
     >
         <i class="fa fa-fw {loading ? 'fa-spinner fa-pulse' : 'fa-user'}" aria-hidden="true" />
     </div>
 
     <input
         type="text"
-        class="form-control px-5"
+        class="form-control pr-5"
         class:is-invalid={!recipients.size}
         placeholder={$store.strings.addrecipients}
         aria-label={$store.strings.addrecipients}
@@ -278,9 +278,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
 </div>
 
 <style global>
+    .local-mail-draft-form-user-search-icon {
+        top: 0;
+        left: 0;
+        padding-left: 0.75rem;
+    }
+
     .local-mail-draft-form-user-search-input {
         width: 100%;
         max-width: 100%;
+    }
+
+    .local-mail-draft-form-user-search-input .form-control {
+        padding-left: 2.55rem;
     }
 
     .local-mail-draft-form-user-search-input input.is-invalid {

@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -94,14 +95,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 >
     <div
         class="local-mail-course-select-icon position-absolute h-100 d-flex align-items-center"
-        style="top: 0; left: 0"
     >
         <i class="fa fa-fw fa-graduation-cap" aria-hidden="true" />
     </div>
 
     {#if readonly}
         <div
-            class="form-control alert-secondary pl-5 pr-2 text-left"
+            class="form-control alert-secondary pr-2 text-left"
             use:truncate={currentCourseName}
         >
             {currentCourseName}
@@ -109,7 +109,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {:else if entering}
         <input
             type="text"
-            class="form-control px-5 text-truncate"
+            class="form-control pr-5 text-truncate"
             placeholder={entering ? strings.course : label}
             aria-label={entering ? strings.course : label}
             bind:value={inputText}
@@ -120,7 +120,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {:else if !currentCourse}
         <button
             type="button"
-            class="form-control px-5 text-left"
+            class="form-control pr-5 text-left"
             style="border-color: rgba(0, 0, 0, 0.125)"
             class:btn-secondary={style == 'menu' || style == 'navbar'}
             on:click={openDropdown}
@@ -130,7 +130,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {:else}
         <button
             type="button"
-            class="form-control px-5 text-left"
+            class="form-control pr-5 text-left"
             class:alert-primary={primary && (style == 'filter-left' || style == 'filter-right')}
             class:btn-secondary={style == 'menu' || style == 'navbar'}
             use:truncate={currentCourseName}
@@ -204,12 +204,18 @@ SPDX-License-Identifier: GPL-3.0-or-later
         color: inherit;
     }
 
+    .local-mail-course-select .form-control {
+        padding-left: 2.5rem;
+    }
+
     .local-mail-course-select-menu .form-control {
         padding-left: 2.75rem !important;
     }
 
     .local-mail-course-select-icon {
-        padding-left: 0.5rem;
+        padding-left: 0.75rem;
+        top: 0;
+        left: 0;
     }
 
     .local-mail-course-select-menu .local-mail-course-select-icon {
