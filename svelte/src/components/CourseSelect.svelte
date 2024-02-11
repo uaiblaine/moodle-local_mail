@@ -93,17 +93,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
     class:list-group-item={style == 'menu' || style == 'navbar'}
     use:blur={closeDropdown}
 >
-    <div
-        class="local-mail-course-select-icon position-absolute h-100 d-flex align-items-center"
-    >
+    <div class="local-mail-course-select-icon position-absolute h-100 d-flex align-items-center">
         <i class="fa fa-fw fa-graduation-cap" aria-hidden="true" />
     </div>
 
     {#if readonly}
-        <div
-            class="form-control alert-secondary pr-2 text-left"
-            use:truncate={currentCourseName}
-        >
+        <div class="form-control alert-secondary pr-2 text-left" use:truncate={currentCourseName}>
             {currentCourseName}
         </div>
     {:else if entering}

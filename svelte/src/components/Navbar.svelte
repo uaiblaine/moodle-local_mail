@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import { blur } from '../actions/blur';
     import type { Course, Label, Settings, Strings, ViewParams } from '../lib/state';
     import { viewUrl } from '../lib/url';
+    import { formatNumber } from '../lib/utils';
     import ComposeButton from './ComposeButton.svelte';
     import MenuComponent from './Menu.svelte';
     import PreferencesButton from './PreferencesButton.svelte';
@@ -76,7 +77,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 <i class="fa fa-fw fa-spinner fa-pulse text-primary" />
             </div>
         {:else if unread > 0}
-            <div class="local-mail-navbar-count count-container">{unread}</div>
+            <div class="local-mail-navbar-count count-container">{formatNumber(unread)}</div>
         {/if}
     </a>
     {#if expanded}

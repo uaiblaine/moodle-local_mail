@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -71,6 +72,16 @@ export function formatCourseName(
     } else {
         return convertHtmlToText(course.fullname);
     }
+}
+
+/**
+ * Formats a given number to a locale-specific string.
+ *
+ * @param number The number to be formatted.
+ * @returns The formatted number.
+ */
+export function formatNumber(number: number): string {
+    return new Intl.NumberFormat(window.M.str.langconfig.localecldr).format(number);
 }
 
 /**

@@ -18,7 +18,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     export let store: Store;
 </script>
 
-<div role="toolbar" class="local-mail-toolbar py-3 bg-light border-top border-bottom">
+<div role="toolbar" class="local-mail-toolbar px-2 py-3 bg-light border-top border-bottom">
     <div class="d-flex justify-content-around" role="group">
         {#if $store.params.tray == 'trash'}
             <RestoreButton {store} bottom={true} />

@@ -7,8 +7,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <svelte:options immutable={true} />
 
 <script lang="ts">
+    import { ViewportSize } from '../lib/state';
     import type { Store } from '../lib/store';
-    import { replaceStringParams } from '../lib/utils';
+    import { formatNumber, replaceStringParams } from '../lib/utils';
 
     export let store: Store;
     export let bottom = false;
@@ -64,22 +65,22 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     $: pagingText = $store.message
         ? $store.params.search
-            ? ($store.params.offset || 0) + 1
+            ? formatNumber(($store.params.offset || 0) + 1)
             : replaceStringParams($store.strings.pagingsingle, {
-                  index: ($store.messageOffset || 0) + 1,
-                  total: $store.totalCount,
+                  index: formatNumber(($store.messageOffset || 0) + 1),
+                  total: formatNumber($store.totalCount),
               })
         : $store.listMessages.length == 0
           ? ''
-          : $store.params.search
+          : $store.params.search || $store.viewportSize < ViewportSize.SM
             ? replaceStringParams($store.strings.pagingrange, {
-                  first: ($store.params.offset || 0) + 1,
-                  last: ($store.params.offset || 0) + $store.listMessages.length,
+                  first: formatNumber(($store.params.offset || 0) + 1),
+                  last: formatNumber(($store.params.offset || 0) + $store.listMessages.length),
               })
             : replaceStringParams($store.strings.pagingrangetotal, {
-                  first: ($store.params.offset || 0) + 1,
-                  last: ($store.params.offset || 0) + $store.listMessages.length,
-                  total: $store.totalCount,
+                  first: formatNumber(($store.params.offset || 0) + 1),
+                  last: formatNumber(($store.params.offset || 0) + $store.listMessages.length),
+                  total: formatNumber($store.totalCount),
               });
 </script>
 
@@ -90,7 +91,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </div>
     {/if}
 
-    <div class="btn-group d-flex" class:btn-group={!bottom} role="group">
+    <div class="btn-group d-flex" class:btn-group={!bottom} role="group" style="min-width: 0">
         <button
             type="button"
             class="btn btn-secondary"
@@ -103,7 +104,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <i class="fa fa-fw fa-chevron-left" aria-label={$store.strings.previouspage} />
         </button>
         {#if bottom}
-            <div class="text-truncate align-self-center mx-2">
+            <div class="text-truncate align-self-center flex-shrink-1 mx-2" style="min-width: 0">
                 {pagingText}
             </div>
         {/if}

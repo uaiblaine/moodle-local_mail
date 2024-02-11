@@ -44,6 +44,7 @@ $PAGE->set_url($url);
 $PAGE->set_context(context_system::instance());
 $PAGE->set_pagelayout($appid != '' ? 'embedded' : 'base');
 $PAGE->set_title(strings::get('pluginname'));
+$PAGE->requires->string_for_js('localecldr', 'langconfig');
 
 $user = user::current();
 

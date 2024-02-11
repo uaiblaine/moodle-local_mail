@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -9,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import { truncate } from '../actions/truncate';
     import type { ViewParams } from '../lib/state';
     import { viewUrl } from '../lib/url';
+    import { formatNumber } from '../lib/utils';
 
     export let icon: string;
     export let text: string;
@@ -45,7 +47,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     />
     <span class="flex-fill px-2" use:truncate={text}>{text}</span>
     {#if count > 0}
-        <span class="badge">{count}</span>
+        <span class="badge">{formatNumber(count)}</span>
     {/if}
 </a>
 
