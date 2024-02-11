@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -50,6 +51,7 @@ function initNavbar(data: Record<string, unknown>) {
                 courses: data.courses as Course[],
                 labels: data.labels as Label[],
                 params: { courseid: data.courseid as number },
+                loading: false,
                 onClick: (params: ViewParams) => {
                     window.location.href = viewUrl(params);
                 },

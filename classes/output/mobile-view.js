@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -13,6 +14,34 @@ const getPluginElement = () => {
 const messageHandler = async (event) => {
     if (event.data.addon != 'local_mail') {
         return;
+    }
+    if (event.data.setLoading != null) {
+        const toolbar = getPluginElement()?.querySelector('ion-toolbar');
+        if (toolbar) {
+            let spinner = toolbar.querySelector('ion-spinner');
+            if (!spinner) {
+                spinner = document.createElement('ion-spinner');
+                spinner.setAttribute('slot', 'end');
+                spinner.setAttribute('color', 'primary');
+                spinner.setAttribute('paused', 'true');
+                spinner.style.marginRight = '15px';
+                spinner.style.opacity = 0;
+                spinner.style.transitionDuration = '400ms';
+                spinner.style.transitionProperty = 'opacity';
+                spinner.addEventListener("transitionend", () => {
+                    if (spinner.style.opacity == 0) {
+                        spinner.setAttribute('paused', 'true');
+                    }
+                });
+                toolbar.append(spinner);
+            }
+            if (event.data.setLoading) {
+                spinner.setAttribute('paused', 'false');
+                spinner.style.opacity = 1;
+            } else {
+                spinner.style.opacity = 0;
+            }
+        }
     }
     if (event.data.setTitle != null) {
         const element = getPluginElement()?.querySelector('h1');

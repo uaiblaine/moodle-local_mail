@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -18,6 +19,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     export let courses: ReadonlyArray<Course>;
     export let labels: ReadonlyArray<Label>;
     export let params: ViewParams;
+    export let loading: boolean;
     export let onClick: (params: ViewParams) => void;
     export let onComposeClick: (courseid: number) => void;
     export let onCourseChange: (courseid?: number) => void;
@@ -68,8 +70,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
         title={strings.pluginname}
         on:click={handleIconClick}
     >
-        <i class="icon fa fa-fw fa-envelope-o m-0" aria-label={strings.plugginname} />
-        {#if unread > 0}
+        <i class="fa fa-fw fa-envelope-o icon m-0" aria-label={strings.plugginname} />
+        {#if loading}
+            <div class="local-mail-navbar-spinner position-absolute">
+                <i class="fa fa-fw fa-spinner fa-pulse text-primary" />
+            </div>
+        {:else if unread > 0}
             <div class="local-mail-navbar-count count-container">{unread}</div>
         {/if}
     </a>
@@ -117,6 +123,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     .local-mail-navbar-popover :global(.list-group-item:not(.list-group-item-primary):hover) {
         background-color: rgba(0, 0, 0, 0.025);
+    }
+
+    .local-mail-navbar-spinner {
+        top: 50% !important;
+        right: 0;
+        transform: translateY(-18px);
+    }
+
+    .local-mail-navbar-spinner .fa {
+        font-size: 16px;
     }
 
     @media (max-width: 480px) {

@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -31,6 +32,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     let viewNode: HTMLElement;
     let prevNavigationId = 0;
 
+    $: loading = $store.loading;
     $: tray = $store.params.tray;
     $: course = $store.courses.find((c) => c.id == $store.params.courseid);
     $: label = $store.labels.find((l) => l.id == $store.params.labelid);
@@ -57,14 +59,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
     $: mobileTitle =
         $store.viewportSize < ViewportSize.LG ? heading || $store.strings.pluginname : '';
 
-    $: window.parent?.postMessage(
-        {
-            addon: 'local_mail',
-            setTitle: mobileTitle,
-            captureBack: tray != null,
-        },
-        '*',
-    );
+    $: captureBackButton = tray != null;
+
+    $: window.parent?.postMessage({ addon: 'local_mail', setLoading: loading }, '*');
+    $: window.parent?.postMessage({ addon: 'local_mail', setTitle: mobileTitle }, '*');
+    $: window.parent?.postMessage({ addon: 'local_mail', captureBack: captureBackButton }, '*');
 
     onMount(() => {
         store.setViewportSize(window.innerWidth);
