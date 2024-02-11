@@ -104,3 +104,10 @@
     position: static;
     margin: 0 2rem 2rem auto;
 }
+
+#page-local-mail-view.pagelayout-embedded,
+#page-local-mail-view.pagelayout-embedded .btn,
+#page-local-mail-view.pagelayout-embedded .dropdown-menu,
+#page-local-mail-view.pagelayout-embedded .form-control {
+    font-size: 1rem;
+}
