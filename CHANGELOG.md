@@ -1,5 +1,28 @@
 # Changelog
 
+## [2.3] - 2024-02-12
+
+### Added
+
+- A spinner is displayed while waiting for server responses.
+- The number of unread messages of each course is now displayed in the course selector.
+
+### Changed
+
+- Numbers are now displayed with thousands separators.
+- The text size in the Moodle app now follows the rest of the app.
+- The contrast betweem emabled and disabled buttons has been increased.
+- The language string about invalid recipients is now more explicit.
+- The number of total messages is no longer displayed in small screens.
+- The menu entry in the Moodle app is no longer restricted to the "more" tab.
+
+### Fixed
+
+- The toolbar was not always displayed at the bottom in the Moodle app.
+- The course selector sometimes exceeded the screen boundaries in the Moodle app.
+- The size of form controls and buttons was not always consistent in the Moodle App.
+- Language strings for cache definitions were missing.
+
 ## [2.2] - 2024-02-03
 
 ### Fixed
