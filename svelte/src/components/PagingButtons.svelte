@@ -64,7 +64,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         : undefined;
 
     $: pagingText = $store.message
-        ? $store.params.search
+        ? $store.params.search || $store.viewportSize < ViewportSize.SM
             ? formatNumber(($store.params.offset || 0) + 1)
             : replaceStringParams($store.strings.pagingsingle, {
                   index: formatNumber(($store.messageOffset || 0) + 1),
