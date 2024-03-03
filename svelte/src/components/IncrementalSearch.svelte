@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -66,13 +67,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 query,
                 limit: LIMIT + 1,
             };
-            let responses: unknown[];
+            let responses: unknown[] | null;
             try {
                 responses = await callServices([request]);
             } catch (error) {
                 store.setError(error as ServiceError);
-                loading = false;
-                messages = undefined;
+                return;
+            }
+            if (responses == null) {
                 return;
             }
             loading = false;

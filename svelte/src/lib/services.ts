@@ -252,21 +252,66 @@ export interface SendMessageRequest {
 
 export type SendMessageResponse = void;
 
+interface ServiceCall {
+    promise: Promise<unknown[] | null>;
+    cancel: () => void;
+}
+
+let currentCall: ServiceCall | undefined;
+
+const cancellableMethods = new Set([
+    'get_courses',
+    'get_labels',
+    'count_messages',
+    'search_messages',
+    'get_message',
+    'view_message',
+    'get_roles',
+    'get_groups',
+    'search_users',
+    'get_message_form',
+]);
+
 /**
  * Calls one or more web service methods in a single HTTP request.
  *
  * @param requests List of request with method name and arguments.
- * @returns A promise to the web service responses.
+ * @returns A promise to the array of responses or null if cancelled.
  */
-export async function callServices(requests: ServiceRequest[]): Promise<unknown[]> {
-    const ajax = await loadModule<CoreAjax>('core/ajax');
-    const ajaxRequests = Array.from(requests).map(({ methodname, ...args }) => ({
-        methodname: `local_mail_${methodname}`,
-        args,
-    }));
-    try {
-        return await Promise.all(ajax.call(ajaxRequests));
-    } catch (error) {
-        throw typeof error == 'string' ? { message: error } : error;
-    }
+export function callServices(requests: ServiceRequest[]): Promise<unknown[] | null> {
+    let cancelled = false;
+
+    const start = async () => {
+        const ajax = await loadModule<CoreAjax>('core/ajax');
+        const ajaxRequests = requests
+            .filter((request) => !cancelled || !cancellableMethods.has(request.methodname))
+            .map(({ methodname, ...args }) => ({
+                methodname: `local_mail_${methodname}`,
+                args,
+            }));
+
+        let responses: unknown[] = [];
+
+        if (ajaxRequests.length > 0) {
+            try {
+                responses = await Promise.all(ajax.call(ajaxRequests));
+            } catch (error) {
+                throw typeof error == 'string' ? { message: error } : error;
+            }
+        }
+
+        return cancelled ? null : responses;
+    };
+
+    currentCall?.cancel();
+
+    currentCall = {
+        // Chain promise to avoid concurrent web service calls.
+        promise: currentCall ? currentCall.promise.then(start, start) : start(),
+        cancel: () => {
+            cancelled = true;
+        },
+    };
+
+    return currentCall.promise;
 }

@@ -51,7 +51,6 @@ import { replaceStringParams } from './utils';
 export type Store = Awaited<ReturnType<typeof createStore>>;
 
 export async function createStore(data: InitialData) {
-    let currentActionId = 0;
     let draftTimeoutId = 0;
 
     let state: State = {
@@ -94,8 +93,6 @@ export async function createStore(data: InitialData) {
         newParams?: ViewParams,
         redirect = false,
     ): Promise<unknown[] | null> => {
-        const actionId = ++currentActionId;
-
         const messageid = state.message?.id;
         const draftData = state.draftData;
         const params = newParams || state.params;
@@ -208,11 +205,8 @@ export async function createStore(data: InitialData) {
             }
         }
 
-        let responses: unknown[];
-        try {
-            responses = await callServices(requests);
-        } catch (error) {
-            setError(error as ServiceError);
+        const responses = await callServicesAndSetError(requests);
+        if (responses == null) {
             return null;
         }
 
@@ -266,25 +260,15 @@ export async function createStore(data: InitialData) {
         // Fetch form if message is a draft.
         let draftForm: MessageForm | undefined;
         if (message?.draft && message?.id != messageid) {
-            const draftRequests: ServiceRequest[] = [
-                {
-                    methodname: 'get_message_form',
-                    messageid: message.id,
-                },
-            ];
-            let draftResponses: unknown[];
-            try {
-                draftResponses = await callServices(draftRequests);
-            } catch (error) {
-                setError(error as ServiceError);
+            const request: ServiceRequest = {
+                methodname: 'get_message_form',
+                messageid: message.id,
+            };
+            const responses = await callServicesAndSetError([request]);
+            if (responses == null) {
                 return null;
             }
-            draftForm = draftResponses.pop() as GetMessageFormeResponse;
-        }
-
-        // Check if the user has done some other action during the web service calls.
-        if (actionId != currentActionId) {
-            return responses;
+            draftForm = responses.pop() as GetMessageFormeResponse;
         }
 
         // Update state with fetched data.
@@ -334,6 +318,17 @@ export async function createStore(data: InitialData) {
         return responses;
     };
 
+    const callServicesAndSetError = async (
+        requests: ServiceRequest[],
+    ): Promise<unknown[] | null> => {
+        try {
+            return await callServices(requests);
+        } catch (error) {
+            setError(error as ServiceError);
+            return null;
+        }
+    };
+
     const createLabel = async (name: string, color: string) => {
         const request: CreateLabelRequest = {
             methodname: 'create_label',
@@ -353,19 +348,15 @@ export async function createStore(data: InitialData) {
             courseid,
         };
 
-        let responses: unknown[];
-        try {
-            responses = await callServices([request]);
-        } catch (error) {
-            setError(error as ServiceError);
-            return;
-        }
+        const responses = await callServicesAndSetError([request]);
 
-        await navigate({
-            tray: 'drafts',
-            messageid: responses.pop() as number,
-            courseid,
-        });
+        if (responses != null) {
+            await navigate({
+                tray: 'drafts',
+                messageid: responses.pop() as number,
+                courseid,
+            });
+        }
     };
 
     const deleteLabel = async (labelid: number) => {
@@ -705,7 +696,6 @@ export async function createStore(data: InitialData) {
             return;
         }
 
-        const actionId = ++currentActionId;
         const message = state.message;
         const prevData = state.draftData;
         patch({ draftData: data, draftSaved: false });
@@ -731,15 +721,10 @@ export async function createStore(data: InitialData) {
                 },
             ];
 
-            let responses: unknown[];
-            try {
-                responses = await callServices(requests);
-            } catch (error) {
-                setError(error as ServiceError);
-                return;
-            }
-            const updatedMessage = responses.pop() as Message;
-            if (actionId == currentActionId) {
+            const responses = await callServicesAndSetError(requests);
+
+            if (responses != null) {
+                const updatedMessage = responses.pop() as Message;
                 patch({
                     message: updatedMessage,
                     draftData: undefined,

@@ -89,15 +89,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
                         limit: limit + 1,
                     },
                 ];
-                let responses: unknown[];
+                let responses: unknown[] | null;
                 try {
                     responses = await callServices(requests);
                 } catch (error) {
                     store.setError(error as ServiceError);
-                    loading = false;
-                    expanded = false;
-                    tooManyUsers = false;
-                    users = [];
+                    return;
+                }
+                if (responses == null) {
                     return;
                 }
                 users = responses.pop() as ReadonlyArray<User>;
