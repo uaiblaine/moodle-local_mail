@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.4] - 2024-03-03
+
+### Added
+
+- New button in the message form to save the draft and go back to the list of messages.
+
+### Changed
+
+- The external function `create_label` can assign the created label to a specified list of messages.
+
+### Fixed
+
+- Excessive number of web service calls to autosave drafts.
+- Web service requests are now performed sequentially to prevent potential race conditions.
+- Superfluous padding in role and group selectors. 
+
 ## [2.3] - 2024-02-12
 
 ### Added
