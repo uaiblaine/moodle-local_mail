@@ -1237,28 +1237,98 @@ class external_test extends testcase {
 
     public function test_create_label() {
         $generator = self::getDataGenerator();
-        $user = new user($generator->create_user());
-        self::setUser($user->id);
-
-        $result = external::create_label('Label 1', 'blue');
-
-        external::validate_parameters(external::create_label_returns(), $result);
-        $label = label::get($result);
-        self::assertNotNull($label);
-        self::assertEquals($user->id, $label->userid);
-        self::assertEquals('Label 1', $label->name);
-        self::assertEquals('blue', $label->color);
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $generator->enrol_user($user1->id, $course->id);
+        $time = make_timestamp(2021, 10, 11, 12, 0);
+        $this->setUser($user1->id);
 
         // Empty color.
 
-        $result = external::create_label('Label 2');
+        $result = external::create_label('Label 1');
 
         external::validate_parameters(external::create_label_returns(), $result);
-        $label = label::get($result);
-        self::assertNotNull($label);
-        self::assertEquals($user->id, $label->userid);
-        self::assertEquals('Label 2', $label->name);
-        self::assertEquals('', $label->color);
+        $label1 = label::get($result);
+        self::assertNotNull($label1);
+        self::assertEquals($user1->id, $label1->userid);
+        self::assertEquals('Label 1', $label1->name);
+        self::assertEquals('', $label1->color);
+
+        // Messages from the user.
+
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $message1 = message::create($data);
+        $message1->send($time);
+        $message1->set_labels($user1, [$label1]);
+        $message2 = message::create($data);
+        $message2->send($time);
+        $message3 = message::create($data);
+        $message3->send($time);
+
+        $result = external::create_label('Label 2', 'blue', [$message1->id, $message2->id]);
+
+        external::validate_parameters(external::create_label_returns(), $result);
+        $label2 = label::get($result);
+        self::assertNotNull($label2);
+        self::assertEquals($user1->id, $label2->userid);
+        self::assertEquals('Label 2', $label2->name);
+        self::assertEquals('blue', $label2->color);
+        self::assertEquals([$label1, $label2], message::get($message1->id)->get_labels($user1));
+        self::assertEquals([$label2], message::get($message2->id)->get_labels($user1));
+        self::assertEquals([], message::get($message3->id)->get_labels($user1));
+
+        // Message sent to the user.
+
+        $data = message_data::new($course, $user2);
+        $data->to = [$user1];
+        $data->subject = 'Subject';
+        $message = message::create($data);
+        $message->send($time);
+
+        $result = external::create_label('Label 3', 'red', [$message->id]);
+
+        external::validate_parameters(external::create_label_returns(), $result);
+        $label3 = label::get($result);
+        self::assertNotNull($label3);
+        self::assertEquals($user1->id, $label3->userid);
+        self::assertEquals('Label 3', $label3->name);
+        self::assertEquals('red', $label3->color);
+        self::assertTrue(message::get($message->id)->has_label($label3));
+
+        // Draft from the user.
+
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $message = message::create($data);
+
+        $result = external::create_label('Label 4', 'green', [$message->id]);
+
+        external::validate_parameters(external::create_label_returns(), $result);
+        $label4 = label::get($result);
+        self::assertNotNull($label4);
+        self::assertEquals($user1->id, $label4->userid);
+        self::assertEquals('Label 4', $label4->name);
+        self::assertEquals('green', $label4->color);
+        self::assertTrue(message::get($message->id)->has_label($label4));
+
+        // Draft to the user (no permission).
+
+        $data = message_data::new($course, $user2);
+        $data->to = [$user1];
+        $data->subject = 'Subject';
+        $message = message::create($data);
+
+        try {
+            $result = external::create_label('Label 5', 'yellow', [$message->id]);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+            self::assertEquals($message->id, $e->a);
+            self::assertCount(4, label::get_by_user($user1));
+        }
 
         // Empty name.
 
@@ -1281,10 +1351,20 @@ class external_test extends testcase {
         // Invalid color.
 
         try {
-            external::create_label('Label 3', 'abc');
+            external::create_label('Label 6', 'abc');
             self::fail();
         } catch (\invalid_parameter_exception $e) {
             self::assertEquals('invalid color: abc', $e->debuginfo);
+        }
+
+        // Invalid message.
+
+        try {
+            external::create_label('Label 7', 'blue', [123]);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+            self::assertEquals(123, $e->a);
         }
     }
 

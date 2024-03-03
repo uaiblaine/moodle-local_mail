@@ -84,10 +84,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     const createLabel = async (name: string, color: string) => {
         store.hideDialog();
-        const id = await store.createLabel(name, color);
-        if (id) {
-            store.setLabels([id], []);
-        }
+        store.createLabel(name, color);
     };
 </script>
 

@@ -1045,6 +1045,12 @@ class external extends \external_api {
         return new \external_function_parameters([
             'name' => new \external_value(PARAM_RAW, 'Name of the label'),
             'color' => new \external_value(PARAM_ALPHA, "Color of the label. Valid values: $colors", VALUE_DEFAULT, ''),
+            'messageids' => new \external_multiple_structure(
+                new \external_value(PARAM_INT),
+                'IDs of the messages to which the label will be set',
+                VALUE_DEFAULT,
+                []
+            ),
         ]);
     }
 
@@ -1068,7 +1074,20 @@ class external extends \external_api {
             throw new \invalid_parameter_exception('invalid color: ' . $params['color']);
         }
 
+        $messages = message::get_many($params['messageids']);
+        foreach ($messages as $message) {
+            if (!$user->can_view_message($message)) {
+                throw new exception('errormessagenotfound', $message->id);
+            }
+        }
+
         $label = label::create($user, $normalizedname, $params['color']);
+
+        foreach ($messages as $message) {
+            $labels = $message->get_labels($user);
+            $labels[] = $label;
+            $message->set_labels($user, $labels);
+        }
 
         return $label->id;
     }

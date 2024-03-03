@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -333,16 +334,15 @@ export async function createStore(data: InitialData) {
         return responses;
     };
 
-    const createLabel = async (name: string, color: string): Promise<number | undefined> => {
+    const createLabel = async (name: string, color: string) => {
         const request: CreateLabelRequest = {
             methodname: 'create_label',
             name,
             color,
+            messageids: Array.from(state.selectedMessages.keys()),
         };
 
-        const responses = await callServicesAndRefresh([request]);
-
-        return responses?.pop() as number | undefined;
+        await callServicesAndRefresh([request]);
     };
 
     const createMessage = async (courseid?: number) => {
