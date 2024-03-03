@@ -155,7 +155,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 selected={course.id}
                 required={true}
                 readonly={message.references.length > 0}
-                style="filter-left"
                 onChange={handleCourseChange}
             />
         </div>

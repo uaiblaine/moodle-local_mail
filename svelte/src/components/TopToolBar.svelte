@@ -1,6 +1,7 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
-
+SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
 <svelte:options immutable={true} />
@@ -53,9 +54,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 label={$store.strings.allcourses}
                 selected={$store.params.courseid}
                 readonly={$store.params.tray == 'course'}
+                buttonClass="alert-primary"
+                dropdownAlign={$store.viewportSize < ViewportSize.MD ? 'right' : 'left'}
                 onChange={(id) => store.selectCourse(id)}
-                primary={true}
-                style={$store.viewportSize >= ViewportSize.MD ? 'filter-left' : 'filter-right'}
             />
         </div>
     {/if}

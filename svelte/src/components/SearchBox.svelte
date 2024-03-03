@@ -8,9 +8,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script lang="ts">
     import { tick } from 'svelte';
-    import { blur } from '../actions/blur';
     import type { SearchParams, ViewParams } from '../lib/state';
     import type { Store } from '../lib/store';
+    import ComboBox from './ComboBox.svelte';
     import SearchOptions from './SearchOptions.svelte';
     import IncrementalSearch from './IncrementalSearch.svelte';
 
@@ -18,8 +18,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     let entering = !$store.params.search;
     let advancedExpanded = false;
-    let inputNode: HTMLElement;
-    let advancedNode: SearchOptions;
+    let comboBox: ComboBox;
+    let searchOptions: SearchOptions;
     let content = '';
     let sendername = '';
     let recipientname = '';
@@ -78,7 +78,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             advancedExpanded = true;
         }
         await tick();
-        inputNode.focus();
+        comboBox.focus();
     };
 
     const stopEntering = async () => {
@@ -91,12 +91,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
         if (advancedExpanded) {
             advancedExpanded = false;
             await tick();
-            inputNode.focus();
+            comboBox.focus();
         } else {
+            entering = true;
             advancedExpanded = true;
-            startEntering();
             await tick();
-            advancedNode.focus();
+            searchOptions.focus();
         }
     };
 
@@ -110,7 +110,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             search: undefined,
         });
         await tick();
-        inputNode.focus();
+        comboBox.focus();
     };
 
     const submit = async () => {
@@ -135,17 +135,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
         entering = false;
     };
 
-    const handleKeypress = (event: KeyboardEvent) => {
-        if (event.key == 'Enter') {
-            event.preventDefault();
-            if (submitEnabled) {
-                submit();
-            } else {
-                cancel();
-            }
-        }
-    };
-
     const handleIncrementalSearchClick = async (params: ViewParams) => {
         await store.navigate(params);
         advancedExpanded = false;
@@ -153,77 +142,46 @@ SPDX-License-Identifier: GPL-3.0-or-later
     };
 </script>
 
-<form class="local-mail-search-box position-relative" use:blur={stopEntering}>
-    <div
-        class="local-mail-search-box-icon position-absolute h-100 d-flex justify-content-center align-items-center px-0"
-    >
-        <i class="fa fa-fw {loading ? 'fa-spinner fa-pulse' : 'fa-search'}" aria-hidden="true" />
-    </div>
+<ComboBox
+    bind:this={comboBox}
+    mode={entering ? 'input' : 'button'}
+    bind:inputText={content}
+    inputPlaceholder={$store.strings.search}
+    leftIconClass={loading ? 'fa-spinner fa-pulse' : 'fa-search'}
+    rightIconClass={advancedExpanded ? 'fa-caret-up' : 'fa-sliders'}
+    rightIconLabel={$store.strings.searchoptions}
+    middleIconClass={searchEnabled || submitEnabled ? 'fa-times' : undefined}
+    middleIconLabel={$store.strings.clearsearch}
+    buttonClass="alert-primary"
+    onBlur={stopEntering}
+    onEnter={submitEnabled ? submit : cancel}
+    onRightIconClick={toggleDropdown}
+    onMiddleIconClick={cancel}
+    onButtonClick={startEntering}
+>
+    <span slot="buttonContent">
+        {#each searchFields as { label, value }, i}
+            {#if i > 0}<span class="dimmed_text">,&ensp;</span>{/if}
+            {#if value === true}
+                <span class="dimmed_text">{label}</span>
+            {:else}
+                {#if label}<span class="dimmed_text">{label}: </span>{/if}
+                {value}
+            {/if}
+        {/each}
+    </span>
 
-    {#if entering}
-        <input
-            type="text"
-            class="local-mail-search-box-input form-control"
-            class:local-mail-search-box-input-enabled={searchEnabled || submitEnabled}
-            placeholder={$store.strings.search}
-            aria-label={$store.strings.search}
-            autocomplete="off"
-            bind:value={content}
-            bind:this={inputNode}
-            on:keypress={handleKeypress}
-        />
-    {:else}
-        <button
-            type="button"
-            class="local-mail-search-box-input-enabled alert-primary form-control text-left text-truncate"
-            on:click={startEntering}
-        >
-            {#each searchFields as { label, value }, i}
-                {#if i > 0}<span class="dimmed_text">,&ensp;</span>{/if}
-                {#if value === true}
-                    <span class="dimmed_text">{label}</span>
-                {:else}
-                    {#if label}<span class="dimmed_text">{label}: </span>{/if}
-                    {value}
-                {/if}
-            {/each}
-        </button>
-    {/if}
-    <div class="position-absolute h-100 d-flex align-items-center" style="top: 0; right: 0">
-        {#if searchEnabled || submitEnabled}
-            <button
-                type="button"
-                class="local-mail-search-box-icon btn px-0"
-                title={$store.strings.clearsearch}
-                on:click|preventDefault={cancel}
-            >
-                <i class="fa fa-fw fa-times" aria-hidden="true" />
-            </button>
-        {/if}
-        <button
-            type="button"
-            aria-expanded={advancedExpanded}
-            class="local-mail-search-box-icon btn px-0"
-            title={$store.strings.searchoptions}
-            on:click|preventDefault={toggleDropdown}
-        >
-            <i
-                class="fa fa-fw {advancedExpanded ? 'fa-caret-up' : 'fa-sliders'}"
-                aria-hidden="true"
-            />
-        </button>
-    </div>
     {#if advancedExpanded}
         <SearchOptions
-            bind:this={advancedNode}
+            bind:this={searchOptions}
             {store}
             bind:sendername
             bind:recipientname
             bind:unread
             bind:withfilesonly
             bind:maxtime
-            {submit}
-            {submitEnabled}
+            onSubmit={submitEnabled ? submit : cancel}
+            onCancel={cancel}
         />
     {/if}
     {#if $store.settings.incrementalsearch}
@@ -235,28 +193,4 @@ SPDX-License-Identifier: GPL-3.0-or-later
             onClick={handleIncrementalSearchClick}
         />
     {/if}
-</form>
-
-<style global>
-    .local-mail-search-box-icon {
-        top: 0;
-        left: 0;
-        padding-left: 0.75rem;
-    }
-
-    .local-mail-search-box {
-        width: 100%;
-        max-width: 100%;
-    }
-    .local-mail-search-box-input {
-        padding-left: 2.5rem;
-        padding-right: 2.5rem;
-    }
-    .local-mail-search-box-input-enabled {
-        padding-left: 2.5rem;
-        padding-right: 5rem;
-    }
-    .local-mail-search-box-icon {
-        width: 2.5rem;
-    }
-</style>
+</ComboBox>

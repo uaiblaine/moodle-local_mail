@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -16,8 +17,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
     export let unread = false;
     export let withfilesonly = false;
     export let maxtime = 0;
-    export let submit: () => void;
-    export let submitEnabled: boolean;
+    export let onSubmit: () => void;
+    export let onCancel: () => void;
 
     export function focus() {
         senderNode.focus();
@@ -30,6 +31,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     const updateMaxTime = (event: Event) => {
         maxtime = timestampFromDate((event.target as HTMLInputElement).value);
+    };
+
+    const handleInputKey = (event: KeyboardEvent) => {
+        if (event.key == 'Enter') {
+            onSubmit();
+        } else if (event.key == 'Escape') {
+            onCancel();
+        }
     };
 </script>
 
@@ -45,6 +54,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 id="local-mail-search-input-sendername"
                 bind:value={sendername}
                 bind:this={senderNode}
+                on:keyup={handleInputKey}
             />
         </div>
     </div>
@@ -58,6 +68,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 class="form-control"
                 id="local-mail-search-input-recipientname"
                 bind:value={recipientname}
+                on:keyup={handleInputKey}
             />
         </div>
     </div>
@@ -74,6 +85,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 max={today}
                 value={maxdate}
                 on:input={updateMaxTime}
+                on:keyup={handleInputKey}
             />
         </div>
     </div>
@@ -85,6 +97,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 type="checkbox"
                 id="local-mail-search-input-unread"
                 bind:checked={unread}
+                on:keyup={handleInputKey}
             />
             <label class="form-check-label" for="local-mail-search-input-unread">
                 {$store.strings.searchunreadonly}
@@ -96,17 +109,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 type="checkbox"
                 id="local-mail-search-input-withfilesonly"
                 bind:checked={withfilesonly}
+                on:keyup={handleInputKey}
             />
             <label class="form-check-label" for="local-mail-search-input-withfilesonly">
                 {$store.strings.searchhasattachments}
             </label>
         </div>
-        <input
-            type="submit"
-            disabled={!submitEnabled}
+        <button
+            type="button"
             class="btn btn-primary px-3 ml-auto"
-            on:click|preventDefault={submit}
-            value={$store.strings.search}
-        />
+            on:click={onSubmit}
+            on:keyup={handleInputKey}
+        >
+            {$store.strings.search}
+        </button>
     </div>
 </div>
