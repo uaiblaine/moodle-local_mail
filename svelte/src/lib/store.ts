@@ -691,24 +691,14 @@ export async function createStore(data: InitialData) {
         }
     };
 
-    const updateDraft = (data: MessageData, force: boolean) => {
+    const updateDraft = (data: MessageData, noDelay: boolean) => {
         if (!state.message) {
             return;
         }
 
         const message = state.message;
-        const prevData = state.draftData;
-        patch({ draftData: data, draftSaved: false });
 
-        let delay = 3000;
-        if (force) {
-            delay = 0;
-        } else if (prevData) {
-            delay = Math.max(0, message.time * 1000 + delay - Date.now());
-        }
-        window.clearTimeout(draftTimeoutId);
-
-        draftTimeoutId = window.setTimeout(async () => {
+        const handler = async () => {
             const requests: ServiceRequest[] = [
                 {
                     methodname: 'update_message',
@@ -731,7 +721,11 @@ export async function createStore(data: InitialData) {
                     draftSaved: true,
                 });
             }
-        }, delay);
+        };
+
+        patch({ draftData: data, draftSaved: false });
+        window.clearTimeout(draftTimeoutId);
+        draftTimeoutId = window.setTimeout(handler, noDelay ? 0 : 5000);
     };
 
     const updateLabel = async (labelid: number, name: string, color: string) => {

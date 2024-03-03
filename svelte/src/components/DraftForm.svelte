@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -37,7 +38,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     $: recipients = new Map(message.recipients.map((user) => [user.id, user]));
 
     onMount(() => {
-        formNode?.addEventListener('core_form/uploadChanged', () => save(false));
+        formNode?.addEventListener('core_form/uploadChanged', () => save());
         const disableTinyEventHandlers = enableTinyEventHandlers();
 
         return () => {
@@ -51,7 +52,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
         const handleChange = () => {
             tinyEditor?.save();
-            save(false);
+            save();
         };
 
         const handleEditor = (event: { editor: TinyMCE.Editor }) => {
@@ -95,14 +96,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
         recipientsList.sort((a, b) => a.sortorder.localeCompare(b.sortorder));
         recipients = new Map(recipientsList.map((recipient) => [recipient.id, recipient]));
 
-        save(false);
+        save();
     };
 
     const handleRecipientDelete = (user: User) => {
         handleRecipientChange([user], null);
     };
 
-    const save = async (force: boolean) => {
+    const save = (noDelay = false, navigateToList = false) => {
         if (!formNode) {
             return;
         }
@@ -126,7 +127,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
             draftitemid: parseInt(formData.get('content[itemid]')?.toString() || '') || 0,
         };
 
-        await store.updateDraft(data, force);
+        store.updateDraft(data, noDelay);
+
+        if (navigateToList) {
+            store.navigateToList();
+        }
     };
 </script>
 
@@ -135,7 +140,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <hr class="d-lg-none mt-0 mb-3 mb-sm-2" />
 <form
     bind:this={formNode}
-    on:submit|preventDefault={() => save(true)}
+    on:submit|preventDefault={() => save(false, true)}
     class="pt-lg-2 pb-3 px-lg-4"
     class:card={$store.viewportSize >= ViewportSize.LG}
 >
@@ -171,11 +176,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
             autocomplete="off"
             maxlength="100"
             bind:value={subject}
-            on:input={() => save(false)}
+            on:input={() => save()}
         />
     </div>
 
-    <div class="form-group" on:change={() => save(false)}>
+    <div class="form-group" on:change={() => save()}>
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {@html form.editorhtml}
     </div>
@@ -211,6 +216,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </div>
     {/if}
     <div class="d-flex justify-content-end align-items-center">
+        <button
+            type="submit"
+            class="btn btn-secondary flex-shrink-0 text-nowrap px-3 text-truncate"
+            title={$store.strings.send}
+        >
+            {$store.strings.save}
+        </button>
         <SendButton {store} />
     </div>
 </form>
