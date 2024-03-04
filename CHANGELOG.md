@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.5] - 2024-03-04
+
+### Fixed
+
+- Disable interactions while loading new page to prevent double clicks.
+
 ## [2.4] - 2024-03-03
 
 ### Added
