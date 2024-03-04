@@ -78,6 +78,14 @@
     box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.local-mail-busy {
+    cursor: wait !important;
+}
+
+.local-mail-busy * {
+    pointer-events: none;
+}
+
 #page-local-mail-view #topofscroll {
     padding: 0;
     margin-bottom: 0;

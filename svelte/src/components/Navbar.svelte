@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script lang="ts">
     import { blur } from '../actions/blur';
+    import { busy } from '../actions/busy';
     import type { Course, Label, Settings, Strings, ViewParams } from '../lib/state';
     import { viewUrl } from '../lib/url';
     import { formatNumber } from '../lib/utils';
@@ -39,11 +40,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
     };
 
     const handleIconClick = (event: Event) => {
+        event.preventDefault();
         if (settings.globaltrays.length > 0 || labels.length > 0) {
             expanded = !expanded;
-            event.preventDefault();
         } else {
-            event.preventDefault();
             onClick({ tray: 'inbox' });
         }
     };
@@ -63,6 +63,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     class="local-mail local-mail-navbar pop-over-region h-100"
     class:popover-region-toggle={expanded}
     use:blur={closeMenu}
+    use:busy={loading}
 >
     <a
         aria-expanded={expanded}

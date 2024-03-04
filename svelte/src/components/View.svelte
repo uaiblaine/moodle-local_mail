@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script lang="ts">
     import { onMount, afterUpdate } from 'svelte';
+    import { busy } from '../actions/busy';
     import { ViewportSize } from '../lib/state';
     import type { Store } from '../lib/store';
     import { getViewParamsFromUrl } from '../lib/url';
@@ -123,10 +124,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 </svelte:head>
 
 <div
+    use:busy={$store.loading}
     class="local-mail local-mail-view container-fluid d-flex flex-column pt-2"
     class:pt-3={!$store.mobile}
     class:p-md-4={!$store.mobile && $store.viewportSize >= ViewportSize.MD}
-    class:local-mail-loading={$store.loading}
     class:min-vh-100={$store.viewportSize < ViewportSize.MD}
     bind:this={viewNode}
 >
@@ -258,10 +259,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
     .local-mail-view-search {
         flex-grow: 1;
         margin-right: auto;
-    }
-
-    .local-mail-loading * {
-        cursor: wait;
     }
 
     @media (min-width: 992px) {
