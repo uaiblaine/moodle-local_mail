@@ -162,7 +162,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 <ComposeButton
                     strings={$store.strings}
                     iconOnly={tray && $store.viewportSize < ViewportSize.SM}
-                    onClick={() => store.createMessage()}
+                    onClick={() => store.createMessage($store.params.courseid)}
                 />
                 {#if !tray}
                     <div class="ml-auto">
@@ -181,7 +181,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <div class="row mb-3">
             {#if $store.viewportSize >= ViewportSize.LG}
                 <div class="local-mail-view-side-column">
-                    <ComposeButton strings={$store.strings} onClick={() => store.createMessage()} />
+                    <ComposeButton
+                        strings={$store.strings}
+                        onClick={() => store.createMessage($store.params.courseid)}
+                    />
                 </div>
             {/if}
             {#if tray}

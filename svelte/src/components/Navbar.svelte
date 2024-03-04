@@ -23,7 +23,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     export let params: ViewParams;
     export let loading: boolean;
     export let onClick: (params: ViewParams) => void;
-    export let onComposeClick: (courseid: number) => void;
+    export let onComposeClick: (courseid?: number) => void;
     export let onCourseChange: (courseid?: number) => void;
 
     let expanded = false;
@@ -36,7 +36,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     const handleComposeClick = () => {
         closeMenu();
-        onComposeClick(params.courseid || courses[0].id);
+        onComposeClick(params.courseid);
     };
 
     const handleIconClick = (event: Event) => {

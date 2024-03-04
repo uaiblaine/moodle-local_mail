@@ -3,16 +3,16 @@
     "file": "global-zz1v44OQ.css",
     "src": "_global-!~{003}~.js"
   },
-  "_global-03kAjYdZ.js": {
+  "_global-doXHLcej.js": {
     "css": [
       "global-zz1v44OQ.css"
     ],
-    "file": "global-03kAjYdZ.js"
+    "file": "global-doXHLcej.js"
   },
   "src/navigation.ts": {
-    "file": "navigation-iwJIQlV5.js",
+    "file": "navigation-P5SiL5iK.js",
     "imports": [
-      "_global-03kAjYdZ.js"
+      "_global-doXHLcej.js"
     ],
     "isEntry": true,
     "src": "src/navigation.ts"
@@ -21,9 +21,9 @@
     "css": [
       "view-uQt-ynJ8.css"
     ],
-    "file": "view-2EzZvtQq.js",
+    "file": "view-sQUtRDJa.js",
     "imports": [
-      "_global-03kAjYdZ.js"
+      "_global-doXHLcej.js"
     ],
     "isEntry": true,
     "src": "src/view.ts"

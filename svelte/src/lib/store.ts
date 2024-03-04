@@ -340,12 +340,10 @@ export async function createStore(data: InitialData) {
         await callServicesAndRefresh([request]);
     };
 
-    const createMessage = async (courseid?: number) => {
-        courseid = courseid || state.params.courseid || state.courses[0].id;
-
+    const createMessage = async (courseid: number | undefined) => {
         const request: CreateMessageRequest = {
             methodname: 'create_message',
-            courseid,
+            courseid: courseid || state.courses[0].id,
         };
 
         const responses = await callServicesAndSetError([request]);
