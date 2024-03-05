@@ -2145,6 +2145,29 @@ class external_test extends testcase {
             self::assertEquals('errorcoursenotfound', $e->errorcode);
             self::assertEquals($data['courseid'], $e->a);
         }
+
+        // Reply with a different course.
+
+        $data = message_data::new($course1, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Message subject';
+        $message = message::create($data);
+        $message->send($time);
+        $reply = message::create(message_data::reply($message, $user1, false));
+        $data = [
+            'courseid' => $course2->id,
+            'to' => [],
+            'cc' => [],
+            'bcc' => [],
+            'subject' => 'Message subject',
+            'content' => 'Message content',
+            'format' => FORMAT_HTML,
+            'draftitemid' => file_get_unused_draft_itemid(),
+        ];
+
+        external::update_message($reply->id, $data);
+
+        self::assertEquals($message->courseid, message::get($reply->id)->courseid);
     }
 
     public function test_send_message() {
