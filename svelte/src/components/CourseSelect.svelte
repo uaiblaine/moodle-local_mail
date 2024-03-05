@@ -70,7 +70,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     bind:inputText
     inputPlaceholder={strings.course}
     leftIconClass="fa-graduation-cap"
-    rightIconClass={!entering ? 'fa-caret-down' : inputText ? 'fa-times' : 'fa-caret-up'}
+    rightIconClass={readonly ? '' : !entering ? 'fa-caret-down' : inputText ? 'fa-times' : 'fa-caret-up'}
     rightIconLabel={entering && inputText ? strings.clearsearch : strings.changecourse}
     buttonText={currentCourseName || label}
     {buttonClass}

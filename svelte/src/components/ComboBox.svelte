@@ -86,7 +86,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </button>
     {:else}
         <div
-            class="local-mail-combo-box-readonly form-control btn {readonlyClass}"
+            class="local-mail-combo-box-readonly form-control {readonlyClass}"
             class:local-mail-combo-box-readonly-default={readonlyClass == ''}
             use:truncate={readonlyText}
         >
@@ -143,6 +143,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
     }
 
     .local-mail-combo-box-button {
+        padding-left: 2.5rem;
+        padding-right: 0.5rem;
+        text-align: left;
+    }
+
+    .local-mail-combo-box-readonly {
         padding-left: 2.5rem;
         padding-right: 0.5rem;
         text-align: left;

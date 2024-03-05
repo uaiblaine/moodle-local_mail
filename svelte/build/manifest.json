@@ -1,18 +1,18 @@
 {
   "_global-!~{003}~.js": {
-    "file": "global-zz1v44OQ.css",
+    "file": "global-0l8v2TK5.css",
     "src": "_global-!~{003}~.js"
   },
-  "_global-doXHLcej.js": {
+  "_global-6gefFxfP.js": {
     "css": [
-      "global-zz1v44OQ.css"
+      "global-0l8v2TK5.css"
     ],
-    "file": "global-doXHLcej.js"
+    "file": "global-6gefFxfP.js"
   },
   "src/navigation.ts": {
-    "file": "navigation-P5SiL5iK.js",
+    "file": "navigation-NR5jBwX9.js",
     "imports": [
-      "_global-doXHLcej.js"
+      "_global-6gefFxfP.js"
     ],
     "isEntry": true,
     "src": "src/navigation.ts"
@@ -21,9 +21,9 @@
     "css": [
       "view-uQt-ynJ8.css"
     ],
-    "file": "view-sQUtRDJa.js",
+    "file": "view-H1_ZseDn.js",
     "imports": [
-      "_global-doXHLcej.js"
+      "_global-6gefFxfP.js"
     ],
     "isEntry": true,
     "src": "src/view.ts"
