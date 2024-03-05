@@ -155,6 +155,14 @@ class upgrade_test extends testcase {
             'draft' => 0,
             'time' => 2000000003,
         ]);
+        $DB->insert_record('local_mail_message_refs', [
+            'messageid' => $messageid3,
+            'reference' => $messageid1,
+        ]);
+        $DB->insert_record('local_mail_message_refs', [
+            'messageid' => $messageid3,
+            'reference' => $messageid2,
+        ]);
         $DB->insert_record('local_mail_message_users', [
             'messageid' => $messageid3,
             'userid' => $user1->id,
@@ -334,6 +342,7 @@ class upgrade_test extends testcase {
             'normalizedsubject' => 'Subject 3',
             'normalizedcontent' => 'Content of message 3',
         ]);
+        self::assert_record_count(0, 'message_refs', ['messageid' => $messageid3]);
         self::assert_record_data('message_users', ['messageid' => $messageid3, 'userid' => $user1->id], [
             'courseid' => $course2->id,
             'draft' => 0,
