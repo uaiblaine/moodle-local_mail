@@ -114,6 +114,7 @@ export async function createStore(data: InitialData) {
         // Save draft.
         if (messageid && draftData) {
             window.clearTimeout(draftTimeoutId);
+            draftTimeoutId = 0;
             requests.unshift({
                 methodname: 'update_message',
                 messageid,
@@ -697,6 +698,9 @@ export async function createStore(data: InitialData) {
         const message = state.message;
 
         const handler = async () => {
+            window.clearTimeout(draftTimeoutId);
+            draftTimeoutId = 0;
+
             const requests: ServiceRequest[] = [
                 {
                     methodname: 'update_message',
@@ -722,8 +726,11 @@ export async function createStore(data: InitialData) {
         };
 
         patch({ draftData: data, draftSaved: false });
-        window.clearTimeout(draftTimeoutId);
-        draftTimeoutId = window.setTimeout(handler, noDelay ? 0 : 5000);
+        if (noDelay) {
+            handler();
+        } else if (!draftTimeoutId && state.settings.autosaveinterval > 0) {
+            draftTimeoutId = window.setTimeout(handler, state.settings.autosaveinterval * 1000);
+        }
     };
 
     const updateLabel = async (labelid: number, name: string, color: string) => {

@@ -23,6 +23,9 @@ class settings {
     /** @var int Maximum size of attachments allowed per message. */
     public int $maxbytes;
 
+    /** @var int Interval in seconds between automatic draft saves. */
+    public int $autosaveinterval = 5;
+
     /** @var string[] Global trays displayed in menus: "starred", "sent", "drafts" and/or "trash". */
     public array $globaltrays = ['starred', 'sent', 'drafts', 'trash'];
 
@@ -95,6 +98,9 @@ class settings {
         }
         if (isset($config->maxbytes)) {
             $settings->maxbytes = (int) $config->maxbytes;
+        }
+        if (isset($config->autosaveinterval)) {
+            $settings->autosaveinterval = (int) $config->autosaveinterval;
         }
         if (isset($config->globaltrays)) {
             if ($config->globaltrays) {

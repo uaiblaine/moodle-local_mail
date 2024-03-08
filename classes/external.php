@@ -45,6 +45,10 @@ class external extends \external_api {
                 PARAM_INT,
                 'Maximum size of attachments allowed per message'
             ),
+            'autosaveinterval' => new \external_value(
+                PARAM_INT,
+                'Interval in seconds between automatic draft saves'
+            ),
             'globaltrays' => new \external_multiple_structure(
                 new \external_value(PARAM_ALPHA, 'Type of ray: "starred", "sent", "drafts" or "trash"'),
                 'Global trays displayed in menus'

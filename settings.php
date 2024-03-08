@@ -59,9 +59,16 @@ if ($hassiteconfig) {
     $visiblename = strings::get('configmaxattachmentsize');
     $description = strings::get('configmaxattachmentsizedesc');
     $defaultsetting = $defaults->maxbytes;
-    $paramtype = PARAM_INT;
     $choices = get_max_upload_sizes($CFG->maxbytes ?? 0, 0, 0, settings::get()->maxbytes);
     $settings->add(new admin_setting_configselect($name, $visiblename, $description, $defaultsetting, $choices));
+
+    // Autosave interval.
+    $name = 'local_mail/autosaveinterval';
+    $visiblename = strings::get('configautosaveinterval');
+    $description = strings::get('configautosaveintervaldesc');
+    $defaultsetting = $defaults->autosaveinterval;
+    $paramtype = PARAM_INT;
+    $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
 
     // Trays.
     $settings->add(new admin_setting_heading('local_mail_trays', strings::get('trays'), ''));

@@ -28,6 +28,7 @@ class external_test extends testcase {
         set_config('usersearchlimit', '50', 'local_mail');
         set_config('maxfiles', '5', 'local_mail');
         set_config('maxbytes', '45000', 'local_mail');
+        set_config('autosaveinterval', '3', 'local_mail');
         set_config('globaltrays', 'drafts,trash', 'local_mail');
         set_config('coursetrays', 'unread', 'local_mail');
         set_config('coursetraysname', 'shortname', 'local_mail');
@@ -50,6 +51,7 @@ class external_test extends testcase {
             'usersearchlimit' => 50,
             'maxfiles' => 5,
             'maxbytes' => 45000,
+            'autosaveinterval' => 3,
             'globaltrays' => ['drafts', 'trash'],
             'coursetrays' => 'unread',
             'coursetraysname' => 'shortname',
@@ -84,6 +86,7 @@ class external_test extends testcase {
         unset_config('usersearchlimit', 'local_mail');
         unset_config('maxfiles', 'local_mail');
         unset_config('maxbytes', 'local_mail');
+        unset_config('autosaveinterval', 'local_mail');
         unset_config('globaltrays', 'local_mail');
         unset_config('coursetrays', 'local_mail');
         unset_config('coursetraysname', 'local_mail');
@@ -102,6 +105,7 @@ class external_test extends testcase {
         self::assertEquals(100, $result['usersearchlimit']);
         self::assertEquals(20, $result['maxfiles']);
         self::assertEquals(123000, $result['maxbytes']);
+        self::assertEquals(5, $result['autosaveinterval']);
         self::assertEquals(['starred', 'sent', 'drafts', 'trash'], $result['globaltrays']);
         self::assertEquals('none', $result['coursetrays']);
         self::assertEquals('fullname', $result['coursetraysname']);

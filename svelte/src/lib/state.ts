@@ -180,6 +180,7 @@ export interface ServiceError {
 
 export interface Settings {
     readonly maxrecipients: number;
+    readonly autosaveinterval: number;
     readonly usersearchlimit: number;
     readonly globaltrays: ReadonlyArray<string>;
     readonly coursetrays: 'none' | 'unread' | 'all';
