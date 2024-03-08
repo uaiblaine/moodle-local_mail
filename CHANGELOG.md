@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.6] - 2024-03-08
+
+### Added
+
+- New setting to configure the autosave interval in seconds.
+
+### Fixed
+
+- The selected course is no longer changed when creating a new messge.
+- It was possible to change the course of a reply.
+- Tiny editor autosave was enabled although it is redundant.
+
 ## [2.5] - 2024-03-04
 
 ### Fixed
