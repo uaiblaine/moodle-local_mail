@@ -353,7 +353,9 @@ export async function createStore(data: InitialData) {
             await navigate({
                 tray: 'drafts',
                 messageid: responses.pop() as number,
-                courseid,
+                courseid: ['shortname', 'fullname'].includes(state.settings.filterbycourse)
+                    ? courseid
+                    : undefined,
             });
         }
     };
@@ -388,7 +390,11 @@ export async function createStore(data: InitialData) {
             await navigate({
                 tray: 'drafts',
                 messageid: responses.pop() as number,
-                courseid: oldParams.courseid ? message.course.id : undefined,
+                courseid:
+                    ['shortname', 'fullname'].includes(state.settings.filterbycourse) &&
+                    oldParams.courseid != null
+                        ? message.course.id
+                        : undefined,
             });
         }
     };
@@ -461,7 +467,11 @@ export async function createStore(data: InitialData) {
             await navigate({
                 tray: 'drafts',
                 messageid: responses.pop() as number,
-                courseid: oldParams.courseid ? message.course.id : undefined,
+                courseid:
+                    ['shortname', 'fullname'].includes(state.settings.filterbycourse) &&
+                    oldParams.courseid != null
+                        ? message.course.id
+                        : undefined,
             });
         }
     };

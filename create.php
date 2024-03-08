@@ -10,6 +10,7 @@
 use local_mail\course;
 use local_mail\message;
 use local_mail\message_data;
+use local_mail\settings;
 use local_mail\user;
 
 require_once('../../config.php');
@@ -42,4 +43,10 @@ if ($recipients) {
 $message = message::create($data);
 
 // Redirect to message form.
-redirect(new moodle_url('/local/mail/view.php', ['t' => 'drafts', 'c' => $course->id, 'm' => $message->id]));
+$redirecturl = new moodle_url('/local/mail/view.php');
+$redirecturl->param('t', 'drafts');
+$redirecturl->param('m', $message->id);
+if (settings::get()->filterbycourse != 'hidden') {
+    $redirecturl->param('c', $course->id);
+}
+redirect($redirecturl);
