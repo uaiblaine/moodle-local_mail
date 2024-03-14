@@ -38,8 +38,11 @@ class external_test extends testcase {
         set_config('incrementalsearch', '0', 'local_mail');
         set_config('incrementalsearchlimit', '2000', 'local_mail');
         set_config('courselink', 'fullname', 'local_mail');
-        set_config('message_provider_local_mail_mail_enabled', 'popup,email', 'message');
+        \core_plugin_manager::resolve_plugininfo_class('message')::enable_plugin('airnotifier', true);
+        set_config('airnotifieraccesskey', random_string());
+        set_config('message_provider_local_mail_mail_enabled', 'email,airnotifier', 'message');
         set_config('email_provider_local_mail_mail_locked', '1', 'message');
+        set_config('popup_provider_local_mail_mail_locked', '1', 'message');
         $this->setUser($user);
 
         $result = external::get_settings();
@@ -63,15 +66,15 @@ class external_test extends testcase {
             'courselink' => 'fullname',
             'messageprocessors' => [
                 [
-                    'name' => 'popup',
-                    'displayname' => get_string('pluginname', 'message_popup'),
-                    'locked' => false,
-                    'enabled' => true,
-                ],
-                [
                     'name' => 'email',
                     'displayname' => get_string('pluginname', 'message_email'),
                     'locked' => true,
+                    'enabled' => true,
+                ],
+                [
+                    'name' => 'airnotifier',
+                    'displayname' => get_string('pluginname', 'message_airnotifier'),
+                    'locked' => false,
                     'enabled' => true,
                 ],
             ],

@@ -1,6 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -54,9 +55,11 @@ class settings_test extends testcase {
         set_config('incrementalsearch', '0', 'local_mail');
         set_config('incrementalsearchlimit', '2000', 'local_mail');
         set_config('courselink', 'fullname', 'local_mail');
-        set_config('message_provider_local_mail_mail_enabled', 'popup,email', 'message');
+        \core_plugin_manager::resolve_plugininfo_class('message')::enable_plugin('airnotifier', true);
+        set_config('airnotifieraccesskey', random_string());
+        set_config('message_provider_local_mail_mail_enabled', 'email,airnotifier', 'message');
         set_config('email_provider_local_mail_mail_locked', '1', 'message');
-
+        set_config('popup_provider_local_mail_mail_locked', '1', 'message');
         $settings = settings::get();
 
         self::assertFalse($settings->enablebackup);
@@ -76,15 +79,15 @@ class settings_test extends testcase {
         self::assertEquals('fullname', $settings->courselink);
         self::assertEquals([
             [
-                'name' => 'popup',
-                'displayname' => get_string('pluginname', 'message_popup'),
-                'locked' => false,
-                'enabled' => true,
-            ],
-            [
                 'name' => 'email',
                 'displayname' => get_string('pluginname', 'message_email'),
                 'locked' => true,
+                'enabled' => true,
+            ],
+            [
+                'name' => 'airnotifier',
+                'displayname' => get_string('pluginname', 'message_airnotifier'),
+                'locked' => false,
                 'enabled' => true,
             ],
         ], $settings->messageprocessors);

@@ -1,6 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -136,14 +137,15 @@ class settings {
         if (!get_config('message', 'local_mail_mail_disable')) {
             $enabled = explode(',', get_config('message', 'message_provider_local_mail_mail_enabled'));
             foreach (get_message_processors(true) as $processor) {
-                if ($processor->name == 'localmail') {
+                $processorlocked = (bool) get_config('message', "{$processor->name}_provider_local_mail_mail_locked");
+                $processorenabled = array_search($processor->name, $enabled) !== false;
+                if ($processor->name == 'localmail' || $processorlocked && !$processorenabled) {
                     continue;
                 }
-                $locked = (bool) get_config('message', "{$processor->name}_provider_local_mail_mail_locked");
                 $settings->messageprocessors[] = [
                     'name' => $processor->name,
                     'displayname' => get_string('pluginname', 'message_' . $processor->name),
-                    'locked' => $locked,
+                    'locked' => $processorlocked,
                     'enabled' => array_search($processor->name, $enabled) !== false,
                 ];
             }
