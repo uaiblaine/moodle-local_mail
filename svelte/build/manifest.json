@@ -3,26 +3,26 @@
     "file": "global-DinWoNdn.css",
     "src": "_global-!~{003}~.js"
   },
-  "_global-Dw3mevGg.js": {
-    "file": "global-Dw3mevGg.js",
+  "_global-2WWIzohN.js": {
+    "file": "global-2WWIzohN.js",
     "css": [
       "global-DinWoNdn.css"
     ]
   },
   "src/navigation.ts": {
-    "file": "navigation-Bizkepuf.js",
+    "file": "navigation-D16Fl8XJ.js",
     "src": "src/navigation.ts",
     "isEntry": true,
     "imports": [
-      "_global-Dw3mevGg.js"
+      "_global-2WWIzohN.js"
     ]
   },
   "src/view.ts": {
-    "file": "view-D_zciKV4.js",
+    "file": "view-DLGMx2kj.js",
     "src": "src/view.ts",
     "isEntry": true,
     "imports": [
-      "_global-Dw3mevGg.js"
+      "_global-2WWIzohN.js"
     ],
     "css": [
       "view-9GWmLScu.css"
