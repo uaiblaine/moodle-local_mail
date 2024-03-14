@@ -55,8 +55,8 @@ function initNavbar(data: Record<string, unknown>) {
                 onClick: (params: ViewParams) => {
                     window.location.href = viewUrl(params);
                 },
-                onComposeClick: (courseid: number) => {
-                    window.location.href = createUrl(courseid);
+                onComposeClick: (courseid?: number) => {
+                    window.location.href = createUrl(courseid || (data.courses as Course[])[0]?.id);
                 },
                 onCourseChange: (courseid?: number) => {
                     navbar.$set({ params: { courseid } });
