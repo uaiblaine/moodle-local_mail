@@ -33,7 +33,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     let formNode: HTMLFormElement | undefined;
 
-    $: course = message.course;
+    $: courseid = message.course.id;
     $: subject = message.subject;
     $: recipients = new Map(message.recipients.map((user) => [user.id, user]));
 
@@ -80,8 +80,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
     };
 
     const handleCourseChange = (id?: number) => {
-        course = $store.courses.find((course) => course.id == id) || $store.courses[0];
-        save(true);
+        courseid = id || $store.courses[0].id;
+        save();
+        store.navigate(
+            {
+                ...$store.params,
+                courseid: $store.params.courseid ? courseid : undefined,
+            },
+            true,
+        );
     };
 
     const handleRecipientChange = (users: ReadonlyArray<User>, type: RecipientType | null) => {
@@ -104,7 +111,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
         handleRecipientChange([user], null);
     };
 
-    const save = (noDelay = false, navigateToList = false) => {
+    const handleSubmit = () => {
+        save();
+        store.navigateToList();
+    };
+
+    const save = () => {
         if (!formNode) {
             return;
         }
@@ -112,7 +124,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         const formData = new FormData(formNode);
 
         const data: MessageData = {
-            courseid: course.id,
+            courseid,
             to: Array.from(recipients.values())
                 .filter((user) => user.type == 'to')
                 .map((user) => user.id),
@@ -128,11 +140,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             draftitemid: parseInt(formData.get('content[itemid]')?.toString() || '') || 0,
         };
 
-        store.updateDraft(data, noDelay);
-
-        if (navigateToList) {
-            store.navigateToList();
-        }
+        store.updateDraft(data, false);
     };
 </script>
 
@@ -141,7 +149,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <hr class="d-lg-none mt-0 mb-3 mb-sm-2" />
 <form
     bind:this={formNode}
-    on:submit|preventDefault={() => save(false, true)}
+    on:submit|preventDefault={handleSubmit}
     class="pt-lg-2 pb-3 px-lg-4"
     class:card={$store.viewportSize >= ViewportSize.LG}
 >
@@ -153,14 +161,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 strings={$store.strings}
                 courses={$store.courses}
                 label={$store.strings.course}
-                selected={course.id}
+                selected={courseid}
                 required={true}
                 readonly={message.references.length > 0}
                 onChange={handleCourseChange}
             />
         </div>
         <div class="col-12 col-xl-7">
-            <DraftFormUserSearch {store} {course} {recipients} onChange={handleRecipientChange} />
+            <DraftFormUserSearch {store} {recipients} onChange={handleRecipientChange} />
         </div>
     </div>
     <DraftFormRecipients {store} {recipients} onDelete={handleRecipientDelete} />

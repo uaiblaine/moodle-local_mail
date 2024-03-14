@@ -12,10 +12,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import {
         GroupMode,
         RecipientType,
-        type Course,
-        type Group,
         type Recipient,
-        type Role,
         type ServiceError,
         type User,
     } from '../lib/state';
@@ -24,7 +21,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import UserPicture from './UserPicture.svelte';
 
     export let store: Store;
-    export let course: Course;
     export let recipients: ReadonlyMap<number, Recipient>;
     export let onChange: (users: ReadonlyArray<User>, type: RecipientType | null) => unknown;
 
@@ -35,20 +31,18 @@ SPDX-License-Identifier: GPL-3.0-or-later
     let comboBox: ComboBox;
     let loading = false;
     let timeoutId: number | undefined;
-    let roles: ReadonlyArray<Role> = [];
-    let groups: ReadonlyArray<Group> = [];
     let users: ReadonlyArray<User> = [];
     let tooManyUsers = false;
-    let oldCourseId = course.id;
     let roleid = 0;
     let groupid = 0;
 
-    // Reset role and group when course changes.
-    $: if (oldCourseId != course.id) {
-        oldCourseId = course.id;
-        roleid = 0;
-        groupid = 0;
-    }
+    $: course = $store.message?.course;
+    $: roleid = $store.draftRoles?.find((role) => role.id == roleid) ? roleid : 0;
+    $: groupid = $store.draftGroups?.find((group) => group.id == groupid)
+        ? groupid
+        : course?.groupmode == GroupMode.Separate
+          ? $store.draftGroups?.[0]?.id || 0
+          : 0;
 
     const handleToggleClick = async () => {
         if (expanded) {
@@ -69,29 +63,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
         timeoutId = window.setTimeout(
             async () => {
-                const requests: ServiceRequest[] = [
-                    {
-                        methodname: 'get_roles',
-                        courseid: course.id,
+                const request: ServiceRequest = {
+                    methodname: 'search_users',
+                    query: {
+                        courseid: course?.id || 0,
+                        fullname: text,
+                        roleid,
+                        groupid,
                     },
-                    {
-                        methodname: 'get_groups',
-                        courseid: course.id,
-                    },
-                    {
-                        methodname: 'search_users',
-                        query: {
-                            courseid: course.id,
-                            fullname: text,
-                            roleid,
-                            groupid,
-                        },
-                        limit: limit + 1,
-                    },
-                ];
+                    limit: limit + 1,
+                };
                 let responses: unknown[] | null;
                 try {
-                    responses = await callServices(requests);
+                    responses = await callServices([request]);
                 } catch (error) {
                     store.setError(error as ServiceError);
                     return;
@@ -102,14 +86,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 users = responses.pop() as ReadonlyArray<User>;
                 tooManyUsers = users.length > limit;
                 users = users.slice(0, limit);
-                groups = responses.pop() as ReadonlyArray<Group>;
-                groupid = groups.find((group) => group.id == groupid)
-                    ? groupid
-                    : course.groupmode == GroupMode.Separate
-                      ? groups[0]?.id || 0
-                      : 0;
-                roles = responses.pop() as ReadonlyArray<Role>;
-                roleid = roles.find((role) => role.id == roleid) ? roleid : 0;
                 loading = false;
                 expanded = true;
             },
@@ -157,14 +133,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
                         on:change={() => search(false)}
                     >
                         <option value={0}>{$store.strings.allroles}</option>
-                        {#each roles as role (role.id)}
+                        {#each $store.draftRoles ?? [] as role (role.id)}
                             <option value={role.id}>
                                 {role.name}
                             </option>
                         {/each}
                     </select>
                 </div>
-                {#if groups.length > 0}
+                {#if (course?.groupmode ?? GroupMode.No) !== GroupMode.No}
                     <div class="flex-grow-1 mx-2 mt-2 mt-sm-0">
                         <select
                             class="form-control text-truncate"
@@ -172,10 +148,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
                             bind:value={groupid}
                             on:change={() => search(false)}
                         >
-                            {#if course.groupmode != GroupMode.Separate}
+                            {#if course?.groupmode == GroupMode.Visible}
                                 <option value={0}>{$store.strings.allgroups}</option>
                             {/if}
-                            {#each groups as group (group.id)}
+                            {#each $store.draftGroups ?? [] as group (group.id)}
                                 <option value={group.id} class="text-truncate">
                                     {group.name}
                                 </option>

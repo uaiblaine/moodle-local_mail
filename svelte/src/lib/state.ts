@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -221,6 +222,8 @@ export interface State {
 
     /* Data used for editing drafts. */
     readonly draftForm?: MessageForm;
+    readonly draftRoles?: ReadonlyArray<Role>;
+    readonly draftGroups?: ReadonlyArray<Group>;
     readonly draftData?: MessageData;
     readonly draftSaved?: boolean;
 

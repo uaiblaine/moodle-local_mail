@@ -44,6 +44,8 @@ import {
     type Toast,
     type ViewParams,
     type Preferences,
+    type Group,
+    type Role,
 } from './state';
 import { getViewParamsFromUrl, setUrlFromViewParams } from './url';
 import { replaceStringParams } from './utils';
@@ -260,16 +262,34 @@ export async function createStore(data: InitialData) {
 
         // Fetch form if message is a draft.
         let draftForm: MessageForm | undefined;
-        if (message?.draft && message?.id != messageid) {
-            const request: ServiceRequest = {
-                methodname: 'get_message_form',
-                messageid: message.id,
-            };
-            const responses = await callServicesAndSetError([request]);
+        let draftRoles: ReadonlyArray<Role> | undefined;
+        let draftGroups: ReadonlyArray<Group> | undefined;
+        if (message?.draft) {
+            const requests: ServiceRequest[] = [
+                {
+                    methodname: 'get_roles',
+                    courseid: message.course.id,
+                },
+                {
+                    methodname: 'get_groups',
+                    courseid: message.course.id,
+                },
+            ];
+            if (message?.id != messageid) {
+                requests.push({
+                    methodname: 'get_message_form',
+                    messageid: message.id,
+                });
+            }
+            const responses = await callServicesAndSetError(requests);
             if (responses == null) {
                 return null;
             }
-            draftForm = responses.pop() as GetMessageFormeResponse;
+            if (message?.id != messageid) {
+                draftForm = responses.pop() as GetMessageFormeResponse;
+            }
+            draftGroups = responses.pop() as ReadonlyArray<Group>;
+            draftRoles = responses.pop() as ReadonlyArray<Role>;
         }
 
         // Update state with fetched data.
@@ -287,6 +307,8 @@ export async function createStore(data: InitialData) {
             nextMessageId,
             prevMessageId,
             draftForm: message?.id != messageid ? draftForm : state.draftForm,
+            draftRoles,
+            draftGroups,
             draftData: undefined,
             draftSaved: message?.id == messageid ? draftData == null : false,
             selectedMessages: new Map(
