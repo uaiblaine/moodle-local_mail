@@ -14,4 +14,4 @@ $plugin->version = 2024031400;
 $plugin->requires = 2022112800;
 $plugin->component = 'local_mail';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '2.6';
+$plugin->release = '2.7';

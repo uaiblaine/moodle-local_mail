@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.7] - 2024-03-14
+
+### Changed
+
+- Take into account the capability to access all groups when searching users.
+- Require only that recipients are enrolled in the course when sending messages.
+- Disable and lock web notification output by default.
+- Hide disabled and locked notification outputs in the preferences dialog.
+
+### Fixed
+
+- Selected course was not updated when the course of a draft was changed.
+- Compose button not working from site pages.
+- Error modal hiding immediately after showing up.
+
 ## [2.6] - 2024-03-08
 
 ### Added
