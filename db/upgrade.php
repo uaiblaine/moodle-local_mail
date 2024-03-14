@@ -370,5 +370,14 @@ function xmldb_local_mail_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024030500, 'local', 'mail');
     }
 
+    // Disable web notifications by default.
+
+    if ($oldversion < 2024031400) {
+        $processors = explode(',', get_config('message', 'message_provider_local_mail_mail_enabled') ?? '');
+        $processors = array_filter($processors, fn($processor) => $processor !== 'popup');
+        set_config('message_provider_local_mail_mail_enabled', implode(',', $processors), 'message');
+        set_config('popup_provider_local_mail_mail_locked', '1', 'message');
+    }
+
     return true;
 }

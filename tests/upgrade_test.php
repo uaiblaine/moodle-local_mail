@@ -1,6 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -29,6 +30,11 @@ class upgrade_test extends testcase {
 
         $dbman->delete_tables_from_xmldb_file("$CFG->dirroot/local/mail/db/install.xml");
         $dbman->install_from_xmldb_file("$CFG->dirroot/local/mail/tests/upgrade_test.xml");
+
+        // Set message processor settings.
+
+        set_config('message_provider_local_mail_mail_enabled', 'popup,email', 'message');
+        set_config('popup_provider_local_mail_mail_locked', '0', 'message');
 
         // Add some data.
 
@@ -206,6 +212,11 @@ class upgrade_test extends testcase {
         $xmldbfile = new \xmldb_file("$CFG->dirroot/local/mail/db/install.xml");
         $xmldbfile->loadXMLStructure();
         $dbman->check_database_schema($xmldbfile->getStructure());
+
+        // Check web message processor is disabled.
+
+        self::assertEquals('email', get_config('message', 'message_provider_local_mail_mail_enabled'));
+        self::assertEquals('1', get_config('message', 'popup_provider_local_mail_mail_locked'));
 
         // Check upgraded data.
 
