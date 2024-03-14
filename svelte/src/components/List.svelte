@@ -102,7 +102,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </div>
 {/key}
 
-<style global>
+<style>
     .local-mail-list-message {
         color: var(--dark) !important;
     }

@@ -253,7 +253,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </ComboBox>
 </div>
 
-<style global>
+<style>
     .local-mail-draft-form-user-search-dropdown {
         max-height: 50vh;
         max-width: 50rem;

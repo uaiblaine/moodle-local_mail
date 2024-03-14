@@ -65,13 +65,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 event.editor.on('ExecCommand', handleChange);
             }
         };
-        
+
         loadModule<EditorTinyLoader>('editor_tiny/loader').then(async (loader) => {
             tiny = await loader.getTinyMCE();
             tiny.EditorManager.get().forEach((editor) => handleEditor({ editor }));
             tiny.EditorManager.on('SetupEditor', handleEditor);
         });
-        
+
         return () => {
             tiny?.EditorManager.off('SetupEditor', handleEditor);
             tinyEditor?.off('input', handleChange);

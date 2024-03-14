@@ -35,5 +35,5 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </div>
 {/if}
 
-<style global>
+<style>
 </style>

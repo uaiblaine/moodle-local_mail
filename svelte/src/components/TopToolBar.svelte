@@ -68,7 +68,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {/if}
 </div>
 
-<style global>
+<style>
     .local-mail-toolbar {
         column-gap: 1rem;
     }

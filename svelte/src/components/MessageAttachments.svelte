@@ -58,7 +58,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {/if}
 </div>
 
-<style global>
+<style>
     .local-mail-message-attachments a {
         min-width: 0;
         min-height: 3rem;

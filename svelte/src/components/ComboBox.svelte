@@ -117,7 +117,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <slot />
 </div>
 
-<style global>
+<style>
     .local-mail-combo-box {
         display: flex;
         min-width: 0;

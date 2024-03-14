@@ -51,7 +51,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {/if}
 </a>
 
-<style global>
+<style>
     .local-mail-menu-item:focus {
         z-index: 3;
     }

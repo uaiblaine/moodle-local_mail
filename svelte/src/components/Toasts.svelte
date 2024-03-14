@@ -54,7 +54,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {/each}
 </div>
 
-<style global>
+<style>
     .local-mail-toasts {
         left: 0;
         bottom: 0;

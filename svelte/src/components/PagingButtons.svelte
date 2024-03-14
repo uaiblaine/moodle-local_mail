@@ -122,7 +122,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </div>
 </div>
 
-<style global>
+<style>
     .local-mail-paging-buttons {
         min-width: 0;
         column-gap: 1rem;

@@ -20,7 +20,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <i class="fa fa fa-fw fa-arrow-left" />
 </button>
 
-<style global>
+<style>
     .local-mail-back-button {
         margin-right: 13px;
     }

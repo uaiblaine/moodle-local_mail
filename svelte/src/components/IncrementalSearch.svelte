@@ -155,7 +155,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </div>
 {/if}
 
-<style global>
+<style>
     .local-mail-incremental-search-muted {
         opacity: 0.6;
     }

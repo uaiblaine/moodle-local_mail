@@ -64,7 +64,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {/if}
 {/each}
 
-<style global>
+<style>
     .local-mail-draft-form-recipients-type {
         width: 3rem;
     }

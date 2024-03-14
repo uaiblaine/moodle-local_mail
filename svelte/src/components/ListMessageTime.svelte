@@ -21,7 +21,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {message.shorttime}
 </span>
 
-<style global>
+<style>
     .local-mail-list-message-time-md {
         min-width: 5rem;
     }

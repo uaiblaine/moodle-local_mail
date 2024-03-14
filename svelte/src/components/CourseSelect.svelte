@@ -70,7 +70,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
     bind:inputText
     inputPlaceholder={strings.course}
     leftIconClass="fa-graduation-cap"
-    rightIconClass={readonly ? '' : !entering ? 'fa-caret-down' : inputText ? 'fa-times' : 'fa-caret-up'}
+    rightIconClass={readonly
+        ? ''
+        : !entering
+          ? 'fa-caret-down'
+          : inputText
+            ? 'fa-times'
+            : 'fa-caret-up'}
     rightIconLabel={entering && inputText ? strings.clearsearch : strings.changecourse}
     buttonText={currentCourseName || label}
     {buttonClass}
@@ -114,7 +120,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </div>
 </ComboBox>
 
-<style global>
+<style>
     .local-mail-select-course-item :global(mark) {
         padding-left: 0;
         padding-right: 0;

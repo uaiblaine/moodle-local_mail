@@ -182,7 +182,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {/if}
 {/if}
 
-<style global>
+<style>
     .local-mail-action-more-button::after {
         display: none !important;
     }

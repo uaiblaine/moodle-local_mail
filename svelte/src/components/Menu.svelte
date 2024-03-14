@@ -147,7 +147,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {/each}
 </div>
 
-<style global>
+<style>
     .local-mail-menu-navbar :global(a:focus),
     .local-mail-menu-navbar :global(.btn:focus),
     .local-mail-menu-navbar :global(.form-control:focus) {

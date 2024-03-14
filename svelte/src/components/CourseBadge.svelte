@@ -27,7 +27,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </span>
 {/if}
 
-<style global>
+<style>
     .local-mail-course-badge {
         font-size: inherit;
         font-weight: inherit;

@@ -95,7 +95,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </form>
 </ModalDialog>
 
-<style global>
+<style>
     .local-mail-label-modal-color {
         display: flex;
         flex-wrap: wrap;

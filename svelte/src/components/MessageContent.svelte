@@ -24,7 +24,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {@html content}
 </div>
 
-<style global>
+<style>
     .local-mail-message-content {
         max-width: 60rem;
     }

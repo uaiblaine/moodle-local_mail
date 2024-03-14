@@ -22,7 +22,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {label.name}
 </span>
 
-<style global>
+<style>
     .local-mail-label-badge {
         font-size: inherit;
         font-weight: inherit;

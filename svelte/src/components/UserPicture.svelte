@@ -31,7 +31,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </span>
 {/if}
 
-<style global>
+<style>
     .local-mail-user-picture-fallback {
         width: 35px;
         height: 35px;

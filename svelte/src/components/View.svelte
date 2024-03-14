@@ -237,7 +237,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <ErrorModal {store} />
 </div>
 
-<style global>
+<style>
     .local-mail-view {
         max-width: 100rem;
     }

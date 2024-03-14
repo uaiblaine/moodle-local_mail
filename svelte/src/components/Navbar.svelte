@@ -101,7 +101,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {/if}
 </div>
 
-<style global>
+<style>
     .local-mail-navbar-count {
         top: 50% !important;
         transform: translateY(-16px);
