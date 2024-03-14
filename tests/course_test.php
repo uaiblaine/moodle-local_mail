@@ -1,6 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -156,19 +157,31 @@ class course_test extends testcase {
         self::assertEquals([], $course1->get_viewable_groups($user2));
 
         // Student in course with visible groups.
-        $expected = [$group2->id => $group2->name, $group3->id => $group3->name];
+        $expected = [
+            0 => get_string('allgroups', 'local_mail'),
+            $group2->id => $group2->name,
+            $group3->id => $group3->name,
+        ];
         self::assertEquals($expected, $course2->get_viewable_groups($user1));
 
         // Teacher in course with visible groups.
-        $expected = [$group2->id => $group2->name, $group3->id => $group3->name];
+        $expected = [
+            0 => get_string('allgroups', 'local_mail'),
+            $group2->id => $group2->name,
+            $group3->id => $group3->name,
+        ];
         self::assertEquals($expected, $course2->get_viewable_groups($user2));
 
         // Student in course with separate groups.
         $expected = [$group4->id => $group4->name];
         self::assertEquals($expected, $course3->get_viewable_groups($user1));
 
-        // Teacher in course with separate groups, ignoring access all groups capability.
-        $expected = [$group5->id => $group5->name];
+        // Teacher in course with separate groups (access all groups capability).
+        $expected = [
+            0 => get_string('allgroups', 'local_mail'),
+            $group4->id => $group4->name,
+            $group5->id => $group5->name,
+        ];
         self::assertEquals($expected, $course3->get_viewable_groups($user2));
     }
 

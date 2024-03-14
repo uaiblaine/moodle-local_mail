@@ -78,6 +78,65 @@ class user_test extends testcase {
         self::assertTrue($user4->can_view_files($message1));
     }
 
+    public function test_can_view_group() {
+        $generator = self::getDataGenerator();
+        $course1 = new course($generator->create_course(['groupmode' => NOGROUPS]));
+        $course2 = new course($generator->create_course(['groupmode' => VISIBLEGROUPS]));
+        $course3 = new course($generator->create_course(['groupmode' => SEPARATEGROUPS]));
+        $group1 = $generator->create_group(['courseid' => $course1->id]);
+        $group2 = $generator->create_group(['courseid' => $course2->id]);
+        $group3 = $generator->create_group(['courseid' => $course2->id]);
+        $group4 = $generator->create_group(['courseid' => $course3->id]);
+        $group5 = $generator->create_group(['courseid' => $course3->id]);
+
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $generator->enrol_user($user1->id, $course1->id, 'student');
+        $generator->enrol_user($user1->id, $course2->id, 'student');
+        $generator->enrol_user($user1->id, $course3->id, 'student');
+        $generator->enrol_user($user2->id, $course1->id, 'editingteacher');
+        $generator->enrol_user($user2->id, $course2->id, 'editingteacher');
+        $generator->enrol_user($user2->id, $course3->id, 'editingteacher');
+        $generator->create_group_member(['userid' => $user1->id, 'groupid' => $group1->id]);
+        $generator->create_group_member(['userid' => $user2->id, 'groupid' => $group1->id]);
+        $generator->create_group_member(['userid' => $user1->id, 'groupid' => $group2->id]);
+        $generator->create_group_member(['userid' => $user1->id, 'groupid' => $group4->id]);
+        $generator->create_group_member(['userid' => $user2->id, 'groupid' => $group5->id]);
+
+        // Student in course with no groups.
+        $this->assertTrue($user1->can_view_group($course1, 0));
+        $this->assertFalse($user1->can_view_group($course1, $group1->id));
+        $this->assertFalse($user1->can_view_group($course1, $group2->id));
+
+        // Teacher in course with no groups.
+        self::assertEquals([], $course1->get_viewable_groups($user2));
+        $this->assertTrue($user2->can_view_group($course1, 0));
+        $this->assertFalse($user2->can_view_group($course1, $group1->id));
+        $this->assertFalse($user2->can_view_group($course1, $group2->id));
+
+        // Student in course with visible groups.
+        $this->assertTrue($user1->can_view_group($course2, 0));
+        $this->assertTrue($user1->can_view_group($course2, $group2->id));
+        $this->assertTrue($user1->can_view_group($course2, $group3->id));
+        $this->assertFalse($user1->can_view_group($course2, $group4->id));
+
+        // Teacher in course with visible groups.
+        $this->assertTrue($user2->can_view_group($course2, 0));
+        $this->assertTrue($user2->can_view_group($course2, $group2->id));
+        $this->assertTrue($user2->can_view_group($course2, $group3->id));
+        $this->assertFalse($user2->can_view_group($course2, $group4->id));
+
+        // Student in course with separate groups.
+        $this->assertFalse($user1->can_view_group($course3, 0));
+        $this->assertTrue($user1->can_view_group($course3, $group4->id));
+        $this->assertFalse($user1->can_view_group($course3, $group5->id));
+
+        // Teacher in course with separate groups (access all groups capability).
+        $this->assertTrue($user2->can_view_group($course3, 0));
+        $this->assertTrue($user2->can_view_group($course3, $group4->id));
+        $this->assertTrue($user2->can_view_group($course3, $group5->id));
+    }
+
     public function test_can_edit_message() {
         $generator = self::getDataGenerator();
         $course1 = new course($generator->create_course());

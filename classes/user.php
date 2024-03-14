@@ -172,6 +172,23 @@ class user {
     }
 
     /**
+     * Returns whether the user can view a group.
+     *
+     * @param course $course Course.
+     * @param int $groupid ID of the group or 0 for all groups.
+     * @return bool
+     */
+    public function can_view_group(course $course, int $groupid): bool {
+        if (!$this->can_use_mail($course)) {
+            return false;
+        } else if ($course->groupmode == NOGROUPS) {
+            return $groupid == 0;
+        } else {
+            return array_key_exists($groupid, $course->get_viewable_groups($this));
+        }
+    }
+
+    /**
      * Returns whether the user can a message.
      *
      * @param message $message Message.

@@ -1345,6 +1345,10 @@ class external extends \external_api {
             $search->include = $params['query']['include'];
         }
 
+        if (!$user->can_view_group($search->course, $search->groupid)) {
+            throw new exception('errorgroupnotfound');
+        }
+
         $users = $search->get($params['offset'], $params['limit']);
 
         return self::search_users_response($course, $users);

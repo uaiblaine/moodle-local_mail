@@ -10,11 +10,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import { truncate } from '../actions/truncate';
     import { callServices, type ServiceRequest } from '../lib/services';
     import {
-        GroupMode,
         RecipientType,
         type Recipient,
         type ServiceError,
         type User,
+        GroupMode,
     } from '../lib/state';
     import type { Store } from '../lib/store';
     import ComboBox from './ComboBox.svelte';
@@ -32,7 +32,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     let loading = false;
     let timeoutId: number | undefined;
     let users: ReadonlyArray<User> = [];
-    let tooManyUsers = false;
+    let error = '';
     let roleid = 0;
     let groupid = 0;
 
@@ -40,9 +40,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     $: roleid = $store.draftRoles?.find((role) => role.id == roleid) ? roleid : 0;
     $: groupid = $store.draftGroups?.find((group) => group.id == groupid)
         ? groupid
-        : course?.groupmode == GroupMode.Separate
-          ? $store.draftGroups?.[0]?.id || 0
-          : 0;
+        : $store.draftGroups?.[0]?.id || 0;
 
     const handleToggleClick = async () => {
         if (expanded) {
@@ -60,6 +58,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
         loading = true;
         window.clearTimeout(timeoutId);
+
+        if (course?.groupmode != GroupMode.No && !$store.draftGroups?.length) {
+            loading = false;
+            expanded = true;
+            error = $store.strings.errornogroups;
+            return;
+        }
 
         timeoutId = window.setTimeout(
             async () => {
@@ -84,7 +89,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
                     return;
                 }
                 users = responses.pop() as ReadonlyArray<User>;
-                tooManyUsers = users.length > limit;
+                if (!users.length) {
+                    error = $store.strings.nousersfound;
+                } else if (users.length > limit) {
+                    error = $store.strings.toomanyusersfound;
+                } else {
+                    error = '';
+                }
                 users = users.slice(0, limit);
                 loading = false;
                 expanded = true;
@@ -140,17 +151,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
                         {/each}
                     </select>
                 </div>
-                {#if (course?.groupmode ?? GroupMode.No) !== GroupMode.No}
+                {#if ($store.draftGroups ?? []).length > 0}
                     <div class="flex-grow-1 mx-2 mt-2 mt-sm-0">
                         <select
                             class="form-control text-truncate"
                             style="min-width: 0"
+                            disabled={($store.draftGroups ?? []).length == 1}
                             bind:value={groupid}
                             on:change={() => search(false)}
                         >
-                            {#if course?.groupmode == GroupMode.Visible}
-                                <option value={0}>{$store.strings.allgroups}</option>
-                            {/if}
                             {#each $store.draftGroups ?? [] as group (group.id)}
                                 <option value={group.id} class="text-truncate">
                                     {group.name}
@@ -160,13 +169,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
                     </div>
                 {/if}
             </div>
-            {#if !users.length}
+            {#if error}
                 <div class="list-group-item text-danger">
-                    {$store.strings.nousersfound}
-                </div>
-            {:else if tooManyUsers}
-                <div class="list-group-item text-danger">
-                    {$store.strings.toomanyusersfound}
+                    {error}
                 </div>
             {:else}
                 <div class="list-group-item d-flex align-items-sm-center p-0">

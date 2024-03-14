@@ -1715,6 +1715,19 @@ class external_test extends testcase {
                 $query['include'] = $search->include;
             }
 
+            if (!$search->user->can_view_group($search->course, $search->groupid)) {
+                // Invalid group.
+                try {
+                    external::search_users($query);
+                    self::fail();
+                } catch (exception $e) {
+                    self::assertEquals('errorgroupnotfound', $e->errorcode);
+                }
+                continue;
+            }
+
+            // No offset or limit.
+
             $expected = external::search_users_response($search->course, $search->get());
             $result = external::search_users($query);
             external::validate_parameters(external::search_users_returns(), $result);

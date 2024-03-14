@@ -1,6 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -145,17 +146,26 @@ class course {
      * Returns the course groups visible by the user.
      *
      * @param user $user User.
-     * @return string[] Array of group names, indexed by ID.
+     * @return string[] Array of group names, including "All groups", indexed by ID.
      */
     public function get_viewable_groups(user $user): array {
         if ($this->groupmode == NOGROUPS) {
             return [];
         }
 
-        $userid = $this->groupmode == VISIBLEGROUPS ? 0 : $user->id;
+        $result = [];
+
+        $accessallgroups = has_capability('moodle/site:accessallgroups', $this->get_context(), $user->id);
+
+        if ($this->groupmode == VISIBLEGROUPS || $accessallgroups) {
+            $result[0] = get_string('allgroups', 'local_mail');
+            $userid = 0;
+        } else {
+            $userid = $user->id;
+        }
+
         $groups = groups_get_all_groups($this->id, $userid, $this->defaultgroupingid);
 
-        $result = [];
         foreach ($groups as $group) {
             $result[$group->id] = $group->name;
         }
