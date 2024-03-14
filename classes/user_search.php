@@ -1,6 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -147,23 +148,9 @@ class user_search {
         }
 
         // Group.
-        if ($this->groupid || $this->course->groupmode == SEPARATEGROUPS) {
-            if ($this->course->groupmode == SEPARATEGROUPS) {
-                $groupids = array_keys($this->course->get_viewable_groups($this->user));
-                if ($this->groupid) {
-                    $groupids = array_intersect($groupids, [$this->groupid]);
-                }
-            } else {
-                $groupids = [$this->groupid];
-            }
-            if ($groupids) {
-                [$groupsql, $groupparams] = $DB->get_in_or_equal($groupids, SQL_PARAMS_NAMED, 'group');
-                $wheres .= " AND u.id IN (SELECT gm.userid FROM {groups_members} gm WHERE gm.groupid $groupsql)";
-                $params = array_merge($params, $groupparams);
-            } else {
-                // No groups, return an empty result.
-                $wheres .= ' AND 1 = 2';
-            }
+        if ($this->groupid) {
+            $wheres .= " AND u.id IN (SELECT gm.userid FROM {groups_members} gm WHERE gm.groupid = :groupid)";
+            $params['groupid'] = $this->groupid;
         }
 
         // Full name.

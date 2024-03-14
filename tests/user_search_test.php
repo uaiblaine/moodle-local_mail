@@ -1,6 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -58,7 +59,7 @@ class user_search_test extends testcase {
                 }
 
                 // Groups.
-                foreach (array_keys($course->get_viewable_groups($user)) as $groupid) {
+                foreach (array_keys(groups_get_all_groups($course->id, 0, $course->defaultgroupingid)) as $groupid) {
                     $search = new user_search($user, $course);
                     $search->groupid = $groupid;
                     $result[] = $search;
@@ -115,8 +116,6 @@ class user_search_test extends testcase {
                     $excludedroleids,
                     array_column(get_user_roles($context, $user->id, false), 'roleid')
                 ) ||
-                $search->course->groupmode == SEPARATEGROUPS &&
-                !array_intersect_key($usergroups, $search->course->get_viewable_groups($user)) ||
                 $search->roleid && !user_has_role_assignment($user->id, $search->roleid, $context->id) ||
                 $search->groupid && !groups_is_member($search->groupid, $user->id) ||
                 $search->fullname && !isset($fullnamematches[$user->id]) ||
