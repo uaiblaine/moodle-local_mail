@@ -357,15 +357,16 @@ function xmldb_local_mail_upgrade($oldversion) {
     // Remove references to messages from different courses.
 
     if ($oldversion < 2024030500) {
-        $sql = 'DELETE FROM {local_mail_message_refs}
-                WHERE id IN (
-                    SELECT r.id
-                    FROM {local_mail_message_refs} r
-                    JOIN {local_mail_messages} m1 ON m1.id = r.messageid
-                    JOIN {local_mail_messages} m2 ON m2.id = r.reference
-                    WHERE m1.courseid != m2.courseid
-                )';
-        $DB->execute($sql);
+        $sql = 'SELECT r.id
+                FROM {local_mail_message_refs} r
+                JOIN {local_mail_messages} m1 ON m1.id = r.messageid
+                JOIN {local_mail_messages} m2 ON m2.id = r.reference
+                WHERE m1.courseid != m2.courseid';
+        $rs = $DB->get_recordset_sql($sql);
+        foreach ($rs as $record) {
+            $DB->delete_records('local_mail_message_refs', ['id' => $record->id]);
+        }
+        $rs->close();
 
         upgrade_plugin_savepoint(true, 2024030500, 'local', 'mail');
     }
