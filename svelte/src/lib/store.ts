@@ -364,6 +364,8 @@ export async function createStore(data: InitialData) {
     };
 
     const createMessage = async (courseid: number | undefined) => {
+        const oldParams = state.params;
+
         const request: CreateMessageRequest = {
             methodname: 'create_message',
             courseid: courseid || state.courses[0].id,
@@ -375,9 +377,11 @@ export async function createStore(data: InitialData) {
             await navigate({
                 tray: 'drafts',
                 messageid: responses.pop() as number,
-                courseid: ['shortname', 'fullname'].includes(state.settings.filterbycourse)
-                    ? courseid
-                    : undefined,
+                courseid:
+                    ['shortname', 'fullname'].includes(state.settings.filterbycourse) &&
+                    oldParams.courseid
+                        ? courseid
+                        : undefined,
             });
         }
     };

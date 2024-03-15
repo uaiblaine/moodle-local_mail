@@ -10,10 +10,12 @@ function baseUrl() {
     return window.M.cfg.wwwroot + '/local/mail/';
 }
 
-export function createUrl(courseid: number, recipients: number[] = [], role?: string): string {
+export function createUrl(courseid?: number, recipients: number[] = [], role?: string): string {
     const url = new URL(baseUrl() + 'create.php');
 
-    url.searchParams.set('course', String(courseid));
+    if (courseid) {
+        url.searchParams.set('course', String(courseid));
+    }
     if (recipients.length) {
         url.searchParams.set('recipients', recipients.join(','));
     }
