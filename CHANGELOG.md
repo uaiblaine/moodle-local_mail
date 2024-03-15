@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.8] - 2024-03-15
+
+### Fixed
+
+- Upgrade to versions 2.6/2.7 failed in MySQL.
+- The course filter was not kept to "All courses" when creating a message.
+- Drafts were marked as changed just after opening them.
+
 ## [2.7] - 2024-03-14
 
 ### Changed
