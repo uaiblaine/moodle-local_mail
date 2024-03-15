@@ -56,13 +56,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
             save();
         };
 
+        const handleExecCommand = (event: TinyMCE.EditorEvent<{ command: string }>) => {
+            if (event.command != 'mceFocus') {
+                handleChange();
+            }
+        };
+
         const handleEditor = (event: { editor: TinyMCE.Editor }) => {
             if (event.editor.id == `local-mail-compose-editor-${message.id}`) {
                 tinyEditor?.off('input', handleChange);
-                tinyEditor?.off('ExecCommand', handleChange);
+                tinyEditor?.off('ExecCommand', handleExecCommand);
                 tinyEditor = event.editor;
                 event.editor.on('input', handleChange);
-                event.editor.on('ExecCommand', handleChange);
+                event.editor.on('ExecCommand', handleExecCommand);
             }
         };
 
@@ -75,7 +81,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         return () => {
             tiny?.EditorManager.off('SetupEditor', handleEditor);
             tinyEditor?.off('input', handleChange);
-            tinyEditor?.off('ExecCommand', handleChange);
+            tinyEditor?.off('ExecCommand', handleExecCommand);
         };
     };
 
