@@ -310,7 +310,7 @@ export async function createStore(data: InitialData) {
             draftRoles,
             draftGroups,
             draftData: undefined,
-            draftSaved: message?.id == messageid ? draftData == null : false,
+            draftSaved: message?.id == messageid,
             selectedMessages: new Map(
                 message
                     ? [[message.id, message]]
@@ -732,10 +732,14 @@ export async function createStore(data: InitialData) {
         }
 
         const message = state.message;
-
         const handler = async () => {
             window.clearTimeout(draftTimeoutId);
             draftTimeoutId = 0;
+
+            const data = state.draftData;
+            if (!data) {
+                return;
+            }
 
             const requests: ServiceRequest[] = [
                 {
@@ -751,7 +755,7 @@ export async function createStore(data: InitialData) {
 
             const responses = await callServicesAndSetError(requests);
 
-            if (responses != null) {
+            if (responses != null && data === state.draftData) {
                 const updatedMessage = responses.pop() as Message;
                 patch({
                     message: updatedMessage,
