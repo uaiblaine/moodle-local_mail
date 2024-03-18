@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.9] - 2024-03-18
+
+### Fixed
+
+- Autosave was reverting changes in subject and recipients.
+
 ## [2.8] - 2024-03-15
 
 ### Fixed
