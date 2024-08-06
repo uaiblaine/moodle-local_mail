@@ -304,7 +304,10 @@ class backup_test extends testcase {
      * @return string Unique identifier for this backup.
      */
     private static function backup_course(int $courseid, bool $userdata): string {
-        global $USER;
+        global $CFG, $USER;
+
+        // Workaround for bug introduced in MDL-81119.
+        $CFG->forced_plugin_settings['backup'] ??= [];
 
         // Do backup with default settings. MODE_IMPORT means it will just
         // create the directory and not zip it.
