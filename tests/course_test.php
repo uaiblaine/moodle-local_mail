@@ -19,9 +19,6 @@ class course_test extends testcase {
     public function test_get() {
         $generator = self::getDataGenerator();
         $record = $generator->create_course(['groupmode' => SEPARATEGROUPS]);
-        $grouping = $generator->create_grouping(['courseid' => $record->id]);
-        $record->defaultgroupingid = $grouping->id;
-        update_course($record);
 
         $course = course::get($record->id);
 
@@ -31,7 +28,6 @@ class course_test extends testcase {
         self::assertEquals($record->fullname, $course->fullname);
         self::assertEquals((bool) $record->visible, $course->visible);
         self::assertEquals((int) $record->groupmode, $course->groupmode);
-        self::assertEquals((int) $record->defaultgroupingid, $course->defaultgroupingid);
         self::assertEquals($course, course::cache()->get($course->id));
 
         // Missing course.

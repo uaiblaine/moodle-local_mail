@@ -24,9 +24,6 @@ class course {
     /** @var int Group mode. */
     public int $groupmode;
 
-    /** @var int Default grouping ID. */
-    public int $defaultgroupingid;
-
     /**
      * Constructs a course instance from a database record.
      *
@@ -38,7 +35,6 @@ class course {
         $this->fullname = $record->fullname;
         $this->visible = $record->visible;
         $this->groupmode = (int) $record->groupmode;
-        $this->defaultgroupingid = (int) $record->defaultgroupingid;
     }
 
     /**
@@ -109,7 +105,7 @@ class course {
             [$sqlid, $params] = $DB->get_in_or_equal($missingids, SQL_PARAMS_NAMED, 'courseid');
             $select = "id $sqlid AND id <> :siteid";
             $params['siteid'] = SITEID;
-            $fields = 'id, shortname, fullname, visible, groupmode, defaultgroupingid';
+            $fields = 'id, shortname, fullname, visible, groupmode';
             $records = $DB->get_records_select('course', $select, $params, '', $fields);
             foreach ($missingids as $id) {
                 if (isset($records[$id])) {
@@ -164,7 +160,7 @@ class course {
             $userid = $user->id;
         }
 
-        $groups = groups_get_all_groups($this->id, $userid, $this->defaultgroupingid);
+        $groups = groups_get_all_groups($this->id, $userid);
 
         foreach ($groups as $group) {
             $result[$group->id] = $group->name;

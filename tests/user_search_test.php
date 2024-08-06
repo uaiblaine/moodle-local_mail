@@ -59,7 +59,7 @@ class user_search_test extends testcase {
                 }
 
                 // Groups.
-                foreach (array_keys(groups_get_all_groups($course->id, 0, $course->defaultgroupingid)) as $groupid) {
+                foreach (array_keys(groups_get_all_groups($course->id, 0)) as $groupid) {
                     $search = new user_search($user, $course);
                     $search->groupid = $groupid;
                     $result[] = $search;
