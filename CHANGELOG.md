@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.10] - 2024-08-06
+
+### Fixed
+
+- The group dropdown was filtered by the default grouping of the course.
+
 ## [2.9] - 2024-03-18
 
 ### Fixed
