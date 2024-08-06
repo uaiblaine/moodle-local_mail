@@ -13,7 +13,8 @@ use local_mail\event\message_base;
 
 abstract class testcase extends \advanced_testcase {
     public function setUp(): void {
-        $this->resetAfterTest(true);
+        $this->resetAfterTest();
+        $this->preventResetByRollback();
         $this->setAdminUser();
     }
 
