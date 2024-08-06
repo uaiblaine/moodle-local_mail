@@ -20,8 +20,8 @@ require_once(__DIR__ . '/testcase.php');
  * @covers \backup_local_mail_plugin
  * @covers \restore_local_mail_plugin
  */
-class backup_test extends testcase {
-    public function test_backup_and_restore() {
+final class backup_test extends testcase {
+    public function test_backup_and_restore(): void {
         global $DB;
 
         set_config('enablebackup', 1, 'local_mail');
@@ -75,7 +75,7 @@ class backup_test extends testcase {
         }
     }
 
-    public function test_backup_disabled() {
+    public function test_backup_disabled(): void {
         $generator = self::getDataGenerator();
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
@@ -117,7 +117,7 @@ class backup_test extends testcase {
         self::assert_record_count(0, 'labels');
     }
 
-    public function test_backup_without_users() {
+    public function test_backup_without_users(): void {
         set_config('enablebackup', 1, 'local_mail');
 
         $generator = self::getDataGenerator();
@@ -159,7 +159,7 @@ class backup_test extends testcase {
         self::assert_record_count(0, 'labels');
     }
 
-    public function test_restore_disabled() {
+    public function test_restore_disabled(): void {
         $generator = self::getDataGenerator();
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
@@ -201,7 +201,7 @@ class backup_test extends testcase {
         self::assert_record_count(0, 'labels');
     }
 
-    public function test_restore_without_users() {
+    public function test_restore_without_users(): void {
         set_config('enablebackup', 1, 'local_mail');
 
         $generator = self::getDataGenerator();

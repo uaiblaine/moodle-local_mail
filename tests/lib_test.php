@@ -16,8 +16,8 @@ require_once(__DIR__ . '/testcase.php');
  * @covers \local_mail_render_navbar_output
  * @runTestsInSeparateProcesses
  */
-class lib_test extends testcase {
-    public function test_pluginfile() {
+final class lib_test extends testcase {
+    public function test_pluginfile(): void {
         $generator = $this->getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -88,7 +88,7 @@ class lib_test extends testcase {
         self::assertFalse($result);
     }
 
-    public function test_render_navbar_output() {
+    public function test_render_navbar_output(): void {
         global $PAGE;
 
         $generator = $this->getDataGenerator();

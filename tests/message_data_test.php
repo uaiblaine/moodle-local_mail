@@ -14,8 +14,8 @@ require_once(__DIR__ . '/testcase.php');
 /**
  * @covers \local_mail\message_data
  */
-class message_data_test extends testcase {
-    public function test_draft() {
+final class message_data_test extends testcase {
+    public function test_draft(): void {
         $generator = self::getDataGenerator();
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
@@ -51,7 +51,7 @@ class message_data_test extends testcase {
         self::assertEquals($message->time, $data->time);
     }
 
-    public function test_forward() {
+    public function test_forward(): void {
         $generator = self::getDataGenerator();
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
@@ -102,7 +102,7 @@ class message_data_test extends testcase {
         self::assertEquals('FW: Subject', $data->subject);
     }
 
-    public function test_reply() {
+    public function test_reply(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -182,7 +182,7 @@ class message_data_test extends testcase {
         self::assertEquals('RE: Subject', $data->subject);
     }
 
-    public function test_new() {
+    public function test_new(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user = new user($generator->create_user());

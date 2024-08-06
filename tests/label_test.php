@@ -16,8 +16,8 @@ require_once(__DIR__ . '/testcase.php');
 /**
  * @covers \local_mail\label
  */
-class label_test extends testcase {
-    public function test_create() {
+final class label_test extends testcase {
+    public function test_create(): void {
         $generator = self::getDataGenerator();
         $user = new user($generator->create_user());
         label::user_cache()->set($user->id, []);
@@ -34,7 +34,7 @@ class label_test extends testcase {
         self::assertFalse(label::user_cache()->get($user->id));
     }
 
-    public function test_delete() {
+    public function test_delete(): void {
         $generator = self::getDataGenerator();
         $user = new user($generator->create_user());
         $course = new course($generator->create_course());
@@ -55,7 +55,7 @@ class label_test extends testcase {
         self::assertFalse(label::user_cache()->get($user->id));
     }
 
-    public function test_get() {
+    public function test_get(): void {
         $generator = self::getDataGenerator();
         $user = new user($generator->create_user());
         $label = label::create($user, 'name 1', 'red');
@@ -79,7 +79,7 @@ class label_test extends testcase {
         self::assertNull(label::get(123, IGNORE_MISSING));
     }
 
-    public function test_get_by_user() {
+    public function test_get_by_user(): void {
         $generator = self::getDataGenerator();
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
@@ -105,7 +105,7 @@ class label_test extends testcase {
         self::assertEquals([$label1->id => $label1, $label3->id => $label3], $result);
     }
 
-    public function test_get_many() {
+    public function test_get_many(): void {
         $generator = self::getDataGenerator();
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
@@ -138,7 +138,7 @@ class label_test extends testcase {
         self::assertEquals([], label::get_many([]));
     }
 
-    public function test_update() {
+    public function test_update(): void {
         $generator = self::getDataGenerator();
         $user = new user($generator->create_user());
         $label = label::create($user, 'name 1', 'red');
@@ -151,7 +151,7 @@ class label_test extends testcase {
         self::assertEquals($label, label::cache()->get($label->id));
     }
 
-    public function test_normalized_name() {
+    public function test_normalized_name(): void {
         self::assertEquals('', label::nromalized_name(''));
         self::assertEquals('word', label::nromalized_name('word'));
         self::assertEquals('multiple words', label::nromalized_name('multiple words'));

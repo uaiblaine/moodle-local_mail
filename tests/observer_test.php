@@ -15,8 +15,8 @@ require_once(__DIR__ . '/message_search_test.php');
 /**
  * @covers \local_mail\observer
  */
-class observer_test extends testcase {
-    public function test_course_deleted() {
+final class observer_test extends testcase {
+    public function test_course_deleted(): void {
         [$users, $messages] = message_search_test::generate_data();
         $course = $messages[0]->get_course();
         $context = $course->get_context();

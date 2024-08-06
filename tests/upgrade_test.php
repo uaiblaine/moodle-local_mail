@@ -19,8 +19,8 @@ require_once("$CFG->dirroot/local/mail/db/upgrade.php");
 /**
  * @covers \xmldb_local_mail_upgrade
  */
-class upgrade_test extends testcase {
-    public function test_upgrade() {
+final class upgrade_test extends testcase {
+    public function test_upgrade(): void {
         global $CFG, $DB;
 
         $dbman = $DB->get_manager();

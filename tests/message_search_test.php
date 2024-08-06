@@ -14,7 +14,7 @@ require_once(__DIR__ . '/testcase.php');
 /**
  * @covers \local_mail\message_search
  */
-class message_search_test extends testcase {
+final class message_search_test extends testcase {
     /* Constants used for generating random mail data. */
     private const NUM_COURSES = 5;
     private const NUM_USERS = 10;
@@ -35,7 +35,7 @@ class message_search_test extends testcase {
         'Moixaina', 'Amanyagar', 'Enraonar', 'Ginesta', 'Atzavara', 'Paral·lel',
     ];
 
-    public function test_count() {
+    public function test_count(): void {
         [$users, $messages] = self::generate_data();
         foreach (self::cases($users, $messages) as $search) {
             $expected = count(self::search_result($messages, $search));
@@ -43,7 +43,7 @@ class message_search_test extends testcase {
         }
     }
 
-    public function test_count_per_course() {
+    public function test_count_per_course(): void {
         [$users, $messages] = self::generate_data();
         foreach (self::cases($users, $messages) as $search) {
             $expected = [];
@@ -54,7 +54,7 @@ class message_search_test extends testcase {
         }
     }
 
-    public function test_count_per_label() {
+    public function test_count_per_label(): void {
         [$users, $messages] = self::generate_data();
         foreach (self::cases($users, $messages) as $search) {
             $expected = [];
@@ -69,7 +69,7 @@ class message_search_test extends testcase {
         }
     }
 
-    public function test_get() {
+    public function test_get(): void {
         [$users, $messages] = self::generate_data();
         foreach (self::cases($users, $messages) as $search) {
             $expected = self::search_result($messages, $search);

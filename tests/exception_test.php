@@ -14,8 +14,8 @@ require_once(__DIR__ . '/testcase.php');
 /**
  * @covers \local_mail\exception
  */
-class exception_test extends testcase {
-    public function test_construct() {
+final class exception_test extends testcase {
+    public function test_construct(): void {
         $exception = new exception('errortoomanyrecipients', 123, 'debug info');
 
         self::assertEquals('errortoomanyrecipients', $exception->errorcode);

@@ -14,8 +14,8 @@ require_once(__DIR__ . '/testcase.php');
 /**
  * @covers \local_mail\output\mobile
  */
-class output_mobile_test extends testcase {
-    public function test_init() {
+final class output_mobile_test extends testcase {
+    public function test_init(): void {
         global $CFG;
 
         $generator = self::getDataGenerator();
@@ -41,7 +41,7 @@ class output_mobile_test extends testcase {
         self::assertEquals(['disabled' => true], output\mobile::init());
     }
 
-    public function test_view() {
+    public function test_view(): void {
         global $CFG;
 
         self::assertEquals(

@@ -14,8 +14,8 @@ require_once(__DIR__ . '/testcase.php');
 /**
  * @covers \local_mail\output\renderer
  */
-class output_renderer_test extends testcase {
-    public function test_file_url() {
+final class output_renderer_test extends testcase {
+    public function test_file_url(): void {
         global $CFG, $PAGE;
 
         $generator = self::getDataGenerator();
@@ -32,7 +32,7 @@ class output_renderer_test extends testcase {
         self::assertEquals($expected, $renderer->file_url($file));
     }
 
-    public function test_file_icon_url() {
+    public function test_file_icon_url(): void {
         global $CFG, $PAGE;
 
         $generator = self::getDataGenerator();
@@ -50,7 +50,7 @@ class output_renderer_test extends testcase {
         self::assertEquals($renderer->image_url(file_extension_icon('file2.html', $size)), $renderer->file_icon_url($file2));
     }
 
-    public function test_formatted_message_content() {
+    public function test_formatted_message_content(): void {
         global $PAGE;
 
         $renderer = $PAGE->get_renderer('local_mail');
@@ -71,7 +71,7 @@ class output_renderer_test extends testcase {
         self::assertEquals("<p>$filelink</p>", $result);
     }
 
-    public function test_formatted_time() {
+    public function test_formatted_time(): void {
         global $PAGE;
 
         $generator = self::getDataGenerator();
@@ -113,7 +113,7 @@ class output_renderer_test extends testcase {
         self::assertEquals($fulltime, $renderer->formatted_time($date->getTimestamp(), true, $now->getTimestamp()));
     }
 
-    public function test_notification() {
+    public function test_notification(): void {
         global $PAGE, $SITE;
 
         $generator = self::getDataGenerator();
@@ -170,7 +170,7 @@ class output_renderer_test extends testcase {
         self::assertEquals('Subject', $notification->contexturlname);
     }
 
-    public function test_svelte_script() {
+    public function test_svelte_script(): void {
         global $CFG, $PAGE, $OUTPUT;
 
         $renderer = $PAGE->get_renderer('local_mail');

@@ -19,8 +19,8 @@ require_once(__DIR__ . '/testcase.php');
  * @covers \local_mail\event\message_sent
  * @covers \local_mail\event\message_viewed
  */
-class event_test extends testcase {
-    public function test_draft_created() {
+final class event_test extends testcase {
+    public function test_draft_created(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user = new user($generator->create_user());
@@ -46,7 +46,7 @@ class event_test extends testcase {
         );
     }
 
-    public function test_draft_deleted() {
+    public function test_draft_deleted(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user = new user($generator->create_user());
@@ -72,7 +72,7 @@ class event_test extends testcase {
         );
     }
 
-    public function test_draft_updated() {
+    public function test_draft_updated(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user = new user($generator->create_user());
@@ -98,7 +98,7 @@ class event_test extends testcase {
         );
     }
 
-    public function test_draft_viewed() {
+    public function test_draft_viewed(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user = new user($generator->create_user());
@@ -124,7 +124,7 @@ class event_test extends testcase {
         );
     }
 
-    public function test_message_sent() {
+    public function test_message_sent(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -153,7 +153,7 @@ class event_test extends testcase {
         );
     }
 
-    public function test_message_viewed() {
+    public function test_message_viewed(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());

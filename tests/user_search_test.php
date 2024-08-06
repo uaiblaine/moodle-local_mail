@@ -15,10 +15,10 @@ require_once(__DIR__ . '/testcase.php');
 /**
  * @covers \local_mail\user_search
  */
-class user_search_test extends testcase {
+final class user_search_test extends testcase {
     private const NUM_USERS = 50;
 
-    public function test_count() {
+    public function test_count(): void {
         $users = self::generate_data();
         foreach (self::cases($users) as $search) {
             $expected = count(self::filter_users($users, $search));
@@ -26,7 +26,7 @@ class user_search_test extends testcase {
         }
     }
 
-    public function test_get() {
+    public function test_get(): void {
         $users = self::generate_data();
         foreach (self::cases($users) as $search) {
             $filteredusers = self::filter_users($users, $search);

@@ -15,8 +15,8 @@ require_once(__DIR__ . '/testcase.php');
 /**
  * @covers \local_mail\course
  */
-class course_test extends testcase {
-    public function test_get() {
+final class course_test extends testcase {
+    public function test_get(): void {
         $generator = self::getDataGenerator();
         $record = $generator->create_course(['groupmode' => SEPARATEGROUPS]);
 
@@ -43,7 +43,7 @@ class course_test extends testcase {
         self::assertNull(course::get(123, IGNORE_MISSING));
     }
 
-    public function test_get_by_user() {
+    public function test_get_by_user(): void {
         $generator = self::getDataGenerator();
         $course1 = new course($generator->create_course());
         $course2 = new course($generator->create_course());
@@ -82,7 +82,7 @@ class course_test extends testcase {
         self::assertEquals([$course1->id => $course1, $course3->id => $course3], $result);
     }
 
-    public function test_get_context() {
+    public function test_get_context(): void {
         $generator = self::getDataGenerator();
         $course1 = new course($generator->create_course());
         $course2 = new course($generator->create_course());
@@ -91,7 +91,7 @@ class course_test extends testcase {
         self::assertEquals(\context_course::instance($course2->id), $course2->get_context());
     }
 
-    public function test_get_many() {
+    public function test_get_many(): void {
         $generator = self::getDataGenerator();
         $course1 = new course($generator->create_course());
         $course2 = new course($generator->create_course());
@@ -121,7 +121,7 @@ class course_test extends testcase {
         self::assertEquals([], course::get_many([]));
     }
 
-    public function test_get_viewable_groups() {
+    public function test_get_viewable_groups(): void {
         $generator = self::getDataGenerator();
         $course1 = new course($generator->create_course(['groupmode' => NOGROUPS]));
         $course2 = new course($generator->create_course(['groupmode' => VISIBLEGROUPS]));
@@ -181,7 +181,7 @@ class course_test extends testcase {
         self::assertEquals($expected, $course3->get_viewable_groups($user2));
     }
 
-    public function test_get_viewable_roles() {
+    public function test_get_viewable_roles(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user = new user($generator->create_user());
@@ -199,7 +199,7 @@ class course_test extends testcase {
         self::assertEquals($expected, $course->get_viewable_roles($user));
     }
 
-    public function test_url() {
+    public function test_url(): void {
         global $CFG;
 
         $generator = self::getDataGenerator();

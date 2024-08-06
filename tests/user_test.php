@@ -15,8 +15,8 @@ require_once(__DIR__ . '/testcase.php');
 /**
  * @covers \local_mail\user
  */
-class user_test extends testcase {
-    public function test_can_view_files() {
+final class user_test extends testcase {
+    public function test_can_view_files(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -78,7 +78,7 @@ class user_test extends testcase {
         self::assertTrue($user4->can_view_files($message1));
     }
 
-    public function test_can_view_group() {
+    public function test_can_view_group(): void {
         $generator = self::getDataGenerator();
         $course1 = new course($generator->create_course(['groupmode' => NOGROUPS]));
         $course2 = new course($generator->create_course(['groupmode' => VISIBLEGROUPS]));
@@ -137,7 +137,7 @@ class user_test extends testcase {
         $this->assertTrue($user2->can_view_group($course3, $group5->id));
     }
 
-    public function test_can_edit_message() {
+    public function test_can_edit_message(): void {
         $generator = self::getDataGenerator();
         $course1 = new course($generator->create_course());
         $course2 = new course($generator->create_course());
@@ -174,7 +174,7 @@ class user_test extends testcase {
         self::assertFalse($user2->can_edit_message($message2));
     }
 
-    public function test_can_use_mail() {
+    public function test_can_use_mail(): void {
         $generator = self::getDataGenerator();
         $course1 = new course($generator->create_course());
         $course2 = new course($generator->create_course());
@@ -192,7 +192,7 @@ class user_test extends testcase {
         self::assertFalse($user->can_use_mail($course4));
     }
 
-    public function test_can_view_message() {
+    public function test_can_view_message(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -232,7 +232,7 @@ class user_test extends testcase {
         self::assertFalse($user2->can_view_message($message));
     }
 
-    public function test_current() {
+    public function test_current(): void {
         $generator = self::getDataGenerator();
         $record = $generator->create_user();
         self::setUser($record->id);
@@ -248,7 +248,7 @@ class user_test extends testcase {
         self::assertNull(user::current());
     }
 
-    public function test_fullname() {
+    public function test_fullname(): void {
         $generator = self::getDataGenerator();
         $record = $generator->create_user();
         $user = new user($record);
@@ -256,7 +256,7 @@ class user_test extends testcase {
         self::assertEquals(fullname($record), $user->fullname());
     }
 
-    public function test_get() {
+    public function test_get(): void {
         $generator = self::getDataGenerator();
         $record = $generator->create_user();
 
@@ -297,7 +297,7 @@ class user_test extends testcase {
         self::assertNull(user::get(123, IGNORE_MISSING));
     }
 
-    public function test_get_many() {
+    public function test_get_many(): void {
         $generator = self::getDataGenerator();
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
@@ -327,7 +327,7 @@ class user_test extends testcase {
         self::assertEquals([], user::get_many([]));
     }
 
-    public function test_picture_url() {
+    public function test_picture_url(): void {
         global $PAGE;
 
         $generator = self::getDataGenerator();
@@ -347,7 +347,7 @@ class user_test extends testcase {
         self::assertEquals('', $user3->picture_url());
     }
 
-    public function test_profile_url() {
+    public function test_profile_url(): void {
         $generator = self::getDataGenerator();
         $user = new user($generator->create_user());
         $course = new course($generator->create_course());
@@ -356,7 +356,7 @@ class user_test extends testcase {
         self::assertEquals($url->out(false), $user->profile_url($course));
     }
 
-    public function test_sortorder() {
+    public function test_sortorder(): void {
         $generator = self::getDataGenerator();
         $user = new user($generator->create_user(['firstname' => 'Lena', 'lastname' => 'Becker']));
 

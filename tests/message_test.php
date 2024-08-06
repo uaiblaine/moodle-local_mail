@@ -18,8 +18,8 @@ require_once(__DIR__ . '/message_search_test.php');
 /**
  * @covers \local_mail\message
  */
-class message_test extends testcase {
-    public function test_create() {
+final class message_test extends testcase {
+    public function test_create(): void {
         $generator = self::getDataGenerator();
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
@@ -98,7 +98,7 @@ class message_test extends testcase {
         self::assertEquals($message, message::cache()->get($message->id));
     }
 
-    public function test_delete_course() {
+    public function test_delete_course(): void {
         [$users, $messages] = message_search_test::generate_data();
         $course = $messages[0]->get_course();
         $context = $course->get_context();
@@ -122,7 +122,7 @@ class message_test extends testcase {
         self::assertEmpty($fs->get_area_files($context->id, 'local_mail', 'message'));
     }
 
-    public function test_get() {
+    public function test_get(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -168,7 +168,7 @@ class message_test extends testcase {
         self::assertNull(message::get(123, IGNORE_MISSING));
     }
 
-    public function test_get_course() {
+    public function test_get_course(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user = new user($generator->create_user());
@@ -179,7 +179,7 @@ class message_test extends testcase {
         self::assertEquals($course, $message->get_course());
     }
 
-    public function test_get_labels() {
+    public function test_get_labels(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -203,7 +203,7 @@ class message_test extends testcase {
         self::assertEquals([], $message->get_labels($user3));
     }
 
-    public function test_get_many() {
+    public function test_get_many(): void {
         $generator = self::getDataGenerator();
         $course1 = new course($generator->create_course());
         $course2 = new course($generator->create_course());
@@ -268,7 +268,7 @@ class message_test extends testcase {
         self::assertEquals([], message::get_many([]));
     }
 
-    public function test_get_recipients() {
+    public function test_get_recipients(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -309,7 +309,7 @@ class message_test extends testcase {
         self::assertEquals(array_values($recipients), $message->get_recipients(message::ROLE_TO, message::ROLE_CC));
     }
 
-    public function test_get_references() {
+    public function test_get_references(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -345,7 +345,7 @@ class message_test extends testcase {
         self::assertEquals(message::get_many([]), $message3->get_references(true));
     }
 
-    public function test_get_sender() {
+    public function test_get_sender(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -358,7 +358,7 @@ class message_test extends testcase {
         self::assertEquals($user1, $message->get_sender());
     }
 
-    public function test_has_label() {
+    public function test_has_label(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user = new user($generator->create_user());
@@ -374,7 +374,7 @@ class message_test extends testcase {
         self::assertFalse($message->has_label($label3));
     }
 
-    public function test_has_recipient() {
+    public function test_has_recipient(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -396,7 +396,7 @@ class message_test extends testcase {
         self::assertFalse($message->has_recipient($user5));
     }
 
-    public function test_normalize_text() {
+    public function test_normalize_text(): void {
         self::assertEquals('', message::normalize_text('', FORMAT_PLAIN));
         self::assertEquals('text', message::normalize_text('   text   ', FORMAT_PLAIN));
         self::assertEquals('text text', message::normalize_text('text     text', FORMAT_PLAIN));
@@ -405,7 +405,7 @@ class message_test extends testcase {
         self::assertEquals('text text', message::normalize_text(' <p> text    text </p>', FORMAT_HTML));
     }
 
-    public function test_role() {
+    public function test_role(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -427,7 +427,7 @@ class message_test extends testcase {
         self::assertEquals(message::ROLE_BCC, $message->role($user5));
     }
 
-    public function test_role_names() {
+    public function test_role_names(): void {
         $expected = [
             message::ROLE_FROM => 'from',
             message::ROLE_TO => 'to',
@@ -437,7 +437,7 @@ class message_test extends testcase {
         self::assertEquals($expected, message::role_names());
     }
 
-    public function test_send() {
+    public function test_send(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -483,7 +483,7 @@ class message_test extends testcase {
         self::assertEquals($message2, message::cache()->get($message2->id));
     }
 
-    public function test_set_deleted() {
+    public function test_set_deleted(): void {
         $fs = get_file_storage();
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
@@ -540,7 +540,7 @@ class message_test extends testcase {
         self::assertEquals($message, message::cache()->get($message->id));
     }
 
-    public function test_set_labels() {
+    public function test_set_labels(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -588,7 +588,7 @@ class message_test extends testcase {
         self::assertEquals($message, message::cache()->get($message->id));
     }
 
-    public function test_set_starred() {
+    public function test_set_starred(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -619,7 +619,7 @@ class message_test extends testcase {
         self::assertEquals($message, message::cache()->get($message->id));
     }
 
-    public function test_set_unread() {
+    public function test_set_unread(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -650,7 +650,7 @@ class message_test extends testcase {
         self::assertEquals($message, message::cache()->get($message->id));
     }
 
-    public function test_update() {
+    public function test_update(): void {
         $generator = self::getDataGenerator();
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());

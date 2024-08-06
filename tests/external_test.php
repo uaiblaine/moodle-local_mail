@@ -19,8 +19,8 @@ require_once(__DIR__ . '/user_search_test.php');
  * @covers \local_mail\external
  * @runTestsInSeparateProcesses
  */
-class external_test extends testcase {
-    public function test_get_settings() {
+final class external_test extends testcase {
+    public function test_get_settings(): void {
         $generator = $this->getDataGenerator();
         $user = $generator->create_user();
         set_config('enablebackup', '0', 'local_mail');
@@ -139,7 +139,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_get_strings() {
+    public function test_get_strings(): void {
         global $CFG, $SESSION;
 
         $generator = $this->getDataGenerator();
@@ -181,7 +181,7 @@ class external_test extends testcase {
         self::assertEquals('Comparteix', $result['forward']);
     }
 
-    public function test_get_preferences() {
+    public function test_get_preferences(): void {
         $generator = $this->getDataGenerator();
         $user = $generator->create_user();
         $this->setUser($user);
@@ -235,7 +235,7 @@ class external_test extends testcase {
         self::assertEquals(100, $result['perpage']);
     }
 
-    public function test_set_preferences() {
+    public function test_set_preferences(): void {
         $generator = $this->getDataGenerator();
         $user = $generator->create_user();
         $this->setUser($user);
@@ -290,7 +290,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_get_courses() {
+    public function test_get_courses(): void {
         $generator = $this->getDataGenerator();
         [$users] = message_search_test::generate_data();
 
@@ -330,7 +330,7 @@ class external_test extends testcase {
         self::assertEquals([], external::get_courses());
     }
 
-    public function test_get_labels() {
+    public function test_get_labels(): void {
         $generator = $this->getDataGenerator();
         [$users] = message_search_test::generate_data();
 
@@ -367,7 +367,7 @@ class external_test extends testcase {
         self::assertEquals([], external::get_labels());
     }
 
-    public function test_count_messages() {
+    public function test_count_messages(): void {
         $generator = self::getDataGenerator();
 
         [$users, $messages] = message_search_test::generate_data();
@@ -486,7 +486,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_search_messages() {
+    public function test_search_messages(): void {
         $generator = self::getDataGenerator();
 
         [$users, $messages] = message_search_test::generate_data();
@@ -602,7 +602,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_get_message() {
+    public function test_get_message(): void {
         global $PAGE;
 
         $fs = get_file_storage();
@@ -801,7 +801,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_view_message() {
+    public function test_view_message(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -878,7 +878,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_set_unread() {
+    public function test_set_unread(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -946,7 +946,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_set_starred() {
+    public function test_set_starred(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -1014,7 +1014,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_set_deleted() {
+    public function test_set_deleted(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -1124,7 +1124,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_empty_trash() {
+    public function test_empty_trash(): void {
         $generator = self::getDataGenerator();
         $course1 = new course($generator->create_course());
         $course2 = new course($generator->create_course());
@@ -1242,7 +1242,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_create_label() {
+    public function test_create_label(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -1375,7 +1375,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_update_label() {
+    public function test_update_label(): void {
         $generator = self::getDataGenerator();
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
@@ -1462,7 +1462,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_delete_label() {
+    public function test_delete_label(): void {
         $generator = self::getDataGenerator();
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
@@ -1497,7 +1497,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_set_labels() {
+    public function test_set_labels(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -1619,7 +1619,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_get_roles() {
+    public function test_get_roles(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user = new user($generator->create_user());
@@ -1656,7 +1656,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_get_groups() {
+    public function test_get_groups(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course(['groupmode' => SEPARATEGROUPS]));
         $group1 = $generator->create_group(['courseid' => $course->id]);
@@ -1698,7 +1698,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_search_users() {
+    public function test_search_users(): void {
         $generator = self::getDataGenerator();
         $users = user_search_test::generate_data();
 
@@ -1768,7 +1768,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_get_message_form() {
+    public function test_get_message_form(): void {
         $generator = $this->getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -1837,7 +1837,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_create_message() {
+    public function test_create_message(): void {
         $generator = $this->getDataGenerator();
         $course = new course($generator->create_course());
         $user = new user($generator->create_user());
@@ -1883,7 +1883,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_reply_message() {
+    public function test_reply_message(): void {
         $generator = $this->getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -1984,7 +1984,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_forward_message() {
+    public function test_forward_message(): void {
         $generator = $this->getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -2078,7 +2078,7 @@ class external_test extends testcase {
         }
     }
 
-    public function test_update_message() {
+    public function test_update_message(): void {
         $generator = $this->getDataGenerator();
         $course1 = new course($generator->create_course());
         $course2 = new course($generator->create_course());
@@ -2190,7 +2190,7 @@ class external_test extends testcase {
         self::assertEquals($message->courseid, message::get($reply->id)->courseid);
     }
 
-    public function test_send_message() {
+    public function test_send_message(): void {
         global $PAGE;
         $renderer = $PAGE->get_renderer('local_mail');
 

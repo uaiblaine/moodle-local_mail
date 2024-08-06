@@ -15,8 +15,8 @@ require_once(__DIR__ . '/testcase.php');
 /**
  * @covers \local_mail\settings
  */
-class settings_test extends testcase {
-    public function test_defaults() {
+final class settings_test extends testcase {
+    public function test_defaults(): void {
         set_config('maxbytes', 123000);
 
         $settings = settings::defaults();
@@ -38,7 +38,7 @@ class settings_test extends testcase {
         self::assertEquals('hidden', $settings->courselink);
     }
 
-    public function test_get() {
+    public function test_get(): void {
         set_config('maxbytes', 123000);
         set_config('enablebackup', '0', 'local_mail');
         set_config('maxrecipients', '20', 'local_mail');
@@ -99,7 +99,7 @@ class settings_test extends testcase {
         self::assertEquals([], $settings->globaltrays);
     }
 
-    public function test_is_installed() {
+    public function test_is_installed(): void {
         self::assertTrue(settings::is_installed());
 
         set_config('version', 123, 'local_mail');

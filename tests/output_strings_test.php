@@ -14,8 +14,8 @@ require_once(__DIR__ . '/testcase.php');
 /**
  * @covers \local_mail\output\strings
  */
-class output_strings_test extends testcase {
-    public function test_get() {
+final class output_strings_test extends testcase {
+    public function test_get(): void {
         global $SESSION;
 
         $generator = $this->getDataGenerator();
@@ -39,7 +39,7 @@ class output_strings_test extends testcase {
         }
     }
 
-    public function test_get_all() {
+    public function test_get_all(): void {
         global $SESSION;
 
         $generator = $this->getDataGenerator();
@@ -55,7 +55,7 @@ class output_strings_test extends testcase {
         }
     }
 
-    public function test_get_ids() {
+    public function test_get_ids(): void {
         global $SESSION;
 
         $generator = $this->getDataGenerator();
@@ -69,7 +69,7 @@ class output_strings_test extends testcase {
         self::assertEquals(array_keys($strings), output\strings::get_ids());
     }
 
-    public function test_get_many() {
+    public function test_get_many(): void {
         global $SESSION;
 
         $generator = $this->getDataGenerator();
