@@ -190,5 +190,5 @@ $string['trash'] = 'Trash';
 $string['trays'] = 'Trays';
 $string['undo'] = 'Undo';
 $string['unread'] = 'Unread';
-$string['unstarred'] = 'Npt starred';
+$string['unstarred'] = 'Not starred';
 $string['viewmessage'] = 'View message';
