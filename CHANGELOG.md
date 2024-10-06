@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.11] - 2024-10-06
+
+### Fixed
+
+- Spelling error in string 'Not starred'.
+- Alignment of icons inside buttons.
+- Deprecation warnings in Moodle 4.5.
+
 ## [2.10] - 2024-08-06
 
 ### Fixed
