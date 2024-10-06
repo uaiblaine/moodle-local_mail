@@ -1,6 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -15,7 +16,7 @@ class exception extends \moodle_exception {
      * @param mixed $a Language string parameters.
      * @param ?string $debuginfo Optional debugging information
      */
-    public function __construct(string $errorcode, $a = null, string $debuginfo = null) {
+    public function __construct(string $errorcode, $a = null, ?string $debuginfo = null) {
         parent::__construct($errorcode, 'local_mail', '', $a, $debuginfo);
     }
 }
