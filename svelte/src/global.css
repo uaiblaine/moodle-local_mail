@@ -39,17 +39,6 @@
     opacity: 0.2;
 }
 
-.local-mail .btn .fa {
-    vertical-align: middle;
-}
-
-.local-mail .btn .fa-arrow-left,
-.local-mail .btn .fa-star,
-.local-mail .btn .fa-star-o,
-.local-mail .btn .fa-trash {
-    transform: translateY(-1.5px);
-}
-
 .local-mail .dropdown-menu {
     background-color: var(--light);
 }

@@ -1,31 +1,31 @@
 {
   "_global-!~{003}~.js": {
-    "file": "global-DinWoNdn.css",
+    "file": "global-BXIoz04S.css",
     "src": "_global-!~{003}~.js"
   },
-  "_global-auzbJfDF.js": {
-    "file": "global-auzbJfDF.js",
+  "_global-T_GUCy8c.js": {
+    "file": "global-T_GUCy8c.js",
     "name": "global",
     "css": [
-      "global-DinWoNdn.css"
+      "global-BXIoz04S.css"
     ]
   },
   "src/navigation.ts": {
-    "file": "navigation-DxJx0ekO.js",
+    "file": "navigation-B8BrEazQ.js",
     "name": "navigation",
     "src": "src/navigation.ts",
     "isEntry": true,
     "imports": [
-      "_global-auzbJfDF.js"
+      "_global-T_GUCy8c.js"
     ]
   },
   "src/view.ts": {
-    "file": "view-BWLq82j8.js",
+    "file": "view-BcDdQAzp.js",
     "name": "view",
     "src": "src/view.ts",
     "isEntry": true,
     "imports": [
-      "_global-auzbJfDF.js"
+      "_global-T_GUCy8c.js"
     ],
     "css": [
       "view-9GWmLScu.css"
