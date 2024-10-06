@@ -10,9 +10,9 @@ export default defineConfig({
         rollupOptions: {
             input: [resolve(__dirname, 'src/view.ts'), resolve(__dirname, 'src/navigation.ts')],
             output: {
-                entryFileNames: `[name]-[hash].js`,
-                chunkFileNames: `[name]-[hash].js`,
-                assetFileNames: `[name]-[hash][extname]`,
+                entryFileNames: '[name]-[hash].js',
+                chunkFileNames: '[name]-[hash].js',
+                assetFileNames: '[name]-[hash][extname]',
             },
         },
         sourcemap: true,
