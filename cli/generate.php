@@ -1,6 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -59,7 +60,11 @@ function main() {
     raise_memory_limit(MEMORY_HUGE);
 
     // Run script as an admin user, to be able to use file draft areas.
-    cron_setup_user();
+    if ($CFG->branch >= 402) {
+        \core\cron::setup_user();
+    } else {
+        cron_setup_user();
+    }
 
     $countperuser = MESSAGES_PER_USER_PER_COURSE;
     $countperuser = (int) cli_input("Messages per user per course? [$countperuser]", $countperuser);
