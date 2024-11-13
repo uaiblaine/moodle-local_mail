@@ -140,45 +140,10 @@ final class external_test extends testcase {
     }
 
     public function test_get_strings(): void {
-        global $CFG, $SESSION;
-
-        $generator = $this->getDataGenerator();
-        $user = $generator->create_user();
-        $this->setUser($user);
-
-        make_writable_directory("$CFG->langlocalroot/es_local");
-        $content = "<?php
-            defined('MOODLE_INTERNAL') || die();
-            \$string['forward'] = 'Compartir';
-        ";
-        file_put_contents("$CFG->langlocalroot/es_local/local_mail.php", $content);
-
-        make_writable_directory("$CFG->langlocalroot/ca_local");
-        $content = "<?php
-            defined('MOODLE_INTERNAL') || die();
-            \$string['forward'] = 'Comparteix';
-        ";
-        file_put_contents("$CFG->langlocalroot/ca_local/local_mail.php", $content);
-
-        // Spanish.
-
-        $SESSION->forcelang = 'es';
-
         $result = external::get_strings();
 
         external::validate_parameters(external::get_strings_returns(), $result);
         self::assertEquals(output\strings::get_all(), $result);
-        self::assertEquals('Compartir', $result['forward']);
-
-        // Catalan.
-
-        $SESSION->forcelang = 'ca';
-
-        $result = external::get_strings();
-
-        external::validate_parameters(external::get_strings_returns(), $result);
-        self::assertEquals(output\strings::get_all(), $result);
-        self::assertEquals('Comparteix', $result['forward']);
     }
 
     public function test_get_preferences(): void {

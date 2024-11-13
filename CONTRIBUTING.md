@@ -93,3 +93,8 @@ See the `version.php` file for an example.
 ## Changelog file
 
 Changelog file uses the format from [Keep a Changelog](https://keepachangelog.com).
+
+## Language strings
+
+Translations of the plugin are maintained in AMOS:
+https://lang.moodle.org/

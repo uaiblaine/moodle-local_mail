@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Language strings for Basque, Catalan, Galician, and Spanish are now downloaded from AMOS.
+
 ## [2.11] - 2024-10-06
 
 ### Fixed
