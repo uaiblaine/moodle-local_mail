@@ -91,17 +91,20 @@ final class user_test extends testcase {
 
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
         $generator->enrol_user($user1->id, $course1->id, 'student');
         $generator->enrol_user($user1->id, $course2->id, 'student');
         $generator->enrol_user($user1->id, $course3->id, 'student');
         $generator->enrol_user($user2->id, $course1->id, 'editingteacher');
         $generator->enrol_user($user2->id, $course2->id, 'editingteacher');
         $generator->enrol_user($user2->id, $course3->id, 'editingteacher');
+        $generator->enrol_user($user3->id, $course1->id, 'guest');
         $generator->create_group_member(['userid' => $user1->id, 'groupid' => $group1->id]);
         $generator->create_group_member(['userid' => $user2->id, 'groupid' => $group1->id]);
         $generator->create_group_member(['userid' => $user1->id, 'groupid' => $group2->id]);
         $generator->create_group_member(['userid' => $user1->id, 'groupid' => $group4->id]);
         $generator->create_group_member(['userid' => $user2->id, 'groupid' => $group5->id]);
+        $generator->create_group_member(['userid' => $user3->id, 'groupid' => $group1->id]);
 
         // Student in course with no groups.
         $this->assertTrue($user1->can_view_group($course1, 0));
@@ -135,6 +138,9 @@ final class user_test extends testcase {
         $this->assertTrue($user2->can_view_group($course3, 0));
         $this->assertTrue($user2->can_view_group($course3, $group4->id));
         $this->assertTrue($user2->can_view_group($course3, $group5->id));
+
+        // User with no permission.
+        $this->assertFalse($user3->can_view_group($course1, $group1->id));
     }
 
     public function test_can_edit_message(): void {
