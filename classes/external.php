@@ -1,6 +1,6 @@
 <?php
 /*
- * SPDX-FileCopyrightText: 2017-2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2017-2025 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -1412,6 +1412,9 @@ class external extends \external_api {
             $data->format = FORMAT_HTML;
         }
 
+        $originaltexteditors = $CFG->texteditors;
+        $CFG->texteditors = implode(',', settings::text_editors());
+
         $PAGE->set_url(new \moodle_url('/local/mail/view.php', ['t' => 'drafts', 'm' => $message->id]));
         $PAGE->set_context(\context_system::instance());
         $options['autosave'] = false;
@@ -1429,6 +1432,8 @@ class external extends \external_api {
         $filemanagerhtml = $filemanager->toHtml();
         $javascript = $PAGE->requires->get_end_code();
         $PAGE->end_collecting_javascript_requirements();
+
+        $CFG->texteditors = $originaltexteditors;
 
         return [
             'draftitemid' => $data->draftitemid,

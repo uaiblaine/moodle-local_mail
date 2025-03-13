@@ -1,7 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -105,5 +105,30 @@ final class settings_test extends testcase {
         set_config('version', 123, 'local_mail');
 
         self::assertFalse(settings::is_installed());
+    }
+
+    public function test_text_editors(): void {
+        global $CFG, $USER;
+
+        // No setting.
+        unset_config('texteditors');
+        self::assertEquals([], settings::text_editors());
+
+        // Supported editors.
+        set_config('texteditors', 'atto,tiny,textarea');
+        self::assertEquals(['atto', 'tiny', 'textarea'], settings::text_editors());
+
+        // Legacy TinyMCE editor.
+        set_config('texteditors', 'tinymce,atto');
+        self::assertEquals(['tiny', 'atto'], settings::text_editors());
+
+        // Unknown editor.
+        set_config('texteditors', 'tiny,unknown,textarea');
+        self::assertEquals(['tiny', 'textarea'], settings::text_editors());
+
+        // User preference.
+        set_config('texteditors', 'atto,tiny,textarea');
+        set_user_preference('htmleditor', 'tiny', $USER);
+        self::assertEquals(['tiny', 'atto', 'textarea'], settings::text_editors());
     }
 }

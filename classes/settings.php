@@ -1,7 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -168,5 +168,32 @@ class settings {
         $version = get_config('local_mail', 'version');
 
         return $version == $plugin->version;
+    }
+
+    /**
+     * Returns the enabled supported text editors for the current user.
+     *
+     * @return array
+     */
+    public static function text_editors(): array {
+        global $CFG, $USER;
+
+        $preferrededitor = get_user_preferences('htmleditor', '', $USER);
+        $enablededitors = explode(',', $CFG->texteditors ?? '');
+
+        if (in_array($preferrededitor, $enablededitors)) {
+            array_unshift($enablededitors, $preferrededitor);
+        }
+
+        $supportededitors = [];
+        foreach ($enablededitors as $editor) {
+            if ($editor === 'tinymce') {
+                $supportededitors[] = 'tiny';
+            } else if (in_array($editor, ['atto', 'tiny', 'textarea'])) {
+                $supportededitors[] = $editor;
+            }
+        }
+
+        return array_values(array_unique($supportededitors));
     }
 }

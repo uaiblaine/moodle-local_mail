@@ -5,6 +5,8 @@
 ### Fixed
 
 - Message not found error when a site administrator opens a message in a hidden course.
+- Unsupported text editors are now ignored.
+- The user preference for the text editor is now taken into account.
 
 ## [2.12] - 2025-01-22
 
