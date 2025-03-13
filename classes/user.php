@@ -12,32 +12,35 @@ class user {
     /** @var int User ID. */
     public int $id;
 
+    /** @var bool Deleted status. */
+    public bool $deleted;
+
     /** @var string First name. */
-    public string $firstname;
+    public string $firstname = '';
 
     /** @var string Last name. */
-    public string $lastname;
+    public string $lastname = '';
 
     /** @var string Email address. */
-    public string $email;
+    public string $email = '';
 
     /** @var int Picture file ID. */
-    public int $picture;
+    public int $picture = 0;
 
-    /** @var ?string Picture description. */
-    public ?string $imagealt;
+    /** @var string Picture description. */
+    public string $imagealt = '';
 
     /** @var string Phonetic spelling of first name. */
-    public string $firstnamephonetic;
+    public string $firstnamephonetic = '';
 
     /** @var string Phonetic spelling of last name. */
-    public string $lastnamephonetic;
+    public string $lastnamephonetic = '';
 
     /** @var string Middle name. */
-    public string $middlename;
+    public string $middlename = '';
 
     /** @var string Alternate name. */
-    public string $alternatename;
+    public string $alternatename = '';
 
     /**
      * Constructs a user instance from a database record.
@@ -46,15 +49,18 @@ class user {
      */
     public function __construct(\stdClass $record) {
         $this->id = (int) $record->id;
-        $this->firstname = $record->firstname;
-        $this->lastname = $record->lastname;
-        $this->email = $record->email;
-        $this->picture = (int) $record->picture;
-        $this->imagealt = $record->imagealt ?? '';
-        $this->firstnamephonetic = $record->firstnamephonetic ?? '';
-        $this->lastnamephonetic = $record->lastnamephonetic ?? '';
-        $this->middlename = $record->middlename ?? '';
-        $this->alternatename = $record->alternatename ?? '';
+        $this->deleted = !empty($record->deleted);
+        if (!$this->deleted) {
+            $this->firstname = $record->firstname;
+            $this->lastname = $record->lastname;
+            $this->email = $record->email;
+            $this->picture = (int) $record->picture;
+            $this->imagealt = $record->imagealt ?? '';
+            $this->firstnamephonetic = $record->firstnamephonetic ?? '';
+            $this->lastnamephonetic = $record->lastnamephonetic ?? '';
+            $this->middlename = $record->middlename ?? '';
+            $this->alternatename = $record->alternatename ?? '';
+        }
     }
 
     /**
@@ -86,25 +92,25 @@ class user {
 
     /**
      * Gets a user from the database.
+     * An empty user is returned if the user is missing or deleted.
      *
-     * @param int $strictness MUST_EXIST or IGNORE_MISSING.
      * @param int $id ID of the user to get.
-     * @return ?self
+     * @return self
      */
-    public static function get(int $id, int $strictness = MUST_EXIST): ?self {
-        $users = self::get_many([$id], $strictness);
+    public static function get(int $id): self {
+        $users = self::get_many([$id]);
 
-        return $users[$id] ?? null;
+        return $users[$id];
     }
 
     /**
      * Gets multiple users from the database.
+     * Empty users are returned for missing and deleted users.
      *
      * @param int[] $ids IDs of the users to get.
-     * @param int $strictness MUST_EXIST or IGNORE_MISSING.
      * @return self[] Array of users indexed by ID.
      */
-    public static function get_many(array $ids, int $strictness = MUST_EXIST): array {
+    public static function get_many(array $ids): array {
         global $CFG, $DB;
 
         $users = self::cache()->get_many($ids);
@@ -112,17 +118,13 @@ class user {
 
         if ($missingids) {
             [$sqlid, $params] = $DB->get_in_or_equal($missingids, SQL_PARAMS_NAMED, 'userid');
-            $select = "id $sqlid AND id <> :guestid";
+            $select = "id $sqlid AND deleted = 0 AND id <> :guestid";
             $params['guestid'] = $CFG->siteguest;
             $fields = implode(',', \core_user\fields::get_picture_fields());
             $records = $DB->get_records_select('user', $select, $params, '', $fields);
             foreach ($missingids as $id) {
-                if (isset($records[$id])) {
-                    $users[$id] = new self($records[$id]);
-                    self::cache()->set($id, $users[$id]);
-                } else if ($strictness == MUST_EXIST) {
-                    throw new exception('errorusernotfound', $id);
-                }
+                $users[$id] = new self($records[$id] ?? (object) ['id' => $id, 'deleted' => 1]);
+                self::cache()->set($id, $users[$id]);
             }
         }
 
@@ -205,7 +207,7 @@ class user {
      * @return string
      */
     public function fullname(): string {
-        return fullname((object) (array) $this);
+        return $this->deleted ? get_string('deleteduser', 'local_mail') : fullname((object) (array) $this);
     }
 
     /**
@@ -242,6 +244,6 @@ class user {
      * @return string
      */
     public function sortorder(): string {
-        return sprintf("%s\n%s\n%010d", $this->lastname, $this->firstname, $this->id);
+        return sprintf("%d\n%s\n%s\n%010d", $this->deleted, $this->lastname, $this->firstname, $this->id);
     }
 }

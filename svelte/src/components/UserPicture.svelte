@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -9,7 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import type { User } from '../lib/state';
 
     export let user: User | undefined = undefined;
-    export let icon: string | undefined = undefined;
+    export let icon = 'fa-user';
 </script>
 
 {#if user?.pictureurl}
@@ -23,9 +24,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
     />
 {:else}
     <span class="local-mail-user-picture-fallback m-0">
-        {#if user}
+        {#if user?.firstname || user?.lastname}
             {user.firstname.slice(0, 1)}{user.lastname.slice(0, 1)}
-        {:else if icon}
+        {:else}
             <i class="fa {icon}" />
         {/if}
     </span>

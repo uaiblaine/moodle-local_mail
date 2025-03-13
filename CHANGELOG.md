@@ -8,6 +8,10 @@
 - Unsupported text editors are now ignored.
 - The user preference for the text editor is now taken into account.
 
+### Changed
+
+- The names of deleted users are now hidden for privacy reasons.
+
 ## [2.12] - 2025-01-22
 
 ### Changed

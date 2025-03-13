@@ -1,7 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -17,6 +17,7 @@ require_once(__DIR__ . '/testcase.php');
  */
 final class user_search_test extends testcase {
     private const NUM_USERS = 50;
+    private const NUM_DELETED_USERS = 10;
 
     public function test_count(): void {
         $users = self::generate_data();
@@ -67,7 +68,9 @@ final class user_search_test extends testcase {
 
                 // Full name.
                 $search = new user_search($user, $course);
-                $search->fullname = self::random_item($users)->firstname;
+                while ($search->fullname === '') {
+                    $search->fullname = self::random_item($users)->firstname;
+                }
                 $result[] = $search;
 
                 // Include.
@@ -111,6 +114,7 @@ final class user_search_test extends testcase {
         foreach ($users as $user) {
             if (
                 $user->id == $search->user->id ||
+                $user->deleted ||
                 !is_enrolled($context, $user, 'local/mail:usemail', true) ||
                 $excludedroleids && array_intersect(
                     $excludedroleids,
@@ -136,6 +140,8 @@ final class user_search_test extends testcase {
      * @return user[] Users.
      */
     public static function generate_data(): array {
+        global $DB;
+
         $generator = self::getDataGenerator();
 
         $courses = [];
@@ -172,15 +178,26 @@ final class user_search_test extends testcase {
         // Generate users.
         for ($i = 0; $i < self::NUM_USERS; $i++) {
             $user = new user($generator->create_user());
-            $users[] = $user;
+
+            // Enrol user to some courses.
             foreach (self::random_items($courses, count($courses) - 1) as $course) {
                 $roleid = self::random_item($roleids);
                 $generator->enrol_user($user->id, $course->id, $roleid);
+
+                // Add user to a group.
                 $groupid = self::random_item($groupids[$course->id]);
                 if ($groupid) {
                     $generator->create_group_member(['userid' => $user->id, 'groupid' => $groupid]);
                 }
             }
+
+            // Mark some users as deleted.
+            if ($i >= self::NUM_USERS - self::NUM_DELETED_USERS) {
+                $DB->set_field('user', 'deleted', 1, ['id' => $user->id]);
+                $user = new user((object) ['id' => $user->id, 'deleted' => 1]);
+            }
+
+            $users[] = $user;
         }
 
         // Sort users.

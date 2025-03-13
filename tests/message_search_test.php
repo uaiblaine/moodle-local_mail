@@ -1,6 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -18,6 +19,7 @@ final class message_search_test extends testcase {
     /* Constants used for generating random mail data. */
     private const NUM_COURSES = 5;
     private const NUM_USERS = 10;
+    private const NUM_DELETED_USERS = 2;
     private const NUM_COURSES_PER_USER = 4;
     private const NUM_LABELS_PER_USER = 3;
     private const NUM_MESSAGES = 1000;
@@ -154,12 +156,18 @@ final class message_search_test extends testcase {
 
             // Sender name.
             $search = new message_search($user);
-            $search->sendername = self::random_item($users)->fullname();
+            do {
+                $sender = self::random_item($users);
+            } while ($sender->deleted);
+            $search->sendername = $sender->fullname();
             $result[] = $search;
 
             // Recipient name.
             $search = new message_search($user);
-            $search->recipientname = self::random_item($users)->fullname();
+            do {
+                $recipient = self::random_item($users);
+            } while ($recipient->deleted);
+            $search->recipientname = $recipient->fullname();
             $result[] = $search;
 
             // With files only.
@@ -215,6 +223,8 @@ final class message_search_test extends testcase {
      * @return array Array with users and messages.
      */
     public static function generate_data() {
+        global $DB;
+
         $generator = self::getDataGenerator();
 
         $courses = [];
@@ -231,20 +241,33 @@ final class message_search_test extends testcase {
 
         for ($i = 0; $i < self::NUM_USERS; $i++) {
             $user = new user($generator->create_user());
-            $users[] = $user;
             $userlabels[$user->id] = [];
+
             // One user with no courses and no labels.
             if ($i == 0) {
                 continue;
             }
+
+            // Enrol user to some courses.
             foreach (self::random_items($courses, self::NUM_COURSES_PER_USER) as $course) {
                 $generator->enrol_user($user->id, $course->id, 'student');
             }
+
+            // Create some labels.
             foreach (self::random_items(self::WORDS, self::NUM_LABELS_PER_USER) as $name) {
                 $userlabels[$user->id][] = label::create($user, $name);
             }
-            // One label with no messages.
+
+            // Create one label with no messages.
             $userlabels[$user->id] = array_slice($userlabels[$user->id], 1);
+
+            // Mark some users as deleted.
+            if ($i >= self::NUM_USERS - self::NUM_DELETED_USERS) {
+                $DB->set_field('user', 'deleted', 1, ['id' => $user->id]);
+                $user = new user((object) ['id' => $user->id, 'deleted' => 1]);
+            }
+
+            $users[] = $user;
         }
 
         // One user and one course with no messages.

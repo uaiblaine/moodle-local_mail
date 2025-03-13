@@ -1,6 +1,6 @@
 <?php
 /*
- * SPDX-FileCopyrightText: 2017-2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2017-2025 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2021 Marc Català <reskit@gmail.com>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
  *
@@ -300,6 +300,9 @@ final class external_test extends testcase {
         [$users] = message_search_test::generate_data();
 
         foreach ($users as $user) {
+            if ($user->deleted) {
+                continue;
+            }
             $this->setUser($user->id);
 
             $expected = [];
@@ -338,6 +341,9 @@ final class external_test extends testcase {
         [$users, $messages] = message_search_test::generate_data();
 
         foreach (message_search_test::cases($users, $messages) as $search) {
+            if ($search->user->deleted) {
+                continue;
+            }
             $this->setUser($search->user->id);
             $query = [];
             if ($search->course) {
@@ -457,6 +463,9 @@ final class external_test extends testcase {
         [$users, $messages] = message_search_test::generate_data();
 
         foreach (message_search_test::cases($users, $messages) as $search) {
+            if ($search->user->deleted) {
+                continue;
+            }
             $this->setUser($search->user->id);
             $query = [];
             if ($search->course) {
@@ -1668,6 +1677,9 @@ final class external_test extends testcase {
         $users = user_search_test::generate_data();
 
         foreach (user_search_test::cases($users) as $search) {
+            if ($search->user->deleted) {
+                continue;
+            }
             $this->setUser($search->user->id);
             $query = ['courseid' => $search->course->id];
             if ($search->roleid) {

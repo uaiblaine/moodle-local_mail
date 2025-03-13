@@ -1,7 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -266,10 +266,10 @@ function generate_random_reply(\file_storage $fs, message $message, int $time): 
 }
 
 function generate_user_labels() {
-    global $DB;
+    global $CFG, $DB;
 
-    $records = $DB->get_records('user', null, '', 'id');
-    $users = user::get_many(array_keys($records), IGNORE_MISSING);
+    $records = $DB->get_records_select('user', 'deleted = 0 AND id <> ?', [$CFG->siteguest], '', 'id');
+    $users = user::get_many(array_keys($records));
 
     foreach ($users as $user) {
         print_progress('Generating user labels', count($users));

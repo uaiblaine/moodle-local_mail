@@ -2,7 +2,7 @@
 /*
  * SPDX-FileCopyrightText: 2012-2014 Institut Obert de Catalunya <https://ioc.gencat.cat>
  * SPDX-FileCopyrightText: 2014-2017 Marc Català <reskit@gmail.com>
- * SPDX-FileCopyrightText: 2016-2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2016-2025 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -77,6 +77,7 @@ $string['course'] = 'Course';
 $string['courseswithunreadmessages'] = 'Courses with unread messages';
 $string['create'] = 'Create';
 $string['date'] = 'Date';
+$string['deleteduser'] = 'Deleted user';
 $string['deleteforever'] = 'Delete forever';
 $string['deleteforevermessageconfirm'] = 'Are you sure you want to permanently delete this message?';
 $string['deleteforeverselectedconfirm'] = 'Are you sure you want to permanently delete the selected messages?';

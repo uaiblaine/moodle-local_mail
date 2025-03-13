@@ -278,6 +278,10 @@ final class user_test extends testcase {
         $user = new user($record);
 
         self::assertEquals(fullname($record), $user->fullname());
+
+        // Deleted user.
+        $user = new user($generator->create_user(['deleted' => 1]));
+        self::assertEquals(get_string('deleteduser', 'local_mail'), $user->fullname());
     }
 
     public function test_get(): void {
@@ -288,6 +292,7 @@ final class user_test extends testcase {
 
         self::assertInstanceOf(user::class, $user);
         self::assertEquals((int) $record->id, $user->id);
+        self::assertFalse($user->deleted);
         self::assertEquals($record->firstname, $user->firstname);
         self::assertEquals($record->lastname, $user->lastname);
         self::assertEquals($record->email, $user->email);
@@ -307,18 +312,35 @@ final class user_test extends testcase {
 
         self::assertInstanceOf(user::class, $user);
         self::assertEquals((int) $record->id, $user->id);
+        self::assertTrue($user->deleted);
+        self::assertEquals('', $user->firstname);
+        self::assertEquals('', $user->lastname);
+        self::assertEquals('', $user->email);
+        self::assertEquals(0, $user->picture);
+        self::assertEquals(null, $user->imagealt);
+        self::assertEquals('', $user->firstnamephonetic);
+        self::assertEquals('', $user->lastnamephonetic);
+        self::assertEquals('', $user->middlename);
+        self::assertEquals('', $user->alternatename);
+        self::assertEquals($user, user::cache()->get($user->id));
 
         // Missing user.
-        try {
-            user::get(123);
-            self::fail();
-        } catch (exception $e) {
-            self::assertEquals('errorusernotfound', $e->errorcode);
-            self::assertEquals(123, $e->a);
-        }
 
-        // Ignored missing user.
-        self::assertNull(user::get(123, IGNORE_MISSING));
+        $user = user::get(123);
+
+        self::assertInstanceOf(user::class, $user);
+        self::assertEquals(123, $user->id);
+        self::assertTrue($user->deleted);
+        self::assertEquals('', $user->firstname);
+        self::assertEquals('', $user->lastname);
+        self::assertEquals('', $user->email);
+        self::assertEquals(0, $user->picture);
+        self::assertEquals(null, $user->imagealt);
+        self::assertEquals('', $user->firstnamephonetic);
+        self::assertEquals('', $user->lastnamephonetic);
+        self::assertEquals('', $user->middlename);
+        self::assertEquals('', $user->alternatename);
+        self::assertEquals($user, user::cache()->get(123));
     }
 
     public function test_get_many(): void {
@@ -326,26 +348,15 @@ final class user_test extends testcase {
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
         $user3 = new user($generator->create_user(['deleted' => 1]));
+        $user4 = new user((object) ['id' => 123, 'deleted' => 1]);
 
-        $result = user::get_many([$user3->id, $user1->id, $user3->id, $user2->id, $user3->id]);
+        $result = user::get_many([$user3->id, $user1->id, $user3->id, $user2->id, $user3->id, $user4->id]);
 
-        self::assertEquals([$user3->id => $user3, $user1->id => $user1, $user2->id => $user2], $result);
+        self::assertEquals([$user3->id => $user3, $user1->id => $user1, $user2->id => $user2, $user4->id => $user4], $result);
         self::assertEquals($user1, user::cache()->get($user1->id));
         self::assertEquals($user2, user::cache()->get($user2->id));
         self::assertEquals($user3, user::cache()->get($user3->id));
-
-        // Missing user.
-        try {
-            user::get_many([$user1->id, 123, $user2->id]);
-            self::fail();
-        } catch (exception $e) {
-            self::assertEquals('errorusernotfound', $e->errorcode);
-            self::assertEquals(123, $e->a);
-        }
-
-        // Ignored missing user.
-        $result = user::get_many([$user1->id, 123, $user2->id], IGNORE_MISSING);
-        self::assertEquals([$user1->id => $user1, $user2->id => $user2], $result);
+        self::assertEquals($user4, user::cache()->get($user4->id));
 
         // No IDs.
         self::assertEquals([], user::get_many([]));
@@ -384,6 +395,6 @@ final class user_test extends testcase {
         $generator = self::getDataGenerator();
         $user = new user($generator->create_user(['firstname' => 'Lena', 'lastname' => 'Becker']));
 
-        self::assertEquals(sprintf("Becker\nLena\n%010d", $user->id), $user->sortorder());
+        self::assertEquals(sprintf("0\nBecker\nLena\n%010d", $user->id), $user->sortorder());
     }
 }
