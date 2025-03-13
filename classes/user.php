@@ -1,7 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -149,8 +149,7 @@ class user {
      * @return bool
      */
     public function can_use_mail(course $course) {
-        return is_enrolled($course->get_context(), $this->id, 'local/mail:usemail', true) &&
-            ($course->visible || has_capability('moodle/course:viewhiddencourses', $course->get_context(), $this->id, false));
+        return array_key_exists($course->id, course::get_by_user($this));
     }
 
     /**

@@ -1,7 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -200,42 +200,60 @@ final class user_test extends testcase {
 
     public function test_can_view_message(): void {
         $generator = self::getDataGenerator();
-        $course = new course($generator->create_course());
+        $course1 = new course($generator->create_course());
+        $course2 = new course($generator->create_course(['visible' => 0]));
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
         $user3 = new user($generator->create_user());
         $user4 = new user($generator->create_user());
-        $generator->enrol_user($user1->id, $course->id);
-        $generator->enrol_user($user2->id, $course->id);
-        $generator->enrol_user($user4->id, $course->id);
+        $generator->enrol_user($user1->id, $course1->id);
+        $generator->enrol_user($user2->id, $course1->id);
+        $generator->enrol_user($user4->id, $course1->id);
+        $generator->enrol_user($user1->id, $course2->id);
+        $generator->enrol_user($user2->id, $course2->id, 'editingteacher');
+        $generator->enrol_user($user3->id, $course2->id);
         $time = make_timestamp(2021, 10, 11, 12, 0);
+
+        set_config('siteadmins', $user3->id);
 
         // Draft.
 
-        $data = message_data::new($course, $user1);
+        $data = message_data::new($course1, $user1);
         $data->subject = 'Subject';
         $data->to = [$user2, $user3];
         $data->time = $time;
-        $message = message::create($data);
-        self::assertTrue($user1->can_view_message($message));
-        self::assertFalse($user2->can_view_message($message));
-        self::assertFalse($user3->can_view_message($message));
-        self::assertFalse($user4->can_view_message($message));
+        $message1 = message::create($data);
+        self::assertTrue($user1->can_view_message($message1));
+        self::assertFalse($user2->can_view_message($message1));
+        self::assertFalse($user3->can_view_message($message1));
+        self::assertFalse($user4->can_view_message($message1));
 
         // Sent message.
 
-        $message->send($time);
-        self::assertTrue($user1->can_view_message($message));
-        self::assertTrue($user2->can_view_message($message));
-        self::assertFalse($user3->can_view_message($message));
-        self::assertFalse($user4->can_view_message($message));
+        $message1->send($time);
+        self::assertTrue($user1->can_view_message($message1));
+        self::assertTrue($user2->can_view_message($message1));
+        self::assertFalse($user3->can_view_message($message1));
+        self::assertFalse($user4->can_view_message($message1));
 
         // Deleted message.
 
-        $message->set_deleted($user1, message::DELETED_FOREVER);
-        $message->set_deleted($user2, message::DELETED_FOREVER);
-        self::assertFalse($user1->can_view_message($message));
-        self::assertFalse($user2->can_view_message($message));
+        $message1->set_deleted($user1, message::DELETED_FOREVER);
+        $message1->set_deleted($user2, message::DELETED_FOREVER);
+        self::assertFalse($user1->can_view_message($message1));
+        self::assertFalse($user2->can_view_message($message1));
+
+        // Sent message in hidden course.
+
+        $data = message_data::new($course2, $user1);
+        $data->subject = 'Subject';
+        $data->to = [$user2, $user3];
+        $data->time = $time;
+        $message2 = message::create($data);
+        $message2->send($time);
+        self::assertFalse($user1->can_view_message($message2));
+        self::assertTrue($user2->can_view_message($message2)); // Teacher.
+        self::assertTrue($user3->can_view_message($message2)); // Site administrator.
     }
 
     public function test_current(): void {

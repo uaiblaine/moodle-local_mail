@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Message not found error when a site administrator opens a message in a hidden course.
+
 ## [2.12] - 2025-01-22
 
 ### Changed
