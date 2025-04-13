@@ -18,4 +18,7 @@ export default defineConfig({
         sourcemap: true,
     },
     plugins: [svelte()],
+    server: {
+        cors: true,
+    },
 });
