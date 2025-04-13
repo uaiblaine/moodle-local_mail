@@ -14,7 +14,7 @@ The client side components are written using [Svelte](https://svelte.dev).
 2. Start the developement server with:
    ```
    cd local/mail/svelte
-   npm install
+   npm ci
    npm run dev
    ```
 
@@ -22,7 +22,7 @@ The client side components are written using [Svelte](https://svelte.dev).
 
 ```
 cd local/mail/svelte
-npm install
+npm ci
 npm run check
 npm run lint
 ```
@@ -31,7 +31,7 @@ npm run lint
 
 ```
 cd local/mail/svelte
-npm install
+npm ci
 npm run build
 ```
 
