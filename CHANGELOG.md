@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.14] - 2025-04-14
+
+### Added
+
+- Compatibility with Moodle 5.0.
+
+### Fixed
+
+- CORS error in the development server.
+
 ## [2.13] - 2025-03-13
 
 ### Fixed
