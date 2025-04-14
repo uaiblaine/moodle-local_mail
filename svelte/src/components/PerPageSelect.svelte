@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -23,7 +24,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <label for="local-mail-perpage-select">{$store.strings.messagesperpage}:</label>
         <select
             id="local-mail-perpage-select"
-            class="custom-select"
+            class="local-mail-perpage-select-select custom-select"
             bind:value={selected}
             on:change={() => store.savePreferences({ perpage: selected })}
         >
@@ -33,3 +34,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </select>
     </div>
 </div>
+
+<style>
+    .local-mail-perpage-select-select {
+        width: auto;
+        margin-left: 0.5rem;
+    }
+</style>

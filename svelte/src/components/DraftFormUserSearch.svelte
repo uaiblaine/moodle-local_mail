@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
-SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -116,7 +116,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     };
 </script>
 
-<div class="form-group">
+<div class="local-mail-draft-form-user-search form-group">
     <ComboBox
         bind:this={comboBox}
         mode="input"
@@ -132,14 +132,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
         onInput={() => search(true)}
     >
         <div
-            class="local-mail-draft-form-user-search-dropdown dropdown-menu dropdown-menu-left p-0 w-100"
+            class="local-mail-draft-form-user-search-dropdown dropdown-menu p-0 w-100"
             class:show={expanded}
             style="min-width: 18rem"
         >
             <div class="list-group-item d-sm-flex px-2 py-2">
                 <div class="flex-grow-1 mx-2">
                     <select
-                        class="form-control text-truncate"
+                        class="form-control custom-select w-100 text-truncate bg-transparent"
                         bind:value={roleid}
                         on:change={() => search(false)}
                     >
@@ -235,6 +235,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 </div>
 
 <style>
+    .local-mail-draft-form-user-search :global(.list-group-item) {
+        background: none;
+    }
+
     .local-mail-draft-form-user-search-dropdown {
         max-height: 50vh;
         max-width: 50rem;

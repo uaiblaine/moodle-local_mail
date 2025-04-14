@@ -1,34 +1,34 @@
 {
   "_global-!~{003}~.js": {
-    "file": "global-DBPMaRB8.css",
+    "file": "global-DuzdCNhf.css",
     "src": "_global-!~{003}~.js"
   },
-  "_global-C5pVt8Sc.js": {
-    "file": "global-C5pVt8Sc.js",
+  "_global-CUTJa-Jf.js": {
+    "file": "global-CUTJa-Jf.js",
     "name": "global",
     "css": [
-      "global-DBPMaRB8.css"
+      "global-DuzdCNhf.css"
     ]
   },
   "src/navigation.ts": {
-    "file": "navigation-CvXqBWQ8.js",
+    "file": "navigation-qxMtMryf.js",
     "name": "navigation",
     "src": "src/navigation.ts",
     "isEntry": true,
     "imports": [
-      "_global-C5pVt8Sc.js"
+      "_global-CUTJa-Jf.js"
     ]
   },
   "src/view.ts": {
-    "file": "view-BLyIWThw.js",
+    "file": "view-D8IGdRnp.js",
     "name": "view",
     "src": "src/view.ts",
     "isEntry": true,
     "imports": [
-      "_global-C5pVt8Sc.js"
+      "_global-CUTJa-Jf.js"
     ],
     "css": [
-      "view-CMt0mRi7.css"
+      "view-D5mHcvEW.css"
     ]
   }
 }

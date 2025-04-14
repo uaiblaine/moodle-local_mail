@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -18,7 +19,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         (file.filepath + file.filename).replace(/^\//, '');
 </script>
 
-<div class="local-mail-message-attachments d-sm-flex flex-wrap mr-n3 mt-3 mb-sm-n3">
+<div class="local-mail-message-attachments d-sm-flex flex-wrap">
     {#each message.attachments as file}
         <a
             href={file.fileurl}
@@ -59,6 +60,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 </div>
 
 <style>
+    .local-mail-message-attachments {
+        margin-top: 1rem;
+        margin-right: -1rem;
+    }
+
     .local-mail-message-attachments a {
         min-width: 0;
         min-height: 3rem;
@@ -70,5 +76,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
     }
     .local-mail-message-attachments-file:hover img {
         display: none !important;
+    }
+
+    @media (min-width: 576px) {
+        .local-mail-message-attachments {
+            margin-bottom: -1rem;
+        }
     }
 </style>

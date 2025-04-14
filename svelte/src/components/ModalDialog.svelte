@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -50,12 +51,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
 >
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header align-items-center">
                 <h5 class="modal-title">
                     {title}
                 </h5>
-                <button type="button" class="close" aria-label={cancelText} on:click={onCancel}>
-                    <span aria-hidden="true">&times;</span>
+                <button
+                    type="button"
+                    class="close d-flex align-items-center justify-content ml-auto"
+                    aria-label={cancelText}
+                    on:click={onCancel}
+                >
+                    <span aria-hidden="true" class="fa fa-times" />
                 </button>
             </div>
             <div class="modal-body">

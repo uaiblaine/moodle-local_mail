@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -17,11 +18,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <button
     type="button"
-    class="btn px-2"
+    class="btn px-2 d-flex align-items-center border-0"
     role="checkbox"
     aria-checked={Boolean($store.selectedMessages.has(message.id))}
     title={$store.strings.select}
     on:click|preventDefault|stopPropagation={() => store.toggleSelected(message.id)}
 >
-    <i class="fa align-middle {checkClass}" />
+    <i class="fa {checkClass}" />
 </button>

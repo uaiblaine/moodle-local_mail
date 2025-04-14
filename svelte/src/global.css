@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -31,6 +31,12 @@
     --local-mail-color-cyan-fg: #055160;
 }
 
+.local-mail {
+    --bs-list-group-border-width: 1px;
+    --bs-list-group-border-color: rgba(0, 0, 0, 0.125);
+    --bs-secondary-border-subtle: rgba(0, 0, 0, 0.125);
+}
+
 .local-mail .btn:disabled {
     opacity: 0.4;
 }
@@ -40,7 +46,21 @@
 }
 
 .local-mail .dropdown-menu {
-    background-color: var(--light);
+    top: 100%;
+    margin-top: 0.125rem;
+    background-color: var(--light, var(--bs-gray-100));
+}
+
+.local-mail .dropdown-menu-right {
+    right: 0;
+    left: auto;
+}
+
+.local-mail .dropup .dropdown-menu {
+    top: auto;
+    bottom: 100%;
+    margin-top: 0;
+    margin-bottom: 0.125rem;
 }
 
 .local-mail .dropdown-item:not(:focus):hover {
@@ -98,8 +118,9 @@
 }
 
 #page-local-mail-view .btn-footer-popover {
+    display: block;
     position: static;
-    margin: 0 2rem 2rem auto;
+    margin: 2rem 2rem 2rem auto;
 }
 
 #page-local-mail-view.pagelayout-embedded,

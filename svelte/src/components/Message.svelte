@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -36,14 +37,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
             {message.subject}
         </h3>
         <div class="d-md-flex align-items-start mb-2">
-            <div class="d-flex flex-wrap mx-n2 mt-2" style="min-width: 0">
+            <div class="local-mail-message-labels d-flex flex-wrap" style="min-width: 0">
                 <MessageLabels {store} {message} />
             </div>
             <div class="d-flex justify-content-between flex-shrink-0 ml-auto">
                 <div class="my-2 text-truncate">
                     {message.fulltime}
                 </div>
-                <div class="d-flex flex-shrink-0 ml-3 mr-n2">
+                <div class="local-mail-message-actions d-flex flex-shrink-0">
                     <NessageActions {store} {message} {canReplyAll} />
                 </div>
             </div>
@@ -56,7 +57,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <MessageAttachments strings={$store.strings} {message} />
         {/if}
         <hr />
-        <div class="mt-3 d-flex mr-n3 mb-n3 flex-column flex-sm-row justify-content-end">
+        <div class="local-mail-message-buttons d-flex flex-column flex-sm-row justify-content-end">
             <MessageButtons {store} {message} {canReplyAll} />
         </div>
     </div>
@@ -70,3 +71,22 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <MessageReference strings={$store.strings} {reference} />
     {/each}
 {/if}
+
+<style>
+    .local-mail-message-actions {
+        margin-left: 1rem;
+        margin-right: -0.5rem;
+    }
+
+    .local-mail-message-buttons {
+        margin-top: 1rem;
+        margin-right: -1rem;
+        margin-bottom: -1rem;
+    }
+
+    .local-mail-message-labels {
+        margin-top: 0.5rem;
+        margin-left: -0.5rem;
+        margin-right: -0.5rem;
+    }
+</style>

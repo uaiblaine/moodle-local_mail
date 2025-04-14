@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
-SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -51,10 +51,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 </script>
 
 <div bind:this={node} class="local-mail-combo-box" use:blur={() => onBlur?.()}>
-    <div class="local-mail-combo-box-left-icon">
-        <i class="fa fa-fw {leftIconClass}" aria-hidden="true" />
-    </div>
-
     {#if mode == 'input'}
         <input
             type="text"
@@ -93,6 +89,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
             {readonlyText}
         </div>
     {/if}
+
+    <div class="local-mail-combo-box-left-icon">
+        <i class="fa fa-fw {leftIconClass}" aria-hidden="true" />
+    </div>
+
     {#if middleIconClass}
         <button
             type="button"
@@ -103,6 +104,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <i class="fa fa-fw {middleIconClass}" aria-hidden="true" />
         </button>
     {/if}
+
     {#if rightIconClass}
         <button
             type="button"
@@ -143,8 +145,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
     }
 
     .local-mail-combo-box-button {
-        padding-left: 2.5rem;
-        padding-right: 0.5rem;
+        padding: 0.375rem 0.5rem 0.375rem 2.5rem;
+        margin-bottom: 0;
         text-align: left;
     }
 

@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -23,7 +24,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             animate:flip
             in:fly|global={{ y: 50, delay: 200 }}
             out:fly|global={{ y: 50, duration: 400 }}
-            class="toast mt-2 mb-0"
+            class="toast mt-2 mb-0 show"
             role="alert"
             aria-live="assertive"
             aria-atomic="true"
@@ -43,7 +44,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
                 <button
                     type="button"
-                    class="btn px-2 py-0 ml-2 text-white-50"
+                    class="btn px-2 py-0 ml-2"
                     title={$store.strings.close}
                     on:click={() => store.hideToast(toast)}
                 >

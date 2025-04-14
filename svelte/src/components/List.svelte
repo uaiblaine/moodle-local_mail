@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -63,7 +64,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                             >
                                 <ListMessageSubject {store} {message} />
                                 <div
-                                    class="d-flex text-truncate flex-shrink-0 justify-content-end mb-n2 ml-auto"
+                                    class="local-mail-list-message-labels-md d-flex text-truncate flex-shrink-0 justify-content-end"
                                     style="max-width: 80%"
                                 >
                                     <ListMessageLabels {store} {message} />
@@ -90,7 +91,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                                 </div>
                                 <ListMessageStar {store} {message} />
                             </div>
-                            <div class="d-flex flex-wrap ml-n2 mr-2">
+                            <div class="local-mail-list-message-labels d-flex flex-wrap mr-2">
                                 <ListMessageLabels {store} {message} />
                             </div>
                         </div>
@@ -110,5 +111,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
     .local-mail-list-message:focus,
     .local-mail-list-message :global(.btn:focus) {
         z-index: 3;
+    }
+
+    .local-mail-list-message-labels {
+        margin-left: -0.5rem;
+    }
+
+    .local-mail-list-message-labels-md {
+        margin-left: auto;
+        margin-bottom: -0.5rem;
     }
 </style>
