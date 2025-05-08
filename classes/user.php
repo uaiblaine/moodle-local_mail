@@ -206,9 +206,15 @@ class user {
      */
     public function picture_url(): ?string {
         global $PAGE;
+
+        if ($this->deleted) {
+            return '';
+        }
+
         $userpicture = new \user_picture((object) (array) $this);
         $url = $userpicture->get_url($PAGE)->out(false);
         $defaulturl = $PAGE->get_renderer('core')->image_url('u/f2')->out(false);
+
         return $url == $defaulturl ? '' : $url;
     }
 

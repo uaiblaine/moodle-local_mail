@@ -365,6 +365,9 @@ final class user_test extends test\testcase {
         // Deleted user.
         self::assertEquals('', $user2->picture_url());
 
+        // User with ID 0.
+        self::assertEquals('', user::get(0)->picture_url());
+
         // User without picture.
         self::assertEquals('', $user3->picture_url());
     }
