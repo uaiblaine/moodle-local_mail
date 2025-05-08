@@ -2,7 +2,7 @@
 /*
  * SPDX-FileCopyrightText: 2012-2014 Institut Obert de Catalunya <https://ioc.gencat.cat>
  * SPDX-FileCopyrightText: 2014-2021 Marc Català <reskit@gmail.com>
- * SPDX-FileCopyrightText: 2016-2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2016-2025 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -163,9 +163,6 @@ final class message_test extends testcase {
             self::assertEquals('errormessagenotfound', $e->errorcode);
             self::assertEquals(123, $e->a);
         }
-
-        // Ignored missing message.
-        self::assertNull(message::get(123, IGNORE_MISSING));
     }
 
     public function test_get_course(): void {
@@ -259,10 +256,6 @@ final class message_test extends testcase {
             self::assertEquals('errormessagenotfound', $e->errorcode);
             self::assertEquals(123, $e->a);
         }
-
-        // Ignored missing message.
-        $result = message::get_many([$message1->id, 134, $message2->id], IGNORE_MISSING);
-        self::assertEquals([$message2->id => $message2, $message1->id => $message1], $result);
 
         // No IDs.
         self::assertEquals([], message::get_many([]));

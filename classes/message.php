@@ -2,7 +2,7 @@
 /*
  * SPDX-FileCopyrightText: 2012-2014 Institut Obert de Catalunya <https://ioc.gencat.cat>
  * SPDX-FileCopyrightText: 2014-2021 Marc Català <reskit@gmail.com>
- * SPDX-FileCopyrightText: 2016-2017 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2016-2025 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -184,23 +184,21 @@ class message {
      * Gets a message from the database.
      *
      * @param int $id ID of the message to get.
-     * @param int $strictness MUST_EXIST or IGNORE_MISSING.
-     * @return ?self
+     * @return self
      */
-    public static function get(int $id, int $strictness = MUST_EXIST): ?self {
-        $messages = self::get_many([$id], $strictness);
+    public static function get(int $id): self {
+        $messages = self::get_many([$id]);
 
-        return $messages[$id] ?? null;
+        return $messages[$id];
     }
 
     /**
      * Gets messages from the database.
      *
      * @param int[] $ids IDs of the messages to get.
-     * @param int $strictness MUST_EXIST or IGNORE_MISSING.
      * @return self[] Array of messages ordered from newer to older and indexed by ID.
      */
-    public static function get_many(array $ids, int $strictness = MUST_EXIST): array {
+    public static function get_many(array $ids): array {
         global $DB;
 
         $messages = self::cache()->get_many($ids);
@@ -216,7 +214,7 @@ class message {
             foreach ($missingids as $id) {
                 if (isset($messagerecords[$id])) {
                     $messages[$id] = new self($messagerecords[$id]);
-                } else if ($strictness == MUST_EXIST) {
+                } else {
                     throw new exception('errormessagenotfound', $id);
                 }
             }
@@ -252,7 +250,6 @@ class message {
         }
 
         // Sort messages by ascending time and ascending ID.
-        $messages = array_filter($messages);
         uasort($messages, fn ($a, $b) => $a->time == $b->time ? $b->id - $a->id : $b->time - $a->time);
 
         return $messages;

@@ -1083,7 +1083,7 @@ final class external_test extends testcase {
 
         $result = external::set_deleted($draft->id, '2');
         self::assertNull($result);
-        self::assertNull(message::get($draft->id, IGNORE_MISSING));
+        self::assert_record_count(0, 'messages', ['id' => $draft->id]);
 
         self::assert_message_event('\local_mail\event\draft_deleted', $draft, $eventsink);
 
@@ -1170,7 +1170,7 @@ final class external_test extends testcase {
         self::assertEquals(message::DELETED_FOREVER, message::get($message4->id)->deleted($user1));
         self::assertEquals(message::DELETED_FOREVER, message::get($message5->id)->deleted($user1));
         self::assertEquals(message::DELETED, message::get($message6->id)->deleted($user1));
-        self::assertNull(message::get($draft->id, IGNORE_MISSING));
+        self::assert_record_count(0, 'messages', ['id' => $draft->id]);
         self::assert_message_event('\local_mail\event\draft_deleted', $draft, $eventsink);
 
         // Empty course trash.
@@ -1448,7 +1448,7 @@ final class external_test extends testcase {
 
         self::assertNull(external::delete_label_returns());
         self::assertNull($result);
-        self::assertNUll(label::get($label1->id, IGNORE_MISSING));
+        self::assert_record_count(0, 'labels', ['id' => $label1->id]);
 
         // Invalid label.
 

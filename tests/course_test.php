@@ -1,7 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -38,9 +38,6 @@ final class course_test extends testcase {
             self::assertEquals('errorcoursenotfound', $e->errorcode);
             self::assertEquals(123, $e->a);
         }
-
-        // Ignored missing course.
-        self::assertNull(course::get(123, IGNORE_MISSING));
     }
 
     public function test_get_by_user(): void {
@@ -112,10 +109,6 @@ final class course_test extends testcase {
             self::assertEquals('errorcoursenotfound', $e->errorcode);
             self::assertEquals(123, $e->a);
         }
-
-        // Ignored missing course.
-        $result = course::get_many([$course1->id, 123, $course2->id], IGNORE_MISSING);
-        self::assertEquals([$course1->id => $course1, $course2->id => $course2], $result);
 
         // No IDs.
         self::assertEquals([], course::get_many([]));

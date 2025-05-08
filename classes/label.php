@@ -3,6 +3,7 @@
  * SPDX-FileCopyrightText: 2012-2013 Institut Obert de Catalunya <https://ioc.gencat.cat>
  * SPDX-FileCopyrightText: 2014-2015 Marc Català <reskit@gmail.com>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -78,13 +79,12 @@ class label {
      * Gets a label from the database.
      *
      * @param int $id ID of the label to get.
-     * @param int $strictness MUST_EXIST or IGNORE_MISSING.
-     * @return ?self
+     * @return self
      */
-    public static function get(int $id, int $strictness = MUST_EXIST): ?self {
-        $labels = self::get_many([$id], $strictness);
+    public static function get(int $id): self {
+        $labels = self::get_many([$id]);
 
-        return $labels[$id] ?? null;
+        return $labels[$id];
     }
 
     /**
@@ -119,10 +119,9 @@ class label {
      * Gets multiple labels from the database.
      *
      * @param int[] $id IDs of the labels to get.
-     * @param int $strictness MUST_EXIST or IGNORE_MISSING.
      * @return self[] Array of labels indexed by ID.
      */
-    public static function get_many(array $ids, int $strictness = MUST_EXIST): array {
+    public static function get_many(array $ids): array {
         global $DB;
 
         $labels = self::cache()->get_many($ids);
@@ -135,13 +134,13 @@ class label {
                 if (isset($records[$id])) {
                     $labels[$id] = new self($records[$id]);
                     self::cache()->set($id, $labels[$id]);
-                } else if ($strictness == MUST_EXIST) {
+                } else {
                     throw new exception('errorlabelnotfound', $id);
                 }
             }
         }
 
-        return array_filter($labels);
+        return $labels;
     }
 
     /**

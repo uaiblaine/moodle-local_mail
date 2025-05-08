@@ -93,7 +93,12 @@ function main() {
     $starttime = time();
 
     $fs = get_file_storage();
-    $courses = course::get_many(array_keys(get_courses('all', 'c.sortorder', 'c.id')), IGNORE_MISSING);
+    $courses = [];
+    foreach (get_courses('all', 'c.sortorder') as $record) {
+        if ($record->id != SITEID) {
+            $courses[$record->id] = new course($record);
+        }
+    }
 
     delete_messages($courses);
     generate_user_labels();

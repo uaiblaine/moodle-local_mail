@@ -128,7 +128,7 @@ class user {
             }
         }
 
-        return array_filter($users);
+        return $users;
     }
 
     /**

@@ -3,7 +3,7 @@
  * SPDX-FileCopyrightText: 2012-2013 Institut Obert de Catalunya <https://ioc.gencat.cat>
  * SPDX-FileCopyrightText: 2021 Marc Català <reskit@gmail.com>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -48,7 +48,8 @@ final class label_test extends testcase {
 
         $label1->delete();
 
-        self::assertNull(label::get($label1->id, IGNORE_MISSING));
+        self::assert_record_count(0, 'labels', ['id' => $label1->id]);
+        self::assert_record_count(0, 'message_labels', ['labelid' => $label1->id]);
         self::assertEquals($label2, label::get($label2->id));
         $message = message::get($message->id);
         self::assertEquals([$label2], $message->get_labels($user));
@@ -75,9 +76,6 @@ final class label_test extends testcase {
             self::assertEquals('errorlabelnotfound', $e->errorcode);
             self::assertEquals(123, $e->a);
         }
-
-        // Ignore missing label.
-        self::assertNull(label::get(123, IGNORE_MISSING));
     }
 
     public function test_get_by_user(): void {
@@ -130,10 +128,6 @@ final class label_test extends testcase {
             self::assertEquals('errorlabelnotfound', $e->errorcode);
             self::assertEquals(123, $e->a);
         }
-
-        // Ignore missing label.
-        $result = label::get_many([$label1->id, 123, $label2->id], IGNORE_MISSING);
-        self::assertEquals([$label1->id => $label1, $label2->id => $label2], $result);
 
         // No IDs.
         self::assertEquals([], label::get_many([]));

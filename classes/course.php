@@ -1,7 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -50,13 +50,12 @@ class course {
      * Gets a course from the database.
      *
      * @param int $id ID of the course to get.
-     * @param int $strictness MUST_EXIST or IGNORE_MISSING.
-     * @return ?self
+     * @return self
      */
-    public static function get(int $id, int $strictness = MUST_EXIST): ?self {
-        $courses = self::get_many([$id], $strictness);
+    public static function get(int $id): self {
+        $courses = self::get_many([$id]);
 
-        return $courses[$id] ?? null;
+        return $courses[$id];
     }
 
     /**
@@ -92,10 +91,9 @@ class course {
      * Gets multiple courses from the database.
      *
      * @param int[] $ids IDs of the courses to get.
-     * @param int $strictness MUST_EXIST or IGNORE_MISSING.
      * @return self[] Array of courses indexed by ID.
      */
-    public static function get_many(array $ids, int $strictness = MUST_EXIST): array {
+    public static function get_many(array $ids): array {
         global $DB;
 
         $courses = self::cache()->get_many($ids);
@@ -111,13 +109,13 @@ class course {
                 if (isset($records[$id])) {
                     $courses[$id] = new self($records[$id]);
                     self::cache()->set($id, $courses[$id]);
-                } else if ($strictness == MUST_EXIST) {
+                } else {
                     throw new exception('errorcoursenotfound', $id);
                 }
             }
         }
 
-        return array_filter($courses);
+        return $courses;
     }
 
     /**

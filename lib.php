@@ -2,13 +2,14 @@
 /*
  * SPDX-FileCopyrightText: 2012-2014 Institut Obert de Catalunya <https://ioc.gencat.cat>
  * SPDX-FileCopyrightText: 2014-2020 Marc Català <reskit@gmail.com>
- * SPDX-FileCopyrightText: 2016-2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2016-2025 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 use local_mail\course;
+use local_mail\exception;
 use local_mail\external;
 use local_mail\message;
 use local_mail\output\strings;
@@ -30,14 +31,18 @@ function local_mail_pluginfile(
 
     $user = user::current();
 
-    if (!settings::is_installed() || !$user) {
+    if (!settings::is_installed() || !$user || $filearea != 'message') {
         return false;
     }
 
     // Check message.
     $messageid = (int) array_shift($args);
-    $message = message::get($messageid, IGNORE_MISSING);
-    if ($filearea != 'message' || !$message || !$user || !$user->can_view_files($message)) {
+    try {
+        $message = message::get($messageid);
+    } catch (exception $e) {
+        return false;
+    }
+    if (!$user->can_view_files($message)) {
         return false;
     }
 
