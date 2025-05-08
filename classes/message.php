@@ -131,10 +131,12 @@ class message {
 
         // References.
         if ($data->reference) {
-            $records = [['messageid' => $message->id, 'reference' => $data->reference->id]];
-            foreach ($data->reference->get_references() as $reference) {
-                $records[] = ['messageid' => $message->id, 'reference' => $reference->id];
+            $records = $DB->get_records('local_mail_message_refs', ['messageid' => $data->reference->id]);
+            foreach ($records as $record) {
+                unset($record->id);
+                $record->messageid = $message->id;
             }
+            $records[] = (object) ['messageid' => $message->id, 'reference' => $data->reference->id];
             $DB->insert_records('local_mail_message_refs', $records);
         }
 
@@ -313,20 +315,27 @@ class message {
      * Gets the references of the message.
      *
      * @param bool $reverse Return forward references instead of backward references.
-     * @return self[] Array of references indexed by ID.
+     * @param int $offset Skip this number of messages.
+     * @param int $limit Maximum number of messages, 0 means no limit.
+     * @return self[] Array of ordered references indexed by ID.
      */
-    public function get_references(bool $forward = false): array {
+    public function get_references(bool $forward = false, int $offset = 0, int $limit = 0): array {
         global $DB;
 
         if ($forward) {
-            $conditions = ['reference' => $this->id];
-            $field = 'messageid';
+            $thisfield = 'reference';
+            $otherfield = 'messageid';
         } else {
-            $conditions = ['messageid' => $this->id];
-            $field = 'reference';
+            $thisfield = 'messageid';
+            $otherfield = 'reference';
         }
 
-        $records = $DB->get_records('local_mail_message_refs', $conditions, '', $field);
+        $sql = 'SELECT m.id'
+            . ' FROM {local_mail_message_refs} mr'
+            . " JOIN {local_mail_messages} m ON m.id = mr.$otherfield"
+            . " WHERE mr.$thisfield = ?"
+            . ' ORDER BY m.time DESC, m.id DESC';
+        $records = $DB->get_records_sql($sql, [$this->id], $offset, $limit);
 
         return self::get_many(array_keys($records));
     }
@@ -414,13 +423,12 @@ class message {
         $this->time = $time;
 
         // Set labels from first reference.
-        foreach ($this->get_references() as $ref) {
+        foreach ($this->get_references(false, 0, 1) as $ref) {
             foreach ($this->users as $user) {
                 if ($this->roles[$user->id] != self::ROLE_FROM && !empty($ref->labelids[$user->id])) {
                     $this->set_labels($user, label::get_many($ref->labelids[$user->id]));
                 }
             }
-            break;
         }
 
         $transaction->allow_commit();
@@ -635,7 +643,9 @@ class message {
         $newcontext = $data->course->get_context();
 
         // Course.
-        $this->course = $data->course;
+        if (!$DB->record_exists('local_mail_message_refs', ['messageid' => $this->id])) {
+            $this->course = $data->course;
+        }
 
         // Subject.
         $this->subject = trim($data->subject);

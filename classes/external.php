@@ -1556,13 +1556,7 @@ class external extends \external_api {
             throw new exception('errormessagenotfound', $message->id);
         }
 
-        $references = $message->get_references();
-        if ($references) {
-            $course = current($references)->course;
-        } else {
-            $course = course::get($params['data']['courseid']);
-        }
-
+        $course = course::get($params['data']['courseid']);
         if (!$user->can_use_mail($course)) {
             throw new exception('errorcoursenotfound', $course->id);
         }

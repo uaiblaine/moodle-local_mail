@@ -263,14 +263,30 @@ final class message_test extends test\testcase {
         $data3 = message_data::reply($message2, $user2, false);
         $data3->to = [$user3];
         $message3 = message::create($data3);
-        $message3->send($time3);
+        $message3->send($time2);
 
-        self::assertEquals(message::get_many([]), $message1->get_references());
-        self::assertEquals(message::get_many([$message1->id]), $message2->get_references());
-        self::assertEquals(message::get_many([$message2->id, $message1->id]), $message3->get_references());
-        self::assertEquals(message::get_many([$message3->id, $message2->id]), $message1->get_references(true));
-        self::assertEquals(message::get_many([$message3->id]), $message2->get_references(true));
-        self::assertEquals(message::get_many([]), $message3->get_references(true));
+        $data4 = message_data::reply($message3, $user3, false);
+        $data4->to = [$user2];
+        $message4 = message::create($data4);
+        $message4->send($time3);
+
+        $data5 = message_data::reply($message4, $user2, false);
+        $data5->to = [$user3];
+        $message5 = message::create($data5);
+        $message5->send($time3);
+
+        self::assert_array_of_objects([], $message1->get_references());
+        self::assert_array_of_objects([$message1], $message2->get_references());
+        self::assert_array_of_objects([$message2, $message1], $message3->get_references());
+        self::assert_array_of_objects([$message3, $message2, $message1], $message4->get_references());
+        self::assert_array_of_objects([$message4, $message3, $message2, $message1], $message5->get_references());
+        self::assert_array_of_objects([$message3, $message2], $message5->get_references(false, 1, 2));
+        self::assert_array_of_objects([], $message5->get_references(true));
+        self::assert_array_of_objects([$message5], $message4->get_references(true));
+        self::assert_array_of_objects([$message5, $message4], $message3->get_references(true));
+        self::assert_array_of_objects([$message5, $message4, $message3], $message2->get_references(true));
+        self::assert_array_of_objects([$message5, $message4, $message3, $message2], $message1->get_references(true));
+        self::assert_array_of_objects([$message4, $message3], $message1->get_references(true, 1, 2));
     }
 
     public function test_has_label(): void {
@@ -683,5 +699,16 @@ final class message_test extends test\testcase {
 
         self::assertEquals(str_repeat('X', 95) . 'AB...', $message->subject);
         self::assert_message($message);
+
+        // Course of replies cannot be changed.
+
+        $message->send($data->time);
+        $data = message_data::reply($message, $user2, false);
+        $reply = message::create($data);
+        $data = message_data::draft($reply);
+        $data->course = $course1;
+        $reply->update($data);
+        self::assertEquals($course2, $reply->course);
+        self::assert_message($reply);
     }
 }
