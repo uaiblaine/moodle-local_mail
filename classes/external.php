@@ -985,6 +985,10 @@ class external extends \external_api {
     public static function set_deleted() {
         $params = self::validate_call(self::set_deleted_parameters(), func_get_args());
 
+        if (!in_array($params['deleted'], [message::NOT_DELETED, message::DELETED, message::DELETED_FOREVER])) {
+            throw new \invalid_parameter_exception('Invalid deleted status');
+        }
+
         $user = user::current();
         $message = message::get($params['messageid']);
 

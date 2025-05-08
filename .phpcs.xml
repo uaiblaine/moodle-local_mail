@@ -3,6 +3,12 @@
   <rule ref="moodle"/>
   <rule ref="moodle-extra"/>
   <exclude-pattern type="relative">^svelte/</exclude-pattern>
+  <rule ref="PSR12.Classes.OpeningBraceSpace.Found">
+    <severity>0</severity>
+  </rule>
+  <rule ref="Universal.OOStructures.AlphabeticExtendsImplements.ImplementsWrongOrder">
+    <severity>0</severity>
+  </rule>
   <rule ref="moodle.Commenting.DocblockDescription">
     <severity>0</severity>
   </rule>

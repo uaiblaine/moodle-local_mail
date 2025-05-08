@@ -18,6 +18,6 @@ class observer {
      * @param \core\event\course_deleted $event
      */
     public static function course_deleted(\core\event\course_deleted $event) {
-        message::delete_course($event->get_context());
+        message::delete_course_data($event->get_context());
     }
 }

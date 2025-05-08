@@ -10,6 +10,8 @@
 
 namespace local_mail;
 
+use local_mail\output\strings;
+
 /**
  * @covers \local_mail\message
  */
@@ -91,7 +93,7 @@ final class message_test extends test\testcase {
         self::assertEquals([$data->reference->id => $data->reference], $message->get_references());
     }
 
-    public function test_delete_course(): void {
+    public function test_delete_course_data(): void {
         [$users, $messages] = self::generate_random_data(true);
 
         $course = $messages[0]->course;
@@ -99,7 +101,7 @@ final class message_test extends test\testcase {
 
         $fs = get_file_storage();
 
-        message::delete_course($context);
+        message::delete_course_data($context);
 
         self::assert_record_count(0, 'messages', ['courseid' => $course->id]);
         self::assert_record_count(0, 'message_users', ['courseid' => $course->id]);
@@ -467,7 +469,6 @@ final class message_test extends test\testcase {
     }
 
     public function test_set_deleted(): void {
-        $fs = get_file_storage();
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -475,37 +476,50 @@ final class message_test extends test\testcase {
         $label1 = label::create($user1, 'Label 1');
         $label2 = label::create($user2, 'Label 2');
         $time = make_timestamp(2021, 10, 11, 12, 0);
-
         $data = message_data::new($course, $user1);
         $data->subject = 'subject';
+        $data->content = 'content';
+        $data->format = FORMAT_HTML;
         $data->to = [$user2];
+        self::create_draft_file($data->draftitemid, 'file.txt', 'File');
+
+        // Delete message.
+
         $message = message::create($data);
         $message->send($time);
+        $message->set_unread($user1, true);
+        $message->set_unread($user2, true);
+        $message->set_starred($user1, true);
+        $message->set_starred($user2, true);
+        $message->set_labels($user1, [$label1]);
         $message->set_labels($user2, [$label2]);
-        $draft = message::create($data);
-        $draft->set_labels($user1, [$label1]);
-
-        // Delete draft forever.
-
-        $draft->set_deleted($user1, message::DELETED_FOREVER);
-
-        self::assert_record_count(0, 'messages', ['id' => $draft->id]);
-        self::assert_record_count(0, 'message_refs', ['messageid' => $draft->id]);
-        self::assert_record_count(0, 'message_users', ['messageid' => $draft->id]);
-        self::assert_record_count(0, 'message_labels', ['messageid' => $draft->id]);
-        self::assertEquals([], $fs->get_area_files($course->get_context()->id, 'local_mail', 'message', $draft->id));
-        self::assertEquals(message::DELETED_FOREVER, $draft->deleted($user1));
-        self::assertEquals([], $draft->get_labels($user1));
-
-        // Delete sent message.
-
         $message->set_deleted($user2, message::DELETED);
 
+        self::assertEquals(message::NOT_DELETED, $message->deleted($user1));
         self::assertEquals(message::DELETED, $message->deleted($user2));
+        self::assertTrue($message->unread($user1));
+        self::assertTrue($message->unread($user2));
+        self::assertTrue($message->starred($user1));
+        self::assertTrue($message->starred($user2));
+        self::assertEquals([$label1], $message->get_labels($user1));
+        self::assertEquals([$label2], $message->get_labels($user2));
+        self::assertEquals('subject', $message->subject);
+        self::assertEquals('content', $message->content);
+        self::assertEquals(FORMAT_HTML, $message->format);
+        self::assertEquals(1, $message->attachments);
+        self::assert_attachments(['file.txt' => 'File'], $message);
         self::assert_message($message);
 
         // Restore deleted message.
 
+        $message = message::create($data);
+        $message->send($time);
+        $message->set_unread($user1, true);
+        $message->set_unread($user2, true);
+        $message->set_starred($user1, true);
+        $message->set_starred($user2, true);
+        $message->set_labels($user1, [$label1]);
+        $message->set_labels($user2, [$label2]);
         $message->set_deleted($user2, message::NOT_DELETED);
 
         self::assertEquals(message::NOT_DELETED, $message->deleted($user2));
@@ -513,10 +527,123 @@ final class message_test extends test\testcase {
 
         // Delete sent message forever.
 
+        $message = message::create($data);
+        $message->send($time);
+        $message->set_unread($user1, true);
+        $message->set_unread($user2, true);
+        $message->set_starred($user1, true);
+        $message->set_starred($user2, true);
+        $message->set_labels($user1, [$label1]);
+        $message->set_labels($user2, [$label2]);
+        $message->set_deleted($user1, message::DELETED_FOREVER);
+
+        self::assertEquals(message::DELETED_FOREVER, $message->deleted($user1));
+        self::assertEquals(message::NOT_DELETED, $message->deleted($user2));
+        self::assertFalse($message->unread($user1));
+        self::assertTrue($message->unread($user2));
+        self::assertFalse($message->starred($user1));
+        self::assertTrue($message->starred($user2));
+        self::assertEquals([], $message->get_labels($user1));
+        self::assertEquals([$label2], $message->get_labels($user2));
+        self::assertEquals('subject', $message->subject);
+        self::assertEquals('content', $message->content);
+        self::assertEquals(FORMAT_HTML, $message->format);
+        self::assertEquals(1, $message->attachments);
+        self::assert_attachments(['file.txt' => 'File'], $message);
+        self::assert_message($message);
+
+        // Delete received message forever.
+
+        $message = message::create($data);
+        $message->send($time);
+        $message->set_unread($user1, true);
+        $message->set_unread($user2, true);
+        $message->set_starred($user1, true);
+        $message->set_starred($user2, true);
+        $message->set_labels($user1, [$label1]);
+        $message->set_labels($user2, [$label2]);
         $message->set_deleted($user2, message::DELETED_FOREVER);
 
+        self::assertEquals(message::NOT_DELETED, $message->deleted($user1));
         self::assertEquals(message::DELETED_FOREVER, $message->deleted($user2));
+        self::assertTrue($message->unread($user1));
+        self::assertFalse($message->unread($user2));
+        self::assertTrue($message->starred($user1));
+        self::assertFalse($message->starred($user2));
+        self::assertEquals([$label1], $message->get_labels($user1));
+        self::assertEquals([], $message->get_labels($user2));
+        self::assertEquals('subject', $message->subject);
+        self::assertEquals('content', $message->content);
+        self::assertEquals(FORMAT_HTML, $message->format);
+        self::assertEquals(1, $message->attachments);
+        self::assert_attachments(['file.txt' => 'File'], $message);
         self::assert_message($message);
+
+        // Delete draft forever.
+
+        $draft = message::create($data);
+        $draft->set_labels($user1, [$label1]);
+
+        $draft->set_deleted($user1, message::DELETED_FOREVER);
+
+        self::assert_record_count(0, 'messages', ['id' => $draft->id]);
+        self::assert_record_count(0, 'message_refs', ['messageid' => $draft->id]);
+        self::assert_record_count(0, 'message_users', ['messageid' => $draft->id]);
+        self::assert_record_count(0, 'message_labels', ['messageid' => $draft->id]);
+        self::assert_attachments([], $draft);
+        self::assertEquals(message::DELETED_FOREVER, $draft->deleted($user1));
+        self::assertEquals([], $draft->get_labels($user1));
+        self::assertEquals(strings::get('deletedmessagesubject'), $draft->subject);
+        self::assertEquals(strings::get('deletedmessagecontent'), $draft->content);
+        self::assertEquals(FORMAT_PLAIN, $draft->format);
+        self::assertEquals(0, $draft->attachments);
+
+        // Delete content data of sent message.
+
+        $message = message::create($data);
+        $message->send($time);
+        $message->set_starred($user1, true);
+        $message->set_unread($user1, true);
+        $message->set_starred($user2, true);
+        $message->set_unread($user2, true);
+        $message->set_labels($user1, [$label1]);
+        $message->set_labels($user2, [$label2]);
+
+        $message->set_deleted($user1, message::DELETED_CONTENT);
+
+        self::assertEquals(message::DELETED_CONTENT, $message->deleted($user1));
+        self::assertEquals(message::NOT_DELETED, $message->deleted($user2));
+        self::assertFalse($message->unread($user1));
+        self::assertTrue($message->unread($user2));
+        self::assertFalse($message->starred($user1));
+        self::assertTrue($message->starred($user2));
+        self::assertEquals([], $message->get_labels($user1));
+        self::assertEquals([$label2], $message->get_labels($user2));
+        self::assertEquals(strings::get('deletedmessagesubject'), $message->subject);
+        self::assertEquals(strings::get('deletedmessagecontent'), $message->content);
+        self::assertEquals(FORMAT_PLAIN, $message->format);
+        self::assertEquals(0, $message->attachments);
+        self::assert_attachments([], $message);
+        self::assert_message($message);
+
+        // Delete content of draft.
+
+        $draft = message::create($data);
+        $draft->set_labels($user1, [$label1]);
+
+        $draft->set_deleted($user1, message::DELETED_CONTENT);
+
+        self::assert_record_count(0, 'messages', ['id' => $draft->id]);
+        self::assert_record_count(0, 'message_refs', ['messageid' => $draft->id]);
+        self::assert_record_count(0, 'message_users', ['messageid' => $draft->id]);
+        self::assert_record_count(0, 'message_labels', ['messageid' => $draft->id]);
+        self::assert_attachments([], $draft);
+        self::assertEquals(message::DELETED_CONTENT, $draft->deleted($user1));
+        self::assertEquals([], $draft->get_labels($user1));
+        self::assertEquals(strings::get('deletedmessagesubject'), $draft->subject);
+        self::assertEquals(strings::get('deletedmessagecontent'), $draft->content);
+        self::assertEquals(FORMAT_PLAIN, $draft->format);
+        self::assertEquals(0, $draft->attachments);
     }
 
     public function test_set_labels(): void {

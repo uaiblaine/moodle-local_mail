@@ -1090,6 +1090,21 @@ final class external_test extends test\testcase {
             self::assertEquals('errormessagenotfound', $e->errorcode);
             self::assertEquals(123, $e->a);
         }
+
+        // Invalid deleted status.
+
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $message = message::create($data);
+        $message->send($time);
+
+        try {
+            external::set_deleted($message->id, '4');
+            self::fail();
+        } catch (\invalid_parameter_exception $e) {
+            self::assertEquals('Invalid deleted status', $e->debuginfo);
+        }
     }
 
     public function test_empty_trash(): void {

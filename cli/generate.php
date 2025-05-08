@@ -51,6 +51,7 @@ const REPLY_ALL_FREQ = 0.5;
 const UNREAD_FREQ_EXP = 4;
 const STARRED_FREQ = 0.2;
 const DELETED_FREQ = 0.1;
+const DELETED_CONTENT_FREQ = 0.05;
 const MESSAGE_LABEL_EX = 0;
 const MESSAGE_LABEL_SD = 1;
 
@@ -118,7 +119,7 @@ function delete_messages(array $courses) {
     foreach ($courses as $course) {
         print_progress("Deleting course mail", count($courses));
 
-        message::delete_course($course->get_context());
+        message::delete_course_data($course->get_context());
     }
 }
 
@@ -404,9 +405,16 @@ function random_word($capitalize = false): string {
 
 function set_random_deleted(message $message): void {
     if (!$message->draft) {
-        $message->set_deleted($message->sender(), random_bool(DELETED_FREQ));
+        if (random_bool(DELETED_FREQ)) {
+            $message->set_deleted($message->sender(), message::DELETED);
+        }
         foreach ($message->recipients() as $user) {
-            $message->set_deleted($user, random_bool(DELETED_FREQ));
+            if (random_bool(DELETED_FREQ)) {
+                $message->set_deleted($user, message::DELETED);
+            }
+        }
+        if (random_bool(DELETED_CONTENT_FREQ)) {
+            $message->set_deleted($message->sender(), message::DELETED_CONTENT);
         }
     }
 }

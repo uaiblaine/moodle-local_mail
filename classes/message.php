@@ -10,11 +10,14 @@
 
 namespace local_mail;
 
+use local_mail\output\strings;
+
 class message {
     // Deleted stataus constants.
     const NOT_DELETED = 0;
     const DELETED = 1;
     const DELETED_FOREVER = 2;
+    const DELETED_CONTENT = 3;
 
     // Role constants.
     const ROLE_FROM = 1;
@@ -158,7 +161,7 @@ class message {
      *
      * @param \context_course $context Context of the course.
      */
-    public static function delete_course(\context_course $context): void {
+    public static function delete_course_data(\context_course $context): void {
         global $DB;
 
         $transaction = $DB->start_delegated_transaction();
@@ -231,6 +234,11 @@ class message {
             $messages[$r->messageid]->deleted[$r->userid] = (int) $r->deleted;
             $messages[$r->messageid]->users[$r->userid] = $users[$r->userid];
             $messages[$r->messageid]->labelids[$r->userid] = [];
+            if ($r->role == self::ROLE_FROM && $r->deleted == self::DELETED_CONTENT) {
+                $messages[$r->messageid]->subject = strings::get('deletedmessagesubject');
+                $messages[$r->messageid]->content = strings::get('deletedmessagecontent');
+                $messages[$r->messageid]->format = FORMAT_PLAIN;
+            }
         }
 
         // Get message labels.
@@ -457,41 +465,95 @@ class message {
         global $DB;
 
         assert(isset($this->roles[$user->id]));
-        assert(in_array($status, [self::NOT_DELETED, self::DELETED, self::DELETED_FOREVER]));
         assert(!$this->draft || $this->roles[$user->id] == self::ROLE_FROM);
+        assert(
+            $status == self::NOT_DELETED && $this->deleted[$user->id] <= self::DELETED ||
+            $status == self::DELETED && $this->deleted[$user->id] <= self::DELETED ||
+            $status == self::DELETED_FOREVER && $this->deleted[$user->id] <= self::DELETED_FOREVER ||
+            $status == self::DELETED_CONTENT && $this->roles[$user->id] == self::ROLE_FROM
+        );
+
+        if ($status == $this->deleted[$user->id]) {
+            return;
+        }
+
+        $fulldelete = $this->draft && $status >= self::DELETED_FOREVER;
+        $resetcontent = $fulldelete || $status == self::DELETED_CONTENT;
+        $resetmetadata = $fulldelete || $status >= self::DELETED_FOREVER;
 
         $transaction = $DB->start_delegated_transaction();
 
-        if ($this->draft && $status == self::DELETED_FOREVER) {
+        if ($fulldelete) {
             $DB->delete_records('local_mail_messages', ['id' => $this->id]);
             $DB->delete_records('local_mail_message_refs', ['messageid' => $this->id]);
             $DB->delete_records('local_mail_message_users', ['messageid' => $this->id]);
             $DB->delete_records('local_mail_message_labels', ['messageid' => $this->id]);
         } else {
-            $conditions = ['messageid' => $this->id, 'userid' => $user->id];
-            $DB->set_field('local_mail_message_users', 'deleted', $status, $conditions);
+            // Update message record.
+            if ($resetcontent) {
+                $data = [
+                    'id' => $this->id,
+                    'subject' => '',
+                    'content' => '',
+                    'format' => FORMAT_PLAIN,
+                    'attachments' => 0,
+                    'normalizedsubject' => '',
+                    'normalizedcontent' => '',
+                ];
+                $DB->update_record('local_mail_messages', $data);
+            }
 
-            foreach ($this->labelids[$user->id] as $labelid) {
-                $conditions = ['messageid' => $this->id, 'labelid' => $labelid];
-                if ($status == self::DELETED_FOREVER) {
-                    $DB->delete_records('local_mail_message_labels', $conditions);
+            // Update message user record.
+            if ($resetmetadata) {
+                $sql = 'UPDATE {local_mail_message_users}'
+                    . ' SET deleted = :deleted, unread = :unread, starred = :starred'
+                    . ' WHERE messageid = :messageid AND userid = :userid';
+                $params = [
+                    'messageid' => $this->id,
+                    'userid' => $user->id,
+                    'deleted' => $status,
+                    'unread' => 0,
+                    'starred' => 0,
+                ];
+                $DB->execute($sql, $params);
+            } else {
+                $conditions = ['messageid' => $this->id, 'userid' => $user->id];
+                $DB->set_field('local_mail_message_users', 'deleted', $status, $conditions);
+            }
+
+            // Update message label records.
+            if ($this->labelids[$user->id]) {
+                [$sqllabelid, $params] = $DB->get_in_or_equal($this->labelids[$user->id], SQL_PARAMS_NAMED);
+                $select = "messageid = :messageid AND labelid $sqllabelid";
+                $params['messageid'] = $this->id;
+                if ($resetmetadata) {
+                    $DB->delete_records_select('local_mail_message_labels', $select, $params);
                 } else {
-                    $DB->set_field('local_mail_message_labels', 'deleted', $status, $conditions);
+                    $DB->set_field_select('local_mail_message_labels', 'deleted', $status, $select, $params);
                 }
             }
         }
 
         $transaction->allow_commit();
 
-        if ($this->draft && $status == self::DELETED_FOREVER) {
-            // Delete files after the transaction, in case it is rolled back.
+        // Delete files after the transaction, in case it is rolled back.
+        if ($resetcontent && $this->attachments > 0) {
             $fs = get_file_storage();
             $context = $this->course->get_context();
             $fs->delete_area_files($context->id, 'local_mail', 'message', $this->id);
         }
 
+        // Update object.
         $this->deleted[$user->id] = $status;
-        if ($status == self::DELETED_FOREVER) {
+        if ($resetcontent) {
+            $this->subject = strings::get('deletedmessagesubject');
+            $this->content = strings::get('deletedmessagecontent');
+            $this->format = FORMAT_PLAIN;
+            $this->attachments = 0;
+        }
+        if ($resetmetadata) {
+            $this->unread[$user->id] = false;
+            $this->starred[$user->id] = false;
             $this->labelids[$user->id] = [];
         }
     }
@@ -507,7 +569,7 @@ class message {
 
         assert(isset($this->roles[$user->id]));
         assert(!$this->draft || $this->roles[$user->id] == self::ROLE_FROM);
-        assert($this->deleted[$user->id] != self::DELETED_FOREVER);
+        assert(in_array($this->deleted[$user->id], [self::NOT_DELETED, self::DELETED]));
         foreach ($labels as $label) {
             assert($label->userid == $user->id);
         }
@@ -556,7 +618,11 @@ class message {
 
         assert(isset($this->roles[$user->id]));
         assert(!$this->draft || $this->roles[$user->id] == self::ROLE_FROM);
-        assert($this->deleted[$user->id] != self::DELETED_FOREVER);
+        assert(in_array($this->deleted[$user->id], [self::NOT_DELETED, self::DELETED]));
+
+        if ($status == $this->starred[$user->id]) {
+            return;
+        }
 
         $transaction = $DB->start_delegated_transaction();
 
@@ -584,7 +650,11 @@ class message {
 
         assert(isset($this->roles[$user->id]));
         assert(!$this->draft || $this->roles[$user->id] == self::ROLE_FROM);
-        assert($this->deleted[$user->id] != self::DELETED_FOREVER);
+        assert(in_array($this->deleted[$user->id], [self::NOT_DELETED, self::DELETED]));
+
+        if ($status == $this->unread[$user->id]) {
+            return;
+        }
 
         $transaction = $DB->start_delegated_transaction();
 

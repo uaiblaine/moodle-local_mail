@@ -17,6 +17,7 @@ use local_mail\message_data;
 use local_mail\message_search;
 use local_mail\user;
 use local_mail\user_search;
+use local_mail\output\strings;
 
 abstract class testcase extends \advanced_testcase {
     public function setUp(): void {
@@ -46,6 +47,19 @@ abstract class testcase extends \advanced_testcase {
             $ids,
             array_keys($actual),
             'Array of objects with incorrect order.' . ($message ? "\n$message" : ''),
+        );
+    }
+
+    /**
+     * Assert that a language strings exists.
+     *
+     * @param string $identifier String identifier.
+     * @throws \PHPUnit\Framework\ExpectationFailedException
+     */
+    protected static function assert_string_exists(string $identifier): void {
+        self::assertTrue(
+            get_string_manager()->string_exists($identifier, 'local_mail'),
+            "String '$identifier' does not exist."
         );
     }
 
@@ -96,18 +110,19 @@ abstract class testcase extends \advanced_testcase {
      * @throws \PHPUnit\Framework\ExpectationFailedException
      */
     protected static function assert_message(message $message): void {
+        $deleted = $message->deleted($message->sender()) == message::DELETED_CONTENT;
         self::assert_record_data('messages', [
             'id' => $message->id,
         ], [
             'courseid' => $message->course->id,
-            'subject' => $message->subject,
-            'content' => $message->content,
+            'subject' => $deleted ? '' : $message->subject,
+            'content' => $deleted ? '' : $message->content,
             'format' => $message->format,
             'attachments' => $message->attachments,
             'draft' => (int) $message->draft,
             'time' => $message->time,
-            'normalizedsubject' => message::normalize_text($message->subject, FORMAT_PLAIN),
-            'normalizedcontent' => message::normalize_text($message->content, $message->format),
+            'normalizedsubject' => $deleted ? '' : message::normalize_text($message->subject, FORMAT_PLAIN),
+            'normalizedcontent' => $deleted ? '' : message::normalize_text($message->content, $message->format),
         ]);
 
         $numusers = count($message->recipients()) + 1;
@@ -279,6 +294,7 @@ abstract class testcase extends \advanced_testcase {
         $starredfreq = 0.2;
         $deletedfreq = 0.2;
         $deletedforeverfreq = 0.1;
+        $deletedcontentfreq = 0.1;
         $attachmentfreq = 0.2;
         $inctimefreq = 0.9;
         $words = [
@@ -426,10 +442,13 @@ abstract class testcase extends \advanced_testcase {
                     }
                     if (self::random_bool($deletedfreq)) {
                         $message->set_deleted($user, message::DELETED);
-                    }
-                    if (self::random_bool($deletedforeverfreq)) {
+                    } else if (self::random_bool($deletedforeverfreq)) {
                         $message->set_deleted($user, message::DELETED_FOREVER);
                     }
+                }
+
+                if (self::random_bool($deletedcontentfreq)) {
+                    $message->set_deleted($data->sender, message::DELETED_CONTENT);
                 }
             }
 
@@ -505,7 +524,10 @@ abstract class testcase extends \advanced_testcase {
 
             // Content.
             $search = new message_search($user);
-            $search->content = self::random_item($messages)->subject;
+            do {
+                $search->content = self::random_item($messages)->subject;
+            } while ($search->content == strings::get('deletedmessagesubject'));
+
             $cases[] = $search;
 
             // Sender name.

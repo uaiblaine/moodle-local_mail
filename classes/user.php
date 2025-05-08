@@ -129,7 +129,7 @@ class user {
     public function can_edit_message(message $message): bool {
         return $message->draft &&
             $this->id == $message->sender()->id &&
-            $message->deleted($this) != message::DELETED_FOREVER &&
+            in_array($message->deleted($this), [message::NOT_DELETED, message::DELETED]) &&
             $this->can_use_mail($message->course);
     }
 
@@ -186,7 +186,7 @@ class user {
      */
     public function can_view_message(message $message): bool {
         return ($message->sender()->id == $this->id || !$message->draft && $message->has_recipient($this)) &&
-            $message->deleted($this) != message::DELETED_FOREVER &&
+            in_array($message->deleted($this), [message::NOT_DELETED, message::DELETED]) &&
             $this->can_use_mail($message->course);
     }
 
