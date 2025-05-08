@@ -225,11 +225,16 @@ class user {
      * @return string
      */
     public function profile_url(course $course): string {
+        if ($this->deleted) {
+            return '';
+        }
+
         $params = ['id' => $this->id];
         if ($course) {
             $params['course'] = $course->id;
         }
         $url = new \moodle_url('/user/view.php', $params);
+
         return $url->out(false);
     }
 

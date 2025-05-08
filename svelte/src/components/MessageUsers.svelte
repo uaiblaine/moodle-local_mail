@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <script lang="ts">
     import { RecipientType, type Message } from '../lib/state';
     import type { Store } from '../lib/store';
+    import UserFullName from './UserFullName.svelte';
     import UserPicture from './UserPicture.svelte';
 
     export let store: Store;
@@ -25,9 +26,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </div>
     <div class="d-flex flex-column">
         <div class="mt-1 mb-2">
-            <a href={message.sender.profileurl}>
-                {message.sender.fullname}
-            </a>
+            <UserFullName user={message.sender} />
         </div>
         {#each Object.values(RecipientType) as type}
             {#if recipients(type).length > 0}
@@ -36,7 +35,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                     {#each recipients(type) as user, i (user.id)}
                         {#if i > 0},
                         {/if}
-                        <a href={user.profileurl}>{user.fullname}</a>
+                        <UserFullName {user} />
                     {/each}
                 </div>
             {/if}

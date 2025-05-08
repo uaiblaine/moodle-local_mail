@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import type { Reference, Strings } from '../lib/state';
     import MessageAttachments from './MessageAttachments.svelte';
     import MessageContent from './MessageContent.svelte';
+    import UserFullName from './UserFullName.svelte';
     import UserPicture from './UserPicture.svelte';
 
     export let strings: Strings;
@@ -27,9 +28,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                     <UserPicture user={reference.sender} />
                 </div>
                 <div class="mt-1">
-                    <a href={reference.sender.profileurl}>
-                        {reference.sender.fullname}
-                    </a>
+                    <UserFullName user={reference.sender} />
                 </div>
             </div>
             <div class="mt-1 ml-auto">

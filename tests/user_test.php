@@ -379,6 +379,10 @@ final class user_test extends test\testcase {
 
         $url = new \moodle_url('/user/view.php', ['id' => $user->id, 'course' => $course->id]);
         self::assertEquals($url->out(false), $user->profile_url($course));
+
+        // Deleted user.
+        $user = new user($generator->create_user(['deleted' => 1]));
+        self::assertEquals('', $user->profile_url($course));
     }
 
     public function test_sortorder(): void {
