@@ -201,5 +201,6 @@ class label {
         $DB->update_record('local_mail_labels', $record);
 
         self::cache()->set($this->id, $this);
+        self::user_cache()->delete($this->userid);
     }
 }

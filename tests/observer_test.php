@@ -1,24 +1,19 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 namespace local_mail;
 
-defined('MOODLE_INTERNAL') || die;
-
-require_once(__DIR__ . '/testcase.php');
-require_once(__DIR__ . '/message_search_test.php');
-
 /**
  * @covers \local_mail\observer
  */
-final class observer_test extends testcase {
+final class observer_test extends test\testcase {
     public function test_course_deleted(): void {
-        [$users, $messages] = message_search_test::generate_data();
+        [$users, $messages] = self::generate_random_data(true);
         $course = $messages[0]->get_course();
         $context = $course->get_context();
 

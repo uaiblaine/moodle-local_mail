@@ -8,14 +8,10 @@
 
 namespace local_mail;
 
-defined('MOODLE_INTERNAL') || die;
-
-require_once(__DIR__ . '/testcase.php');
-
 /**
  * @covers \local_mail\user
  */
-final class user_test extends testcase {
+final class user_test extends test\testcase {
     public function test_can_view_files(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
@@ -112,7 +108,6 @@ final class user_test extends testcase {
         $this->assertFalse($user1->can_view_group($course1, $group2->id));
 
         // Teacher in course with no groups.
-        self::assertEquals([], $course1->get_viewable_groups($user2));
         $this->assertTrue($user2->can_view_group($course1, 0));
         $this->assertFalse($user2->can_view_group($course1, $group1->id));
         $this->assertFalse($user2->can_view_group($course1, $group2->id));
@@ -352,7 +347,8 @@ final class user_test extends testcase {
 
         $result = user::get_many([$user3->id, $user1->id, $user3->id, $user2->id, $user3->id, $user4->id]);
 
-        self::assertEquals([$user3->id => $user3, $user1->id => $user1, $user2->id => $user2, $user4->id => $user4], $result);
+        self::assert_array_of_objects([$user3, $user1, $user2, $user4], $result);
+
         self::assertEquals($user1, user::cache()->get($user1->id));
         self::assertEquals($user2, user::cache()->get($user2->id));
         self::assertEquals($user3, user::cache()->get($user3->id));

@@ -1,33 +1,33 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 namespace local_mail;
 
-defined('MOODLE_INTERNAL') || die;
-
-global $CFG;
-
-require_once("$CFG->dirroot/backup/util/includes/backup_includes.php");
-require_once("$CFG->dirroot/backup/util/includes/restore_includes.php");
-require_once(__DIR__ . '/message_search_test.php');
-require_once(__DIR__ . '/testcase.php');
-
 /**
  * @covers \backup_local_mail_plugin
  * @covers \restore_local_mail_plugin
  */
-final class backup_test extends testcase {
+final class backup_test extends test\testcase {
+    public function setUp(): void {
+        global $CFG;
+
+        parent::setUp();
+
+        require_once("$CFG->dirroot/backup/util/includes/backup_includes.php");
+        require_once("$CFG->dirroot/backup/util/includes/restore_includes.php");
+    }
+
     public function test_backup_and_restore(): void {
         global $DB;
 
         set_config('enablebackup', 1, 'local_mail');
 
-        message_search_test::generate_data();
+        self::generate_random_data(true);
         self::setAdminUser();
 
         foreach (array_keys(get_courses()) as $oldcourseid) {

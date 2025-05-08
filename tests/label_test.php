@@ -10,14 +10,10 @@
 
 namespace local_mail;
 
-defined('MOODLE_INTERNAL') || die;
-
-require_once(__DIR__ . '/testcase.php');
-
 /**
  * @covers \local_mail\label
  */
-final class label_test extends testcase {
+final class label_test extends test\testcase {
     public function test_create(): void {
         $generator = self::getDataGenerator();
         $user = new user($generator->create_user());
@@ -90,8 +86,7 @@ final class label_test extends testcase {
 
         $result = label::get_by_user($user1);
 
-        self::assertEquals([$label1->id, $label2->id, $label4->id], array_keys($result));
-        self::assertEquals([$label1, $label2, $label4], array_values($result));
+        self::assert_array_of_objects([$label1, $label2, $label4], $result);
         self::assertEquals([$label1->id, $label2->id, $label4->id], label::user_cache()->get($user1->id));
 
         // User with no labels.
@@ -116,7 +111,7 @@ final class label_test extends testcase {
 
         $result = label::get_many([$label1->id, $label2->id, $label1->id]);
 
-        self::assertEquals([$label1->id => $label1, $label2->id => $label2], $result);
+        self::assert_array_of_objects([$label1, $label2], $result);
         self::assertEquals($label1, label::cache()->get($label1->id));
         self::assertEquals($label2, label::cache()->get($label2->id));
 
@@ -137,6 +132,7 @@ final class label_test extends testcase {
         $generator = self::getDataGenerator();
         $user = new user($generator->create_user());
         $label = label::create($user, 'name 1', 'red');
+        label::get_by_user($user);
 
         $label->update('new name', 'indigo');
 
@@ -144,6 +140,7 @@ final class label_test extends testcase {
         self::assertEquals('indigo', $label->color);
         self::assert_label($label);
         self::assertEquals($label, label::cache()->get($label->id));
+        self::assertFalse(label::user_cache()->get($user->id));
     }
 
     public function test_normalized_name(): void {

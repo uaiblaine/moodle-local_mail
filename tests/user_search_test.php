@@ -8,83 +8,36 @@
 
 namespace local_mail;
 
-defined('MOODLE_INTERNAL') || die;
-
-require_once(__DIR__ . '/testcase.php');
-
 /**
  * @covers \local_mail\user_search
  */
-final class user_search_test extends testcase {
-    private const NUM_USERS = 50;
-    private const NUM_DELETED_USERS = 10;
-
+final class user_search_test extends test\testcase {
     public function test_count(): void {
-        $users = self::generate_data();
-        foreach (self::cases($users) as $search) {
+        [$users] = self::generate_random_data(false);
+
+        foreach (self::user_search_cases($users) as $search) {
             $expected = count(self::filter_users($users, $search));
             self::assertEquals($expected, $search->count(), $search);
         }
     }
 
     public function test_get(): void {
-        $users = self::generate_data();
-        foreach (self::cases($users) as $search) {
-            $filteredusers = self::filter_users($users, $search);
-            $expected = array_slice($filteredusers, 5, 10, true);
+        [$users] = self::generate_random_data(false);
+
+        foreach (self::user_search_cases($users) as $search) {
+            $expected = self::filter_users($users, $search);
+            $result = $search->get(0, 0);
+            self::assert_array_of_objects($expected, $result, $search);
+
+            // Offset and limit.
+            $expected = array_slice($expected, 5, 10, true);
             $result = $search->get(5, 10);
-            self::assertEquals($expected, $result, $search);
-            self::assertEquals(array_keys($expected), array_keys($result), $search);
+            self::assert_array_of_objects($expected, $result, $search);
         }
     }
 
     /**
-     * Returns different search casses for the givem users.
-     *
-     * @param user[] $users All users.
-     * @return user_search[] Array of search parameters.
-     */
-    public static function cases(array $users): array {
-        $result = [];
-
-        foreach ($users as $user) {
-            foreach (course::get_by_user($user) as $course) {
-                // All users.
-                $result[] = new user_search($user, $course);
-
-                // Roles.
-                foreach (array_keys($course->get_viewable_roles($user)) as $roleid) {
-                    $search = new user_search($user, $course);
-                    $search->roleid = $roleid;
-                    $result[] = $search;
-                }
-
-                // Groups.
-                foreach (array_keys(groups_get_all_groups($course->id, 0)) as $groupid) {
-                    $search = new user_search($user, $course);
-                    $search->groupid = $groupid;
-                    $result[] = $search;
-                }
-
-                // Full name.
-                $search = new user_search($user, $course);
-                while ($search->fullname === '') {
-                    $search->fullname = self::random_item($users)->firstname;
-                }
-                $result[] = $search;
-
-                // Include.
-                $search = new user_search($user, $course);
-                $search->include = array_column(self::random_items($users, self::NUM_USERS / 2), 'id');
-                $result[] = $search;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * Returns thee generated users filtered by search parameters.
+     * Returns the generated users filtered by search parameters.
      *
      * @param message[] $message Array of messages.
      * @param user_search $search Search parameters.
@@ -99,8 +52,6 @@ final class user_search_test extends testcase {
         if (!has_capability('local/mail:mailsamerole', $context, $search->user->id, false)) {
             $excludedroleids = array_column(get_user_roles($context, $search->user->id, false), 'roleid');
         }
-
-        $usergroups = $search->course->get_viewable_groups($search->user);
 
         $fullnamematches = [];
         if ($search->fullname) {
@@ -132,77 +83,5 @@ final class user_search_test extends testcase {
         }
 
         return $result;
-    }
-
-    /**
-     * Generates random users and courses.
-     *
-     * @return user[] Users.
-     */
-    public static function generate_data(): array {
-        global $DB;
-
-        $generator = self::getDataGenerator();
-
-        $courses = [];
-        $users = [];
-        $roleids = [];
-        $groupids = [];
-
-        // Generate roles.
-        foreach (get_roles_with_capability('local/mail:usemail') as $role) {
-            unassign_capability('local/mail:usemail', $role->id);
-            unassign_capability('local/mail:mailsamerole', $role->id);
-        }
-        $rolecaps = [
-            [],
-            ['local/mail:usemail' => 'allow'],
-            ['local/mail:usemail' => 'allow', 'local/mail:mailsamerole' => 'allow'],
-        ];
-        foreach ($rolecaps as $caps) {
-            $roleid = $generator->create_role();
-            $generator->create_role_capability($roleid, $caps, \context_system::instance());
-            $roleids[] = $roleid;
-        }
-
-        // Generate courses and group.
-        foreach ([NOGROUPS, VISIBLEGROUPS, SEPARATEGROUPS] as $groupmode) {
-            $course = new course($generator->create_course(['groupmode' => $groupmode]));
-            $courses[] = $course;
-            $roles[$course->id] = get_role_names_with_caps_in_context($course->get_context(), ['local/mail:usemail']);
-            $group1 = $generator->create_group(['courseid' => $course->id]);
-            $group2 = $generator->create_group(['courseid' => $course->id]);
-            $groupids[$course->id] = [0, $group1->id, $group2->id];
-        }
-
-        // Generate users.
-        for ($i = 0; $i < self::NUM_USERS; $i++) {
-            $user = new user($generator->create_user());
-
-            // Enrol user to some courses.
-            foreach (self::random_items($courses, count($courses) - 1) as $course) {
-                $roleid = self::random_item($roleids);
-                $generator->enrol_user($user->id, $course->id, $roleid);
-
-                // Add user to a group.
-                $groupid = self::random_item($groupids[$course->id]);
-                if ($groupid) {
-                    $generator->create_group_member(['userid' => $user->id, 'groupid' => $groupid]);
-                }
-            }
-
-            // Mark some users as deleted.
-            if ($i >= self::NUM_USERS - self::NUM_DELETED_USERS) {
-                $DB->set_field('user', 'deleted', 1, ['id' => $user->id]);
-                $user = new user((object) ['id' => $user->id, 'deleted' => 1]);
-            }
-
-            $users[] = $user;
-        }
-
-        // Sort users.
-        \core_collator::asort_objects_by_method($users, 'sortorder');
-
-        return $users;
     }
 }

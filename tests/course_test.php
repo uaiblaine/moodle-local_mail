@@ -8,14 +8,10 @@
 
 namespace local_mail;
 
-defined('MOODLE_INTERNAL') || die;
-
-require_once(__DIR__ . '/testcase.php');
-
 /**
  * @covers \local_mail\course
  */
-final class course_test extends testcase {
+final class course_test extends test\testcase {
     public function test_get(): void {
         $generator = self::getDataGenerator();
         $record = $generator->create_course(['groupmode' => SEPARATEGROUPS]);
@@ -60,7 +56,7 @@ final class course_test extends testcase {
 
         $result = course::get_by_user($user1);
 
-        self::assertEquals([$course4->id => $course4, $course2->id => $course2, $course1->id => $course1], $result);
+        self::assert_array_of_objects([$course4, $course2, $course1], $result);
         self::assertEquals($course1, course::cache()->get($course1->id));
         self::assertEquals($course2, course::cache()->get($course2->id));
         self::assertEquals($course4, course::cache()->get($course4->id));
@@ -76,7 +72,7 @@ final class course_test extends testcase {
         // Get from cache.
         course::user_cache()->set($user1->id, [$course1->id, $course3->id]);
         $result = course::get_by_user($user1);
-        self::assertEquals([$course1->id => $course1, $course3->id => $course3], $result);
+        self::assert_array_of_objects([$course1, $course3], $result);
     }
 
     public function test_get_context(): void {
@@ -96,7 +92,7 @@ final class course_test extends testcase {
 
         $result = course::get_many([$course2->id, $course3->id, $course1->id, $course3->id]);
 
-        self::assertEquals([$course2->id => $course2, $course3->id => $course3, $course1->id => $course1], $result);
+        self::assert_array_of_objects([$course2, $course3, $course1], $result);
         self::assertEquals($course1, course::cache()->get($course1->id));
         self::assertEquals($course2, course::cache()->get($course2->id));
         self::assertEquals($course3, course::cache()->get($course3->id));
@@ -140,10 +136,10 @@ final class course_test extends testcase {
         $generator->create_group_member(['userid' => $user2->id, 'groupid' => $group5->id]);
 
         // Student in course with no groups.
-        self::assertEquals([], $course1->get_viewable_groups($user1));
+        self::assertSame([], $course1->get_viewable_groups($user1));
 
         // Teacher in course with no groups.
-        self::assertEquals([], $course1->get_viewable_groups($user2));
+        self::assertSame([], $course1->get_viewable_groups($user2));
 
         // Student in course with visible groups.
         $expected = [
@@ -151,7 +147,7 @@ final class course_test extends testcase {
             $group2->id => $group2->name,
             $group3->id => $group3->name,
         ];
-        self::assertEquals($expected, $course2->get_viewable_groups($user1));
+        self::assertSame($expected, $course2->get_viewable_groups($user1));
 
         // Teacher in course with visible groups.
         $expected = [
@@ -159,11 +155,11 @@ final class course_test extends testcase {
             $group2->id => $group2->name,
             $group3->id => $group3->name,
         ];
-        self::assertEquals($expected, $course2->get_viewable_groups($user2));
+        self::assertSame($expected, $course2->get_viewable_groups($user2));
 
         // Student in course with separate groups.
         $expected = [$group4->id => $group4->name];
-        self::assertEquals($expected, $course3->get_viewable_groups($user1));
+        self::assertSame($expected, $course3->get_viewable_groups($user1));
 
         // Teacher in course with separate groups (access all groups capability).
         $expected = [
@@ -171,7 +167,7 @@ final class course_test extends testcase {
             $group4->id => $group4->name,
             $group5->id => $group5->name,
         ];
-        self::assertEquals($expected, $course3->get_viewable_groups($user2));
+        self::assertSame($expected, $course3->get_viewable_groups($user2));
     }
 
     public function test_get_viewable_roles(): void {
@@ -189,7 +185,7 @@ final class course_test extends testcase {
             }
         }
 
-        self::assertEquals($expected, $course->get_viewable_roles($user));
+        self::assertSame($expected, $course->get_viewable_roles($user));
     }
 
     public function test_url(): void {

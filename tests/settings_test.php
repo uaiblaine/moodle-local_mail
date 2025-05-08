@@ -8,14 +8,10 @@
 
 namespace local_mail;
 
-defined('MOODLE_INTERNAL') || die;
-
-require_once(__DIR__ . '/testcase.php');
-
 /**
  * @covers \local_mail\settings
  */
-final class settings_test extends testcase {
+final class settings_test extends test\testcase {
     public function test_defaults(): void {
         set_config('maxbytes', 123000);
 

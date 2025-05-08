@@ -10,15 +10,10 @@
 
 namespace local_mail;
 
-defined('MOODLE_INTERNAL') || die;
-
-require_once(__DIR__ . '/testcase.php');
-require_once(__DIR__ . '/message_search_test.php');
-
 /**
  * @covers \local_mail\message
  */
-final class message_test extends testcase {
+final class message_test extends test\testcase {
     public function test_create(): void {
         $generator = self::getDataGenerator();
         $user1 = new user($generator->create_user());
@@ -99,7 +94,8 @@ final class message_test extends testcase {
     }
 
     public function test_delete_course(): void {
-        [$users, $messages] = message_search_test::generate_data();
+        [$users, $messages] = self::generate_random_data(true);
+
         $course = $messages[0]->get_course();
         $context = $course->get_context();
 
@@ -243,7 +239,7 @@ final class message_test extends testcase {
 
         $result = message::get_many([$message1->id, $message2->id, $message1->id, $message4->id]);
 
-        self::assertEquals([$message4->id => $message4, $message2->id => $message2, $message1->id => $message1], $result);
+        self::assert_array_of_objects([$message4, $message2, $message1], $result);
         self::assertEquals($message1, message::cache()->get($message1->id));
         self::assertEquals($message1, message::cache()->get($message1->id));
         self::assertEquals($message1, message::cache()->get($message1->id));

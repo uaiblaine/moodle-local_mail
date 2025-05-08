@@ -1,6 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -14,6 +15,10 @@ class local_mail_coverage extends phpunit_coverage_info {
 
     protected $includelistfiles = [
         'db/upgrade.php',
+    ];
+
+    protected $excludelistfolders = [
+        'classes/test',
     ];
 }
 

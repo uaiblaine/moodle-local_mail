@@ -1,25 +1,26 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 namespace local_mail;
 
-defined('MOODLE_INTERNAL') || die;
-
-global $CFG;
-
-require_once(__DIR__ . '/testcase.php');
-require_once("$CFG->libdir/upgradelib.php");
-require_once("$CFG->dirroot/local/mail/db/upgrade.php");
-
 /**
  * @covers \xmldb_local_mail_upgrade
  */
-final class upgrade_test extends testcase {
+final class upgrade_test extends test\testcase {
+    public function setUp(): void {
+        global $CFG;
+
+        parent::setUp();
+
+        require_once("$CFG->libdir/upgradelib.php");
+        require_once("$CFG->dirroot/local/mail/db/upgrade.php");
+    }
+
     public function test_upgrade(): void {
         global $CFG, $DB;
 

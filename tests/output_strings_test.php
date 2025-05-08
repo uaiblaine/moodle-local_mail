@@ -1,21 +1,17 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 namespace local_mail;
 
-defined('MOODLE_INTERNAL') || die;
-
-require_once(__DIR__ . '/testcase.php');
-
 /**
  * @covers \local_mail\output\strings
  */
-final class output_strings_test extends testcase {
+final class output_strings_test extends test\testcase {
     public function test_get(): void {
         self::assertEquals('{$a->index} of {$a->total}', output\strings::get('pagingsingle'));
         self::assertEquals('3 of 14', output\strings::get('pagingsingle', ['index' => '3', 'total' => '14']));

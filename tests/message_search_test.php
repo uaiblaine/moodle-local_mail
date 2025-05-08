@@ -8,46 +8,23 @@
 
 namespace local_mail;
 
-defined('MOODLE_INTERNAL') || die;
-
-require_once(__DIR__ . '/testcase.php');
-
 /**
  * @covers \local_mail\message_search
  */
-final class message_search_test extends testcase {
-    /* Constants used for generating random mail data. */
-    private const NUM_COURSES = 5;
-    private const NUM_USERS = 10;
-    private const NUM_DELETED_USERS = 2;
-    private const NUM_COURSES_PER_USER = 4;
-    private const NUM_LABELS_PER_USER = 3;
-    private const NUM_MESSAGES = 1000;
-    private const REPLY_FREQ = 0.5;
-    private const DRAFT_FREQ = 0.2;
-    private const RECIPIENT_FREQ = 0.2;
-    private const UNREAD_FREQ = 0.2;
-    private const STARRED_FREQ = 0.2;
-    private const DELETED_FREQ = 0.2;
-    private const DELETED_FOREVER_FREQ = 0.1;
-    private const ATTACHMENT_FREQ = 0.2;
-    private const INC_TIME_FREQ = 0.9;
-    private const WORDS = [
-        'Xiuxiuejar', 'Aixopluc', 'Caliu', 'Tendresa', 'Llibertat',
-        'Moixaina', 'Amanyagar', 'Enraonar', 'Ginesta', 'Atzavara', 'Paral·lel',
-    ];
-
+final class message_search_test extends test\testcase {
     public function test_count(): void {
-        [$users, $messages] = self::generate_data();
-        foreach (self::cases($users, $messages) as $search) {
+        [$users, $messages] = self::generate_random_data(true);
+
+        foreach ($this->messages_search_cases($users, $messages) as $search) {
             $expected = count(self::search_result($messages, $search));
             self::assertEquals($expected, $search->count(), $search);
         }
     }
 
     public function test_count_per_course(): void {
-        [$users, $messages] = self::generate_data();
-        foreach (self::cases($users, $messages) as $search) {
+        [$users, $messages] = self::generate_random_data(true);
+
+        foreach ($this->messages_search_cases($users, $messages) as $search) {
             $expected = [];
             foreach (self::search_result($messages, $search) as $message) {
                 $expected[$message->courseid] = ($expected[$message->courseid] ?? 0) + 1;
@@ -57,8 +34,9 @@ final class message_search_test extends testcase {
     }
 
     public function test_count_per_label(): void {
-        [$users, $messages] = self::generate_data();
-        foreach (self::cases($users, $messages) as $search) {
+        [$users, $messages] = self::generate_random_data(true);
+
+        foreach ($this->messages_search_cases($users, $messages) as $search) {
             $expected = [];
             foreach (self::search_result($messages, $search) as $message) {
                 foreach ($message->get_labels($search->user) as $label) {
@@ -72,273 +50,20 @@ final class message_search_test extends testcase {
     }
 
     public function test_get(): void {
-        [$users, $messages] = self::generate_data();
-        foreach (self::cases($users, $messages) as $search) {
+        [$users, $messages] = self::generate_random_data(true);
+
+        foreach ($this->messages_search_cases($users, $messages) as $search) {
             $expected = self::search_result($messages, $search);
             $result = $search->get(0, 0);
-            self::assertEquals($expected, $result, $search);
-            self::assertEquals(array_keys($expected), array_keys($result), $search);
+            self::assert_array_of_objects($expected, $result, $search);
 
             // Offset and limit.
             $expected = array_slice($expected, 5, 20, true);
             $result = $search->get(5, 20);
-            self::assertEquals($expected, $result, $search);
-            self::assertEquals(array_keys($expected), array_keys($result), $search);
+            self::assert_array_of_objects($expected, $result, $search);
         }
     }
 
-
-    /**
-     * Returns different search casses for the givem users and messages.
-     *
-     * @param user[] $users All users.
-     * @param message[] $messages All messages.
-     * @return message_search[] Array of search parameters.
-     */
-    public static function cases(array $users, array $messages): array {
-        $result = [];
-
-        foreach ($users as $user) {
-            // All messages.
-            $result[] = new message_search($user);
-
-            // Inbox.
-            $search = new message_search($user);
-            $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
-            $result[] = $search;
-
-            // Unread.
-            $search = new message_search($user);
-            $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
-            $search->unread = true;
-            $result[] = $search;
-
-            // Starred.
-            $search = new message_search($user);
-            $search->starred = true;
-            $result[] = $search;
-
-            // Sent.
-            $search = new message_search($user);
-            $search->draft = false;
-            $search->roles = [message::ROLE_FROM];
-            $result[] = $search;
-
-            // Drafts.
-            $search = new message_search($user);
-            $search->draft = true;
-            $search->roles = [message::ROLE_FROM];
-            $result[] = $search;
-
-            // Trash.
-            $search = new message_search($user);
-            $search->deleted = true;
-            $result[] = $search;
-
-            // Course.
-            foreach (course::get_by_user($user) as $course) {
-                $search = new message_search($user);
-                $search->course = $course;
-                $result[] = $search;
-            }
-
-            // Label.
-            foreach (label::get_by_user($user) as $label) {
-                $search = new message_search($user);
-                $search->label = $label;
-                $result[] = $search;
-            }
-
-            // Content.
-            $search = new message_search($user);
-            $search->content = self::random_item($messages)->subject;
-            $result[] = $search;
-
-            // Sender name.
-            $search = new message_search($user);
-            do {
-                $sender = self::random_item($users);
-            } while ($sender->deleted);
-            $search->sendername = $sender->fullname();
-            $result[] = $search;
-
-            // Recipient name.
-            $search = new message_search($user);
-            do {
-                $recipient = self::random_item($users);
-            } while ($recipient->deleted);
-            $search->recipientname = $recipient->fullname();
-            $result[] = $search;
-
-            // With files only.
-            $search = new message_search($user);
-            $search->withfilesonly = true;
-            $result[] = $search;
-
-            // Max time.
-            $search = new message_search($user);
-            $search->maxtime = self::random_item($messages)->time;
-            $result[] = $search;
-
-            // Start message.
-            $search = new message_search($user);
-            $search->start = self::random_item($messages);
-            $result[] = $search;
-
-            // Stop message.
-            $search = new message_search($user);
-            $search->stop = self::random_item($messages);
-            $result[] = $search;
-
-            // Reverse.
-            $search = new message_search($user);
-            $search->reverse = true;
-            $result[] = $search;
-
-            // Start and reverse.
-            $search = new message_search($user);
-            $search->start = self::random_item($messages);
-            $search->reverse = true;
-            $result[] = $search;
-
-            // Stop and reverse.
-            $search = new message_search($user);
-            $search->stop = self::random_item($messages);
-            $search->reverse = true;
-            $result[] = $search;
-
-            // Impossible search, always results in no messages.
-            $search = new message_search($user);
-            $search->roles = [message::ROLE_TO];
-            $search->draft = true;
-            $result[] = $search;
-        }
-
-        return $result;
-    }
-
-    /**
-     * Generates random courses, users, labels and messages.
-     *
-     * @return array Array with users and messages.
-     */
-    public static function generate_data() {
-        global $DB;
-
-        $generator = self::getDataGenerator();
-
-        $courses = [];
-        $users = [];
-        $userlabels = [];
-        $messages = [];
-        $sentmessages = [];
-
-        $time = make_timestamp(2021, 10, 11, 12, 0);
-
-        for ($i = 0; $i < self::NUM_COURSES; $i++) {
-            $courses[] = new course($generator->create_course());
-        }
-
-        for ($i = 0; $i < self::NUM_USERS; $i++) {
-            $user = new user($generator->create_user());
-            $userlabels[$user->id] = [];
-
-            // One user with no courses and no labels.
-            if ($i == 0) {
-                continue;
-            }
-
-            // Enrol user to some courses.
-            foreach (self::random_items($courses, self::NUM_COURSES_PER_USER) as $course) {
-                $generator->enrol_user($user->id, $course->id, 'student');
-            }
-
-            // Create some labels.
-            foreach (self::random_items(self::WORDS, self::NUM_LABELS_PER_USER) as $name) {
-                $userlabels[$user->id][] = label::create($user, $name);
-            }
-
-            // Create one label with no messages.
-            $userlabels[$user->id] = array_slice($userlabels[$user->id], 1);
-
-            // Mark some users as deleted.
-            if ($i >= self::NUM_USERS - self::NUM_DELETED_USERS) {
-                $DB->set_field('user', 'deleted', 1, ['id' => $user->id]);
-                $user = new user((object) ['id' => $user->id, 'deleted' => 1]);
-            }
-
-            $users[] = $user;
-        }
-
-        // One user and one course with no messages.
-        $participants = array_slice($users, 0, count($users) - 1);
-        $courses = array_slice($courses, 1);
-
-        for ($i = 0; $i < self::NUM_MESSAGES; $i++) {
-            if (self::random_bool(self::INC_TIME_FREQ)) {
-                $time++;
-            }
-
-            if (count($sentmessages) > 0 && self::random_bool(self::REPLY_FREQ)) {
-                $reference = self::random_item($sentmessages);
-                $data = message_data::reply($reference, self::random_item($reference->get_recipients()), false);
-            } else {
-                $data = message_data::new(self::random_item($courses), self::random_item($participants));
-            }
-
-            if (self::random_bool(self::ATTACHMENT_FREQ)) {
-                $filename = self::random_item(self::WORDS) . '.txt';
-                $content = self::random_item(self::WORDS) . ' ' . self::random_item(self::WORDS);
-                self::create_draft_file($data->draftitemid, $filename, $content);
-            }
-
-            $data->subject = self::random_item(self::WORDS);
-            $data->content = ' <p> ' . self::random_item(self::WORDS) . '   ' . self::random_item(self::WORDS) . ' </p> ';
-            $data->format = FORMAT_HTML;
-            $data->time = $time;
-
-            if ($data->course) {
-                foreach ($participants as $user) {
-                    if ($user->id != $data->sender->id && self::random_bool(self::RECIPIENT_FREQ)) {
-                        $rolename = self::random_item(['to', 'cc', 'bcc']);
-                        $data->{$rolename}[] = $user;
-                    }
-                }
-            }
-
-            $message = message::create($data);
-
-            $message->set_starred($data->sender, self::random_bool(self::STARRED_FREQ));
-            $message->set_labels($data->sender, self::random_items($userlabels[$data->sender->id]));
-
-            $messages[] = $message;
-
-            if (self::random_bool(self::DRAFT_FREQ) || !$message->get_recipients()) {
-                continue;
-            }
-
-            $message->send($time);
-            $sentmessages[] = $message;
-
-            $message->set_unread($data->sender, self::random_bool(self::UNREAD_FREQ));
-
-            foreach ([$data->sender, ...$message->get_recipients()] as $user) {
-                $message->set_unread($user, self::random_bool(self::UNREAD_FREQ));
-                if ($user->id != $data->sender->id) {
-                    $message->set_starred($user, self::random_bool(self::STARRED_FREQ));
-                    $message->set_labels($user, self::random_items($userlabels[$user->id]));
-                }
-                if (self::random_bool(self::DELETED_FREQ)) {
-                    $message->set_deleted($user, message::DELETED);
-                }
-                if (self::random_bool(self::DELETED_FOREVER_FREQ)) {
-                    $message->set_deleted($user, message::DELETED_FOREVER);
-                }
-            }
-        }
-
-        return [$users, $messages];
-    }
 
     /**
      * Returns thee generated messages filtered by search parameters.

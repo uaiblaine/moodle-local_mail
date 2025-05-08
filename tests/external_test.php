@@ -9,17 +9,11 @@
 
 namespace local_mail;
 
-defined('MOODLE_INTERNAL') || die;
-
-require_once(__DIR__ . '/testcase.php');
-require_once(__DIR__ . '/message_search_test.php');
-require_once(__DIR__ . '/user_search_test.php');
-
 /**
  * @covers \local_mail\external
  * @runTestsInSeparateProcesses
  */
-final class external_test extends testcase {
+final class external_test extends test\testcase {
     public function test_get_settings(): void {
         $generator = $this->getDataGenerator();
         $user = $generator->create_user();
@@ -257,7 +251,7 @@ final class external_test extends testcase {
 
     public function test_get_courses(): void {
         $generator = $this->getDataGenerator();
-        [$users] = message_search_test::generate_data();
+        [$users] = self::generate_random_data(true);
 
         foreach ($users as $user) {
             $this->setUser($user->id);
@@ -297,7 +291,7 @@ final class external_test extends testcase {
 
     public function test_get_labels(): void {
         $generator = $this->getDataGenerator();
-        [$users] = message_search_test::generate_data();
+        [$users] = self::generate_random_data(true);
 
         foreach ($users as $user) {
             if ($user->deleted) {
@@ -338,9 +332,9 @@ final class external_test extends testcase {
     public function test_count_messages(): void {
         $generator = self::getDataGenerator();
 
-        [$users, $messages] = message_search_test::generate_data();
+        [$users, $messages] = self::generate_random_data(true);
 
-        foreach (message_search_test::cases($users, $messages) as $search) {
+        foreach ($this->messages_search_cases($users, $messages) as $search) {
             if ($search->user->deleted) {
                 continue;
             }
@@ -460,9 +454,9 @@ final class external_test extends testcase {
     public function test_search_messages(): void {
         $generator = self::getDataGenerator();
 
-        [$users, $messages] = message_search_test::generate_data();
+        [$users, $messages] = self::generate_random_data(true);
 
-        foreach (message_search_test::cases($users, $messages) as $search) {
+        foreach ($this->messages_search_cases($users, $messages) as $search) {
             if ($search->user->deleted) {
                 continue;
             }
@@ -1674,9 +1668,10 @@ final class external_test extends testcase {
 
     public function test_search_users(): void {
         $generator = self::getDataGenerator();
-        $users = user_search_test::generate_data();
 
-        foreach (user_search_test::cases($users) as $search) {
+        [$users] = self::generate_random_data(false);
+
+        foreach (self::user_search_cases($users) as $search) {
             if ($search->user->deleted) {
                 continue;
             }
