@@ -531,7 +531,11 @@ class external extends \external_api {
             $context = $course->get_context();
             $sender = $message->sender();
             $recipients = [];
-            foreach ($message->recipients(message::ROLE_TO, message::ROLE_CC) as $recipient) {
+            foreach ($message->recipients() as $recipient) {
+                $role = $message->role($recipient);
+                if ($role == message::ROLE_BCC && $user->id != $recipient->id && $user->id != $sender->id) {
+                    continue;
+                }
                 $recipients[] = [
                     'type' => message::role_names()[$message->role($recipient)],
                     'id' => $recipient->id,
