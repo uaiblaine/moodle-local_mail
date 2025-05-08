@@ -17,6 +17,8 @@ require_once($CFG->libdir . '/clilib.php');
 const EMOJIS = ['😀', '😛', '😱', '👍'];
 const CONSONANTS = ['b', 'c', 'ç', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'x', 'y', 'z'];
 const VOWELS = ['a', 'e', 'i', 'o', 'u'];
+const MAX_WORDS = 10000;
+const MAX_SENTENCES = 10000;
 
 const EMOJI_FREQ = 0.05;
 const COMMA_FREQ = 0.1;
@@ -116,9 +118,7 @@ function delete_messages(array $courses) {
     foreach ($courses as $course) {
         print_progress("Deleting course mail", count($courses));
 
-        $transaction = $DB->start_delegated_transaction();
         message::delete_course($course->get_context());
-        $transaction->allow_commit();
     }
 }
 
@@ -193,16 +193,10 @@ function generate_course_messages(\file_storage $fs, course $course, ?user $admi
     $endtime = time();
     $starttime = $endtime - 365 * 86400;
     $sentmessages = [];
-    $transaction = null;
 
     for ($i = 0; $i < $count; $i++) {
         print_progress("Generating messages for course " . $course->shortname, $count);
-        if ($i % 10 == 0) {
-            if ($transaction) {
-                $transaction->allow_commit();
-            }
-            $transaction = $DB->start_delegated_transaction();
-        }
+        $transaction = $DB->start_delegated_transaction();
         $time = (int) (($endtime - $starttime) * $i / $count + $starttime);
         if ($i > 0 && random_bool(REPLY_FREQ)) {
             $data = generate_random_reply($fs, random_item($sentmessages), $time);
@@ -228,9 +222,6 @@ function generate_course_messages(\file_storage $fs, course $course, ?user $admi
         set_random_starred($message);
         set_random_labels($message);
         set_random_deleted($message);
-    }
-
-    if ($transaction) {
         $transaction->allow_commit();
     }
 }
@@ -279,7 +270,6 @@ function generate_user_labels() {
     foreach ($users as $user) {
         print_progress('Generating user labels', count($users));
 
-        $transaction = $DB->start_delegated_transaction();
         foreach (label::get_by_user($user) as $label) {
             $label->delete();
         }
@@ -289,7 +279,6 @@ function generate_user_labels() {
             $color = random_item(label::COLORS);
             label::create($user, $name, $color);
         }
-        $transaction->allow_commit();
     }
 }
 
@@ -340,7 +329,7 @@ function random_count(int $min, float $ex, float $sd): int {
 }
 
 function random_item(array $items) {
-    return array_values($items)[rand(0, count($items) - 1)];
+    return $items[array_rand($items)];
 }
 
 function random_paragraph(): string {
@@ -358,14 +347,21 @@ function random_sentence($period = false): string {
         return random_item(EMOJIS);
     }
 
-    $s = random_word(true);
-    $n = random_count(1, WORD_PER_SENTENCE_EX, WORD_PER_SENTENCE_SD) - 1;
+    static $sentences = [];
+    if (count($sentences) == MAX_SENTENCES) {
+        $s = random_item($sentences);
+    } else {
+        $s = random_word(true);
+        $n = random_count(1, WORD_PER_SENTENCE_EX, WORD_PER_SENTENCE_SD) - 1;
 
-    for ($i = 0; $i < $n; $i++) {
-        if (rand() / getrandmax() < COMMA_FREQ) {
-            $s .= ',';
+        for ($i = 0; $i < $n; $i++) {
+            if (random_bool(COMMA_FREQ)) {
+                $s .= ',';
+            }
+            $s .= ' ' . random_word();
         }
-        $s .= ' ' . random_word();
+
+        $sentences[] = $s;
     }
 
     if ($period) {
@@ -380,18 +376,27 @@ function random_sentence($period = false): string {
 }
 
 function random_word($capitalize = false): string {
-    $s = '';
-    $n = random_count(1, SYLLABES_PER_WORD_EX, SYLLABES_PER_WORD_SD);
+    static $words = [];
 
-    for ($i = 0; $i < $n; $i++) {
-        $c = random_item(CONSONANTS);
-        if ($i == 0 && $capitalize) {
-            $c = mb_strtoupper($c);
+    if (count($words) == MAX_WORDS) {
+        $s = random_item($words);
+    } else {
+        $s = '';
+        $n = random_count(1, SYLLABES_PER_WORD_EX, SYLLABES_PER_WORD_SD);
+
+        for ($i = 0; $i < $n; $i++) {
+            $c = random_item(CONSONANTS);
+            $s .= $c . random_item(VOWELS);
+            if ($i < $n - 1 && random_bool(DASH_FREQ)) {
+                $s .= '-';
+            }
         }
-        $s .= $c . random_item(VOWELS);
-        if ($i < $n - 1 && random_bool(DASH_FREQ)) {
-            $s .= '-';
-        }
+
+        $words[] = $s;
+    }
+
+    if ($capitalize) {
+        $s = mb_strtoupper(mb_substr($s, 0, 1)) . mb_substr($s, 1);
     }
 
     return $s;
