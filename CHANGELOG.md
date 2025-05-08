@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.15] - 2025-05-08
+
+### Added
+
+- Privacy provider implementation.
+
+### Changed
+
+- Refactored cache usage to improve performance and reduce memory usage.
+- Links to profiles of deleted users are no longer displayed.
+
+### Fixed
+
+- Error when sending messages to a large number of users from the participants page.
+- BCC recipients not displayed in the message list.
+- Styling issue with deleted users in the message form in Moodle 5.0.
+- Error caused by database references to an invalid user with ID 0.
+
 ## [2.14] - 2025-04-14
 
 ### Added
