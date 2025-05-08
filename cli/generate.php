@@ -236,7 +236,7 @@ function generate_course_messages(\file_storage $fs, course $course, ?user $admi
 }
 
 function generate_random_forward(\file_storage $fs, message $message, array $users, int $time): message_data {
-    $sender = random_item($message->get_recipients(message::ROLE_TO, message::ROLE_CC));
+    $sender = random_item($message->recipients(message::ROLE_TO, message::ROLE_CC));
     $data = message_data::forward($message, $sender);
     $data->time = $time;
 
@@ -259,7 +259,7 @@ function generate_random_message(\file_storage $fs, course $course, array $users
 }
 
 function generate_random_reply(\file_storage $fs, message $message, int $time): message_data {
-    $sender = random_item($message->get_recipients(message::ROLE_TO, message::ROLE_CC));
+    $sender = random_item($message->recipients(message::ROLE_TO, message::ROLE_CC));
     $all = random_bool(REPLY_ALL_FREQ);
     $data = message_data::reply($message, $sender, $all);
     $data->content = random_content();
@@ -399,17 +399,17 @@ function random_word($capitalize = false): string {
 
 function set_random_deleted(message $message): void {
     if (!$message->draft) {
-        $message->set_deleted($message->get_sender(), random_bool(DELETED_FREQ));
-        foreach ($message->get_recipients() as $user) {
+        $message->set_deleted($message->sender(), random_bool(DELETED_FREQ));
+        foreach ($message->recipients() as $user) {
             $message->set_deleted($user, random_bool(DELETED_FREQ));
         }
     }
 }
 
 function set_random_labels(message $message): void {
-    $users = array_merge([$message->get_sender()], $message->get_recipients());
+    $users = array_merge([$message->sender()], $message->recipients());
     foreach ($users as $user) {
-        if (!$message->draft || $user->id == $message->get_sender()->id) {
+        if (!$message->draft || $user->id == $message->sender()->id) {
             $labels = label::get_by_user($user);
             shuffle($labels);
             $count = random_count(0, MESSAGE_LABEL_EX, MESSAGE_LABEL_SD);
@@ -419,9 +419,9 @@ function set_random_labels(message $message): void {
 }
 
 function set_random_starred(message $message): void {
-    $message->set_starred($message->get_sender(), random_bool(STARRED_FREQ));
+    $message->set_starred($message->sender(), random_bool(STARRED_FREQ));
     if (!$message->draft) {
-        foreach ($message->get_recipients() as $user) {
+        foreach ($message->recipients() as $user) {
             $message->set_starred($user, random_bool(STARRED_FREQ));
         }
     }
@@ -430,7 +430,7 @@ function set_random_starred(message $message): void {
 function set_random_unread(message $message, int $starttime, int $endtime): void {
     if (!$message->draft) {
         $freq = pow(($message->time - $starttime) / ($endtime - $starttime), UNREAD_FREQ_EXP);
-        foreach ($message->get_recipients() as $user) {
+        foreach ($message->recipients() as $user) {
             $message->set_unread($user, random_bool($freq));
         }
     }

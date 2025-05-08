@@ -24,9 +24,7 @@ abstract class testcase extends \advanced_testcase {
         $this->preventResetByRollback();
         $this->setAdminUser();
         course::cache()->purge();
-        user::cache()->purge();
         label::cache()->purge();
-        message::cache()->purge();
     }
 
     /**
@@ -63,7 +61,7 @@ abstract class testcase extends \advanced_testcase {
      */
     protected static function assert_attachments(array $expected, message $message) {
         $fs = get_file_storage();
-        $contextid = $message->get_course()->get_context()->id;
+        $contextid = $message->course->get_context()->id;
         $files = $fs->get_area_files($contextid, 'local_mail', 'message', $message->id, 'id', false);
         $actual = [];
         foreach ($files as $file) {
@@ -101,7 +99,7 @@ abstract class testcase extends \advanced_testcase {
         self::assert_record_data('messages', [
             'id' => $message->id,
         ], [
-            'courseid' => $message->courseid,
+            'courseid' => $message->course->id,
             'subject' => $message->subject,
             'content' => $message->content,
             'format' => $message->format,
@@ -112,18 +110,18 @@ abstract class testcase extends \advanced_testcase {
             'normalizedcontent' => message::normalize_text($message->content, $message->format),
         ]);
 
-        $numusers = count($message->get_recipients()) + 1;
+        $numusers = count($message->recipients()) + 1;
         self::assert_record_count($numusers, 'message_users', ['messageid' => $message->id]);
 
-        $numlabels = count($message->get_labels($message->get_sender()));
-        foreach ($message->get_recipients() as $user) {
+        $numlabels = count($message->get_labels($message->sender()));
+        foreach ($message->recipients() as $user) {
             $numlabels += count($message->get_labels($user));
         }
         self::assert_record_count($numlabels, 'message_labels', ['messageid' => $message->id]);
 
-        foreach ([$message->get_sender(), ...$message->get_recipients()] as $user) {
+        foreach ([$message->sender(), ...$message->recipients()] as $user) {
             $data = [
-                'courseid' => $message->courseid,
+                'courseid' => $message->course->id,
                 'draft' => (int) $message->draft,
                 'time' => $message->time,
                 'role' => $message->role($user),
@@ -168,8 +166,8 @@ abstract class testcase extends \advanced_testcase {
             self::assertEquals(0, $events[0]->courseid);
             self::assertEquals(\context_user::instance($USER->id)->id, $events[0]->contextid);
         } else {
-            self::assertEquals($message->courseid, $events[0]->courseid);
-            self::assertEquals($message->get_course()->get_context()->id, $events[0]->contextid);
+            self::assertEquals($message->course->id, $events[0]->courseid);
+            self::assertEquals($message->course->get_context()->id, $events[0]->contextid);
         }
 
         $sink->close();
@@ -381,7 +379,7 @@ abstract class testcase extends \advanced_testcase {
 
             if (count($sentmessages) > 0 && self::random_bool($replyfreq)) {
                 $reference = self::random_item($sentmessages);
-                $sender = self::random_item($reference->get_recipients());
+                $sender = self::random_item($reference->recipients());
                 $data = message_data::reply($reference, $sender, false);
             } else {
                 $data = message_data::new(self::random_item($courses), self::random_item($participants));
@@ -414,13 +412,13 @@ abstract class testcase extends \advanced_testcase {
 
             $messages[] = $message;
 
-            if (!self::random_bool($draftfreq) && $message->get_recipients()) {
+            if (!self::random_bool($draftfreq) && $message->recipients()) {
                 $message->send($time);
                 $sentmessages[] = $message;
 
                 $message->set_unread($data->sender, self::random_bool($unreadfreq));
 
-                foreach ([$data->sender, ...$message->get_recipients()] as $user) {
+                foreach ([$data->sender, ...$message->recipients()] as $user) {
                     $message->set_unread($user, self::random_bool($unreadfreq));
                     if ($user->id != $data->sender->id) {
                         $message->set_starred($user, self::random_bool($starredfreq));
@@ -439,9 +437,7 @@ abstract class testcase extends \advanced_testcase {
         }
 
         course::cache()->purge();
-        user::cache()->purge();
         label::cache()->purge();
-        message::cache()->purge();
 
         return [$users, $messages];
     }
@@ -540,12 +536,12 @@ abstract class testcase extends \advanced_testcase {
 
             // Start message.
             $search = new message_search($user);
-            $search->start = self::random_item($messages);
+            $search->startid = self::random_item($messages)->id;
             $cases[] = $search;
 
             // Stop message.
             $search = new message_search($user);
-            $search->stop = self::random_item($messages);
+            $search->stopid = self::random_item($messages)->id;
             $cases[] = $search;
 
             // Reverse.
@@ -555,13 +551,13 @@ abstract class testcase extends \advanced_testcase {
 
             // Start and reverse.
             $search = new message_search($user);
-            $search->start = self::random_item($messages);
+            $search->startid = self::random_item($messages)->id;
             $search->reverse = true;
             $cases[] = $search;
 
             // Stop and reverse.
             $search = new message_search($user);
-            $search->stop = self::random_item($messages);
+            $search->stopid = self::random_item($messages)->id;
             $search->reverse = true;
             $cases[] = $search;
 

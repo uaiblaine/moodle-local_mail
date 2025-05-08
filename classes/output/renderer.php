@@ -2,7 +2,7 @@
 /*
  * SPDX-FileCopyrightText: 2012-2014 Institut Obert de Catalunya <https://ioc.gencat.cat>
  * SPDX-FileCopyrightText: 2014-2019 Marc Català <reskit@gmail.com>
- * SPDX-FileCopyrightText: 2016 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2016-2025 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -58,7 +58,7 @@ class renderer extends \plugin_renderer_base {
 
         require_once("$CFG->libdir/filelib.php");
 
-        $context = $message->get_course()->get_context();
+        $context = $message->course->get_context();
         $content = file_rewrite_pluginfile_urls(
             $message->content,
             'pluginfile.php',
@@ -127,9 +127,9 @@ class renderer extends \plugin_renderer_base {
 
         require_once("$CFG->libdir/filelib.php");
 
-        $course = $message->get_course();
+        $course = $message->course;
         $context = $course->get_context();
-        $sender = $message->get_sender();
+        $sender = $message->sender();
 
         $url = new \moodle_url('/local/mail/view.php', ['t' => 'inbox', 'm' => $message->id]);
         $sitename = format_string($SITE->shortname, true, ['context' => \context_system::instance()]);
@@ -148,7 +148,7 @@ class renderer extends \plugin_renderer_base {
         }
 
         $notification = new \core\message\message();
-        $notification->courseid = $message->courseid;
+        $notification->courseid = $message->course->id;
         $notification->component = 'local_mail';
         $notification->name = 'mail';
         $notification->userfrom = $sender->id;

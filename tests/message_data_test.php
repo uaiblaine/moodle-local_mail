@@ -35,9 +35,9 @@ final class message_data_test extends test\testcase {
         $message = message::create($data);
 
         $data = message_data::draft($message);
-        self::assertEquals($message->get_sender(), $data->sender);
+        self::assertEquals($message->sender(), $data->sender);
         self::assertNull($data->reference);
-        self::assertEquals($message->courseid, $data->course->id);
+        self::assertEquals($message->course->id, $data->course->id);
         self::assertEqualsCanonicalizing([$user2, $user3], $data->to);
         self::assertEqualsCanonicalizing([$user4], $data->cc);
         self::assertEqualsCanonicalizing([$user5], $data->bcc);
@@ -69,7 +69,7 @@ final class message_data_test extends test\testcase {
         $data = message_data::forward($message, $user2);
         self::assertEquals($user2, $data->sender);
         self::assertNull($data->reference);
-        self::assertEquals($message->courseid, $data->course->id);
+        self::assertEquals($message->course->id, $data->course->id);
         self::assertEqualsCanonicalizing([], $data->to);
         self::assertEqualsCanonicalizing([], $data->cc);
         self::assertEqualsCanonicalizing([], $data->bcc);
@@ -78,7 +78,7 @@ final class message_data_test extends test\testcase {
             . '<p>'
             . '--------- ' . output\strings::get('forwardedmessage') . ' ---------<br>'
             . output\strings::get('from') . ': '
-            . $message->get_sender()->fullname() . '<br>'
+            . $message->sender()->fullname() . '<br>'
             . output\strings::get('date') . ': '
             . userdate($message->time, get_string('strftimedatetime', 'langconfig')) . '<br>'
             . output\strings::get('subject') . ': '
@@ -126,7 +126,7 @@ final class message_data_test extends test\testcase {
 
         self::assertEquals($user2, $data->sender);
         self::assertEquals($message, $data->reference);
-        self::assertEquals($message->courseid, $data->course->id);
+        self::assertEquals($message->course->id, $data->course->id);
         self::assertEqualsCanonicalizing([$user1], $data->to);
         self::assertEqualsCanonicalizing([], $data->cc);
         self::assertEqualsCanonicalizing([], $data->bcc);

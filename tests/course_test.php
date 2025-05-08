@@ -24,7 +24,7 @@ final class course_test extends test\testcase {
         self::assertEquals($record->fullname, $course->fullname);
         self::assertEquals((bool) $record->visible, $course->visible);
         self::assertEquals((int) $record->groupmode, $course->groupmode);
-        self::assertEquals($course, course::cache()->get($course->id));
+        self::assertFalse(course::cache()->get($course->id));
 
         // Missing course.
         try {
@@ -34,6 +34,17 @@ final class course_test extends test\testcase {
             self::assertEquals('errorcoursenotfound', $e->errorcode);
             self::assertEquals(123, $e->a);
         }
+
+        // Get from cache.
+        $course = new course((object) [
+            'id' => 123,
+            'shortname' => 'Course 123',
+            'fullname' => 'Course 123',
+            'visible' => '1',
+            'groupmode' => NOGROUPS,
+        ]);
+        course::cache()->set($course->id, $course);
+        self::assertEquals($course, course::get($course->id));
     }
 
     public function test_get_by_user(): void {
@@ -57,22 +68,38 @@ final class course_test extends test\testcase {
         $result = course::get_by_user($user1);
 
         self::assert_array_of_objects([$course4, $course2, $course1], $result);
+        self::assertEquals($user1->id, course::cache()->get('userid'));
+        self::assertEquals([$course4->id, $course2->id, $course1->id], course::cache()->get('courseids'));
         self::assertEquals($course1, course::cache()->get($course1->id));
         self::assertEquals($course2, course::cache()->get($course2->id));
         self::assertEquals($course4, course::cache()->get($course4->id));
         self::assertFalse(course::cache()->has($course3->id));
         self::assertFalse(course::cache()->has($course5->id));
         self::assertFalse(course::cache()->has($course6->id));
-        self::assertEquals([$course4->id, $course2->id, $course1->id], course::user_cache()->get($user1->id));
 
-        // Use with no courses.
-        self::assertEquals([], course::get_by_user($user3));
-        self::assertEquals([], course::user_cache()->get($user3->id));
+        // User with no courses.
+
+        $result = course::get_by_user($user3);
+
+        self::assertEquals([], $result);
+        self::assertEquals($user3->id, course::cache()->get('userid'));
+        self::assertEquals([], course::cache()->get('courseids'));
+        self::assertFalse(course::cache()->has($course1->id));
+        self::assertFalse(course::cache()->has($course2->id));
+        self::assertFalse(course::cache()->has($course4->id));
 
         // Get from cache.
-        course::user_cache()->set($user1->id, [$course1->id, $course3->id]);
+
+        delete_course($course1->id, false);
+        delete_course($course2->id, false);
+        course::cache()->set('userid', $user1->id);
+        course::cache()->set('courseids', [$course1->id, $course2->id]);
+        course::cache()->set($course1->id, $course1);
+        course::cache()->set($course2->id, $course2);
+
         $result = course::get_by_user($user1);
-        self::assert_array_of_objects([$course1, $course3], $result);
+
+        self::assert_array_of_objects([$course1, $course2], $result);
     }
 
     public function test_get_context(): void {
@@ -93,9 +120,9 @@ final class course_test extends test\testcase {
         $result = course::get_many([$course2->id, $course3->id, $course1->id, $course3->id]);
 
         self::assert_array_of_objects([$course2, $course3, $course1], $result);
-        self::assertEquals($course1, course::cache()->get($course1->id));
-        self::assertEquals($course2, course::cache()->get($course2->id));
-        self::assertEquals($course3, course::cache()->get($course3->id));
+        self::assertFalse(course::cache()->get($course1->id));
+        self::assertFalse(course::cache()->get($course2->id));
+        self::assertFalse(course::cache()->get($course3->id));
 
         // Missing course.
         try {
@@ -108,6 +135,17 @@ final class course_test extends test\testcase {
 
         // No IDs.
         self::assertEquals([], course::get_many([]));
+
+        // Get from cache.
+        $course = new course((object) [
+            'id' => 123,
+            'shortname' => 'Course 123',
+            'fullname' => 'Course 123',
+            'visible' => '1',
+            'groupmode' => NOGROUPS,
+        ]);
+        course::cache()->set($course->id, $course);
+        self::assert_array_of_objects([$course], course::get_many([$course->id]));
     }
 
     public function test_get_viewable_groups(): void {

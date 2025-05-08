@@ -27,7 +27,7 @@ final class message_search_test extends test\testcase {
         foreach ($this->messages_search_cases($users, $messages) as $search) {
             $expected = [];
             foreach (self::search_result($messages, $search) as $message) {
-                $expected[$message->courseid] = ($expected[$message->courseid] ?? 0) + 1;
+                $expected[$message->course->id] = ($expected[$message->course->id] ?? 0) + 1;
             }
             self::assertEquals($expected, $search->count_per_course(), $search);
         }
@@ -41,7 +41,7 @@ final class message_search_test extends test\testcase {
             foreach (self::search_result($messages, $search) as $message) {
                 foreach ($message->get_labels($search->user) as $label) {
                     if (!$search->label || $search->label->id == $label->id) {
-                        $expected[$label->id][$message->courseid] = ($expected[$label->id][$message->courseid] ?? 0) + 1;
+                        $expected[$label->id][$message->course->id] = ($expected[$label->id][$message->course->id] ?? 0) + 1;
                     }
                 }
             }
@@ -62,6 +62,28 @@ final class message_search_test extends test\testcase {
             $result = $search->get(5, 20);
             self::assert_array_of_objects($expected, $result, $search);
         }
+
+        // Invalid startid.
+        try {
+            $search = new message_search($users[0]);
+            $search->startid = 123;
+            $search->get();
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+            self::assertEquals(123, $e->a);
+        }
+
+        // Invalid stopid.
+        try {
+            $search = new message_search($users[0]);
+            $search->stopid = 123;
+            $search->get();
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+            self::assertEquals(123, $e->a);
+        }
     }
 
 
@@ -79,9 +101,9 @@ final class message_search_test extends test\testcase {
 
         foreach (array_reverse($messages) as $message) {
             if (
-                !in_array($message->courseid, $courseids) ||
-                $search->user->id != $message->get_sender()->id && !$message->has_recipient($search->user) ||
-                $search->user->id != $message->get_sender()->id && $message->draft ||
+                !in_array($message->course->id, $courseids) ||
+                $search->user->id != $message->sender()->id && !$message->has_recipient($search->user) ||
+                $search->user->id != $message->sender()->id && $message->draft ||
                 $search->label && !$message->has_label($search->label) ||
                 $search->draft !== null && $search->draft != $message->draft ||
                 $search->roles && !in_array($message->role($search->user), $search->roles) ||
@@ -91,10 +113,10 @@ final class message_search_test extends test\testcase {
                 $search->deleted && $message->deleted($search->user) != message::DELETED ||
                 $search->withfilesonly && $message->attachments == 0 ||
                 $search->maxtime && $message->time > $search->maxtime ||
-                $search->start && !$search->reverse && $message->id >= $search->start->id ||
-                $search->start && $search->reverse && $message->id <= $search->start->id ||
-                $search->stop && !$search->reverse && $message->id <= $search->stop->id ||
-                $search->stop && $search->reverse && $message->id >= $search->stop->id
+                $search->startid && !$search->reverse && $message->id >= $search->startid ||
+                $search->startid && $search->reverse && $message->id <= $search->startid ||
+                $search->stopid && !$search->reverse && $message->id <= $search->stopid ||
+                $search->stopid && $search->reverse && $message->id >= $search->stopid
             ) {
                 continue;
             }
@@ -107,7 +129,7 @@ final class message_search_test extends test\testcase {
                 if (\core_text::strpos(message::normalize_text($message->content, FORMAT_PLAIN), $pattern) !== false) {
                     $found = true;
                 }
-                foreach ([$message->get_sender(), ...$message->get_recipients(message::ROLE_TO, message::ROLE_CC)] as $user) {
+                foreach ([$message->sender(), ...$message->recipients(message::ROLE_TO, message::ROLE_CC)] as $user) {
                     if (\core_text::strpos($user->fullname(), $pattern) !== false) {
                         $found = true;
                     }
@@ -118,14 +140,14 @@ final class message_search_test extends test\testcase {
             }
             if ($search->sendername != '') {
                 $pattern = message::normalize_text($search->sendername, FORMAT_PLAIN);
-                if (\core_text::strpos($message->get_sender()->fullname(), $pattern) === false) {
+                if (\core_text::strpos($message->sender()->fullname(), $pattern) === false) {
                     continue;
                 }
             }
             if ($search->recipientname != '') {
                 $found = false;
                 $pattern = message::normalize_text($search->recipientname, FORMAT_PLAIN);
-                foreach ($message->get_recipients(message::ROLE_TO, message::ROLE_CC) as $user) {
+                foreach ($message->recipients(message::ROLE_TO, message::ROLE_CC) as $user) {
                     if (\core_text::strpos($user->fullname(), $pattern) !== false) {
                         $found = true;
                     }

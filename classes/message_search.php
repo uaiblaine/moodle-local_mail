@@ -1,6 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -47,11 +48,11 @@ class message_search {
     /** @var int If not zero, search messages older than this date. */
     public int $maxtime = 0;
 
-    /** @var ?message If not null, start serching from the position of this message (excluded). */
-    public ?message $start = null;
+    /** @var ?int If not null, start serching from the position of this message (excluded). */
+    public ?int $startid = null;
 
-    /** @var ?message If not null, stop serching at the position of this message (excluded). */
-    public ?message $stop = null;
+    /** @var ?int If not null, stop serching at the position of this message (excluded). */
+    public ?int $stopid = null;
 
     /** @var bool Search messages from older to newer instead of from newer to older. */
     public bool $reverse = false;
@@ -109,11 +110,11 @@ class message_search {
         if ($this->maxtime) {
             $params['maxtime'] = $this->maxtime;
         }
-        if ($this->start) {
-            $params['start'] = $this->start->id;
+        if ($this->startid) {
+            $params['startid'] = $this->startid;
         }
-        if ($this->stop) {
-            $params['stop'] = $this->stop->id;
+        if ($this->stopid) {
+            $params['stop'] = $this->stopid;
         }
         if ($this->reverse) {
             $params['reverse'] = true;
@@ -316,26 +317,34 @@ class message_search {
             $params['filtertime'] = $this->maxtime;
         }
 
-        if ($this->start) {
+        if ($this->startid) {
+            $starttime = $DB->get_field('local_mail_messages', 'time', ['id' => $this->startid]);
+            if ($starttime === false) {
+                throw new exception('errormessagenotfound', $this->startid);
+            }
             if ($this->reverse) {
                 $selects[] = 'i.time >= :starttime1 AND (i.time > :starttime2 OR i.messageid > :startid)';
             } else {
                 $selects[] = 'i.time <= :starttime1 AND (i.time < :starttime2 OR i.messageid < :startid)';
             }
-            $params['startid'] = $this->start->id;
-            $params['starttime1'] = $this->start->time;
-            $params['starttime2'] = $this->start->time;
+            $params['startid'] = $this->startid;
+            $params['starttime1'] = $starttime;
+            $params['starttime2'] = $starttime;
         }
 
-        if ($this->stop) {
+        if ($this->stopid) {
+            $stoptime = $DB->get_field('local_mail_messages', 'time', ['id' => $this->stopid]);
+            if ($stoptime === false) {
+                throw new exception('errormessagenotfound', $this->stopid);
+            }
             if ($this->reverse) {
                 $selects[] = 'i.time <= :stoptime1 AND (i.time < :stoptime2 OR i.messageid < :stopid)';
             } else {
                 $selects[] = 'i.time >= :stoptime1 AND (i.time > :stoptime2 OR i.messageid > :stopid)';
             }
-            $params['stopid'] = $this->stop->id;
-            $params['stoptime1'] = $this->stop->time;
-            $params['stoptime2'] = $this->stop->time;
+            $params['stopid'] = $this->stopid;
+            $params['stoptime1'] = $stoptime;
+            $params['stoptime2'] = $stoptime;
         }
 
         $wheresql = 'WHERE ' . implode(' AND ', $selects);

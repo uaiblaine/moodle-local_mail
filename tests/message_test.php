@@ -40,16 +40,16 @@ final class message_test extends test\testcase {
         $message = message::create($data);
 
         self::assertGreaterThan(0, $message->id);
-        self::assertEquals($data->course->id, $message->courseid);
+        self::assertEquals($data->course, $message->course);
         self::assertEquals($data->subject, $message->subject);
         self::assertEquals($data->content, $message->content);
         self::assertEquals($data->format, $message->format);
         self::assertEquals(2, $message->attachments);
         self::assertEquals($data->time, $message->time);
-        self::assertEquals($user1, $message->get_sender());
-        self::assertEqualsCanonicalizing([$user2, $user3], $message->get_recipients(message::ROLE_TO));
-        self::assertEqualsCanonicalizing([$user4], $message->get_recipients(message::ROLE_CC));
-        self::assertEqualsCanonicalizing([$user5], $message->get_recipients(message::ROLE_BCC));
+        self::assertEquals($user1, $message->sender());
+        self::assertEqualsCanonicalizing([$user2, $user3], $message->recipients(message::ROLE_TO));
+        self::assertEqualsCanonicalizing([$user4], $message->recipients(message::ROLE_CC));
+        self::assertEqualsCanonicalizing([$user5], $message->recipients(message::ROLE_BCC));
         self::assertFalse($message->unread($user1));
         self::assertTrue($message->unread($user2));
         self::assertTrue($message->unread($user3));
@@ -73,14 +73,13 @@ final class message_test extends test\testcase {
         self::assert_message($message);
         self::assert_attachments(['file1.txt' => 'File 1', 'file2.txt' => 'File 2'], $message);
         self::assertEquals([], $message->get_references());
-        self::assertEquals($message, message::cache()->get($message->id));
 
         // Reference.
 
         $message->send($time);
         $message->set_labels($user1, [$label1]);
         $message->set_labels($user2, [$label2]);
-        $data = message_data::new($message->get_course(), $user2);
+        $data = message_data::new($message->course, $user2);
         $data->reference = $message;
         $data->to = [$user1];
         $data->time = make_timestamp(2021, 10, 11, 13, 0);
@@ -90,13 +89,12 @@ final class message_test extends test\testcase {
         self::assertEquals([], $message->get_labels($user1));
         self::assertEquals([$label2], $message->get_labels($user2));
         self::assertEquals([$data->reference->id => $data->reference], $message->get_references());
-        self::assertEquals($message, message::cache()->get($message->id));
     }
 
     public function test_delete_course(): void {
         [$users, $messages] = self::generate_random_data(true);
 
-        $course = $messages[0]->get_course();
+        $course = $messages[0]->course;
         $context = $course->get_context();
 
         $fs = get_file_storage();
@@ -107,13 +105,12 @@ final class message_test extends test\testcase {
         self::assert_record_count(0, 'message_users', ['courseid' => $course->id]);
         self::assert_record_count(0, 'message_labels', ['courseid' => $course->id]);
         foreach ($messages as $message) {
-            if ($message->courseid == $course->id) {
+            if ($message->course->id == $course->id) {
                 self::assert_record_count(0, 'message_refs', ['messageid' => $message->id]);
                 self::assert_record_count(0, 'message_refs', ['reference' => $message->id]);
             } else {
                 self::assert_message($message);
             }
-            self::assertFalse(message::cache()->get($message->id));
         }
         self::assertEmpty($fs->get_area_files($context->id, 'local_mail', 'message'));
     }
@@ -146,10 +143,8 @@ final class message_test extends test\testcase {
         $message2->set_labels($user1, [$label1]);
         $message2->set_labels($user2, [$label2]);
         $message2 = message::create($data2);
-        message::cache()->purge();
 
         self::assertEquals($message1, message::get($message1->id));
-        self::assertEquals($message1, message::cache()->get($message1->id));
 
         // Missing message.
         try {
@@ -159,41 +154,6 @@ final class message_test extends test\testcase {
             self::assertEquals('errormessagenotfound', $e->errorcode);
             self::assertEquals(123, $e->a);
         }
-    }
-
-    public function test_get_course(): void {
-        $generator = self::getDataGenerator();
-        $course = new course($generator->create_course());
-        $user = new user($generator->create_user());
-
-        $data = message_data::new($course, $user);
-        $message = message::create($data);
-
-        self::assertEquals($course, $message->get_course());
-    }
-
-    public function test_get_labels(): void {
-        $generator = self::getDataGenerator();
-        $course = new course($generator->create_course());
-        $user1 = new user($generator->create_user());
-        $user2 = new user($generator->create_user());
-        $user3 = new user($generator->create_user());
-        $label3 = label::create($user1, 'Label 3');
-        $label1 = label::create($user1, 'Label 1');
-        $label4 = label::create($user2, 'Label 4');
-        $label2 = label::create($user1, 'Label 2');
-        $label5 = label::create($user1, 'Label 5');
-        $data = message_data::new($course, $user1);
-        $data->to = [$user2, $user3];
-        $data->subject = 'Subject';
-        $message = message::create($data);
-        $message->send(time());
-        $message->set_labels($user1, [$label3, $label1, $label2]);
-        $message->set_labels($user2, [$label4]);
-
-        self::assertEquals([$label1, $label2, $label3], $message->get_labels($user1));
-        self::assertEquals([$label4], $message->get_labels($user2));
-        self::assertEquals([], $message->get_labels($user3));
     }
 
     public function test_get_many(): void {
@@ -235,14 +195,10 @@ final class message_test extends test\testcase {
         $data4->content = 'Content 4';
         $data4->time = $time4;
         $message4 = message::create($data4);
-        message::cache()->purge();
 
         $result = message::get_many([$message1->id, $message2->id, $message1->id, $message4->id]);
 
         self::assert_array_of_objects([$message4, $message2, $message1], $result);
-        self::assertEquals($message1, message::cache()->get($message1->id));
-        self::assertEquals($message1, message::cache()->get($message1->id));
-        self::assertEquals($message1, message::cache()->get($message1->id));
 
         // Missing message.
         try {
@@ -257,45 +213,28 @@ final class message_test extends test\testcase {
         self::assertEquals([], message::get_many([]));
     }
 
-    public function test_get_recipients(): void {
+    public function test_get_labels(): void {
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
         $user3 = new user($generator->create_user());
-        $user4 = new user($generator->create_user());
-        $user5 = new user($generator->create_user());
-
+        $label3 = label::create($user1, 'Label 3');
+        $label1 = label::create($user1, 'Label 1');
+        $label4 = label::create($user2, 'Label 4');
+        $label2 = label::create($user1, 'Label 2');
+        $label5 = label::create($user1, 'Label 5');
         $data = message_data::new($course, $user1);
         $data->to = [$user2, $user3];
-        $data->cc = [$user4];
-        $data->bcc = [$user5];
+        $data->subject = 'Subject';
         $message = message::create($data);
+        $message->send(time());
+        $message->set_labels($user1, [$label3, $label1, $label2]);
+        $message->set_labels($user2, [$label4]);
 
-        // All recipients.
-        $recipients = [$user2, $user3, $user4, $user5];
-        \core_collator::asort_objects_by_method($recipients, 'sortorder');
-        self::assertEquals(array_values($recipients), $message->get_recipients());
-
-        // To recipients.
-        $recipients = [$user2, $user3];
-        \core_collator::asort_objects_by_method($recipients, 'sortorder');
-        self::assertEquals(array_values($recipients), $message->get_recipients(message::ROLE_TO));
-
-        // Cc recipients.
-        $recipients = [$user4];
-        \core_collator::asort_objects_by_method($recipients, 'sortorder');
-        self::assertEquals(array_values($recipients), $message->get_recipients(message::ROLE_CC));
-
-        // Bcc recipients.
-        $recipients = [$user5];
-        \core_collator::asort_objects_by_method($recipients, 'sortorder');
-        self::assertEquals(array_values($recipients), $message->get_recipients(message::ROLE_BCC));
-
-        // To and Bcc recipients.
-        $recipients = [$user2, $user3, $user4];
-        \core_collator::asort_objects_by_method($recipients, 'sortorder');
-        self::assertEquals(array_values($recipients), $message->get_recipients(message::ROLE_TO, message::ROLE_CC));
+        self::assertEquals([$label1, $label2, $label3], $message->get_labels($user1));
+        self::assertEquals([$label4], $message->get_labels($user2));
+        self::assertEquals([], $message->get_labels($user3));
     }
 
     public function test_get_references(): void {
@@ -332,19 +271,6 @@ final class message_test extends test\testcase {
         self::assertEquals(message::get_many([$message3->id, $message2->id]), $message1->get_references(true));
         self::assertEquals(message::get_many([$message3->id]), $message2->get_references(true));
         self::assertEquals(message::get_many([]), $message3->get_references(true));
-    }
-
-    public function test_get_sender(): void {
-        $generator = self::getDataGenerator();
-        $course = new course($generator->create_course());
-        $user1 = new user($generator->create_user());
-        $user2 = new user($generator->create_user());
-
-        $data = message_data::new($course, $user1);
-        $data->to = [$user2];
-        $message = message::create($data);
-
-        self::assertEquals($user1, $message->get_sender());
     }
 
     public function test_has_label(): void {
@@ -392,6 +318,47 @@ final class message_test extends test\testcase {
         self::assertEquals('text text', message::normalize_text('text😛😛text', FORMAT_PLAIN));
         self::assertEquals('text text', message::normalize_text('text @@PLUGINFILE@@/ text', FORMAT_HTML));
         self::assertEquals('text text', message::normalize_text(' <p> text    text </p>', FORMAT_HTML));
+    }
+
+    public function test_recipients(): void {
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $user4 = new user($generator->create_user());
+        $user5 = new user($generator->create_user());
+
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2, $user3];
+        $data->cc = [$user4];
+        $data->bcc = [$user5];
+        $message = message::create($data);
+
+        // All recipients.
+        $recipients = [$user2, $user3, $user4, $user5];
+        \core_collator::asort_objects_by_method($recipients, 'sortorder');
+        self::assertEquals(array_values($recipients), $message->recipients());
+
+        // To recipients.
+        $recipients = [$user2, $user3];
+        \core_collator::asort_objects_by_method($recipients, 'sortorder');
+        self::assertEquals(array_values($recipients), $message->recipients(message::ROLE_TO));
+
+        // Cc recipients.
+        $recipients = [$user4];
+        \core_collator::asort_objects_by_method($recipients, 'sortorder');
+        self::assertEquals(array_values($recipients), $message->recipients(message::ROLE_CC));
+
+        // Bcc recipients.
+        $recipients = [$user5];
+        \core_collator::asort_objects_by_method($recipients, 'sortorder');
+        self::assertEquals(array_values($recipients), $message->recipients(message::ROLE_BCC));
+
+        // To and Bcc recipients.
+        $recipients = [$user2, $user3, $user4];
+        \core_collator::asort_objects_by_method($recipients, 'sortorder');
+        self::assertEquals(array_values($recipients), $message->recipients(message::ROLE_TO, message::ROLE_CC));
     }
 
     public function test_role(): void {
@@ -455,7 +422,6 @@ final class message_test extends test\testcase {
         self::assertFalse($message1->draft);
         self::assertEquals($time2, $message1->time);
         self::assert_message($message1);
-        self::assertEquals($message1, message::cache()->get($message1->id));
 
         // Send message with references.
 
@@ -469,7 +435,19 @@ final class message_test extends test\testcase {
         self::assertEquals([$label1], $message2->get_labels($user1));
         self::assertEquals([], $message2->get_labels($user2));
         self::assert_message($message2);
-        self::assertEquals($message2, message::cache()->get($message2->id));
+    }
+
+    public function test_sender(): void {
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $message = message::create($data);
+
+        self::assertEquals($user1, $message->sender());
     }
 
     public function test_set_deleted(): void {
@@ -502,7 +480,6 @@ final class message_test extends test\testcase {
         self::assertEquals([], $fs->get_area_files($course->get_context()->id, 'local_mail', 'message', $draft->id));
         self::assertEquals(message::DELETED_FOREVER, $draft->deleted($user1));
         self::assertEquals([], $draft->get_labels($user1));
-        self::assertFalse($message::cache()->get($draft->id));
 
         // Delete sent message.
 
@@ -510,7 +487,6 @@ final class message_test extends test\testcase {
 
         self::assertEquals(message::DELETED, $message->deleted($user2));
         self::assert_message($message);
-        self::assertEquals($message, message::cache()->get($message->id));
 
         // Restore deleted message.
 
@@ -518,7 +494,6 @@ final class message_test extends test\testcase {
 
         self::assertEquals(message::NOT_DELETED, $message->deleted($user2));
         self::assert_message($message);
-        self::assertEquals($message, message::cache()->get($message->id));
 
         // Delete sent message forever.
 
@@ -526,7 +501,6 @@ final class message_test extends test\testcase {
 
         self::assertEquals(message::DELETED_FOREVER, $message->deleted($user2));
         self::assert_message($message);
-        self::assertEquals($message, message::cache()->get($message->id));
     }
 
     public function test_set_labels(): void {
@@ -550,31 +524,26 @@ final class message_test extends test\testcase {
         self::assertEquals([$label1, $label2], $message->get_labels($user1));
         self::assertEquals([], $message->get_labels($user2));
         self::assert_message($message);
-        self::assertEquals($message, message::cache()->get($message->id));
 
         $message->set_labels($user1, [$label2, $label3]);
         self::assertEquals([$label2, $label3], $message->get_labels($user1));
         self::assertEquals([], $message->get_labels($user2));
         self::assert_message($message);
-        self::assertEquals($message, message::cache()->get($message->id));
 
         $message->set_labels($user2, [$label4]);
         self::assertEquals([$label2, $label3], $message->get_labels($user1));
         self::assertEquals([$label4], $message->get_labels($user2));
         self::assert_message($message);
-        self::assertEquals($message, message::cache()->get($message->id));
 
         $message->set_labels($user1, []);
         self::assertEquals([], $message->get_labels($user1));
         self::assertEquals([$label4], $message->get_labels($user2));
         self::assert_message($message);
-        self::assertEquals($message, message::cache()->get($message->id));
 
         $message->set_labels($user2, []);
         self::assertEquals([], $message->get_labels($user1));
         self::assertEquals([], $message->get_labels($user2));
         self::assert_message($message);
-        self::assertEquals($message, message::cache()->get($message->id));
     }
 
     public function test_set_starred(): void {
@@ -597,7 +566,6 @@ final class message_test extends test\testcase {
 
         self::assertTrue($message->starred($user2));
         self::assert_message($message);
-        self::assertEquals($message, message::cache()->get($message->id));
 
         // Set unstarred.
 
@@ -605,7 +573,6 @@ final class message_test extends test\testcase {
 
         self::assertFalse($message->starred($user2));
         self::assert_message($message);
-        self::assertEquals($message, message::cache()->get($message->id));
     }
 
     public function test_set_unread(): void {
@@ -628,7 +595,6 @@ final class message_test extends test\testcase {
 
         self::assertFalse($message->unread($user2));
         self::assert_message($message);
-        self::assertEquals($message, message::cache()->get($message->id));
 
         // Set read.
 
@@ -636,7 +602,6 @@ final class message_test extends test\testcase {
 
         self::assertTrue($message->unread($user2));
         self::assert_message($message);
-        self::assertEquals($message, message::cache()->get($message->id));
     }
 
     public function test_update(): void {
@@ -680,16 +645,16 @@ final class message_test extends test\testcase {
         $message->update($data);
 
         self::assertGreaterThan(0, $message->id);
-        self::assertEquals($data->course->id, $message->courseid);
+        self::assertEquals($data->course, $message->course);
         self::assertEquals($data->subject, $message->subject);
         self::assertEquals($data->content, $message->content);
         self::assertEquals($data->format, $message->format);
         self::assertEquals(1, $message->attachments);
         self::assertEquals($data->time, $message->time);
-        self::assertEquals($user1, $message->get_sender());
-        self::assertEqualsCanonicalizing([$user2], $message->get_recipients(message::ROLE_TO));
-        self::assertEqualsCanonicalizing([$user3], $message->get_recipients(message::ROLE_CC));
-        self::assertEqualsCanonicalizing([$user5], $message->get_recipients(message::ROLE_BCC));
+        self::assertEquals($user1, $message->sender());
+        self::assertEqualsCanonicalizing([$user2], $message->recipients(message::ROLE_TO));
+        self::assertEqualsCanonicalizing([$user3], $message->recipients(message::ROLE_CC));
+        self::assertEqualsCanonicalizing([$user5], $message->recipients(message::ROLE_BCC));
         self::assertFalse($message->unread($user1));
         self::assertTrue($message->unread($user2));
         self::assertTrue($message->unread($user3));
@@ -709,7 +674,6 @@ final class message_test extends test\testcase {
         self::assert_message($message);
         self::assert_attachments(['file3.txt' => 'File 3'], $message);
         self::assertEquals([], $message->get_references());
-        self::assertEquals($message, message::cache()->get($message->id));
 
         // Subject longer than 100 characters.
 
@@ -719,6 +683,5 @@ final class message_test extends test\testcase {
 
         self::assertEquals(str_repeat('X', 95) . 'AB...', $message->subject);
         self::assert_message($message);
-        self::assertEquals($message, message::cache()->get($message->id));
     }
 }

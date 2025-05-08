@@ -259,7 +259,6 @@ final class user_test extends test\testcase {
         $user = user::current();
 
         self::assertEquals(new user($record), $user);
-        self::assertEquals($user, user::cache()->get($user->id));
 
         // Not logged in.
 
@@ -297,7 +296,6 @@ final class user_test extends test\testcase {
         self::assertEquals($record->lastnamephonetic, $user->lastnamephonetic);
         self::assertEquals($record->middlename, $user->middlename);
         self::assertEquals($record->alternatename, $user->alternatename);
-        self::assertEquals($user, user::cache()->get($user->id));
 
         // Deleted user.
 
@@ -317,7 +315,6 @@ final class user_test extends test\testcase {
         self::assertEquals('', $user->lastnamephonetic);
         self::assertEquals('', $user->middlename);
         self::assertEquals('', $user->alternatename);
-        self::assertEquals($user, user::cache()->get($user->id));
 
         // Missing user.
 
@@ -335,7 +332,6 @@ final class user_test extends test\testcase {
         self::assertEquals('', $user->lastnamephonetic);
         self::assertEquals('', $user->middlename);
         self::assertEquals('', $user->alternatename);
-        self::assertEquals($user, user::cache()->get(123));
     }
 
     public function test_get_many(): void {
@@ -348,11 +344,6 @@ final class user_test extends test\testcase {
         $result = user::get_many([$user3->id, $user1->id, $user3->id, $user2->id, $user3->id, $user4->id]);
 
         self::assert_array_of_objects([$user3, $user1, $user2, $user4], $result);
-
-        self::assertEquals($user1, user::cache()->get($user1->id));
-        self::assertEquals($user2, user::cache()->get($user2->id));
-        self::assertEquals($user3, user::cache()->get($user3->id));
-        self::assertEquals($user4, user::cache()->get($user4->id));
 
         // No IDs.
         self::assertEquals([], user::get_many([]));

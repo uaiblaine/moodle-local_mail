@@ -38,7 +38,7 @@ class course {
     }
 
     /**
-     * Cache of courses, indexed by ID.
+     * Cache of user courses.
      *
      * @return \cache
      */
@@ -65,26 +65,26 @@ class course {
      * @return self[] Array of courses indexed by ID.
      */
     public static function get_by_user(user $user): array {
-        $courses = [];
+        $cache = self::cache();
 
-        $ids = self::user_cache()->get($user->id);
-
-        if ($ids === false) {
-            $courses = [];
-            foreach (enrol_get_users_courses($user->id, true) as $record) {
-                $context = \context_course::instance($record->id);
-                if (has_capability('local/mail:usemail', $context, $user->id, false)) {
-                    $courses[$record->id] = new self($record);
-                }
-            }
-
-            self::cache()->set_many($courses);
-            self::user_cache()->set($user->id, array_keys($courses));
-
-            return $courses;
-        } else {
-            return self::get_many($ids);
+        if ($user->id == $cache->get('userid')) {
+            return self::get_many($cache->get('courseids'));
         }
+
+        $courses = [];
+        foreach (enrol_get_users_courses($user->id, true) as $record) {
+            $context = \context_course::instance($record->id);
+            if (has_capability('local/mail:usemail', $context, $user->id, false)) {
+                $courses[$record->id] = new self($record);
+            }
+        }
+
+        $cache->purge();
+        $cache->set_many($courses);
+        $cache->set('courseids', array_keys($courses));
+        $cache->set('userid', $user->id);
+
+        return $courses;
     }
 
     /**
@@ -108,7 +108,6 @@ class course {
             foreach ($missingids as $id) {
                 if (isset($records[$id])) {
                     $courses[$id] = new self($records[$id]);
-                    self::cache()->set($id, $courses[$id]);
                 } else {
                     throw new exception('errorcoursenotfound', $id);
                 }
@@ -116,15 +115,6 @@ class course {
         }
 
         return $courses;
-    }
-
-    /**
-     * Cache of user course IDs, indexed by user ID.
-     *
-     * @return \cache
-     */
-    public static function user_cache(): \cache {
-        return \cache::make('local_mail', 'usercourseids');
     }
 
     /**

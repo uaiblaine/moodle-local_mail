@@ -64,15 +64,6 @@ class user {
     }
 
     /**
-     * Cache of users, indexed by ID.
-     *
-     * @return \cache
-     */
-    public static function cache(): \cache {
-        return \cache::make('local_mail', 'users');
-    }
-
-    /**
      * Returns the current logged in user.
      *
      * @return ?self The current or null if not logged in or is guest.
@@ -85,7 +76,6 @@ class user {
         }
 
         $user = new self($USER);
-        self::cache()->set($user->id, $user);
 
         return $user;
     }
@@ -113,19 +103,18 @@ class user {
     public static function get_many(array $ids): array {
         global $CFG, $DB;
 
-        $users = self::cache()->get_many($ids);
-        $missingids = array_filter($ids, fn($id) => !$users[$id]);
+        if (!$ids) {
+            return [];
+        }
 
-        if ($missingids) {
-            [$sqlid, $params] = $DB->get_in_or_equal($missingids, SQL_PARAMS_NAMED, 'userid');
-            $select = "id $sqlid AND deleted = 0 AND id <> :guestid";
-            $params['guestid'] = $CFG->siteguest;
-            $fields = implode(',', \core_user\fields::get_picture_fields());
-            $records = $DB->get_records_select('user', $select, $params, '', $fields);
-            foreach ($missingids as $id) {
-                $users[$id] = new self($records[$id] ?? (object) ['id' => $id, 'deleted' => 1]);
-                self::cache()->set($id, $users[$id]);
-            }
+        [$sqlid, $params] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'userid');
+        $select = "id $sqlid AND deleted = 0 AND id <> :guestid";
+        $params['guestid'] = $CFG->siteguest;
+        $fields = implode(',', \core_user\fields::get_picture_fields());
+        $records = $DB->get_records_select('user', $select, $params, '', $fields);
+
+        foreach ($ids as $id) {
+            $users[$id] = new self($records[$id] ?? (object) ['id' => $id, 'deleted' => 1]);
         }
 
         return $users;
@@ -139,9 +128,9 @@ class user {
      */
     public function can_edit_message(message $message): bool {
         return $message->draft &&
-            $this->id == $message->get_sender()->id &&
+            $this->id == $message->sender()->id &&
             $message->deleted($this) != message::DELETED_FOREVER &&
-            $this->can_use_mail($message->get_course());
+            $this->can_use_mail($message->course);
     }
 
     /**
@@ -196,9 +185,9 @@ class user {
      * @return bool
      */
     public function can_view_message(message $message): bool {
-        return ($message->get_sender()->id == $this->id || !$message->draft && $message->has_recipient($this)) &&
+        return ($message->sender()->id == $this->id || !$message->draft && $message->has_recipient($this)) &&
             $message->deleted($this) != message::DELETED_FOREVER &&
-            $this->can_use_mail($message->get_course());
+            $this->can_use_mail($message->course);
     }
 
     /**

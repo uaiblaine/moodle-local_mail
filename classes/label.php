@@ -39,7 +39,7 @@ class label {
     }
 
     /**
-     * Cache of labels, indexed by ID.
+     * Cache of user labels.
      *
      * @return \cache
      */
@@ -69,8 +69,7 @@ class label {
 
         $label = new self($record);
 
-        self::cache()->set($label->id, $label);
-        self::user_cache()->delete($user->id);
+        self::cache()->purge();
 
         return $label;
     }
@@ -96,23 +95,25 @@ class label {
     public static function get_by_user(user $user): array {
         global $DB;
 
-        $ids = self::user_cache()->get($user->id);
+        $cache = self::cache();
 
-        if ($ids === false) {
-            $labels = [];
-            $records = $DB->get_records('local_mail_labels', ['userid' => $user->id]);
-            foreach ($records as $id => $record) {
-                $labels[$id] = new self($record);
-            }
-            \core_collator::asort_objects_by_property($labels, 'name', \core_collator::SORT_NATURAL);
-
-            self::cache()->set_many($labels);
-            self::user_cache()->set($user->id, array_keys($labels));
-
-            return $labels;
-        } else {
-            return self::get_many($ids);
+        if ($user->id == $cache->get('userid')) {
+            return self::get_many($cache->get('labelids'));
         }
+
+        $labels = [];
+        foreach ($DB->get_records('local_mail_labels', ['userid' => $user->id]) as $record) {
+            $labels[$record->id] = new self($record);
+        }
+
+        \core_collator::asort_objects_by_property($labels, 'name', \core_collator::SORT_NATURAL);
+
+        self::cache()->purge();
+        $cache->set_many($labels);
+        $cache->set('labelids', array_keys($labels));
+        $cache->set('userid', $user->id);
+
+        return $labels;
     }
 
     /**
@@ -125,7 +126,7 @@ class label {
         global $DB;
 
         $labels = self::cache()->get_many($ids);
-        $missingids = array_filter($ids, fn ($id) => !$labels[$id]);
+        $missingids = array_filter($ids, fn($id) => !$labels[$id]);
 
         if ($missingids) {
             [$sqlid, $params] = $DB->get_in_or_equal($missingids);
@@ -133,7 +134,6 @@ class label {
             foreach ($missingids as $id) {
                 if (isset($records[$id])) {
                     $labels[$id] = new self($records[$id]);
-                    self::cache()->set($id, $labels[$id]);
                 } else {
                     throw new exception('errorlabelnotfound', $id);
                 }
@@ -154,15 +154,6 @@ class label {
     }
 
     /**
-     * Cache of user label IDs, indexed by user ID.
-     *
-     * @return \cache
-     */
-    public static function user_cache(): \cache {
-        return \cache::make('local_mail', 'userlabelids');
-    }
-
-    /**
      * Deletes the label from the database.
      */
     public function delete(): void {
@@ -173,9 +164,7 @@ class label {
         $DB->delete_records('local_mail_message_labels', ['labelid' => $this->id]);
         $transaction->allow_commit();
 
-        self::cache()->delete($this->id);
-        self::user_cache()->delete($this->userid);
-        message::cache()->purge();
+        self::cache()->purge();
     }
 
     /**
@@ -200,7 +189,6 @@ class label {
 
         $DB->update_record('local_mail_labels', $record);
 
-        self::cache()->set($this->id, $this);
-        self::user_cache()->delete($this->userid);
+        self::cache()->purge();
     }
 }

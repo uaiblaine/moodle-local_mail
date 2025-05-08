@@ -462,11 +462,11 @@ class external extends \external_api {
         $search->maxtime = $query['maxtime'];
 
         if ($query['startid']) {
-            $search->start = message::get($query['startid']);
+            $search->startid = $query['startid'];
         }
 
         if ($query['stopid']) {
-            $search->stop = message::get($query['stopid']);
+            $search->stopid = $query['stopid'];
         }
 
         $search->reverse = $query['reverse'];
@@ -527,11 +527,11 @@ class external extends \external_api {
         $result = [];
 
         foreach ($messages as $message) {
-            $course = $message->get_course();
+            $course = $message->course;
             $context = $course->get_context();
-            $sender = $message->get_sender();
+            $sender = $message->sender();
             $recipients = [];
-            foreach ($message->get_recipients(message::ROLE_TO, message::ROLE_CC) as $recipient) {
+            foreach ($message->recipients(message::ROLE_TO, message::ROLE_CC) as $recipient) {
                 $recipients[] = [
                     'type' => message::role_names()[$message->role($recipient)],
                     'id' => $recipient->id,
@@ -666,9 +666,9 @@ class external extends \external_api {
         $OUTPUT->header(); // Hack alert: Forcing bootstrap_renderer to initiate moodle page.
         $PAGE->start_collecting_javascript_requirements();
 
-        $course = $message->get_course();
+        $course = $message->course;
         $context = $course->get_context();
-        $sender = $message->get_sender();
+        $sender = $message->sender();
 
         $result = [
             'id' => $message->id,
@@ -718,11 +718,13 @@ class external extends \external_api {
             ];
         }
 
+        $recipients = $message->recipients();
+
         $search = new user_search($user, $course);
-        $search->include = array_column($message->get_recipients(), 'id');
+        $search->include = array_column($recipients, 'id');
         $validrecipients = $search->get();
 
-        foreach ($message->get_recipients() as $recipient) {
+        foreach ($recipients as $recipient) {
             $role = $message->role($recipient);
             if ($role == message::ROLE_BCC && $user->id != $recipient->id && $user->id != $sender->id) {
                 continue;
@@ -755,7 +757,7 @@ class external extends \external_api {
                 ];
             }
 
-            $refsender = $ref->get_sender();
+            $refsender = $ref->sender();
 
             $result['references'][] = [
                 'id' => $ref->id,
@@ -1491,7 +1493,7 @@ class external extends \external_api {
 
         $user = user::current();
         $message = message::get($params['messageid']);
-        if (!$user->can_view_message($message) || !$user->can_use_mail($message->get_course())) {
+        if (!$user->can_view_message($message)) {
             throw new exception('errormessagenotfound', $message->id);
         }
 
@@ -1515,7 +1517,7 @@ class external extends \external_api {
 
         $user = user::current();
         $message = message::get($params['messageid']);
-        if (!$user->can_view_message($message) || !$user->can_use_mail($message->get_course())) {
+        if (!$user->can_view_message($message)) {
             throw new exception('errormessagenotfound', $message->id);
         }
 
@@ -1556,7 +1558,7 @@ class external extends \external_api {
 
         $references = $message->get_references();
         if ($references) {
-            $course = current($references)->get_course();
+            $course = current($references)->course;
         } else {
             $course = course::get($params['data']['courseid']);
         }
@@ -1604,13 +1606,13 @@ class external extends \external_api {
             throw new exception('errormessagenotfound', $message->id);
         }
 
-        $recipients = $message->get_recipients();
+        $recipients = $message->recipients();
 
         if (!$recipients) {
             throw new exception('erroremptyrecipients');
         }
 
-        $search = new user_search($user, $message->get_course());
+        $search = new user_search($user, $message->course);
         $search->include = array_column($recipients, 'id');
         $validrecipients = $search->get();
 
@@ -1634,7 +1636,7 @@ class external extends \external_api {
         event\message_sent::create_from_message($message)->trigger();
 
         $renderer = $PAGE->get_renderer('local_mail');
-        foreach ($message->get_recipients() as $recipient) {
+        foreach ($message->recipients() as $recipient) {
             $notificationid = message_send($renderer->notification($message, $recipient));
             if ($notificationid && get_user_preferences('local_mail_markasread', false, $recipient->id)) {
                 $message->set_unread($recipient, false);

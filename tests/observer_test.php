@@ -14,7 +14,7 @@ namespace local_mail;
 final class observer_test extends test\testcase {
     public function test_course_deleted(): void {
         [$users, $messages] = self::generate_random_data(true);
-        $course = $messages[0]->get_course();
+        $course = $messages[0]->course;
         $context = $course->get_context();
 
         $fs = get_file_storage();
@@ -25,7 +25,7 @@ final class observer_test extends test\testcase {
         self::assert_record_count(0, 'message_users', ['courseid' => $course->id]);
         self::assert_record_count(0, 'message_labels', ['courseid' => $course->id]);
         foreach ($messages as $message) {
-            if ($message->courseid == $course->id) {
+            if ($message->course->id == $course->id) {
                 self::assert_record_count(0, 'message_refs', ['messageid' => $message->id]);
                 self::assert_record_count(0, 'message_refs', ['reference' => $message->id]);
             } else {

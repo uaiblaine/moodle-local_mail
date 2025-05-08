@@ -379,11 +379,11 @@ final class external_test extends test\testcase {
             if ($search->maxtime) {
                 $query['maxtime'] = $search->maxtime;
             }
-            if ($search->start) {
-                $query['startid'] = $search->start->id;
+            if ($search->startid) {
+                $query['startid'] = $search->startid;
             }
-            if ($search->stop) {
-                $query['stopid'] = $search->stop->id;
+            if ($search->stopid) {
+                $query['stopid'] = $search->stopid;
             }
             if ($search->reverse) {
                 $query['reverse'] = true;
@@ -501,11 +501,11 @@ final class external_test extends test\testcase {
             if ($search->maxtime) {
                 $query['maxtime'] = $search->maxtime;
             }
-            if ($search->start) {
-                $query['startid'] = $search->start->id;
+            if ($search->startid) {
+                $query['startid'] = $search->startid;
             }
-            if ($search->stop) {
-                $query['stopid'] = $search->stop->id;
+            if ($search->stopid) {
+                $query['stopid'] = $search->stopid;
             }
             if ($search->reverse) {
                 $query['reverse'] = true;
@@ -1824,11 +1824,11 @@ final class external_test extends test\testcase {
         $draft = message::get($result);
         self::assertNotNull($draft);
         self::assertTrue($draft->draft);
-        self::assertEquals($course, $draft->get_course());
+        self::assertEquals($course, $draft->course);
         self::assertEquals('', $draft->subject);
         self::assertEquals('', $draft->content);
         self::assertEquals(FORMAT_HTML, $draft->format);
-        self::assertEquals($user->id, $draft->get_sender()->id);
+        self::assertEquals($user->id, $draft->sender()->id);
         self::assertGreaterThanOrEqual($now, $draft->time);
 
         self::assert_message_event('\local_mail\event\draft_created', $draft, $eventsink);
@@ -1889,14 +1889,14 @@ final class external_test extends test\testcase {
         $draft = message::get($result);
         self::assertNotNull($draft);
         self::assertTrue($draft->draft);
-        self::assertEquals($data->course, $draft->get_course());
+        self::assertEquals($data->course, $draft->course);
         self::assertEquals('RE: ' . $data->subject, $draft->subject);
         self::assertEquals('', $draft->content);
         self::assertEquals(FORMAT_HTML, $draft->format);
-        self::assertEquals($user2, $draft->get_sender());
-        self::assertEqualsCanonicalizing([$user1], $draft->get_recipients(message::ROLE_TO));
-        self::assertEqualsCanonicalizing([], $draft->get_recipients(message::ROLE_CC));
-        self::assertEqualsCanonicalizing([], $draft->get_recipients(message::ROLE_BCC));
+        self::assertEquals($user2, $draft->sender());
+        self::assertEqualsCanonicalizing([$user1], $draft->recipients(message::ROLE_TO));
+        self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_CC));
+        self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_BCC));
         self::assertGreaterThanOrEqual($now, $draft->time);
         self::assertEquals([$message->id => $message], $draft->get_references());
         self::assert_attachments([], $draft);
@@ -1908,10 +1908,10 @@ final class external_test extends test\testcase {
         external::validate_parameters(external::reply_message_returns(), $result);
         $draft = message::get($result);
         self::assertNotNull($draft);
-        self::assertEquals($user2, $draft->get_sender());
-        self::assertEqualsCanonicalizing([$user1], $draft->get_recipients(message::ROLE_TO));
-        self::assertEqualsCanonicalizing([$user3, $user4], $draft->get_recipients(message::ROLE_CC));
-        self::assertEqualsCanonicalizing([], $draft->get_recipients(message::ROLE_BCC));
+        self::assertEquals($user2, $draft->sender());
+        self::assertEqualsCanonicalizing([$user1], $draft->recipients(message::ROLE_TO));
+        self::assertEqualsCanonicalizing([$user3, $user4], $draft->recipients(message::ROLE_CC));
+        self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_BCC));
 
         // User cannot view message.
 
@@ -1984,13 +1984,13 @@ final class external_test extends test\testcase {
         $draft = message::get($result);
         self::assertNotNull($draft);
         self::assertTrue($draft->draft);
-        self::assertEquals($data->course, $draft->get_course());
+        self::assertEquals($data->course, $draft->course);
         self::assertEquals('FW: ' . $data->subject, $draft->subject);
         $expected = '<p><br></p>'
             . '<p>'
             . '--------- ' . output\strings::get('forwardedmessage') . ' ---------<br>'
             . output\strings::get('from') . ': '
-            . $message->get_sender()->fullname() . '<br>'
+            . $message->sender()->fullname() . '<br>'
             . output\strings::get('date') . ': '
             . userdate($message->time, get_string('strftimedatetime', 'langconfig')) . '<br>'
             . output\strings::get('subject') . ': '
@@ -1999,10 +1999,10 @@ final class external_test extends test\testcase {
             . format_text($message->content, $message->format, ['filter' => false, 'para' => false]);
         self::assertEquals($expected, $draft->content);
         self::assertEquals(FORMAT_HTML, $draft->format);
-        self::assertEquals($user2, $draft->get_sender());
-        self::assertEqualsCanonicalizing([], $draft->get_recipients(message::ROLE_TO));
-        self::assertEqualsCanonicalizing([], $draft->get_recipients(message::ROLE_CC));
-        self::assertEqualsCanonicalizing([], $draft->get_recipients(message::ROLE_BCC));
+        self::assertEquals($user2, $draft->sender());
+        self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_TO));
+        self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_CC));
+        self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_BCC));
         self::assertGreaterThanOrEqual($now, $draft->time);
         self::assertEquals([], $draft->get_references());
         self::assert_attachments(['file1.txt' => 'File 1', 'file2.txt' => 'File 2'], $draft);
@@ -2089,15 +2089,15 @@ final class external_test extends test\testcase {
         self::assertNull(external::update_message_returns());
         self::assertNull($result);
         $message = message::get($message->id);
-        self::assertEquals($course2, $message->get_course());
+        self::assertEquals($course2, $message->course);
         self::assertEquals('Message subject', $message->subject);
         self::assertEquals('Message content', $message->content);
         self::assertEquals(FORMAT_HTML, $message->format);
         self::assertGreaterThanOrEqual($now, $message->time);
-        self::assertEquals($user1, $message->get_sender());
-        self::assertEqualsCanonicalizing([$user2, $user3], $message->get_recipients(message::ROLE_TO));
-        self::assertEqualsCanonicalizing([$user4], $message->get_recipients(message::ROLE_CC));
-        self::assertEqualsCanonicalizing([$user5], $message->get_recipients(message::ROLE_BCC));
+        self::assertEquals($user1, $message->sender());
+        self::assertEqualsCanonicalizing([$user2, $user3], $message->recipients(message::ROLE_TO));
+        self::assertEqualsCanonicalizing([$user4], $message->recipients(message::ROLE_CC));
+        self::assertEqualsCanonicalizing([$user5], $message->recipients(message::ROLE_BCC));
         self::assert_attachments([
             'file1.txt' => 'File 1',
             'file2.txt' => 'File 2',
@@ -2159,7 +2159,7 @@ final class external_test extends test\testcase {
 
         external::update_message($reply->id, $data);
 
-        self::assertEquals($message->courseid, message::get($reply->id)->courseid);
+        self::assertEquals($message->course->id, message::get($reply->id)->course->id);
     }
 
     public function test_send_message(): void {
@@ -2211,7 +2211,7 @@ final class external_test extends test\testcase {
 
         $notificationsink->close();
         $notifications = $notificationsink->get_messages();
-        $recipients = $message->get_recipients();
+        $recipients = $message->recipients();
         self::assertEquals(count($recipients), count($notifications));
         foreach ($recipients as $i => $user) {
             $expected = $renderer->notification($message, $user);

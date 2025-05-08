@@ -17,18 +17,28 @@ final class label_test extends test\testcase {
     public function test_create(): void {
         $generator = self::getDataGenerator();
         $user = new user($generator->create_user());
-        label::user_cache()->set($user->id, []);
 
-        $label = label::create($user, 'name', 'red');
+        $label1 = label::create($user, 'name1', 'red');
 
-        self::assertInstanceOf(label::class, $label);
-        self::assertGreaterThan(0, $label->id);
-        self::assertEquals($user->id, $label->userid);
-        self::assertEquals('name', $label->name);
-        self::assertEquals('red', $label->color);
-        self::assert_label($label);
-        self::assertEquals($label, label::cache()->get($label->id));
-        self::assertFalse(label::user_cache()->get($user->id));
+        self::assertInstanceOf(label::class, $label1);
+        self::assertGreaterThan(0, $label1->id);
+        self::assertEquals($user->id, $label1->userid);
+        self::assertEquals('name1', $label1->name);
+        self::assertEquals('red', $label1->color);
+        self::assert_label($label1);
+
+        // Check cache.
+
+        label::cache()->set('userid', $user->id);
+        label::cache()->set('labelids', [$label1->id]);
+        label::cache()->set($label1->id, $label1);
+
+        $label2 = label::create($user, 'name2', 'blue');
+
+        self::assertFalse(label::cache()->get('userid'));
+        self::assertFalse(label::cache()->get('labelids'));
+        self::assertFalse(label::cache()->get($label1->id));
+        self::assertFalse(label::cache()->get($label2->id));
     }
 
     public function test_delete(): void {
@@ -40,29 +50,30 @@ final class label_test extends test\testcase {
         $data = message_data::new($course, $user);
         $message = message::create($data);
         $message->set_labels($user, [$label1, $label2]);
-        label::user_cache()->set($user->id, []);
+        label::cache()->set('userid', $user->id);
+        label::cache()->set('labelids', [$label1->id, $label2->id]);
+        label::cache()->set($label1->id, $label1);
+        label::cache()->set($label2->id, $label2);
 
         $label1->delete();
 
         self::assert_record_count(0, 'labels', ['id' => $label1->id]);
         self::assert_record_count(0, 'message_labels', ['labelid' => $label1->id]);
         self::assertEquals($label2, label::get($label2->id));
-        $message = message::get($message->id);
-        self::assertEquals([$label2], $message->get_labels($user));
+        self::assertFalse(label::cache()->get('userid'));
+        self::assertFalse(label::cache()->get('labelids'));
         self::assertFalse(label::cache()->get($label1->id));
-        self::assertFalse(label::user_cache()->get($user->id));
+        self::assertFalse(label::cache()->get($label2->id));
     }
 
     public function test_get(): void {
         $generator = self::getDataGenerator();
         $user = new user($generator->create_user());
         $label = label::create($user, 'name 1', 'red');
-        label::cache()->purge();
 
         $result = label::get($label->id);
 
         self::assertEquals($label, $result);
-        self::assertEquals($label, label::cache()->get($label->id));
 
         // Missing label.
         try {
@@ -72,6 +83,16 @@ final class label_test extends test\testcase {
             self::assertEquals('errorlabelnotfound', $e->errorcode);
             self::assertEquals(123, $e->a);
         }
+
+        // Get from cache.
+        $label = new label((object) [
+            'id' => 123,
+            'userid' => $user->id,
+            'name' => 'Label 123',
+            'color' => 'red',
+        ]);
+        label::cache()->set($label->id, $label);
+        self::assertEquals($label, label::get($label->id));
     }
 
     public function test_get_by_user(): void {
@@ -87,16 +108,36 @@ final class label_test extends test\testcase {
         $result = label::get_by_user($user1);
 
         self::assert_array_of_objects([$label1, $label2, $label4], $result);
-        self::assertEquals([$label1->id, $label2->id, $label4->id], label::user_cache()->get($user1->id));
+        self::assertEquals($user1->id, label::cache()->get('userid'));
+        self::assertEquals([$label1->id, $label2->id, $label4->id], label::cache()->get('labelids'));
+        self::assertEquals($label1, label::cache()->get($label1->id));
+        self::assertEquals($label2, label::cache()->get($label2->id));
+        self::assertEquals($label4, label::cache()->get($label4->id));
+        self::assertFalse(label::cache()->get($label3->id));
 
         // User with no labels.
-        self::assertEquals([], label::get_by_user($user3));
-        self::assertEquals([], label::user_cache()->get($user3->id));
+
+        $result = label::get_by_user($user3);
+
+        self::assertEquals([], $result);
+        self::assertEquals($user3->id, label::cache()->get('userid'));
+        self::assertEquals([], label::cache()->get('labelids'));
+        self::assertFalse(label::cache()->get($label1->id));
+        self::assertFalse(label::cache()->get($label2->id));
+        self::assertFalse(label::cache()->get($label4->id));
 
         // Get from cache.
-        label::user_cache()->set($user1->id, [$label1->id, $label3->id]);
+
+        $label1->delete();
+        $label2->delete();
+        label::cache()->set('userid', $user1->id);
+        label::cache()->set('labelids', [$label1->id, $label2->id]);
+        label::cache()->set($label1->id, $label1);
+        label::cache()->set($label2->id, $label2);
+
         $result = label::get_by_user($user1);
-        self::assertEquals([$label1->id => $label1, $label3->id => $label3], $result);
+
+        self::assert_array_of_objects([$label1, $label2], $result);
     }
 
     public function test_get_many(): void {
@@ -107,13 +148,12 @@ final class label_test extends test\testcase {
         $label2 = label::create($user2, 'name 2', 'blue');
         $label3 = label::create($user1, 'name 3', 'yellow');
 
-        label::cache()->purge();
-
         $result = label::get_many([$label1->id, $label2->id, $label1->id]);
 
         self::assert_array_of_objects([$label1, $label2], $result);
-        self::assertEquals($label1, label::cache()->get($label1->id));
-        self::assertEquals($label2, label::cache()->get($label2->id));
+        self::assertFalse(label::cache()->get($label1->id));
+        self::assertFalse(label::cache()->get($label2->id));
+        self::assertFalse(label::cache()->get($label3->id));
 
         // Missing label.
         try {
@@ -126,21 +166,38 @@ final class label_test extends test\testcase {
 
         // No IDs.
         self::assertEquals([], label::get_many([]));
+
+        // Get from cache.
+        $label = new label((object) [
+            'id' => 123,
+            'userid' => $user1->id,
+            'name' => 'Label 123',
+            'color' => 'red',
+        ]);
+        label::cache()->set($label->id, $label);
+        self::assert_array_of_objects([$label], label::get_many([$label->id]));
     }
 
     public function test_update(): void {
         $generator = self::getDataGenerator();
         $user = new user($generator->create_user());
-        $label = label::create($user, 'name 1', 'red');
-        label::get_by_user($user);
+        $label1 = label::create($user, 'name 1', 'red');
+        $label2 = label::create($user, 'name 2');
+        label::cache()->set('userid', $user->id);
+        label::cache()->set('labelids', [$label1->id, $label2->id]);
+        label::cache()->set($label1->id, $label1);
+        label::cache()->set($label2->id, $label2);
 
-        $label->update('new name', 'indigo');
+        $label1->update('new name', 'indigo');
 
-        self::assertEquals('new name', $label->name);
-        self::assertEquals('indigo', $label->color);
-        self::assert_label($label);
-        self::assertEquals($label, label::cache()->get($label->id));
-        self::assertFalse(label::user_cache()->get($user->id));
+        self::assertEquals('new name', $label1->name);
+        self::assertEquals('indigo', $label1->color);
+        self::assert_label($label1);
+        self::assert_label($label2);
+        self::assertFalse(label::cache()->get('userid'));
+        self::assertFalse(label::cache()->get('labelids'));
+        self::assertFalse(label::cache()->get($label1->id));
+        self::assertFalse(label::cache()->get($label2->id));
     }
 
     public function test_normalized_name(): void {

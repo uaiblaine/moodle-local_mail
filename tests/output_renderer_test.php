@@ -62,7 +62,7 @@ final class output_renderer_test extends test\testcase {
 
         $result = $renderer->formatted_message_content($message);
 
-        $context = $message->get_course()->get_context();
+        $context = $message->course->get_context();
         $fileurl = new \moodle_url("/pluginfile.php/$context->id/local_mail/message/$message->id/file.txt");
         $filelink = '<a href="' . $fileurl->out() . '" class="_blanktarget">' . $fileurl->out(false) . '</a>';
         self::assertEquals("<p>$filelink</p>", $result);
