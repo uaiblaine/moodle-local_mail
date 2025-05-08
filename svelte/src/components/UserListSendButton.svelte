@@ -45,6 +45,23 @@ SPDX-License-Identifier: GPL-3.0-or-later
             }
         }
     };
+
+    const createMessage = (role: string) => {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = createUrl(course?.id ?? 0, [], role);
+        form.style.display = 'none'
+
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'recipients';
+        input.value = recipients.join(',');
+        form.appendChild(input);
+
+        document.body.appendChild(form);
+
+        form.submit();
+    };
 </script>
 
 {#if course}
@@ -62,9 +79,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </button>
         <div class="dropdown-menu">
             {#each ['to', 'cc', 'bcc'] as role (role)}
-                <a class="dropdown-item" href={createUrl(course.id, recipients, role)}>
+                <button type="button" class="dropdown-item" on:click={() => createMessage(role)}>
                     {strings[role]}
-                </a>
+                </button>
             {/each}
         </div>
     </div>
