@@ -30,7 +30,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                     <div
                         transition:fade
                         use:truncate={user.fullname}
-                        class="local-mail-draft-form-recipients-user d-flex flex-shrink align-items-center mr-2 mb-2"
+                        class="local-mail-draft-form-recipients-user alert d-flex flex-shrink align-items-center border-0 p-0 mr-2 mb-2"
                         class:alert-danger={!user.isvalid}
                     >
                         <div class="d-flex m-1 mr-2">
