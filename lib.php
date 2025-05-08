@@ -75,7 +75,7 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
 
     $user = user::current();
 
-    if (!settings::is_installed() || !$user || !course::get_by_user($user)) {
+    if (!settings::is_installed() || WS_SERVER || AJAX_SCRIPT || !$user || !course::get_by_user($user)) {
         return '';
     }
 
