@@ -36,6 +36,9 @@ final class privacy_provider_test extends test\testcase {
             $expectedtables[$table->getName()] = $fields;
         }
 
+        $expectedpreferences = ['local_mail_mailsperpage', 'local_mail_markasread'];
+        $expectedsubsystems = ['core_files'];
+
         $collection = new collection('local_mail');
 
         provider::get_metadata($collection);
@@ -45,28 +48,38 @@ final class privacy_provider_test extends test\testcase {
         $subsystems = [];
         foreach ($collection->get_collection() as $type) {
             if (is_a($type, \core_privacy\local\metadata\types\database_table::class)) {
-                $tables[$type->get_name()] = array_keys($type->get_privacy_fields());
+                $tables[$type->get_name()] = $type;
             } else if (is_a($type, \core_privacy\local\metadata\types\subsystem_link::class)) {
-                $subsystems[] = $type->get_name();
+                $subsystems[$type->get_name()] = $type;
             } else if (is_a($type, \core_privacy\local\metadata\types\user_preference::class)) {
-                $preferences[] = $type->get_name();
+                $preferences[$type->get_name()] = $type;
             }
         }
 
-        self::assertEquals($expectedtables, $tables);
-        foreach ($tables as $table => $fields) {
-            self::assert_string_exists("privacy:metadata:$table");
-            foreach ($fields as $field) {
-                self::assert_string_exists("privacy:metadata:$table:$field");
+        self::assertEqualsCanonicalizing(array_keys($expectedtables), array_keys($tables));
+        foreach ($tables as $tablename => $table) {
+            $expectedstring = "privacy:metadata:$tablename";
+            $fields = $table->get_privacy_fields();
+            self::assertEquals($expectedstring, $table->get_summary());
+            self::assertEqualsCanonicalizing($expectedtables[$tablename], array_keys($fields));
+            foreach ($fields as $fieldname => $fieldstring) {
+                $expectedstring = "privacy:metadata:$tablename:$fieldname";
+                self::assertEquals($expectedstring, $fieldstring);
+                self::assert_string_exists($expectedstring);
             }
         }
-        self::assertEqualsCanonicalizing(['local_mail_mailsperpage', 'local_mail_markasread'], $preferences);
-        foreach ($preferences as $preference) {
-            self::assert_string_exists("privacy:metadata:preference:$preference");
+
+        self::assertEqualsCanonicalizing($expectedpreferences, array_keys($preferences));
+        foreach ($preferences as $name => $preference) {
+            $expectedstring = "privacy:metadata:preference:$name";
+            self::assertEquals($expectedstring, $preference->get_summary());
+            self::assert_string_exists($expectedstring);
         }
-        self::assertEqualsCanonicalizing(['core_files'], $subsystems);
-        foreach ($subsystems as $subsystem) {
-            self::assert_string_exists("privacy:metadata:$subsystem");
+        self::assertEqualsCanonicalizing($expectedsubsystems, array_keys($subsystems));
+        foreach ($subsystems as $name => $subsystem) {
+            $expectedstring = "privacy:metadata:$name";
+            self::assertEquals($expectedstring, $subsystem->get_summary());
+            self::assert_string_exists($expectedstring);
         }
     }
 
