@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16] - 2026-02-16
+
+### Fixed
+
+- Error viewing inbox when the sender of a message is missing in the database.
+- Typos in privacy provider metadata.
+
 ## [2.15] - 2025-05-08
 
 ### Added
