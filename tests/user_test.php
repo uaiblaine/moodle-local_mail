@@ -1,7 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -264,6 +264,23 @@ final class user_test extends test\testcase {
 
         self::setUser(null);
         self::assertNull(user::current());
+    }
+
+    public function test_deleted(): void {
+        $user = user::deleted();
+
+        self::assertInstanceOf(user::class, $user);
+        self::assertEquals(0, $user->id);
+        self::assertTrue($user->deleted);
+        self::assertEquals('', $user->firstname);
+        self::assertEquals('', $user->lastname);
+        self::assertEquals('', $user->email);
+        self::assertEquals(0, $user->picture);
+        self::assertEquals(null, $user->imagealt);
+        self::assertEquals('', $user->firstnamephonetic);
+        self::assertEquals('', $user->lastnamephonetic);
+        self::assertEquals('', $user->middlename);
+        self::assertEquals('', $user->alternatename);
     }
 
     public function test_fullname(): void {

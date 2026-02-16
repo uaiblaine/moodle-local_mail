@@ -1,7 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -78,6 +78,15 @@ class user {
         $user = new self($USER);
 
         return $user;
+    }
+
+    /**
+     * Returns a user representing a deleted user.
+     *
+     * @return self
+     */
+    public static function deleted(): self {
+        return new self((object) ['id' => 0, 'deleted' => 1]);
     }
 
     /**

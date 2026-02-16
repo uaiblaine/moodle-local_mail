@@ -2,7 +2,7 @@
 /*
  * SPDX-FileCopyrightText: 2012-2014 Institut Obert de Catalunya <https://ioc.gencat.cat>
  * SPDX-FileCopyrightText: 2014-2021 Marc Català <reskit@gmail.com>
- * SPDX-FileCopyrightText: 2016-2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2016-2026 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -456,6 +456,8 @@ final class message_test extends test\testcase {
     }
 
     public function test_sender(): void {
+        global $DB;
+
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user1 = new user($generator->create_user());
@@ -466,6 +468,12 @@ final class message_test extends test\testcase {
         $message = message::create($data);
 
         self::assertEquals($user1, $message->sender());
+
+        // Message with missing sender.
+
+        $DB->delete_records('local_mail_message_users', ['userid' => $user1->id]);
+        $message = message::get($message->id);
+        self::assertEquals(user::deleted(), $message->sender());
     }
 
     public function test_set_deleted(): void {
