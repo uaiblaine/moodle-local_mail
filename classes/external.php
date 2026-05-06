@@ -1543,9 +1543,9 @@ class external extends \external_api {
             'messageid' => new \external_value(PARAM_INT, 'Id of the message'),
             'data' => new \external_single_structure([
                 'courseid' => new \external_value(PARAM_INT, 'Id of the course'),
-                'to' => new \external_multiple_structure(new \external_value(PARAM_INT), 'Ids of TO recipients.'),
-                'cc' => new \external_multiple_structure(new \external_value(PARAM_INT), 'Ids of CC recipients.'),
-                'bcc' => new \external_multiple_structure(new \external_value(PARAM_INT), 'Ids of BCC recipients.'),
+                'to' => new \external_multiple_structure(new \external_value(PARAM_INT), 'Ids of TO recipients.', VALUE_DEFAULT, []),
+                'cc' => new \external_multiple_structure(new \external_value(PARAM_INT), 'Ids of CC recipients.', VALUE_DEFAULT, []),
+                'bcc' => new \external_multiple_structure(new \external_value(PARAM_INT), 'Ids of BCC recipients.', VALUE_DEFAULT, []),
                 'subject' => new \external_value(PARAM_RAW, 'Subject of the message'),
                 'content' => new \external_value(PARAM_RAW, 'Content of the message'),
                 'format' => new \external_format_value('Format of the message'),
