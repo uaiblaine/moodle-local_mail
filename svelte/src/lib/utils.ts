@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -81,7 +81,7 @@ export function formatCourseName(
  * @returns The formatted number.
  */
 export function formatNumber(number: number): string {
-    return new Intl.NumberFormat(window.M.str.langconfig.localecldr).format(number);
+    return new Intl.NumberFormat().format(number);
 }
 
 /**
