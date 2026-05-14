@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.17] - 2026-05-14
+
+### Fixed
+
+- Error viewing inbox with language packs missing the "localecldr" string.
+- Parameters validation for external service "local_mail_update_message".
+
 ## [2.16] - 2026-02-16
 
 ### Fixed
