@@ -10,7 +10,6 @@
 
 use local_mail\course;
 use local_mail\exception;
-use local_mail\external;
 use local_mail\message;
 use local_mail\output\strings;
 use local_mail\settings;
@@ -65,13 +64,24 @@ function local_mail_pluginfile(
 }
 
 /**
- * Renders the navigation bar popover.
+ * Renders the navigation bar envelope icon with an asynchronous unread-count badge.
+ *
+ * The badge is filled in by the `local_mail/navbar` AMD module, which calls the
+ * existing `local_mail_count_messages` web service. The icon is a direct link to
+ * the inbox; no popover is opened on click.
+ *
+ * TODO: Reintroduce the Svelte "Send mail" button that used to be injected on
+ * /user/view.php (profile), /user/index.php (participants), and
+ * /blocks/completion_progress/overview.php by the now-removed
+ * `svelte/src/navigation.ts` entry point. Any reimplementation must be scoped to
+ * those specific pages so that the heavy courses/labels payload is not loaded on
+ * every page render.
  *
  * @param renderer_base $renderer
  * @return string The HTML
  */
 function local_mail_render_navbar_output(\renderer_base $renderer) {
-    global $COURSE, $PAGE;
+    global $PAGE;
 
     $user = user::current();
 
@@ -82,64 +92,25 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
     $url = new moodle_url('/local/mail/view.php', ['t' => 'inbox']);
     $ismailpage = $PAGE->url->compare($url, URL_MATCH_BASE);
 
-    // Fallback link to avoid layout changes during page load.
     $mailicon = html_writer::tag('i', '', [
         'class' => 'fa fa-fw fa-envelope-o icon m-0',
-        'style' => "font-size: 16px",
+        'style' => 'font-size: 16px',
     ]);
-    if ($ismailpage) {
-        $spinnericon = html_writer::tag('i', '', [
-            'class' => 'fa fa-fw fa-spinner fa-pulse text-primary',
-            'style' => "font-size: 16px",
+    $badge = '';
+    if (!$ismailpage) {
+        $badge = html_writer::span('', 'local-mail-navbar-count count-container', [
+            'hidden' => 'hidden',
         ]);
-        $spinner = html_writer::div($spinnericon, 'position-absolute', [
-            'style' => 'top: 50%; right: 0; transform: translateY(-18px)',
-        ]);
-    } else {
-        $spinner = '';
     }
-    $link = html_writer::tag('a', $mailicon . $spinner, [
+    $link = html_writer::tag('a', $mailicon . $badge, [
         'href' => $url,
-        'class' => 'nav-link btn h-100 d-flex align-items-center px-2 py-0',
+        'class' => 'nav-link btn h-100 position-relative d-flex align-items-center px-2 py-0',
         'title' => strings::get('pluginname'),
     ]);
     $output = html_writer::div($link, 'popover-region', ['id' => 'local-mail-navbar']);
 
     if (!$ismailpage) {
-        // Pass all data via a script tag to avoid web service requests.
-        $courses = external::get_courses_raw();
-        $courseid = 0;
-        if (array_search($COURSE->id, array_column($courses, 'id')) !== false) {
-            $courseid = (int) $COURSE->id;
-        }
-        $data = [
-            'userid' => $user->id,
-            'courseid' => $courseid,
-            'settings' => (array) settings::get(),
-            'strings' => strings::get_many([
-                'allcourses',
-                'bcc',
-                'cc',
-                'changecourse',
-                'compose',
-                'course',
-                'drafts',
-                'inbox',
-                'nocoursematchestext',
-                'pluginname',
-                'preferences',
-                'sendmail',
-                'sentplural',
-                'starredplural',
-                'to',
-                'trash',
-            ]),
-            'courses' => $courses,
-            'labels' => external::get_labels_raw(),
-        ];
-        $output .= html_writer::script('window.local_mail_navbar_data = ' . json_encode($data));
-        $renderer = $PAGE->get_renderer('local_mail');
-        $output .= $renderer->svelte_script('src/navigation.ts');
+        $PAGE->requires->js_call_amd('local_mail/navbar', 'init');
     }
 
     return $output;

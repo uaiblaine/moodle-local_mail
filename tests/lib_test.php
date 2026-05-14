@@ -93,8 +93,6 @@ final class lib_test extends test\testcase {
         $course2 = new course($generator->create_course());
         $user1 = new user($generator->create_user());
         $user2 = new user($generator->create_user());
-        $label1 = label::create($user1, 'Label 1');
-        $label2 = label::create($user1, 'Label 2');
         $generator->enrol_user($user1->id, $course1->id);
         $generator->enrol_user($user1->id, $course2->id);
         $data = message_data::new($course1, $user1);
@@ -112,7 +110,6 @@ final class lib_test extends test\testcase {
 
         $PAGE->set_course(get_course($course1->id));
         $output = new \core_renderer($PAGE, RENDERER_TARGET_GENERAL);
-        $renderer = $PAGE->get_renderer('local_mail');
 
         // View page.
 
@@ -123,6 +120,9 @@ final class lib_test extends test\testcase {
 
         self::assertStringContainsString('<div class="popover-region" id="local-mail-navbar">', $result);
         self::assertStringNotContainsString('<script>', $result);
+        self::assertStringNotContainsString('local-mail-navbar-count', $result);
+        self::assertStringNotContainsString('local_mail_navbar_data', $result);
+        self::assertStringNotContainsString('src/navigation.ts', $result);
 
         // Course page.
 
@@ -132,33 +132,14 @@ final class lib_test extends test\testcase {
         $result = local_mail_render_navbar_output($output);
 
         self::assertStringContainsString('<div class="popover-region" id="local-mail-navbar">', $result);
-        self::assertStringContainsString($renderer->svelte_script('src/navigation.ts'), $result);
-        $expected = \html_writer::script('window.local_mail_navbar_data = ' . json_encode([
-            'userid' => $user1->id,
-            'courseid' => $course1->id,
-            'settings' => (array) settings::get(),
-            'strings' => output\strings::get_many([
-                'allcourses',
-                'bcc',
-                'cc',
-                'changecourse',
-                'compose',
-                'course',
-                'drafts',
-                'inbox',
-                'nocoursematchestext',
-                'pluginname',
-                'preferences',
-                'sendmail',
-                'sentplural',
-                'starredplural',
-                'to',
-                'trash',
-            ]),
-            'courses' => external::get_courses_raw(),
-            'labels' => external::get_labels_raw(),
-        ]));
-        self::assertStringContainsString($expected, $result);
+        self::assertStringContainsString('local-mail-navbar-count', $result);
+        self::assertStringContainsString('hidden="hidden"', $result);
+        self::assertStringContainsString('fa-envelope-o', $result);
+        self::assertStringContainsString('/local/mail/view.php?t=inbox', $result);
+        self::assertStringNotContainsString('local_mail_navbar_data', $result);
+        self::assertStringNotContainsString('src/navigation.ts', $result);
+        self::assertStringNotContainsString('<script>', $result);
+        self::assertStringContainsString('local_mail/navbar', $PAGE->requires->get_end_code());
 
         // User has no courses.
 

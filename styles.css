@@ -1,0 +1,10 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Albert Gasset <albertgasset@fsfe.org>
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#local-mail-navbar .local-mail-navbar-count {
+    top: 50% !important;
+    transform: translateY(-16px);
+}
