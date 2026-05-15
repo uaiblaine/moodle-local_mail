@@ -41,10 +41,7 @@ export const init = () => {
 
     Ajax.call([request])[0].then((count) => {
         if (count > 0) {
-            const locale = window.M && window.M.str && window.M.str.langconfig
-                ? window.M.str.langconfig.localecldr
-                : undefined;
-            badge.textContent = new Intl.NumberFormat(locale).format(count);
+            badge.textContent = new Intl.NumberFormat().format(count);
             badge.hidden = false;
         }
         return count;

@@ -50,7 +50,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = createUrl(course?.id ?? 0, [], role);
-        form.style.display = 'none'
+        form.style.display = 'none';
 
         const input = document.createElement('input');
         input.type = 'hidden';

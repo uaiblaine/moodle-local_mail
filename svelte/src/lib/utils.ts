@@ -81,7 +81,7 @@ export function formatCourseName(
  * @returns The formatted number.
  */
 export function formatNumber(number: number): string {
-    return new Intl.NumberFormat(window.M.str.langconfig.localecldr).format(number);
+    return new Intl.NumberFormat().format(number);
 }
 
 /**

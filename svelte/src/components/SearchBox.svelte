@@ -43,21 +43,21 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     $: advancedEnabled = Boolean(
         search?.sendername ||
-            search?.recipientname ||
-            search?.unread ||
-            search?.withfilesonly ||
-            search?.maxtime,
+        search?.recipientname ||
+        search?.unread ||
+        search?.withfilesonly ||
+        search?.maxtime,
     );
 
     $: searchEnabled = Boolean(search?.content) || advancedEnabled;
 
     $: submitEnabled = Boolean(
         content.trim() ||
-            sendername.trim() ||
-            recipientname.trim() ||
-            unread ||
-            withfilesonly ||
-            maxtime,
+        sendername.trim() ||
+        recipientname.trim() ||
+        unread ||
+        withfilesonly ||
+        maxtime,
     );
 
     $: searchFields = [
