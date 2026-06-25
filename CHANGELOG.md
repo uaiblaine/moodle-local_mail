@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Alternative full name not shown to users with the `moodle/site:viewfullnames` capability (e.g. teachers).
+
 ## [2.17] - 2026-05-14
 
 ### Fixed
