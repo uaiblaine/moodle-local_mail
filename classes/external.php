@@ -530,6 +530,7 @@ class external extends \external_api {
             $course = $message->course;
             $context = $course->get_context();
             $sender = $message->sender();
+            $override = has_capability('moodle/site:viewfullnames', $context);
             $recipients = [];
             foreach ($message->recipients() as $recipient) {
                 $role = $message->role($recipient);
@@ -541,7 +542,7 @@ class external extends \external_api {
                     'id' => $recipient->id,
                     'firstname' => $recipient->firstname,
                     'lastname' => $recipient->lastname,
-                    'fullname' => $recipient->fullname(),
+                    'fullname' => $recipient->fullname($override),
                     'pictureurl' => $recipient->picture_url(),
                     'profileurl' => $recipient->profile_url($course),
                     'sortorder' => $recipient->sortorder(),
@@ -577,7 +578,7 @@ class external extends \external_api {
                     'id' => $sender->id,
                     'firstname' => $sender->firstname,
                     'lastname' => $sender->lastname,
-                    'fullname' => $sender->fullname(),
+                    'fullname' => $sender->fullname($override),
                     'pictureurl' => $sender->picture_url(),
                     'profileurl' => $sender->profile_url($course),
                     'sortorder' => $sender->sortorder(),
@@ -673,6 +674,7 @@ class external extends \external_api {
         $course = $message->course;
         $context = $course->get_context();
         $sender = $message->sender();
+        $override = has_capability('moodle/site:viewfullnames', $context);
 
         $result = [
             'id' => $message->id,
@@ -698,7 +700,7 @@ class external extends \external_api {
                 'id' => $sender->id,
                 'firstname' => $sender->firstname,
                 'lastname' => $sender->lastname,
-                'fullname' => $sender->fullname(),
+                'fullname' => $sender->fullname($override),
                 'pictureurl' => $sender->picture_url(),
                 'profileurl' => $sender->profile_url($course),
                 'sortorder' => $sender->sortorder(),
@@ -738,7 +740,7 @@ class external extends \external_api {
                 'id' => $recipient->id,
                 'firstname' => $recipient->firstname,
                 'lastname' => $recipient->lastname,
-                'fullname' => $recipient->fullname(),
+                'fullname' => $recipient->fullname($override),
                 'pictureurl' => $recipient->picture_url(),
                 'profileurl' => $recipient->profile_url($course),
                 'sortorder' => $recipient->sortorder(),
@@ -775,7 +777,7 @@ class external extends \external_api {
                     'id' => $refsender->id,
                     'firstname' => $refsender->firstname,
                     'lastname' => $refsender->lastname,
-                    'fullname' => $refsender->fullname(),
+                    'fullname' => $refsender->fullname($override),
                     'pictureurl' => $refsender->picture_url(),
                     'profileurl' => $refsender->profile_url($course),
                     'sortorder' => $refsender->sortorder(),
@@ -1366,13 +1368,14 @@ class external extends \external_api {
 
     public static function search_users_response(course $course, array $users) {
         $result = [];
+        $override = has_capability('moodle/site:viewfullnames', $course->get_context());
 
         foreach ($users as $user) {
             $result[] = [
                 'id' => $user->id,
                 'firstname' => $user->firstname,
                 'lastname' => $user->lastname,
-                'fullname' => $user->fullname(),
+                'fullname' => $user->fullname($override),
                 'pictureurl' => $user->picture_url(),
                 'profileurl' => $user->profile_url($course),
                 'sortorder' => $user->sortorder(),

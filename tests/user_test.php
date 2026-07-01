@@ -285,14 +285,23 @@ final class user_test extends test\testcase {
 
     public function test_fullname(): void {
         $generator = self::getDataGenerator();
-        $record = $generator->create_user();
+        $record = $generator->create_user(['alternatename' => 'Nick']);
         $user = new user($record);
 
+        // Without override, the standard full name format is used.
         self::assertEquals(fullname($record), $user->fullname());
+        self::assertEquals(fullname($record, false), $user->fullname(false));
+
+        // With override, the alternative full name format is used (e.g. for users
+        // with the moodle/site:viewfullnames capability).
+        set_config('alternativefullnameformat', 'alternatename');
+        self::assertEquals(fullname($record, true), $user->fullname(true));
+        self::assertEquals('Nick', $user->fullname(true));
 
         // Deleted user.
         $user = new user($generator->create_user(['deleted' => 1]));
         self::assertEquals(get_string('deleteduser', 'local_mail'), $user->fullname());
+        self::assertEquals(get_string('deleteduser', 'local_mail'), $user->fullname(true));
     }
 
     public function test_get(): void {
