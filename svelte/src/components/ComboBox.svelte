@@ -218,14 +218,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
         padding-bottom: 0.5rem;
     }
 
-    :global(.local-mail-navbar-popover) .local-mail-combo-box > :global(.dropdown-menu) {
-        max-width: 100%;
-    }
-
-    :global(.local-mail-navbar-popover) .local-mail-combo-box > .form-control {
-        border-radius: 0;
-    }
-
     :global(.list-group) > .local-mail-combo-box:not(:last-child) > .form-control {
         border-bottom-left-radius: 0;
         border-bottom-right-radius: 0;

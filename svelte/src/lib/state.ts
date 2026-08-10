@@ -103,11 +103,6 @@ export interface MessageProcessor {
     locked: boolean;
 }
 
-export interface MessageProcessorPreference {
-    name: string;
-    enabled: boolean;
-}
-
 export interface MessageSummary {
     readonly id: number;
     readonly subject: string;
@@ -269,5 +264,4 @@ export enum ViewportSize {
     SM = 576,
     MD = 768,
     LG = 992,
-    XL = 1200,
 }

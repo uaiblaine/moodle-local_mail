@@ -46,15 +46,6 @@ final class output_strings_test extends test\testcase {
         self::assertEquals($ids, output\strings::get_ids());
     }
 
-    public function test_get_many(): void {
-        $strings = self::load_strings();
-        $ids = self::random_items(array_keys($strings), 10);
-        self::assertEquals(
-            array_intersect_key($strings, array_combine($ids, $ids)),
-            output\strings::get_many($ids)
-        );
-    }
-
     /**
      * Reads the English language file directly to obtain the expected strings.
      *

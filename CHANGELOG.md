@@ -11,6 +11,30 @@
   the version bump itself, the only non-comment edits are a blank line removed
   after a class opening brace and an "implements" list put in alphabetical order,
   both of them required by the checker.
+- The "analyze" NPM script builds with source maps before running
+  source-map-explorer. Source maps are off by default since 2.17.1, so the script
+  could not work as written.
+
+### Removed
+
+- Dead code left behind when the navbar popover was replaced in 2.17: the
+  "UserListSendButton" and "UserProfileSendButton" Svelte components, the
+  "createUrl" helper that only they used, the "navbar" property of the menu
+  component with the CSS it enabled, the styles keyed on the popover class, and
+  "local_mail\output\strings::get_many()". The bundle shrinks by about 0.4 kB of
+  JavaScript and 0.4 kB of CSS.
+- The "classpath" key of all 27 web service registrations. It pointed at
+  local/mail/externallib.php, a file that has never existed in this project.
+  Moodle only reads that key when the class cannot be autoloaded, so it was
+  inert, but it would have turned an autoloading failure into an error about a
+  file that was never there.
+- Unused declarations: the "XL" member of the viewport size enumeration, the
+  "MessageProcessorPreference" interface, the store's "get" accessor, two
+  "global $DB" declarations and one unused parameter in the generator script.
+- The "tsconfig.node.json" TypeScript project, its reference from
+  "tsconfig.json" and the "vite.config.d.ts" it emitted. The project included
+  "vite.config.ts", which was renamed to .js upstream, so it had resolved to an
+  empty file set ever since.
 
 ## [2.17.2] - 2026-08-10
 

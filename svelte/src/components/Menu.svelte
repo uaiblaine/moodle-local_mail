@@ -24,7 +24,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
     export let courses: ReadonlyArray<Course>;
     export let labels: ReadonlyArray<Label>;
     export let params: ViewParams;
-    export let navbar = false;
     export let onClick: ((params: ViewParams) => void) | undefined = undefined;
     export let onCourseChange: (courseid?: number) => void;
 
@@ -57,12 +56,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         : undefined;
 </script>
 
-<div
-    class="list-group"
-    class:local-mail-menu-navbar={navbar}
-    class:list-group-flush={navbar}
-    class:border-top={navbar}
->
+<div class="list-group">
     {#if filterenabled || courseid}
         <CourseSelect
             {settings}
@@ -146,12 +140,3 @@ SPDX-License-Identifier: GPL-3.0-or-later
         {/if}
     {/each}
 </div>
-
-<style>
-    .local-mail-menu-navbar :global(a:focus),
-    .local-mail-menu-navbar :global(.btn:focus),
-    .local-mail-menu-navbar :global(.form-control:focus) {
-        box-shadow: inset 0 0 0 0.2rem var(--primary);
-        outline: none;
-    }
-</style>

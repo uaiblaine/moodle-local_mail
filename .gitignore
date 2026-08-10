@@ -2,6 +2,7 @@
 /coverage
 /phpunit.xml
 /svelte/build/source-map.html
+/svelte/build/*.map
 # macOS
 .DS_Store
 .AppleDouble

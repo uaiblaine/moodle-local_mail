@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "type": "module",
     "scripts": {
-        "analyze": "source-map-explorer --html build/source-map.html 'build/*.js'",
+        "analyze": "vite build --sourcemap && source-map-explorer --html build/source-map.html 'build/*.js'",
         "dev": "vite",
         "build": "vite build",
         "check": "svelte-check --tsconfig ./tsconfig.json",

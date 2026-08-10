@@ -10,23 +10,6 @@ function baseUrl() {
     return window.M.cfg.wwwroot + '/local/mail/';
 }
 
-export function createUrl(courseid?: number, recipients: number[] = [], role?: string): string {
-    const url = new URL(baseUrl() + 'create.php');
-
-    if (courseid) {
-        url.searchParams.set('course', String(courseid));
-    }
-    if (recipients.length) {
-        url.searchParams.set('recipients', recipients.join(','));
-    }
-    if (role) {
-        url.searchParams.set('role', role);
-    }
-    url.searchParams.set('sesskey', window.M.cfg.sesskey);
-
-    return url.toString();
-}
-
 export function downloadAllUrl(messageid: number): string {
     const url = new URL(baseUrl() + 'download.php');
 

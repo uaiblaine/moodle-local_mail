@@ -805,7 +805,6 @@ export async function createStore(data: InitialData) {
         deleteLabel,
         emptyTrash,
         forward,
-        get: (): State => state,
         hideDialog,
         hideToast,
         navigate,

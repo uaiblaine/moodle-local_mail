@@ -123,7 +123,7 @@ set_debugging(DEBUG_DEVELOPER, true);
  * @return void
  */
 function main() {
-    global $CFG, $DB;
+    global $CFG;
 
     raise_memory_limit(MEMORY_HUGE);
 
@@ -185,8 +185,6 @@ function main() {
  * @return void
  */
 function delete_messages(array $courses) {
-    global $DB;
-
     foreach ($courses as $course) {
         print_progress("Deleting course mail", count($courses));
 
@@ -294,7 +292,7 @@ function generate_course_messages(\file_storage $fs, course $course, ?user $admi
         if ($i > 0 && random_bool(REPLY_FREQ)) {
             $data = generate_random_reply($fs, random_item($sentmessages), $time);
         } else if ($i > 0 && random_bool(FORWARD_FREQ / (1 - REPLY_FREQ))) {
-            $data = generate_random_forward($fs, random_item($sentmessages), $users, $time);
+            $data = generate_random_forward(random_item($sentmessages), $users, $time);
         } else {
             $data = generate_random_message($fs, $course, $users, $time);
         }
@@ -322,13 +320,12 @@ function generate_course_messages(\file_storage $fs, course $course, ?user $admi
 /**
  * Builds the data of a message that forwards an existing one to a random set of recipients.
  *
- * @param \file_storage $fs File storage of the site.
  * @param message $message Message that is forwarded.
  * @param user[] $users Users enrolled in the course of the message.
  * @param int $time Timestamp of the forwarded message.
  * @return message_data Data of the forwarded message.
  */
-function generate_random_forward(\file_storage $fs, message $message, array $users, int $time): message_data {
+function generate_random_forward(message $message, array $users, int $time): message_data {
     $sender = random_item($message->recipients(message::ROLE_TO, message::ROLE_CC));
     $data = message_data::forward($message, $sender);
     $data->time = $time;

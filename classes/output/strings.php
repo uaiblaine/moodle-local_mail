@@ -59,14 +59,4 @@ class strings {
     public static function get_ids(): array {
         return array_keys(get_string_manager()->load_component_strings('local_mail', 'en'));
     }
-
-    /**
-     * Returns multiple strings.
-     *
-     * @param string[] $ids Identifiers.
-     * @return string[] Localized strings indexed by identifier.
-     */
-    public static function get_many(array $ids): array {
-        return (array) get_strings($ids, 'local_mail');
-    }
 }
