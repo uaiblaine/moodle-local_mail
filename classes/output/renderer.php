@@ -193,7 +193,7 @@ class renderer extends \plugin_renderer_base {
      *
      * CSS files are included in the head.
      *
-     * @param $file Source file name, e.g. "src/view.ts"
+     * @param string $file Source file name, e.g. "src/view.ts"
      * @return string
      */
     public function svelte_script(string $file): string {

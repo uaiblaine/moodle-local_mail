@@ -1,5 +1,36 @@
 # Changelog
 
+## [2.17.1] - 2026-08-10
+
+### Changed
+
+- CI moved to the moodle-an-hochschulen reusable workflow, with one job per
+  supported Moodle branch (4.5, 5.0, 5.1, 5.2) and the declared support range
+  recorded in version.php.
+- The Svelte bundle is no longer built with source maps. The map embedded the
+  full node_modules sources, shipping about 460 kB of dev-only data with the
+  plugin, and CI rejects the marker words those vendored sources contain.
+
+### Fixed
+
+- Missing upgrade savepoint for the 2024031400 upgrade step.
+- Notification templates had no example context and used HTML attributes that
+  are obsolete in HTML5 ("border", "cellpadding", "cellspacing", "hr size").
+- Incomplete or mismatched phpdoc parameter lists in local_mail\label,
+  local_mail\message, local_mail\output\renderer and the test helpers.
+- The navbar badge stylesheet no longer relies on "!important".
+
+### Known issues
+
+- The Moodle Code Checker (phpcs) runs with "phpcs-continue-on-error: true" in
+  every CI job. moodle-plugin-ci always invokes phpcs with "--standard=moodle"
+  and ignores the repository's own .phpcs.xml, so the upstream file headers
+  (SPDX instead of the Moodle GPL boilerplate) and the absent class, function
+  and constant docblocks produce about 450 errors that only a full reformat of
+  the upstream tree would clear. The step still reports its findings; every
+  other check gates normally. The reformat is deferred so that merges from the
+  upstream repository stay reviewable.
+
 ## [2.17] - 2026-05-15
 
 ### Added

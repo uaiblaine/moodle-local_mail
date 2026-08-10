@@ -39,7 +39,7 @@ final class user_search_test extends test\testcase {
     /**
      * Returns the generated users filtered by search parameters.
      *
-     * @param message[] $message Array of messages.
+     * @param user[] $users Array of generated users.
      * @param user_search $search Search parameters.
      * @return user[] Found users, indexed by ID.
      */

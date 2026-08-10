@@ -70,12 +70,11 @@ function local_mail_pluginfile(
  * existing `local_mail_count_messages` web service. The icon is a direct link to
  * the inbox; no popover is opened on click.
  *
- * TODO: Reintroduce the Svelte "Send mail" button that used to be injected on
- * /user/view.php (profile), /user/index.php (participants), and
- * /blocks/completion_progress/overview.php by the now-removed
- * `svelte/src/navigation.ts` entry point. Any reimplementation must be scoped to
- * those specific pages so that the heavy courses/labels payload is not loaded on
- * every page render.
+ * Not reimplemented here: the Svelte "Send mail" button that the now-removed
+ * svelte/src/navigation.ts entry point injected on /user/view.php (profile),
+ * /user/index.php (participants) and /blocks/completion_progress/overview.php.
+ * Any future version of it must be scoped to those specific pages, so that the
+ * heavy courses/labels payload is not loaded on every page render.
  *
  * @param renderer_base $renderer
  * @return string The HTML

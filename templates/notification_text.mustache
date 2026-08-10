@@ -4,7 +4,7 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 }}
 {{!
-    @template local_mail/notification_html
+    @template local_mail/notification_text
 
     Text notification template.
 
@@ -20,8 +20,27 @@
     * date
     * subject
     * content
-    * attachments: [{path, size, url}]
+    * hasattachments
+    * attachments: array of objects with path, size and url
     * viewurl
+
+    Example context (json):
+    {
+        "coursename": "Introduction to algebra",
+        "sendername": "Alice Wonder",
+        "date": "1 January 2026, 10:00",
+        "subject": "Assignment feedback",
+        "content": "Please read the attached notes before the next session.",
+        "hasattachments": true,
+        "attachments": [
+            {
+                "path": "notes.pdf",
+                "size": "12.4 KB",
+                "url": "https://example.com/pluginfile.php/1/local_mail/message/1/notes.pdf"
+            }
+        ],
+        "viewurl": "https://example.com/local/mail/view.php?t=inbox&m=1"
+    }
 }}
 {{#str}} from, local_mail {{/str}}: {{{ sendername }}}
 {{#str}} subject, local_mail {{/str}}:  {{{ subject }}}

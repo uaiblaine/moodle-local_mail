@@ -378,6 +378,8 @@ function xmldb_local_mail_upgrade($oldversion) {
         $processors = array_filter($processors, fn($processor) => $processor !== 'popup');
         set_config('message_provider_local_mail_mail_enabled', implode(',', $processors), 'message');
         set_config('popup_provider_local_mail_mail_locked', '1', 'message');
+
+        upgrade_plugin_savepoint(true, 2024031400, 'local', 'mail');
     }
 
     return true;

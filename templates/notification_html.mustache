@@ -22,11 +22,33 @@
     * date
     * subject
     * content
-    * attachments: [{path, size, url, icon}]
+    * hasattachments
+    * attachments: array of objects with path, size, url and icon
     * viewurl
+
+    Example context (json):
+    {
+        "coursename": "Introduction to algebra",
+        "courseurl": "https://example.com/course/view.php?id=2",
+        "sendername": "Alice Wonder",
+        "senderurl": "https://example.com/user/view.php?id=3&course=2",
+        "date": "1 January 2026, 10:00",
+        "subject": "Assignment feedback",
+        "content": "<p>Please read the attached notes before the next session.</p>",
+        "hasattachments": true,
+        "attachments": [
+            {
+                "path": "notes.pdf",
+                "size": "12.4 KB",
+                "url": "https://example.com/pluginfile.php/1/local_mail/message/1/notes.pdf",
+                "icon": "https://example.com/theme/image.php/boost/core/1/f/pdf"
+            }
+        ],
+        "viewurl": "https://example.com/local/mail/view.php?t=inbox&m=1"
+    }
 }}
 <div style="font-family: sans-serif">
-    <table border="0" cellpadding="0" cellspacing="0" style="width: 100%; line-height: 1.5">
+    <table style="width: 100%; line-height: 1.5; border: 0; border-collapse: collapse; border-spacing: 0">
         <tr>
             <td style="vertical-align: top; padding-right: 1em">{{#str}} from, local_mail {{/str}}:</td>
             <td><a target="_blank" href="{{{ senderurl }}}">{{ sendername }}</a></td>
@@ -48,10 +70,10 @@
             <td>{{ date }}</td>
         </tr>
     </table>
-    <hr size="1">
+    <hr style="height: 1px; border: 0; background-color: #cccccc">
     {{{ content }}}
     {{# hasattachments }}
-    <hr size="1">
+    <hr style="height: 1px; border: 0; background-color: #cccccc">
     {{# attachments }}
         <div style="margin: 8px 0">
             <img aria-hidden="true" alt="" src="{{ icon }}" width="24" height="24" style="vertical-align: middle">
@@ -59,6 +81,6 @@
         </div>
     {{/ attachments }}
     {{/ hasattachments }}
-    <hr size="1">
+    <hr style="height: 1px; border: 0; background-color: #cccccc">
     <a target="_blank" href="{{ viewurl }}">{{#str}} viewmessage, local_mail {{/str}}</a>
 </div>

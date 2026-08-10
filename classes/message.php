@@ -322,7 +322,7 @@ class message {
     /**
      * Gets the references of the message.
      *
-     * @param bool $reverse Return forward references instead of backward references.
+     * @param bool $forward Return forward references instead of backward references.
      * @param int $offset Skip this number of messages.
      * @param int $limit Maximum number of messages, 0 means no limit.
      * @return self[] Array of ordered references indexed by ID.
@@ -374,7 +374,7 @@ class message {
     /**
      * Returns the recipients of the message.
      *
-     * @param int $roles Roles to include. Defaults to all roles.
+     * @param int ...$roles Roles to include. Defaults to all roles.
      * @return user[] Array of sorted users indexed by ID.
      */
     public function recipients(int ...$roles): array {

@@ -15,7 +15,10 @@ export default defineConfig({
                 assetFileNames: '[name]-[hash][extname]',
             },
         },
-        sourcemap: true,
+        // Source maps embed the full node_modules sources, which ships ~460 kB of
+        // dev-only data with the plugin and trips the CI development-leftover
+        // checker on marker words found inside those vendored sources.
+        sourcemap: false,
     },
     plugins: [svelte()],
     server: {

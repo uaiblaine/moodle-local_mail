@@ -11,6 +11,12 @@ present in the header of the site, or the main menu of the Moodle app.
 
 Project page: https://moodle.org/plugins/local_mail
 
+## Compatibility
+
+This fork is developed and tested against Moodle 4.5, 5.0, 5.1 and 5.2
+(`$plugin->supported = [405, 502]`). It still installs on Moodle 4.1 and later,
+but only the branches above are covered by CI.
+
 ## Installation
 
 Unpack archive inside `/path/to/moodle/local/mail`

@@ -10,8 +10,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2026051500;
+$plugin->version = 2026081000;
 $plugin->requires = 2022112800;
+$plugin->supported = [405, 502];
 $plugin->component = 'local_mail';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '2.17';
+$plugin->release = '2.17.1';

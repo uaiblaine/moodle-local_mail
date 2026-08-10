@@ -89,7 +89,7 @@ class label {
     /**
      * Gets all labels of a user from the database.
      *
-     * @param user User.
+     * @param user $user User.
      * @return label[] Array of labels ordered by name and indexed by ID.
      */
     public static function get_by_user(user $user): array {
@@ -119,7 +119,7 @@ class label {
     /**
      * Gets multiple labels from the database.
      *
-     * @param int[] $id IDs of the labels to get.
+     * @param int[] $ids IDs of the labels to get.
      * @return self[] Array of labels indexed by ID.
      */
     public static function get_many(array $ids): array {

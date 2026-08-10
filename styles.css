@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#local-mail-navbar .local-mail-navbar-count {
-    top: 50% !important;
+/* Specificity, not !important, is what overrides the theme's .count-container top. */
+#local-mail-navbar a .local-mail-navbar-count.count-container {
+    top: 50%;
     transform: translateY(-16px);
 }
