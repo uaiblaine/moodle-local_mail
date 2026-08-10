@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /*
  * SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
  *
@@ -21,13 +36,22 @@ use local_mail\output\strings;
 
 /**
  * Implementation of the privacy subsystem plugin provider for local mail.
+ *
+ * @package    local_mail
+ * @copyright  2025 Albert Gasset
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements
     \core_privacy\local\metadata\provider,
-    \core_privacy\local\request\plugin\provider,
     \core_privacy\local\request\core_userlist_provider,
+    \core_privacy\local\request\plugin\provider,
     \core_privacy\local\request\user_preference_provider {
-
+    /**
+     * Describes the personal data stored by the plugin.
+     *
+     * @param collection $collection Collection of metadata items to add the descriptions to.
+     * @return collection The collection with the metadata of the plugin added.
+     */
     public static function get_metadata(collection $collection): collection {
         $collection->add_database_table('local_mail_labels', [
             'userid' => 'privacy:metadata:local_mail_labels:userid',
@@ -84,6 +108,12 @@ class provider implements
         return $collection;
     }
 
+    /**
+     * Returns the contexts of the courses with messages of the user, and the user context if it has labels.
+     *
+     * @param int $userid ID of the user to search data for.
+     * @return contextlist List of contexts that contain data of the user.
+     */
     public static function get_contexts_for_userid(int $userid): contextlist {
         global $DB;
 
@@ -115,6 +145,11 @@ class provider implements
         return $contextlist;
     }
 
+    /**
+     * Adds the users that have messages in the course of the given context to the user list.
+     *
+     * @param userlist $userlist List of users, with the context to search in.
+     */
     public static function get_users_in_context(userlist $userlist): void {
         global $DB;
 
@@ -141,6 +176,11 @@ class provider implements
         $userlist->add_from_sql('userid', $sql, $params);
     }
 
+    /**
+     * Exports the labels and the messages of the user for the approved contexts.
+     *
+     * @param approved_contextlist $contextlist Approved contexts to export data for, with the user they belong to.
+     */
     public static function export_user_data(approved_contextlist $contextlist): void {
         global $DB;
 
@@ -198,6 +238,11 @@ class provider implements
         }
     }
 
+    /**
+     * Exports the messages per page and mark as read preferences of the user.
+     *
+     * @param int $userid ID of the user to export the preferences of.
+     */
     public static function export_user_preferences(int $userid): void {
         $perpage = get_user_preferences('local_mail_mailsperpage', null, $userid);
         if ($perpage !== null) {
@@ -220,12 +265,24 @@ class provider implements
         }
     }
 
+    /**
+     * Deletes the messages of all the users of a course, ignoring any other context level.
+     *
+     * @param \context $context Context to delete the data of.
+     */
     public static function delete_data_for_all_users_in_context(\context $context): void {
         if ($context->contextlevel == CONTEXT_COURSE) {
             message::delete_course_data($context->get_course_context());
         }
     }
 
+    /**
+     * Deletes the labels of the user in its user context and its messages in the approved course contexts.
+     *
+     * Messages sent by the user keep their metadata, but their content is erased for all the recipients.
+     *
+     * @param approved_contextlist $contextlist Approved contexts to delete data in, with the user they belong to.
+     */
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
         $user = new user($contextlist->get_user());
         foreach ($contextlist->get_contexts() as $context) {
@@ -245,6 +302,11 @@ class provider implements
         }
     }
 
+    /**
+     * Deletes the data of each approved user in the context of the user list.
+     *
+     * @param approved_userlist $userlist Approved users to delete data of, with the context they belong to.
+     */
     public static function delete_data_for_users(approved_userlist $userlist): void {
         foreach ($userlist->get_users() as $user) {
             $contextid = $userlist->get_context()->id;
@@ -252,6 +314,17 @@ class provider implements
         }
     }
 
+    /**
+     * Iterates over the messages of a user in a course, fetching them in batches of one hundred.
+     *
+     * Drafts of other users are skipped, as are messages whose content has been erased. Messages
+     * deleted forever are kept only when the user is their sender, so that their content can still
+     * be erased on request.
+     *
+     * @param user $user User to get the messages of.
+     * @param int $courseid ID of the course to get the messages from.
+     * @return \Traversable Generator that yields message instances.
+     */
     private static function iterate_messages(user $user, int $courseid): \Traversable {
         global $DB;
 

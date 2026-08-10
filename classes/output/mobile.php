@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
  *
@@ -11,7 +26,19 @@ use local_mail\course;
 use local_mail\settings;
 use local_mail\user;
 
+/**
+ * Handlers called by the Moodle mobile app, declared in db/mobile.php.
+ *
+ * @package    local_mail
+ * @copyright  2023-2024 Proyecto UNIMOODLE
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class mobile {
+    /**
+     * Returns the JavaScript that adds the mail entry to the app menu, or disables the plugin.
+     *
+     * @return array Init response for the app, with either a disabled flag or the JavaScript to run.
+     */
     public static function init() {
         global $CFG;
 
@@ -26,6 +53,12 @@ class mobile {
         ];
     }
 
+    /**
+     * Returns the app view that embeds the web interface of the plugin in an iframe.
+     *
+     * @param array $args Arguments sent by the app, appended to the query string of the view URL.
+     * @return array View response for the app, with the template of the iframe and its JavaScript.
+     */
     public static function view(array $args) {
         global $CFG;
 

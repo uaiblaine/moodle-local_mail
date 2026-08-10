@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.17.3] - 2026-08-10
+
+### Changed
+
+- Every PHP file now carries the Moodle GPL boilerplate and full phpdoc, on top
+  of the SPDX headers, which are kept as the copyright record. This resolves the
+  known issue recorded under 2.17.1: the Moodle Code Checker gates the build
+  again, with "phpcs-continue-on-error" removed from all four CI jobs. Apart from
+  the version bump itself, the only non-comment edits are a blank line removed
+  after a class opening brace and an "implements" list put in alphabetical order,
+  both of them required by the checker.
+
 ## [2.17.2] - 2026-08-10
 
 ### Fixed

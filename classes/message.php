@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /*
  * SPDX-FileCopyrightText: 2012-2014 Institut Obert de Catalunya <https://ioc.gencat.cat>
  * SPDX-FileCopyrightText: 2014-2021 Marc Català <reskit@gmail.com>
@@ -12,17 +27,36 @@ namespace local_mail;
 
 use local_mail\output\strings;
 
+/**
+ * A message sent between the users of a course, or a draft of one.
+ *
+ * @package    local_mail
+ * @copyright  2012-2026 Institut Obert de Catalunya, Marc Català, Albert Gasset, Proyecto UNIMOODLE
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class message {
-    // Deleted stataus constants.
+    /** Deleted status: the message is not in the trash of the user. */
     const NOT_DELETED = 0;
+
+    /** Deleted status: the message is in the trash of the user. */
     const DELETED = 1;
+
+    /** Deleted status: the message is no longer visible to the user. */
     const DELETED_FOREVER = 2;
+
+    /** Deleted status: the subject, content and attachments have been erased for everyone. */
     const DELETED_CONTENT = 3;
 
-    // Role constants.
+    /** Role: the user is the sender of the message. */
     const ROLE_FROM = 1;
+
+    /** Role: the user is a main recipient of the message. */
     const ROLE_TO = 2;
+
+    /** Role: the user is a carbon copy recipient of the message. */
     const ROLE_CC = 3;
+
+    /** Role: the user is a blind carbon copy recipient of the message. */
     const ROLE_BCC = 4;
 
     /** @var int Message ID. */

@@ -16,22 +16,11 @@ jobs:
   # The highest branch runs the full PHP x DB matrix; older branches run
   # PostgreSQL only. PHPUnit runs on every runtime leg; the plugin ships no
   # Behat features, so that step is a no-op.
-  #
-  # phpcs-continue-on-error is deliberate and temporary, see CHANGELOG 2.17.1:
-  # this repository is a fork of the upstream GitLab project, whose files carry
-  # SPDX headers instead of the Moodle GPL boilerplate and document almost
-  # nothing with phpdoc. moodle-plugin-ci always runs phpcs with --standard=moodle
-  # and ignores the repository's own .phpcs.xml, so the checker reports ~450
-  # style errors that only a full reformat of the upstream tree would clear.
-  # Until that reformat lands, the step reports without gating; every other
-  # check (phpdoc, leftover checker, validate, savepoints, mustache, grunt,
-  # PHPUnit) gates normally.
   ci-502:
     name: Moodle 5.02
     uses: moodle-an-hochschulen/moodle-workflows/.github/workflows/moodle-plugin-ci.yml@main
     with:
       moodle-core-branch: MOODLE_502_STABLE
-      phpcs-continue-on-error: true
 
   ci-501:
     name: Moodle 5.01
@@ -39,7 +28,6 @@ jobs:
     with:
       moodle-core-branch: MOODLE_501_STABLE
       one-db-only: true
-      phpcs-continue-on-error: true
 
   ci-500:
     name: Moodle 5.00
@@ -47,7 +35,6 @@ jobs:
     with:
       moodle-core-branch: MOODLE_500_STABLE
       one-db-only: true
-      phpcs-continue-on-error: true
 
   ci-405:
     name: Moodle 4.05
@@ -55,4 +42,3 @@ jobs:
     with:
       moodle-core-branch: MOODLE_405_STABLE
       one-db-only: true
-      phpcs-continue-on-error: true

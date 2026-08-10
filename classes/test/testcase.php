@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /*
  * SPDX-FileCopyrightText: 2012-2013 Institut Obert de Catalunya <https://ioc.gencat.cat>
  * SPDX-FileCopyrightText: 2014-2021 Marc Català <reskit@gmail.com>
@@ -19,7 +34,19 @@ use local_mail\user;
 use local_mail\user_search;
 use local_mail\output\strings;
 
+/**
+ * Base class of the unit tests of the plugin, with shared assertions and data generators.
+ *
+ * @package    local_mail
+ * @copyright  2012-2025 Institut Obert de Catalunya, Marc Català, Proyecto UNIMOODLE, Albert Gasset
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 abstract class testcase extends \advanced_testcase {
+    /**
+     * Logs in as admin and empties the caches of the plugin before each test.
+     *
+     * @return void
+     */
     public function setUp(): void {
         $this->resetAfterTest();
         $this->preventResetByRollback();

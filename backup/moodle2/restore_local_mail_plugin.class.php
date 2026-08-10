@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /*
  * SPDX-FileCopyrightText: 2016 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2017 Marc Català <reskit@gmail.com>
@@ -7,7 +22,19 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+/**
+ * Restores the messages of a course from its backup file.
+ *
+ * @package    local_mail
+ * @copyright  2016-2024 Albert Gasset, Marc Català, Proyecto UNIMOODLE
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class restore_local_mail_plugin extends restore_local_plugin {
+    /**
+     * Declares the paths of the backup file that are processed by this plugin.
+     *
+     * @return restore_path_element[] Paths to process, empty if backups are disabled or user data is not included.
+     */
     protected function define_course_plugin_structure() {
         if (!get_config('local_mail', 'enablebackup')) {
             return [];
@@ -25,6 +52,12 @@ class restore_local_mail_plugin extends restore_local_plugin {
         ];
     }
 
+    /**
+     * Inserts a restored message and maps its old identifier to the new one.
+     *
+     * @param array $data Contents of the message element of the backup file.
+     * @return void
+     */
     public function process_local_mail_message($data) {
         global $DB;
 
@@ -43,6 +76,13 @@ class restore_local_mail_plugin extends restore_local_plugin {
         $this->set_mapping('local_mail_message', $data['id'], $newid, true);
     }
 
+    /**
+     * Inserts one reference of a restored message: a link to an earlier message in the same
+     * conversation, not necessarily the one it answers directly.
+     *
+     * @param array $data Contents of the ref element of the backup file.
+     * @return void
+     */
     public function process_local_mail_message_ref($data) {
         global $DB;
 
@@ -52,6 +92,12 @@ class restore_local_mail_plugin extends restore_local_plugin {
         $DB->insert_record('local_mail_message_refs', $record);
     }
 
+    /**
+     * Inserts a sender or recipient of a restored message, converting the role name back to its number.
+     *
+     * @param array $data Contents of the user element of the backup file.
+     * @return void
+     */
     public function process_local_mail_message_user($data) {
         global $DB;
 
@@ -74,6 +120,12 @@ class restore_local_mail_plugin extends restore_local_plugin {
         $DB->insert_record('local_mail_message_users', $record);
     }
 
+    /**
+     * Assigns a restored message to a label of the user, creating the label if it does not exist yet.
+     *
+     * @param array $data Contents of the label element of the backup file.
+     * @return void
+     */
     public function process_local_mail_message_label($data) {
         global $DB;
 
@@ -105,6 +157,11 @@ class restore_local_mail_plugin extends restore_local_plugin {
         $DB->insert_record('local_mail_message_labels', $record);
     }
 
+    /**
+     * Restores the files attached to the messages, once all the messages of the course have been inserted.
+     *
+     * @return void
+     */
     protected function after_execute_course() {
         $this->add_related_files('local_mail', 'message', 'local_mail_message');
     }
