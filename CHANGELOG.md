@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.17.2] - 2026-08-10
+
+### Fixed
+
+- Alternative full name not shown to users with the `moodle/site:viewfullnames`
+  capability (e.g. teachers). Backported from the upstream project, commit
+  ec047eb by Jorge Matamala.
+
 ## [2.17.1] - 2026-08-10
 
 ### Changed

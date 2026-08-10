@@ -202,10 +202,11 @@ class user {
     /**
      * Full name of the user.
      *
+     * @param bool $override If true, use the alternative full name format (moodle/site:viewfullnames).
      * @return string
      */
-    public function fullname(): string {
-        return $this->deleted ? get_string('deleteduser', 'local_mail') : fullname((object) (array) $this);
+    public function fullname(bool $override = false): string {
+        return $this->deleted ? get_string('deleteduser', 'local_mail') : fullname((object) (array) $this, $override);
     }
 
     /**
