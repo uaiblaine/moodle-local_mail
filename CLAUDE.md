@@ -35,6 +35,19 @@ mdl purge m501                           # after PHP changes that affect output
 cd svelte && npm run build               # rebuild the mailbox bundle (see below)
 ```
 
+The host carries no node, so the Svelte gate reproduces through a container. This
+runs what `.github/workflows/svelte.yml` runs, from the plugin root — the mount
+path puts the plugin where its TinyMCE type import expects it, and the bundle it
+writes into `svelte/build/` is the one to commit:
+
+```sh
+docker run --rm -v "$PWD":/moodle/public/local/mail \
+  -v "$HOME/dev/moodle-502/public/lib/editor/tiny/js/tinymce/tinymce.d.ts":/moodle/public/lib/editor/tiny/js/tinymce/tinymce.d.ts:ro \
+  -w /moodle/public/local/mail/svelte node:22-alpine \
+  sh -c 'npm ci && npm run lint && npm run check && npm run build'
+git status --porcelain -- svelte/build/   # anything listed here must be committed
+```
+
 `cli/generate.php` seeds bulk demo mail; it is a development tool, not a
 maintenance script.
 
@@ -54,14 +67,26 @@ templates/                 Only the notification email templates, not the UI.
 
 ## Architecture gotchas
 
-**`svelte/build/` is a committed artefact and nothing in CI checks it.**
-`.github/workflows/ci.yml` has no npm step, and moodle-plugin-ci's grunt leg
-only sees `amd/src` and `styles.css`. The bundle filenames are content-hashed
-and resolved through `svelte/build/manifest.json`; a stale manifest silently
-loads the **previous** bundle rather than erroring. So a `svelte/src` edit must
-ship its rebuild, its new hashed files, the updated `manifest.json`, and a
-`git rm` of the superseded files, all in the same commit — and `npm run check`
-plus `npm run lint` are a human responsibility, not a gate.
+**`svelte/build/` is a committed artefact, gated by its own workflow.**
+`.github/workflows/ci.yml` has no npm step and moodle-plugin-ci's grunt leg only
+sees `amd/src` and `styles.css`, so `.github/workflows/svelte.yml` carries the
+Svelte side alone: it rebuilds from `svelte/src` and fails when the result
+differs from what is committed. The rule it enforces is unchanged — a
+`svelte/src` edit must ship its rebuild, its new hashed files, the updated
+`manifest.json` and a `git rm` of the superseded files, all in the same commit —
+but forgetting it is now an error instead of silence. It used to be silence
+because the filenames are content-hashed and a stale manifest loads the
+**previous** bundle rather than erroring.
+
+Two things about that workflow are load-bearing. It checks the plugin out at
+`local/mail`, because `svelte/src/lib/amd.ts` imports the TinyMCE types five
+levels up, which is the Moodle root on 4.5 and `public/` on 5.x — at the
+workspace root that path escapes the checkout, and `npm run check` reports two
+errors that are an artefact of the layout rather than a defect. And it detects
+staleness with `git status`, not `git diff`: vite empties the output directory,
+so a rebuild leaves the new bundle **untracked**, which `git diff` does not
+report. `npm run check` and `npm run lint` both fail on warnings, per the fleet
+zero-warning policy.
 
 **Adding a member to the `Tray` union produces zero compile errors.** Every
 tray dispatch is a ternary with a silent fallback (`store.ts` builds the query,

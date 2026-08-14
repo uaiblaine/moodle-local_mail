@@ -7,8 +7,8 @@
         "analyze": "vite build --sourcemap && source-map-explorer --html build/source-map.html 'build/*.js'",
         "dev": "vite",
         "build": "vite build",
-        "check": "svelte-check --tsconfig ./tsconfig.json",
-        "lint": "prettier --check . && eslint .",
+        "check": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
+        "lint": "prettier --check . && eslint . --max-warnings 0",
         "format": "prettier --write ."
     },
     "devDependencies": {

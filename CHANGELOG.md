@@ -17,6 +17,15 @@
   "timedeleted" field, and clear it again when the message is restored. The
   message time is the send time, so without this a retention policy would act
   on the age of the content rather than on how long it had been thrown away.
+- CI now checks the compiled mailbox bundle. The Svelte sources compile to
+  "svelte/build", which is committed and is what browsers load, but no gate had
+  ever looked at it: the filenames carry a content hash and the manifest that
+  resolves them silently falls back to the previous bundle, so a source edit
+  committed without its rebuild produced working software that was quietly one
+  revision behind. A new workflow rebuilds from source on every push and fails
+  when the result differs from what is committed, alongside the formatter, the
+  linter and the type-checker, all three of which now fail on warnings rather
+  than only on errors. Nothing that reaches a site changes.
 - The repository carries a CLAUDE.md and a .gitattributes. The latter keeps
   the Svelte sources, the toolchain and the editor configuration out of the
   release zip, which previously shipped all of them; the compiled bundle under
