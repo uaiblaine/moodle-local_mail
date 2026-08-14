@@ -88,9 +88,23 @@ class restore_local_mail_plugin extends restore_local_plugin {
     public function process_local_mail_message_ref($data) {
         global $DB;
 
+        $reference = $this->get_mappingid('local_mail_message', $data['reference']);
+
+        /*
+         * A reference whose target did not come across is dropped rather than stored.
+         * get_mappingid() returns false when it cannot resolve one, and the column is a
+         * not-null integer, so the row would land pointing at message zero and show up
+         * as a phantom in every thread that walked it. Targets go missing for more than
+         * one reason: generated mail is excluded from the backup, and references to
+         * another course have existed in the wild before.
+         */
+        if (!$reference) {
+            return;
+        }
+
         $record = new \stdClass();
         $record->messageid = $this->get_new_parentid('local_mail_message');
-        $record->reference = $this->get_mappingid('local_mail_message', $data['reference']);
+        $record->reference = $reference;
         $DB->insert_record('local_mail_message_refs', $record);
     }
 

@@ -22,7 +22,26 @@
   release zip, which previously shipped all of them; the compiled bundle under
   "svelte/build" still ships, since that is what the browser loads.
 
+### Changed
+
+- Course backups no longer carry generated mail. Notifications are a log of what
+  happened in a course rather than correspondence between people, and restoring
+  them produced data that was wrong in ways nobody could see: restore rewrites
+  the message time, which is the field a retention policy acts on, so moving a
+  course start date landed every restored notification either already expired or
+  years from expiring, and a course import copied them in as fresh rows
+  describing activities whose ids had changed. Human correspondence is backed up
+  exactly as before. The whole feature still switches off through the existing
+  backup setting.
+
 ### Fixed
+
+- A restored reference whose target was not in the backup is now dropped instead
+  of being stored pointing at message zero, where it became a phantom in every
+  thread that walked it. References across courses have existed in the wild —
+  there is an upgrade step that deletes them — and they are the case that cannot
+  be filtered when the backup is written, because the target row is there and
+  only the restore can discover that nothing maps to it.
 
 - The upgrade test asserted nothing about the resulting schema. It called
   Moodle's schema check and discarded the return value, and that method

@@ -70,12 +70,35 @@ class backup_local_mail_plugin extends backup_local_plugin {
         $message->add_child($labels);
         $labels->add_child($label);
 
-        // Messages source.
-        $message->set_source_table('local_mail_messages', ['courseid' => backup::VAR_COURSEID], 'id');
+        /*
+         * Messages source. Generated mail is deliberately left out of the backup: it is
+         * a log of what happened in this course rather than correspondence between
+         * people, and carrying it produces data that is wrong in ways nobody can see.
+         * Restore rewrites the message time through apply_date_offset(), and that is the
+         * field the retention policy acts on, so moving a course start date lands every
+         * restored notification either already expired or years from expiring. A course
+         * import copies them in as fresh rows describing activities whose ids changed.
+         */
+        $sql = 'SELECT id, courseid, subject, content, format, attachments, draft, time, component
+                FROM {local_mail_messages}
+                WHERE courseid = ? AND component IS NULL
+                ORDER BY id';
+        $message->set_source_sql($sql, ['courseid' => backup::VAR_COURSEID]);
+
+        /*
+         * References to messages that are not in the backup are left out with them.
+         * The join drops a reference whose target was excluded above, which would
+         * otherwise be restored pointing at nothing.
+         */
+        $sql = 'SELECT mr.id, mr.reference
+                FROM {local_mail_message_refs} mr
+                JOIN {local_mail_messages} m ON m.id = mr.reference
+                WHERE mr.messageid = ? AND m.component IS NULL
+                ORDER BY mr.id';
+        $ref->set_source_sql($sql, ['messageid' => '../../id']);
 
         // Users source.
         // Roles are stored by name, for compatibility with older versions of the plugin.
-        $ref->set_source_table('local_mail_message_refs', ['messageid' => '../../id'], 'id');
         $rolesql = 'CASE';
         foreach (\local_mail\message::role_names() as $role => $name) {
             $rolesql .= " WHEN role = $role THEN '$name'";
