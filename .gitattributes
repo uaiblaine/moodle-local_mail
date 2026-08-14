@@ -1,0 +1,40 @@
+# Release hygiene — `git archive HEAD` builds the install zip, so every tracked
+# path lands in the package unless it is export-ignore'd here. These paths are
+# versioned for development/CI/collaboration but are NOT needed to run the
+# plugin on a Moodle site.
+#
+# The Svelte case is the one to get right: svelte/build/ SHIPS (it is the
+# compiled mailbox the browser loads, and view.php resolves it through
+# svelte/build/manifest.json), while svelte/src/ and the whole toolchain do not.
+# Nothing in CI rebuilds that bundle, so it is a committed artefact like
+# amd/build/ and must never be export-ignore'd.
+#
+# Two deliberate exceptions to the fleet baseline, both upstream artefacts that
+# README.md links to and which would leave dangling references if stripped:
+#   - LICENSES/ SHIPS: upstream's REUSE-style licence texts.
+#   - CONTRIBUTING.md SHIPS.
+# tests/ also SHIPS, per Moodle convention.
+#
+# Verify with:  git check-attr export-ignore -- <path>
+# (a path marked "set" is excluded from the archive; "unspecified" ships).
+
+/.claude               export-ignore
+/.DS_Store             export-ignore
+/.gitattributes        export-ignore
+/.github               export-ignore
+/.gitignore            export-ignore
+/.phpcs.xml            export-ignore
+/.prettierrc           export-ignore
+/.vscode               export-ignore
+/CLAUDE.md             export-ignore
+
+svelte/.gitignore      export-ignore
+svelte/.prettierignore export-ignore
+svelte/.prettierrc     export-ignore
+svelte/eslint.config.js export-ignore
+svelte/package-lock.json export-ignore
+svelte/package.json    export-ignore
+svelte/src             export-ignore
+svelte/svelte.config.js export-ignore
+svelte/tsconfig.json   export-ignore
+svelte/vite.config.js  export-ignore

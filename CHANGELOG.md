@@ -1,5 +1,22 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- The repository carries a CLAUDE.md and a .gitattributes. The latter keeps
+  the Svelte sources, the toolchain and the editor configuration out of the
+  release zip, which previously shipped all of them; the compiled bundle under
+  "svelte/build" still ships, since that is what the browser loads.
+
+### Fixed
+
+- The upgrade test asserted nothing about the resulting schema. It called
+  Moodle's schema check and discarded the return value, and that method
+  collects its findings into an array rather than throwing, so a column added
+  to install.xml with no matching upgrade step passed the build. The return
+  value is now asserted, with the check narrowed to this plugin's own tables.
+
 ## [2.17.3] - 2026-08-10
 
 ### Changed
