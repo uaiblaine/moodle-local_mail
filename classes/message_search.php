@@ -43,6 +43,9 @@ class message_search {
     /** @var ?bool If not null, search messages with this draft status. */
     public ?bool $draft = null;
 
+    /** @var ?int If not null, search messages of this category, one of the message CATEGORY_* constants. */
+    public ?int $category = null;
+
     /** @var int[] If not empty, search messages in which the user has one of these roles. */
     public array $roles = [];
 
@@ -104,6 +107,9 @@ class message_search {
         }
         if ($this->draft !== null) {
             $params['draft'] = $this->draft;
+        }
+        if ($this->category !== null) {
+            $params['category'] = $this->category;
         }
         if ($this->roles) {
             $params['roles'] = $this->roles;
@@ -261,7 +267,18 @@ class message_search {
         } else {
             $fromsql = 'FROM {local_mail_message_users} i';
             $conditions['userid'] = $this->user->id;
+            if ($this->category !== null) {
+                $conditions['category'] = $this->category;
+            }
         }
+
+        /*
+         * Only the per-user rows carry the denormalized category, because only they are
+         * ever filtered by it: label and trash listings are category-agnostic. A caller
+         * that combines a category with a label therefore has to reach the message
+         * itself, which is what widens the join below.
+         */
+        $categoryviajoin = $this->category !== null && ($this->label || $countperlabel);
 
         foreach ($conditions as $field => $items) {
             if (is_array($items) && empty($items)) {
@@ -277,8 +294,12 @@ class message_search {
         $selects[] = '(i.draft = 0 OR i.role = :rolefrom)';
         $params['rolefrom'] = message::ROLE_FROM;
 
-        if ($this->content != '' || $this->withfilesonly) {
+        if ($this->content != '' || $this->withfilesonly || $categoryviajoin) {
             $fromsql .= ' JOIN {local_mail_messages} m ON m.id = i.messageid';
+        }
+
+        if ($categoryviajoin) {
+            $selects[] = $this->category == message::CATEGORY_UPDATES ? 'm.component IS NOT NULL' : 'm.component IS NULL';
         }
 
         if ($this->content != '') {

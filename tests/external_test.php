@@ -284,6 +284,12 @@ final class external_test extends test\testcase {
                 $unread = $search->count();
                 $search = new message_search($user);
                 $search->course = $course;
+                $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
+                $search->unread = true;
+                $search->category = message::CATEGORY_UPDATES;
+                $unreadupdates = $search->count();
+                $search = new message_search($user);
+                $search->course = $course;
                 $search->roles = [message::ROLE_FROM];
                 $search->draft = true;
                 $drafts = $search->count();
@@ -294,6 +300,7 @@ final class external_test extends test\testcase {
                     'visible' => $course->visible,
                     'groupmode' => $course->groupmode,
                     'unread' => $unread,
+                    'unreadupdates' => $unreadupdates,
                     'drafts' => $drafts,
                 ];
             }
@@ -374,6 +381,9 @@ final class external_test extends test\testcase {
                 foreach ($search->roles as $role) {
                     $query['roles'][] = message::role_names()[$role];
                 }
+            }
+            if ($search->category !== null) {
+                $query['category'] = $search->category == message::CATEGORY_UPDATES ? 'updates' : 'primary';
             }
             if ($search->unread !== null) {
                 $query['unread'] = $search->unread;
@@ -496,6 +506,9 @@ final class external_test extends test\testcase {
                 foreach ($search->roles as $role) {
                     $query['roles'][] = message::role_names()[$role];
                 }
+            }
+            if ($search->category !== null) {
+                $query['category'] = $search->category == message::CATEGORY_UPDATES ? 'updates' : 'primary';
             }
             if ($search->unread !== null) {
                 $query['unread'] = $search->unread;

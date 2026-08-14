@@ -336,6 +336,23 @@ class external extends \external_api {
         $search->unread = true;
         $unread = $search->count_per_course();
 
+        /*
+         * A second sweep, for the badge on the updates tray. It is deliberately a
+         * separate count rather than a second dimension on the one above:
+         * count_per_course() selects the course id first and get_records_sql keys on the
+         * first column, so grouping by category as well would silently overwrite rows.
+         *
+         * Note that unread keeps its meaning of every unread message received, both
+         * categories. The inbox badge subtracts this one, while course trays keep using
+         * the total -- redefining it would hide a course whose only unread mail is
+         * generated, on sites that only list courses with unread messages.
+         */
+        $search = new message_search($user);
+        $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
+        $search->unread = true;
+        $search->category = message::CATEGORY_UPDATES;
+        $unreadupdates = $search->count_per_course();
+
         $search = new message_search($user);
         $search->roles = [message::ROLE_FROM];
         $search->draft = true;
@@ -351,6 +368,7 @@ class external extends \external_api {
                 'visible' => $course->visible,
                 'groupmode' => $course->groupmode,
                 'unread' => $unread[$course->id] ?? 0,
+                'unreadupdates' => $unreadupdates[$course->id] ?? 0,
                 'drafts' => $drafts[$course->id] ?? 0,
             ];
         }
@@ -371,7 +389,8 @@ class external extends \external_api {
                 'fullname' => new \external_value(PARAM_RAW, 'Full name of the course'),
                 'visible' => new \external_value(PARAM_BOOL, 'Course visibility'),
                 'groupmode' => new \external_value(PARAM_INT, 'Group mode: 0 (no), 1 (separate) or 2 (visible)'),
-                'unread' => new \external_value(PARAM_INT, 'Number of unread messages'),
+                'unread' => new \external_value(PARAM_INT, 'Number of unread messages, of both categories'),
+                'unreadupdates' => new \external_value(PARAM_INT, 'Number of unread messages in the updates category'),
                 'drafts' => new \external_value(PARAM_INT, 'Number of drafts'),
             ])
         );
@@ -481,6 +500,11 @@ class external extends \external_api {
                 VALUE_DEFAULT,
                 []
             ),
+            'category' => new \external_value(
+                PARAM_ALPHA,
+                'Search messages of this category: "primary" or "updates"',
+                VALUE_OPTIONAL
+            ),
             'unread' => new \external_value(
                 PARAM_BOOL,
                 'Search messages with this unread status',
@@ -585,6 +609,17 @@ class external extends \external_api {
                 throw new \invalid_parameter_exception('invalid role: ' . $rolename);
             }
             $search->roles[] = $role;
+        }
+
+        if (isset($query['category'])) {
+            $categories = [
+                'primary' => message::CATEGORY_PRIMARY,
+                'updates' => message::CATEGORY_UPDATES,
+            ];
+            if (!isset($categories[$query['category']])) {
+                throw new \invalid_parameter_exception('invalid category: ' . $query['category']);
+            }
+            $search->category = $categories[$query['category']];
         }
 
         if (isset($query['unread'])) {

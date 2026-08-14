@@ -31,6 +31,14 @@
   release zip, which previously shipped all of them; the compiled bundle under
   "svelte/build" still ships, since that is what the browser loads.
 
+- Listings can be filtered by category. Searches and counts accept "primary" or
+  "updates", and the courses web service reports how many of the unread messages
+  in each course are generated mail. The existing unread count keeps its meaning
+  of every unread message received, of both categories, so that a course whose
+  only unread mail is generated still appears on sites that list courses with
+  unread messages; the inbox count is that total minus the new one. Nothing in
+  the interface uses either yet.
+
 ### Changed
 
 - Course backups no longer carry generated mail. Notifications are a log of what
