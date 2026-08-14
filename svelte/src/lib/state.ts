@@ -186,6 +186,10 @@ export interface Settings {
     readonly coursetraysname: 'shortname' | 'fullname';
     readonly coursebadges: 'hidden' | 'shortname' | 'fullname';
     readonly coursebadgeslength: number;
+    readonly retentionenabled: boolean;
+    readonly retentionupdatesdays: number;
+    readonly retentionupdatestrashdays: number;
+    readonly retentiontrashdays: number;
     readonly filterbycourse: 'hidden' | 'shortname' | 'fullname';
     readonly incrementalsearch: boolean;
     readonly incrementalsearchlimit: number;

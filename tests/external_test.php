@@ -48,6 +48,10 @@ final class external_test extends test\testcase {
         set_config('coursetraysname', 'shortname', 'local_mail');
         set_config('coursebadges', 'hidden', 'local_mail');
         set_config('coursebadgeslength', '10', 'local_mail');
+        set_config('retentionenabled', '1', 'local_mail');
+        set_config('retentionupdatesdays', '45', 'local_mail');
+        set_config('retentionupdatestrashdays', '120', 'local_mail');
+        set_config('retentiontrashdays', '15', 'local_mail');
         set_config('filterbycourse', 'hidden', 'local_mail');
         set_config('incrementalsearch', '0', 'local_mail');
         set_config('incrementalsearchlimit', '2000', 'local_mail');
@@ -74,6 +78,10 @@ final class external_test extends test\testcase {
             'coursetraysname' => 'shortname',
             'coursebadges' => 'hidden',
             'coursebadgeslength' => 10,
+            'retentionenabled' => true,
+            'retentionupdatesdays' => 45,
+            'retentionupdatestrashdays' => 120,
+            'retentiontrashdays' => 15,
             'filterbycourse' => 'hidden',
             'incrementalsearch' => false,
             'incrementalsearchlimit' => 2000,

@@ -31,6 +31,23 @@
   release zip, which previously shipped all of them; the compiled bundle under
   "svelte/build" still ships, since that is what the browser loads.
 
+- **Retention settings, and a way to see what they would do before switching them
+  on.** Three thresholds decide how long generated mail stays in Updates, how
+  long it then stays in the trash, and how long anything else stays in the
+  trash. All of them are off until the policy is enabled, a threshold of zero
+  means keep indefinitely, and the third one starts at zero — nothing a person
+  wrote is removed unless an administrator asks for it.
+  `cli/retention.php --dry-run` reports how many copies each threshold would
+  reach, and takes `--days` to try a setting without saving it. **Nothing runs
+  automatically yet**: there is no scheduled task, so at this point the policy
+  can be described and inspected but never acts. Mail already in the trash when
+  a site upgrades is never removed either, since there is no record of when it
+  got there.
+  The Updates and Trash trays say what the policy does, the way a spam folder
+  does. The trash prints two lines when both of its clocks are set, because it
+  holds mail of both kinds and a single line would either announce a rule that
+  is not running or stay silent while mail was being removed.
+
 - An **Updates** tray, holding the mail Moodle generates. The inbox now shows
   only what people wrote, and everything delivered by a message processor —
   forum posts, assignment feedback, course announcements — goes to a tray of its

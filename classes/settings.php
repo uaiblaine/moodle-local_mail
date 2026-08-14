@@ -64,6 +64,18 @@ class settings {
     /** @var int Course badges are truncated to this approximate length. */
     public int $coursebadgeslength = 20;
 
+    /** @var bool Whether the retention policy runs at all. */
+    public bool $retentionenabled = false;
+
+    /** @var int Days after which generated mail is moved to the trash, or 0 to never move it. */
+    public int $retentionupdatesdays = 30;
+
+    /** @var int Days generated mail stays in the trash before being removed, or 0 to keep it. */
+    public int $retentionupdatestrashdays = 90;
+
+    /** @var int Days any other mail stays in the trash before being removed, or 0 to keep it. */
+    public int $retentiontrashdays = 0;
+
     /** @var string Type of course name used in the filter by course: "hidden", "shortname" or "fullname". */
     public string $filterbycourse = 'fullname';
 
@@ -143,6 +155,18 @@ class settings {
         }
         if (isset($config->coursebadgeslength)) {
             $settings->coursebadgeslength = (int) $config->coursebadgeslength;
+        }
+        if (isset($config->retentionenabled)) {
+            $settings->retentionenabled = (bool) $config->retentionenabled;
+        }
+        if (isset($config->retentionupdatesdays)) {
+            $settings->retentionupdatesdays = max(0, (int) $config->retentionupdatesdays);
+        }
+        if (isset($config->retentionupdatestrashdays)) {
+            $settings->retentionupdatestrashdays = max(0, (int) $config->retentionupdatestrashdays);
+        }
+        if (isset($config->retentiontrashdays)) {
+            $settings->retentiontrashdays = max(0, (int) $config->retentiontrashdays);
         }
         if (isset($config->filterbycourse)) {
             $settings->filterbycourse = $config->filterbycourse;

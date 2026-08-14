@@ -106,6 +106,22 @@ class external extends \external_api {
                 PARAM_INT,
                 'Course badges are truncated to this approximate length'
             ),
+            'retentionenabled' => new \external_value(
+                PARAM_BOOL,
+                'Whether the retention policy removes old mail automatically'
+            ),
+            'retentionupdatesdays' => new \external_value(
+                PARAM_INT,
+                'Days before updates are moved to the trash, or 0 to never move them'
+            ),
+            'retentionupdatestrashdays' => new \external_value(
+                PARAM_INT,
+                'Days updates stay in the trash before being removed, or 0 to keep them'
+            ),
+            'retentiontrashdays' => new \external_value(
+                PARAM_INT,
+                'Days any other mail stays in the trash before being removed, or 0 to keep it'
+            ),
             'filterbycourse' => new \external_value(
                 PARAM_ALPHA,
                 'Type of course name used in the filter by course: "hidden", "shortname" or "fullname"'
