@@ -36,6 +36,17 @@
 
 ### Fixed
 
+- Deleting a message now also removes it from the threads that quote it. A
+  message being answered was rendered inside the reply with its subject, its
+  whole body, its sender and working links to its attachments, with no check of
+  whether the reader was allowed to see it — and because each message holds a
+  reference to every one of its ancestors, a long thread exposed all of them and
+  not merely the parent. Anyone who deleted a message therefore kept reading it
+  through their own reply, which would have made a retention policy pointless.
+  Being brought into a thread you were never part of still shows you its
+  history: somebody chose to reply and include you. Attachments follow the same
+  rule, so a link that is no longer shown no longer serves the file either.
+
 - A restored reference whose target was not in the backup is now dropped instead
   of being stored pointing at message zero, where it became a phantom in every
   thread that walked it. References across courses have existed in the wild —

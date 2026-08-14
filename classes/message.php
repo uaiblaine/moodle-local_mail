@@ -442,6 +442,19 @@ class message {
     }
 
     /**
+     * Returns whether a user takes part in the message, as its sender or as a recipient.
+     *
+     * Unlike role() and deleted() this asks rather than asserts, so it is the safe way to
+     * find out whether the per-user state of a message exists for someone at all.
+     *
+     * @param user $user User.
+     * @return bool
+     */
+    public function has_participant(user $user): bool {
+        return isset($this->roles[$user->id]);
+    }
+
+    /**
      * Returns whether the given user is a recipient of a message.
      *
      * @param user $user User.

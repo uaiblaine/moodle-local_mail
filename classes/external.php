@@ -945,6 +945,25 @@ class external extends \external_api {
         }
 
         foreach ($message->get_references() as $ref) {
+            /*
+             * A message somebody deleted is not handed back to them by a thread. This
+             * loop otherwise emits the subject, the whole body, the sender and live
+             * attachment URLs of every ancestor with no check at all, and create()
+             * flattens the ancestry, so a reply exposed every message above it and not
+             * merely its parent. Deleting mail, or a retention policy deleting it, was
+             * therefore undone by pressing Reply.
+             *
+             * The check is deliberately limited to people who took part in the
+             * reference. Somebody brought into a thread they were never part of still
+             * sees the history, which is what makes a reply readable at all, and is a
+             * deliberate act of sharing by whoever included them. This mirrors
+             * user::can_view_files() exactly; the two rules have to agree or a URL that
+             * is no longer rendered would still serve the file.
+             */
+            if ($ref->has_participant($user) && !$user->can_view_message($ref)) {
+                continue;
+            }
+
             $attachments = [];
             $files = $fs->get_area_files($context->id, 'local_mail', 'message', $ref->id, 'filename', false);
 

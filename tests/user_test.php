@@ -92,6 +92,17 @@ final class user_test extends test\testcase {
         $message2->send($time2);
 
         self::assertTrue($user4->can_view_files($message1));
+
+        /*
+         * A participant who deleted the message does not get it back through the thread.
+         * User 2 sent the reply above and can read it, so before this rule the loop over
+         * forward references handed them a working link to the attachments of a message
+         * they had deleted forever -- which is what made deleting it, or a retention
+         * policy deleting it, pointless. The assertion on user 4 just above is the
+         * control: the grant still works for somebody brought into the thread.
+         */
+        self::assertFalse($user2->can_view_files($message1));
+        self::assertFalse($user1->can_view_files($message1));
     }
 
     public function test_can_view_group(): void {
