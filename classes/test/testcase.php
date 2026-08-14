@@ -322,6 +322,8 @@ abstract class testcase extends \advanced_testcase {
         $deletedcontentfreq = 0.1;
         $attachmentfreq = 0.2;
         $inctimefreq = 0.9;
+        $componentfreq = 0.2;
+        $components = ['mod_forum', 'mod_assign', 'moodle'];
         $words = [
             'Xiuxiuejar', 'Aixopluc', 'Caliu', 'Tendresa', 'Llibertat',
             'Moixaina', 'Amanyagar', 'Enraonar', 'Ginesta', 'Atzavara', 'Paral·lel',
@@ -424,6 +426,15 @@ abstract class testcase extends \advanced_testcase {
                 $data = message_data::reply($reference, $sender, false);
             } else {
                 $data = message_data::new(self::random_item($courses), self::random_item($participants));
+                /*
+                 * Only messages composed from scratch get a component, never replies:
+                 * a person answering a notification is writing their own mail. Without
+                 * this the whole fixture would carry a null component and every test
+                 * comparing stored records would be blind to the field.
+                 */
+                if (self::random_bool($componentfreq)) {
+                    $data->component = self::random_item($components);
+                }
             }
 
             if (self::random_bool($attachmentfreq)) {

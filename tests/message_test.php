@@ -775,6 +775,110 @@ final class message_test extends test\testcase {
         self::assert_message($message);
     }
 
+    public function test_component_is_write_once(): void {
+        global $DB;
+
+        $generator = self::getDataGenerator();
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $course = new course($generator->create_course());
+
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $data->content = 'Content';
+        $data->format = (int) FORMAT_PLAIN;
+        $data->time = make_timestamp(2021, 10, 11, 12, 0);
+        $data->component = 'mod_forum';
+
+        $message = message::create($data);
+
+        /*
+         * create() ends by calling update(), so this proves the component survives its
+         * own creation, not merely that it reached the insert statement.
+         */
+        self::assertEquals('mod_forum', $message->component);
+        self::assertEquals(message::CATEGORY_UPDATES, $message->category());
+        self::assertEquals('mod_forum', message::get($message->id)->component);
+
+        // The denormalized copy agrees with the message it was taken from.
+        $records = $DB->get_records('local_mail_message_users', ['messageid' => $message->id]);
+        self::assertCount(2, $records);
+        foreach ($records as $record) {
+            self::assertEquals(message::CATEGORY_UPDATES, (int) $record->category);
+        }
+
+        // An update carries no component of its own and must not be able to clear it.
+        $data = message_data::draft($message);
+        $data->subject = 'Updated subject';
+        $message->update($data);
+
+        self::assertEquals('mod_forum', $message->component);
+        self::assertEquals('mod_forum', message::get($message->id)->component);
+
+        /*
+         * Control: without this, every assertion above would still pass if create()
+         * stamped every message it ever built with the same component.
+         */
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $data->content = 'Content';
+        $data->format = (int) FORMAT_PLAIN;
+        $data->time = make_timestamp(2021, 10, 11, 12, 0);
+
+        $human = message::create($data);
+
+        self::assertNull($human->component);
+        self::assertEquals(message::CATEGORY_PRIMARY, $human->category());
+        self::assertNull(message::get($human->id)->component);
+        $records = $DB->get_records('local_mail_message_users', ['messageid' => $human->id]);
+        self::assertCount(2, $records);
+        foreach ($records as $record) {
+            self::assertEquals(message::CATEGORY_PRIMARY, (int) $record->category);
+        }
+    }
+
+    public function test_reply_does_not_inherit_component(): void {
+        $generator = self::getDataGenerator();
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $course = new course($generator->create_course());
+        $time = make_timestamp(2021, 10, 11, 12, 0);
+
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $data->content = 'Content';
+        $data->format = (int) FORMAT_PLAIN;
+        $data->time = $time;
+        $data->component = 'mod_forum';
+        $notification = message::create($data);
+        $notification->send($time);
+
+        /*
+         * A person answering generated mail is writing their own message. create()
+         * inherits the references and the labels of the message being replied to, so
+         * the provenance is exactly the kind of field that would be carried over by a
+         * later change made in the name of thread consistency.
+         */
+        $data = message_data::reply($notification, $user2, false);
+        $data->subject = 'Re: Subject';
+        $data->content = 'Reply';
+        $data->format = (int) FORMAT_PLAIN;
+        $data->time = $time;
+
+        $reply = message::create($data);
+
+        self::assertNull($data->component);
+        self::assertNull($reply->component);
+        self::assertEquals(message::CATEGORY_PRIMARY, $reply->category());
+        self::assertNull(message::get($reply->id)->component);
+
+        // Control: the message being replied to is still generated mail.
+        self::assertEquals(message::CATEGORY_UPDATES, message::get($notification->id)->category());
+    }
+
     public function test_update(): void {
         $generator = self::getDataGenerator();
         $user1 = new user($generator->create_user());

@@ -4,6 +4,19 @@
 
 ### Added
 
+- Message provenance. Messages carry a "component" field recording the
+  frankenstyle component that generated them, or nothing at all when a person
+  composed them. It is written once, at creation, and is deliberately absent
+  from the record that an update builds, so autosaving a draft cannot alter it
+  and no later call can relabel a message. A matching "category" is
+  denormalized onto the per-user rows, taken from the message so that the two
+  can never disagree, and it joins the covering index of those rows. This is
+  the groundwork for separating generated mail from human correspondence; on
+  its own it changes nothing anyone can see.
+- Per-user rows record when a message was moved to the trash, in a
+  "timedeleted" field, and clear it again when the message is restored. The
+  message time is the send time, so without this a retention policy would act
+  on the age of the content rather than on how long it had been thrown away.
 - The repository carries a CLAUDE.md and a .gitattributes. The latter keeps
   the Svelte sources, the toolchain and the editor configuration out of the
   release zip, which previously shipped all of them; the compiled bundle under

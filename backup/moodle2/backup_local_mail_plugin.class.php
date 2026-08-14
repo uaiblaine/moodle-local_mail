@@ -50,7 +50,7 @@ class backup_local_mail_plugin extends backup_local_plugin {
         // Elements.
         $pluginwrapper = new backup_nested_element($this->get_recommended_name());
         $messages = new backup_nested_element('messages');
-        $elements = ['courseid', 'subject', 'content', 'format', 'attachments', 'draft', 'time'];
+        $elements = ['courseid', 'subject', 'content', 'format', 'attachments', 'draft', 'time', 'component'];
         $message = new backup_nested_element('message', ['id'], $elements);
         $refs = new backup_nested_element('refs');
         $ref = new backup_nested_element('ref', ['id'], ['reference']);

@@ -30,6 +30,7 @@
         <FIELD NAME="time" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="normalizedsubject" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="normalizedcontent" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="component" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="Frankenstyle component that originated the message, or null when a person composed it."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -86,6 +87,8 @@
         <FIELD NAME="unread" TYPE="int" LENGTH="1" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="starred" TYPE="int" LENGTH="1" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="deleted" TYPE="int" LENGTH="1" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="category" TYPE="int" LENGTH="1" NOTNULL="true" SEQUENCE="false" COMMENT="Denormalized category of the message: 0 primary, 1 updates. Deliberately has no default, so that a write site that forgets it fails loudly instead of silently storing 0."/>
+        <FIELD NAME="timedeleted" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Timestamp when this user moved the message to the trash, or 0 if it is not in the trash."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -93,7 +96,7 @@
       <INDEXES>
         <INDEX NAME="messageid" UNIQUE="false" FIELDS="messageid"/>
         <INDEX NAME="courseid" UNIQUE="false" FIELDS="courseid"/>
-        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid, courseid, draft, role, unread, starred, deleted, time, messageid"/>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid, courseid, draft, role, unread, starred, deleted, category, time, messageid"/>
       </INDEXES>
     </TABLE>
   </TABLES>

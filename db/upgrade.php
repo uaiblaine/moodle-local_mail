@@ -411,5 +411,86 @@ function xmldb_local_mail_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024031400, 'local', 'mail');
     }
 
+    // Add field component to local_mail_messages.
+
+    if ($oldversion < 2026081300) {
+        $table = new xmldb_table('local_mail_messages');
+        $field = new xmldb_field('component', XMLDB_TYPE_CHAR, '100', null, null, null, null, 'normalizedcontent');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026081300, 'local', 'mail');
+    }
+
+    /*
+     * Add fields category and timedeleted to local_mail_message_users.
+     *
+     * The category is added with a default because a not null field cannot be
+     * added to a table that already has rows without one, and the default is
+     * dropped again immediately: an insert that forgets the column then fails
+     * loudly instead of silently storing zero, which is the only thing keeping
+     * this copy from drifting away from local_mail_messages.component.
+     *
+     * No backfill is needed. Component is a new field and is therefore null on
+     * every existing row, so every existing message is primary, which is what
+     * the default already wrote.
+     */
+
+    if ($oldversion < 2026081301) {
+        $table = new xmldb_table('local_mail_message_users');
+
+        $field = new xmldb_field('category', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'deleted');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Remove default value from field category.
+        $field = new xmldb_field('category', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null, 'deleted');
+        $dbman->change_field_default($table, $field);
+
+        $field = new xmldb_field('timedeleted', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'category');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026081301, 'local', 'mail');
+    }
+
+    /*
+     * Rebuild the covering index of local_mail_message_users with the category in it.
+     *
+     * The drop has to precede the add. Both column lists generate the same
+     * truncated index name, so adding first would leave the new index with a
+     * counter suffix that a fresh install never produces, and the two would
+     * diverge for good. Note also that index_exists() compares the column set
+     * and ignores the name and the ordering, so each guard below identifies its
+     * index by the exact list it carries.
+     */
+
+    if ($oldversion < 2026081302) {
+        $table = new xmldb_table('local_mail_message_users');
+
+        $index = new xmldb_index(
+            'userid',
+            XMLDB_INDEX_NOTUNIQUE,
+            ['userid', 'courseid', 'draft', 'role', 'unread', 'starred', 'deleted', 'time', 'messageid']
+        );
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+
+        $index = new xmldb_index(
+            'userid',
+            XMLDB_INDEX_NOTUNIQUE,
+            ['userid', 'courseid', 'draft', 'role', 'unread', 'starred', 'deleted', 'category', 'time', 'messageid']
+        );
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        upgrade_plugin_savepoint(true, 2026081302, 'local', 'mail');
+    }
+
     return true;
 }

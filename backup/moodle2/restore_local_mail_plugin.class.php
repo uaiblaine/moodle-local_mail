@@ -71,6 +71,8 @@ class restore_local_mail_plugin extends restore_local_plugin {
         $record->time = $this->apply_date_offset($data['time']);
         $record->normalizedsubject = \local_mail\message::normalize_text($data['subject'], FORMAT_PLAIN);
         $record->normalizedcontent = \local_mail\message::normalize_text($data['content'], $data['format']);
+        // Backup files written before this field existed carry no component at all.
+        $record->component = $data['component'] ?? null;
         $newid = $DB->insert_record('local_mail_messages', $record);
 
         $this->set_mapping('local_mail_message', $data['id'], $newid, true);
@@ -117,6 +119,16 @@ class restore_local_mail_plugin extends restore_local_plugin {
         $record->unread = $data['unread'];
         $record->starred = $data['starred'];
         $record->deleted = $data['deleted'];
+        $record->category = \local_mail\message::category_from_component($message->component);
+
+        /*
+         * The trash clock restarts on restore. The backup records that the message was
+         * in the trash but not when it got there, and carrying over a stale timestamp
+         * would let a retention sweep purge the whole restored course on its first run,
+         * before anyone had a chance to look at it.
+         */
+        $record->timedeleted = $data['deleted'] == \local_mail\message::DELETED ? time() : 0;
+
         $DB->insert_record('local_mail_message_users', $record);
     }
 

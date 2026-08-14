@@ -50,6 +50,8 @@ final class backup_test extends test\testcase {
         self::generate_random_data(true);
         self::setAdminUser();
 
+        $trashedrestored = 0;
+
         foreach (array_keys(get_courses()) as $oldcourseid) {
             $fs = get_file_storage();
 
@@ -75,6 +77,7 @@ final class backup_test extends test\testcase {
             }
 
             // Restore course.
+            $restorestarted = time();
             $newcourseid = self::restore_course($backupid, true);
 
             // Fetch new records.
@@ -90,10 +93,44 @@ final class backup_test extends test\testcase {
             self::assert_restored_records($oldlabels, $newlabels, $idmap, ['labelid']);
             self::assert_restored_records($oldmessages, $newmessages, $idmap, ['messageid', 'reference']);
             self::assert_restored_records($oldmessagerefs, $newmessagerefs, $idmap);
-            self::assert_restored_records($oldmessageusers, $newmessageusers, $idmap);
+            self::assert_restored_records($oldmessageusers, $newmessageusers, $idmap, [], ['timedeleted']);
             self::assert_restored_records($oldmessagelabels, $newmessagelabels, $idmap);
             self::assert_restored_files($oldfiles, $newfiles, $idmap);
+            $trashedrestored += self::assert_restored_trash_timestamps($newmessageusers, $restorestarted);
         }
+
+        /*
+         * Control for the assertion above: unless some restored message really was in
+         * the trash, that check ran against nothing and would go on passing if restore
+         * stopped stamping the trash clock at all.
+         */
+        self::assertGreaterThan(0, $trashedrestored);
+    }
+
+    /**
+     * Checks that the trash clock restarts when a course is restored.
+     *
+     * A backup records that a message was in the trash but not when it got there, so
+     * restored rows are stamped with the time of the restore instead of an older value
+     * that a retention sweep could act on immediately.
+     *
+     * @param \stdClass[] $records Restored records of local_mail_message_users.
+     * @param int $starttime Timestamp taken before the restore started.
+     * @return int Number of restored records that were in the trash.
+     */
+    private static function assert_restored_trash_timestamps(array $records, int $starttime): int {
+        $trashed = 0;
+
+        foreach ($records as $record) {
+            if ($record->deleted == message::DELETED) {
+                $trashed++;
+                self::assertGreaterThanOrEqual($starttime, (int) $record->timedeleted);
+            } else {
+                self::assertEquals(0, $record->timedeleted);
+            }
+        }
+
+        return $trashed;
     }
 
     public function test_backup_disabled(): void {
@@ -291,12 +328,14 @@ final class backup_test extends test\testcase {
      * @param \stdClass[] $newrecords Restored records, with the same order as original records.
      * @param int[][] $idmap Map of fields to arrays of old IDs to new IDs.
      * @param string[] $idmapfields Fields to add to the ID map with the IDs of the new records.
+     * @param string[] $skipfields Fields the restore is expected to change, compared separately.
      */
     private static function assert_restored_records(
         array $oldrecords,
         array $newrecords,
         array &$idmap,
-        array $idmapfields = []
+        array $idmapfields = [],
+        array $skipfields = []
     ) {
         self::assertCount(count($oldrecords), $newrecords);
 
@@ -305,8 +344,17 @@ final class backup_test extends test\testcase {
             foreach ($idmapfields as $field) {
                 $idmap[$field][$oldrecord->id] = $newrecord->id;
             }
+
+            // Clone before unsetting: these are the caller's own records, not copies.
+            $oldrecord = clone $oldrecord;
+            $newrecord = clone $newrecord;
+
             unset($oldrecord->id);
             unset($newrecord->id);
+            foreach ($skipfields as $field) {
+                unset($oldrecord->$field);
+                unset($newrecord->$field);
+            }
             foreach ($oldrecord as $field => $value) {
                 if (isset($idmap[$field])) {
                     $oldrecord->$field = $idmap[$field][$value];
