@@ -31,6 +31,29 @@
   release zip, which previously shipped all of them; the compiled bundle under
   "svelte/build" still ships, since that is what the browser loads.
 
+- **The retention policy now runs.** A nightly task moves generated mail to the
+  trash once it is old enough, and takes mail out of the trash once it has been
+  there long enough. It still never removes a row or a file — a message that has
+  left the trash is invisible, and the storage it uses is reclaimed by separate
+  work — so everything here is reversible until the second stage runs, and the
+  task does nothing at all until an administrator switches the policy on.
+  Messages a person starred, labelled or replied to are left alone, and that is
+  checked again when generated mail leaves the trash rather than only when it
+  arrives there: a message can be starred while it is already in the trash, and
+  the statement that removes it is the same one that erases the star.
+  A run reports what it did through mtrace and a single event, which is the only
+  record that outlives the rows themselves.
+  Note that a notification's sender is the person the activity named rather than
+  a robot account, so the sweep moves their copy too. That is deliberate: one
+  forum post to a large course leaves a teacher one copy per student in their
+  sent mail, and those are most of what accumulates.
+
+- Uninstalling the plugin now also removes the two user preferences it sets for
+  itself. Core removes a component's configuration, its files and the
+  preferences belonging to its message provider, but nothing removes preferences
+  a plugin invented under its own name, so these stayed behind as orphan rows
+  describing people who no longer had a mailbox.
+
 - **Retention settings, and a way to see what they would do before switching them
   on.** Three thresholds decide how long generated mail stays in Updates, how
   long it then stays in the trash, and how long anything else stays in the

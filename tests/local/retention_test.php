@@ -28,7 +28,6 @@ use local_mail\message;
 use local_mail\message_data;
 use local_mail\settings;
 use local_mail\user;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 /**
  * Unit tests for the selection behind the retention policy.
@@ -41,8 +40,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
  * @package    local_mail
  * @copyright  2026 Anderson Blaine
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \local_mail\local\retention
  */
-#[CoversClass(retention::class)]
 final class retention_test extends \local_mail\test\testcase {
     /** @var course Course the fixture messages belong to. */
     private course $course;
@@ -267,6 +266,33 @@ final class retention_test extends \local_mail\test\testcase {
 
         // And it is not picked up by the stage meant for generated mail.
         self::assertEquals(0, $late->count(retention::STAGE_EXPIRE_UPDATES));
+    }
+
+    public function test_generated_mail_starred_inside_the_trash_is_spared(): void {
+        $starred = $this->send('mod_forum');
+        $starred->set_deleted($this->recipient, message::DELETED);
+        $starred->set_starred($this->recipient, true);
+
+        $plain = $this->send('mod_forum');
+        $plain->set_deleted($this->recipient, message::DELETED);
+
+        $settings = settings::defaults();
+        $settings->retentionenabled = true;
+        $settings->retentionupdatestrashdays = 90;
+        $late = new retention($settings, time() + 91 * DAYSECS);
+
+        $selected = [];
+        foreach ($late->batch(retention::STAGE_EXPIRE_UPDATES) as $record) {
+            $selected[] = (int) $record->messageid;
+        }
+
+        /*
+         * Picking something out of a pile the sweep made is the clearest signal there
+         * is, and the statement that would remove it is the same one that erases the
+         * star, so missing it here could not be undone.
+         */
+        self::assertNotContains($starred->id, $selected);
+        self::assertContains($plain->id, $selected);
     }
 
     public function test_mail_trashed_before_the_clock_existed_never_expires(): void {

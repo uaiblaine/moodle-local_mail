@@ -213,14 +213,25 @@ class retention {
             }
         }
 
-        if ($stage == self::STAGE_TRASH_UPDATES) {
+        if ($stage != self::STAGE_EXPIRE_TRASH) {
             /*
              * Anything the user acted on is left alone. Starring is a column of the
              * covering index, so it costs nothing; the other two are indexed lookups.
              *
+             * These are checked again when generated mail leaves the trash, not only
+             * when it arrives there. set_starred() and set_labels() both accept a
+             * message that is already in the trash, so somebody can pick one out of a
+             * pile the sweep put there -- and the statement that removes it is the same
+             * one that erases the star and the labels, so a signal missed here cannot
+             * be recovered afterwards.
+             *
+             * The stage for everything else is deliberately excluded. There the user
+             * put the message in the trash themselves, and that is the more recent
+             * decision of the two.
+             *
              * Note that "replied to" is a property of the message rather than of one
              * person's copy, because references carry no user. That is the right answer
-             * for the mail this stage targets: generated messages have exactly one
+             * for the mail these stages target: generated messages have exactly one
              * recipient, so the only person who could have replied is the only person
              * whose copy is at stake.
              */

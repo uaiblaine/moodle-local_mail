@@ -35,7 +35,7 @@ defined('MOODLE_INTERNAL') || die;
 require_once($CFG->libdir . '/filelib.php');
 
 /**
- * Deletes the files of the plugin that are not removed by the XMLDB uninstall.
+ * Deletes the data of the plugin that is not removed by the XMLDB uninstall.
  *
  * @return bool
  */
@@ -50,6 +50,16 @@ function xmldb_local_mail_uninstall() {
     foreach ($records as $record) {
         $fs->delete_area_files($record->id, 'local_mail');
     }
+
+    /*
+     * The preferences this plugin sets for itself. Core removes a component's config,
+     * its files and the preferences belonging to its message provider, but nothing
+     * removes preferences a plugin invented under its own name, so these would stay
+     * behind as orphan rows. They are user data: the privacy provider declares both.
+     */
+    $names = ['local_mail_mailsperpage', 'local_mail_markasread'];
+    [$sql, $params] = $DB->get_in_or_equal($names);
+    $DB->delete_records_select('user_preferences', "name $sql", $params);
 
     return true;
 }

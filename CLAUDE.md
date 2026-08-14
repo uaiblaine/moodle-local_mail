@@ -179,9 +179,14 @@ adds it.
 its expected-value oracle. A filter added to the SQL but not to that chain
 makes every new assertion vacuously green.
 
-All 21 test files still use doc-comment metadata (`@covers`, `@dataProvider`),
-which PHPUnit 11.5 reports as deprecations — 48 of them on a full run. New test
-files should use attributes instead.
+**Test metadata stays in doc-comments here, against the fleet standard, and the
+reason is the 4.05 leg.** The phpcs standard Moodle 4.5 vendors does not read PHP
+attributes for coverage, so `#[CoversClass]` is invisible to it and every method
+in the file raises `moodle.PHPUnit.TestCaseCovers.Missing` — a warning, which
+`--max-warnings 0` turns into a failed build. It passes on 5.00 through 5.02,
+so a run on the default branch will not catch it. Use `@covers` at class level
+until `$plugin->supported` drops 405. PHPUnit 11.5 reports the doc-comments as
+deprecations (48 on a full run) but does not fail on them.
 
 ## When in doubt
 
