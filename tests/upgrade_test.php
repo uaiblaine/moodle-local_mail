@@ -232,7 +232,18 @@ final class upgrade_test extends test\testcase {
 
         $xmldbfile = new \xmldb_file("$CFG->dirroot/local/mail/db/install.xml");
         $xmldbfile->loadXMLStructure();
-        $dbman->check_database_schema($xmldbfile->getStructure());
+
+        /*
+         * The return value has to be asserted: check_database_schema() collects its
+         * findings into an array and never throws, so calling it bare made this check
+         * vacuous and a column added to install.xml without a matching upgrade step
+         * used to pass. Only this plugin's tables are compared, so extratables is
+         * turned off — the method unsets the tables of the structure it is given and
+         * reports every remaining table in the database, which here means all of core.
+         */
+        $options = ['extratables' => false];
+        $errors = $dbman->check_database_schema($xmldbfile->getStructure(), $options);
+        self::assertEquals([], $errors);
 
         // Check web message processor is disabled.
 

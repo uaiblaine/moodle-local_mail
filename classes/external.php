@@ -106,6 +106,26 @@ class external extends \external_api {
                 PARAM_INT,
                 'Course badges are truncated to this approximate length'
             ),
+            'retentionenabled' => new \external_value(
+                PARAM_BOOL,
+                'Whether the retention policy removes old mail automatically'
+            ),
+            'retentionupdatesdays' => new \external_value(
+                PARAM_INT,
+                'Days before updates are moved to the trash, or 0 to never move them'
+            ),
+            'retentionupdatestrashdays' => new \external_value(
+                PARAM_INT,
+                'Days updates stay in the trash before being removed, or 0 to keep them'
+            ),
+            'retentiontrashdays' => new \external_value(
+                PARAM_INT,
+                'Days any other mail stays in the trash before being removed, or 0 to keep it'
+            ),
+            'retentionpurge' => new \external_value(
+                PARAM_BOOL,
+                'Whether messages nobody holds any more are deleted with their attachments'
+            ),
             'filterbycourse' => new \external_value(
                 PARAM_ALPHA,
                 'Type of course name used in the filter by course: "hidden", "shortname" or "fullname"'
@@ -336,6 +356,23 @@ class external extends \external_api {
         $search->unread = true;
         $unread = $search->count_per_course();
 
+        /*
+         * A second sweep, for the badge on the updates tray. It is deliberately a
+         * separate count rather than a second dimension on the one above:
+         * count_per_course() selects the course id first and get_records_sql keys on the
+         * first column, so grouping by category as well would silently overwrite rows.
+         *
+         * Note that unread keeps its meaning of every unread message received, both
+         * categories. The inbox badge subtracts this one, while course trays keep using
+         * the total -- redefining it would hide a course whose only unread mail is
+         * generated, on sites that only list courses with unread messages.
+         */
+        $search = new message_search($user);
+        $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
+        $search->unread = true;
+        $search->category = message::CATEGORY_UPDATES;
+        $unreadupdates = $search->count_per_course();
+
         $search = new message_search($user);
         $search->roles = [message::ROLE_FROM];
         $search->draft = true;
@@ -351,6 +388,7 @@ class external extends \external_api {
                 'visible' => $course->visible,
                 'groupmode' => $course->groupmode,
                 'unread' => $unread[$course->id] ?? 0,
+                'unreadupdates' => $unreadupdates[$course->id] ?? 0,
                 'drafts' => $drafts[$course->id] ?? 0,
             ];
         }
@@ -371,7 +409,8 @@ class external extends \external_api {
                 'fullname' => new \external_value(PARAM_RAW, 'Full name of the course'),
                 'visible' => new \external_value(PARAM_BOOL, 'Course visibility'),
                 'groupmode' => new \external_value(PARAM_INT, 'Group mode: 0 (no), 1 (separate) or 2 (visible)'),
-                'unread' => new \external_value(PARAM_INT, 'Number of unread messages'),
+                'unread' => new \external_value(PARAM_INT, 'Number of unread messages, of both categories'),
+                'unreadupdates' => new \external_value(PARAM_INT, 'Number of unread messages in the updates category'),
                 'drafts' => new \external_value(PARAM_INT, 'Number of drafts'),
             ])
         );
@@ -481,6 +520,11 @@ class external extends \external_api {
                 VALUE_DEFAULT,
                 []
             ),
+            'category' => new \external_value(
+                PARAM_ALPHA,
+                'Search messages of this category: "primary" or "updates"',
+                VALUE_OPTIONAL
+            ),
             'unread' => new \external_value(
                 PARAM_BOOL,
                 'Search messages with this unread status',
@@ -585,6 +629,17 @@ class external extends \external_api {
                 throw new \invalid_parameter_exception('invalid role: ' . $rolename);
             }
             $search->roles[] = $role;
+        }
+
+        if (isset($query['category'])) {
+            $categories = [
+                'primary' => message::CATEGORY_PRIMARY,
+                'updates' => message::CATEGORY_UPDATES,
+            ];
+            if (!isset($categories[$query['category']])) {
+                throw new \invalid_parameter_exception('invalid category: ' . $query['category']);
+            }
+            $search->category = $categories[$query['category']];
         }
 
         if (isset($query['unread'])) {
@@ -945,6 +1000,25 @@ class external extends \external_api {
         }
 
         foreach ($message->get_references() as $ref) {
+            /*
+             * A message somebody deleted is not handed back to them by a thread. This
+             * loop otherwise emits the subject, the whole body, the sender and live
+             * attachment URLs of every ancestor with no check at all, and create()
+             * flattens the ancestry, so a reply exposed every message above it and not
+             * merely its parent. Deleting mail, or a retention policy deleting it, was
+             * therefore undone by pressing Reply.
+             *
+             * The check is deliberately limited to people who took part in the
+             * reference. Somebody brought into a thread they were never part of still
+             * sees the history, which is what makes a reply readable at all, and is a
+             * deliberate act of sharing by whoever included them. This mirrors
+             * user::can_view_files() exactly; the two rules have to agree or a URL that
+             * is no longer rendered would still serve the file.
+             */
+            if ($ref->has_participant($user) && !$user->can_view_message($ref)) {
+                continue;
+            }
+
             $attachments = [];
             $files = $fs->get_area_files($context->id, 'local_mail', 'message', $ref->id, 'filename', false);
 

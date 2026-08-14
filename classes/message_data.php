@@ -69,6 +69,18 @@ class message_data {
     public int $time;
 
     /**
+     * Frankenstyle component originating the message, or null if a person composed it.
+     *
+     * Only message processors delivering generated mail set this, and only at creation:
+     * update() ignores it, and neither reply() nor forward() carries it over from the
+     * message they are based on, so a person's answer to a notification stays a message
+     * that person wrote.
+     *
+     * @var ?string
+     */
+    public ?string $component = null;
+
+    /**
      * Private constructor.
      */
     private function __construct() {

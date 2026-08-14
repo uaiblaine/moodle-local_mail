@@ -20,6 +20,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     import ListMessageAttachments from './ListMessageAttachments.svelte';
     import ListMessageTime from './ListMessageTime.svelte';
     import ListEmptyAlert from './ListAlert.svelte';
+    import ListRetentionNotice from './ListRetentionNotice.svelte';
 
     export let store: Store;
 
@@ -33,6 +34,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 </script>
 
 {#key $store.navigationId}
+    <ListRetentionNotice {store} />
     <div class="list-group">
         {#each $store.listMessages as message, i (message.id)}
             <a

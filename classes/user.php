@@ -184,11 +184,27 @@ class user {
         if ($this->can_view_message($message)) {
             return true;
         }
+
+        /*
+         * Somebody who took part in this message and no longer sees it does not get it
+         * back through a thread. Without this, deleting a message you had replied to
+         * left you a working link to its attachments through your own reply, which is
+         * what made hiding a message from its own recipient pointless.
+         *
+         * Being brought into a thread you were never part of is a different matter and
+         * still grants access to the history below: somebody chose to reply and include
+         * you, and that is a deliberate act of sharing.
+         */
+        if ($message->has_participant($this)) {
+            return false;
+        }
+
         foreach ($message->get_references(true) as $reference) {
             if ($this->can_view_message($reference)) {
                 return true;
             }
         }
+
         return false;
     }
 

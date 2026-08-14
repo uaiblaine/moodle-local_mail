@@ -140,10 +140,16 @@ export async function createStore(data: InitialData) {
                 labelid: params.tray == 'label' ? params.labelid : undefined,
                 draft: params.tray == 'drafts' ? true : params.tray == 'sent' ? false : undefined,
                 roles:
-                    params.tray == 'inbox'
+                    params.tray == 'inbox' || params.tray == 'updates'
                         ? ['to', 'cc', 'bcc']
                         : params.tray == 'sent'
                           ? ['from']
+                          : undefined,
+                category:
+                    params.tray == 'inbox'
+                        ? 'primary'
+                        : params.tray == 'updates'
+                          ? 'updates'
                           : undefined,
                 starred: params.tray == 'starred' ? true : undefined,
                 deleted: params.tray == 'trash',

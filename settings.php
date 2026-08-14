@@ -188,6 +188,47 @@ if ($hassiteconfig) {
     $paramtype = PARAM_INT;
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
 
+    // Retention.
+    $settings->add(new admin_setting_heading('local_mail_retention', strings::get('retention'), ''));
+
+    // Retention enabled.
+    $name = 'local_mail/retentionenabled';
+    $visiblename = strings::get('configretentionenabled');
+    $description = strings::get('configretentionenableddesc');
+    $defaultsetting = $defaults->retentionenabled;
+    $settings->add(new admin_setting_configcheckbox($name, $visiblename, $description, $defaultsetting));
+
+    // Days before generated mail is moved to the trash.
+    $name = 'local_mail/retentionupdatesdays';
+    $visiblename = strings::get('configretentionupdatesdays');
+    $description = strings::get('configretentionupdatesdaysdesc');
+    $defaultsetting = $defaults->retentionupdatesdays;
+    $paramtype = PARAM_INT;
+    $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
+
+    // Days generated mail stays in the trash.
+    $name = 'local_mail/retentionupdatestrashdays';
+    $visiblename = strings::get('configretentionupdatestrashdays');
+    $description = strings::get('configretentionupdatestrashdaysdesc');
+    $defaultsetting = $defaults->retentionupdatestrashdays;
+    $paramtype = PARAM_INT;
+    $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
+
+    // Days any other mail stays in the trash.
+    $name = 'local_mail/retentiontrashdays';
+    $visiblename = strings::get('configretentiontrashdays');
+    $description = strings::get('configretentiontrashdaysdesc');
+    $defaultsetting = $defaults->retentiontrashdays;
+    $paramtype = PARAM_INT;
+    $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
+
+    // Delete messages nobody holds any more.
+    $name = 'local_mail/retentionpurge';
+    $visiblename = strings::get('configretentionpurge');
+    $description = strings::get('configretentionpurgedesc');
+    $defaultsetting = $defaults->retentionpurge;
+    $settings->add(new admin_setting_configcheckbox($name, $visiblename, $description, $defaultsetting));
+
     // Navigation.
     $settings->add(new admin_setting_heading('local_mail_navigation', strings::get('navigation'), ''));
 

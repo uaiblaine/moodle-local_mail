@@ -15,27 +15,34 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /*
- * SPDX-FileCopyrightText: 2012-2014 Institut Obert de Catalunya <https://ioc.gencat.cat>
- * SPDX-FileCopyrightText: 2014-2023 Marc Català <reskit@gmail.com>
- * SPDX-FileCopyrightText: 2017-2026 Albert Gasset <albertgasset@fsfe.org>
- * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2026 Anderson Blaine
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 /**
- * Version number, core requirements and release name of the plugin.
+ * Scheduled tasks of the plugin.
  *
  * @package    local_mail
- * @copyright  2012-2026 Institut Obert de Catalunya, Marc Català, Albert Gasset, Proyecto UNIMOODLE
+ * @copyright  2026 Anderson Blaine
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2026081403;
-$plugin->requires = 2022112800;
-$plugin->supported = [405, 502];
-$plugin->component = 'local_mail';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->release = '2.17.3';
+/*
+ * Nightly, at a quarter past four. The task does nothing at all unless an administrator
+ * has switched the retention policy on, so a site that never configures one carries a
+ * single cheap check per night.
+ */
+$tasks = [
+    [
+        'classname' => 'local_mail\task\apply_retention',
+        'blocking' => 0,
+        'minute' => '15',
+        'hour' => '4',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
+    ],
+];

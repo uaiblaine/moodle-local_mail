@@ -1,5 +1,142 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Message provenance. Messages carry a "component" field recording the
+  frankenstyle component that generated them, or nothing at all when a person
+  composed them. It is written once, at creation, and is deliberately absent
+  from the record that an update builds, so autosaving a draft cannot alter it
+  and no later call can relabel a message. A matching "category" is
+  denormalized onto the per-user rows, taken from the message so that the two
+  can never disagree, and it joins the covering index of those rows. This is
+  the groundwork for separating generated mail from human correspondence; on
+  its own it changes nothing anyone can see.
+- Per-user rows record when a message was moved to the trash, in a
+  "timedeleted" field, and clear it again when the message is restored. The
+  message time is the send time, so without this a retention policy would act
+  on the age of the content rather than on how long it had been thrown away.
+- CI now checks the compiled mailbox bundle. The Svelte sources compile to
+  "svelte/build", which is committed and is what browsers load, but no gate had
+  ever looked at it: the filenames carry a content hash and the manifest that
+  resolves them silently falls back to the previous bundle, so a source edit
+  committed without its rebuild produced working software that was quietly one
+  revision behind. A new workflow rebuilds from source on every push and fails
+  when the result differs from what is committed, alongside the formatter, the
+  linter and the type-checker, all three of which now fail on warnings rather
+  than only on errors. Nothing that reaches a site changes.
+- The repository carries a CLAUDE.md and a .gitattributes. The latter keeps
+  the Svelte sources, the toolchain and the editor configuration out of the
+  release zip, which previously shipped all of them; the compiled bundle under
+  "svelte/build" still ships, since that is what the browser loads.
+
+- **Storage is reclaimed.** Once every single participant has removed a message —
+  through the policy, or by emptying their own trash — the message, its
+  attachments and everything recorded about it are deleted. This has its own
+  switch and starts off, because it is the only part of the policy that cannot
+  be undone; the rest is reversible from the trash until it runs. It waits for
+  anything still answering a message, so a surviving reply never loses the
+  message it quotes. Switching it on for the first time on an established site
+  can remove a great deal at once, since it also reaches mail everyone deleted
+  by hand long before any of this existed — `cli/retention.php --dry-run
+  --purge` reports how much before anything happens.
+
+- **The retention policy now runs.** A nightly task moves generated mail to the
+  trash once it is old enough, and takes mail out of the trash once it has been
+  there long enough. It still never removes a row or a file — a message that has
+  left the trash is invisible, and the storage it uses is reclaimed by separate
+  work — so everything here is reversible until the second stage runs, and the
+  task does nothing at all until an administrator switches the policy on.
+  Messages a person starred, labelled or replied to are left alone, and that is
+  checked again when generated mail leaves the trash rather than only when it
+  arrives there: a message can be starred while it is already in the trash, and
+  the statement that removes it is the same one that erases the star.
+  A run reports what it did through mtrace and a single event, which is the only
+  record that outlives the rows themselves.
+  Note that a notification's sender is the person the activity named rather than
+  a robot account, so the sweep moves their copy too. That is deliberate: one
+  forum post to a large course leaves a teacher one copy per student in their
+  sent mail, and those are most of what accumulates.
+
+- Uninstalling the plugin now also removes the two user preferences it sets for
+  itself. Core removes a component's configuration, its files and the
+  preferences belonging to its message provider, but nothing removes preferences
+  a plugin invented under its own name, so these stayed behind as orphan rows
+  describing people who no longer had a mailbox.
+
+- **Retention settings, and a way to see what they would do before switching them
+  on.** Three thresholds decide how long generated mail stays in Updates, how
+  long it then stays in the trash, and how long anything else stays in the
+  trash. All of them are off until the policy is enabled, a threshold of zero
+  means keep indefinitely, and the third one starts at zero — nothing a person
+  wrote is removed unless an administrator asks for it.
+  `cli/retention.php --dry-run` reports how many copies each threshold would
+  reach, and takes `--days` to try a setting without saving it. **Nothing runs
+  automatically yet**: there is no scheduled task, so at this point the policy
+  can be described and inspected but never acts. Mail already in the trash when
+  a site upgrades is never removed either, since there is no record of when it
+  got there.
+  The Updates and Trash trays say what the policy does, the way a spam folder
+  does. The trash prints two lines when both of its clocks are set, because it
+  holds mail of both kinds and a single line would either announce a rule that
+  is not running or stay silent while mail was being removed.
+
+- An **Updates** tray, holding the mail Moodle generates. The inbox now shows
+  only what people wrote, and everything delivered by a message processor —
+  forum posts, assignment feedback, course announcements — goes to a tray of its
+  own, carrying a badge with its own unread count so nothing arrives unnoticed.
+  It is always in the menu, since the inbox no longer lists that mail and there
+  would otherwise be no way to reach it. The site-wide envelope badge counts the
+  inbox only, to agree with the first screen a user lands on. Labels, the trash
+  and course trays are unchanged and still show mail of both kinds.
+
+- Listings can be filtered by category. Searches and counts accept "primary" or
+  "updates", and the courses web service reports how many of the unread messages
+  in each course are generated mail. The existing unread count keeps its meaning
+  of every unread message received, of both categories, so that a course whose
+  only unread mail is generated still appears on sites that list courses with
+  unread messages; the inbox count is that total minus the new one. Nothing in
+  the interface uses either yet.
+
+### Changed
+
+- Course backups no longer carry generated mail. Notifications are a log of what
+  happened in a course rather than correspondence between people, and restoring
+  them produced data that was wrong in ways nobody could see: restore rewrites
+  the message time, which is the field a retention policy acts on, so moving a
+  course start date landed every restored notification either already expired or
+  years from expiring, and a course import copied them in as fresh rows
+  describing activities whose ids had changed. Human correspondence is backed up
+  exactly as before. The whole feature still switches off through the existing
+  backup setting.
+
+### Fixed
+
+- Deleting a message now also removes it from the threads that quote it. A
+  message being answered was rendered inside the reply with its subject, its
+  whole body, its sender and working links to its attachments, with no check of
+  whether the reader was allowed to see it — and because each message holds a
+  reference to every one of its ancestors, a long thread exposed all of them and
+  not merely the parent. Anyone who deleted a message therefore kept reading it
+  through their own reply, which would have made a retention policy pointless.
+  Being brought into a thread you were never part of still shows you its
+  history: somebody chose to reply and include you. Attachments follow the same
+  rule, so a link that is no longer shown no longer serves the file either.
+
+- A restored reference whose target was not in the backup is now dropped instead
+  of being stored pointing at message zero, where it became a phantom in every
+  thread that walked it. References across courses have existed in the wild —
+  there is an upgrade step that deletes them — and they are the case that cannot
+  be filtered when the backup is written, because the target row is there and
+  only the restore can discover that nothing maps to it.
+
+- The upgrade test asserted nothing about the resulting schema. It called
+  Moodle's schema check and discarded the return value, and that method
+  collects its findings into an array rather than throwing, so a column added
+  to install.xml with no matching upgrade step passed the build. The return
+  value is now asserted, with the check narrowed to this plugin's own tables.
+
 ## [2.17.3] - 2026-08-10
 
 ### Changed

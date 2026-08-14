@@ -20,7 +20,10 @@ export interface Course {
     readonly fullname: string;
     readonly visible: boolean;
     readonly groupmode: GroupMode;
+    /** Unread messages received in the course, of both categories. */
     readonly unread: number;
+    /** Unread messages received in the course that were generated rather than written. */
+    readonly unreadupdates: number;
     readonly drafts: number;
 }
 
@@ -183,6 +186,11 @@ export interface Settings {
     readonly coursetraysname: 'shortname' | 'fullname';
     readonly coursebadges: 'hidden' | 'shortname' | 'fullname';
     readonly coursebadgeslength: number;
+    readonly retentionenabled: boolean;
+    readonly retentionupdatesdays: number;
+    readonly retentionupdatestrashdays: number;
+    readonly retentiontrashdays: number;
+    readonly retentionpurge: boolean;
     readonly filterbycourse: 'hidden' | 'shortname' | 'fullname';
     readonly incrementalsearch: boolean;
     readonly incrementalsearchlimit: number;
@@ -238,7 +246,31 @@ export interface Toast {
     readonly undo?: () => void;
 }
 
-export type Tray = 'inbox' | 'sent' | 'drafts' | 'starred' | 'course' | 'label' | 'trash';
+export const trays = [
+    'inbox',
+    'updates',
+    'sent',
+    'drafts',
+    'starred',
+    'course',
+    'label',
+    'trash',
+] as const;
+
+export type Tray = (typeof trays)[number];
+
+/**
+ * Narrows an untrusted string to a tray.
+ *
+ * The list above is the only description of the vocabulary that exists at runtime:
+ * every dispatch on a tray is a ternary chain with a silent fallback, so an
+ * unrecognised value does not fail anywhere. It produces an unfiltered listing under
+ * a blank heading instead, which is why anything arriving from a URL comes through
+ * here rather than being cast.
+ */
+export function parseTray(value: string | null): Tray | undefined {
+    return trays.includes(value as Tray) ? (value as Tray) : undefined;
+}
 
 export interface User {
     readonly id: number;

@@ -69,6 +69,7 @@ class provider implements
             'time' => 'privacy:metadata:local_mail_messages:time',
             'normalizedsubject' => 'privacy:metadata:local_mail_messages:normalizedsubject',
             'normalizedcontent' => 'privacy:metadata:local_mail_messages:normalizedcontent',
+            'component' => 'privacy:metadata:local_mail_messages:component',
         ], 'privacy:metadata:local_mail_messages');
 
         $collection->add_database_table('local_mail_message_labels', [
@@ -98,6 +99,8 @@ class provider implements
             'unread' => 'privacy:metadata:local_mail_message_users:unread',
             'starred' => 'privacy:metadata:local_mail_message_users:starred',
             'deleted' => 'privacy:metadata:local_mail_message_users:deleted',
+            'category' => 'privacy:metadata:local_mail_message_users:category',
+            'timedeleted' => 'privacy:metadata:local_mail_message_users:timedeleted',
         ], 'privacy:metadata:local_mail_message_users');
 
         $collection->add_subsystem_link('core_files', [], 'privacy:metadata:core_files');

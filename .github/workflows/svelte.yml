@@ -1,0 +1,98 @@
+name: svelte
+
+# The mailbox SPA compiles to svelte/build/, which is a committed artefact that
+# ships to sites: view.php resolves it through svelte/build/manifest.json. Nothing
+# in ci.yml can see it — that workflow only calls the MAH reusable workflow, and
+# moodle-plugin-ci's grunt leg covers amd/src and styles.css, never svelte/. So a
+# svelte/src edit committed without its rebuild produced no error at all: the
+# filenames are content-hashed, and a stale manifest silently serves the previous
+# bundle. This workflow closes that gap by rebuilding from source and requiring the
+# result to match what is committed.
+#
+# Kept out of ci.yml on purpose. That file is a plain list of reusable-workflow
+# calls, mechanically edited whenever version.php $plugin->supported changes and
+# shaped the same way across the sibling plugin repos; and workflow-level
+# concurrency or permissions set there would clamp those four calls too.
+#
+# No paths filter. Restricting this to svelte/** would skip it on PHP-only pull
+# requests, and GitHub reports a path-filtered job as pending rather than skipped —
+# so once this check is required, such a pull request would wait forever.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: svelte-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  bundle:
+    name: Bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+        working-directory: local/mail/svelte
+    steps:
+      # Checked out at its Moodle path rather than at the workspace root, because
+      # svelte/src/lib/amd.ts imports the TinyMCE types through a path relative to
+      # the Moodle root. Five levels up from svelte/src/lib is the root on 4.5 and
+      # public/ on 5.x, so the plugin has to sit at local/mail for it to resolve.
+      - name: Check out the plugin at its Moodle path
+        uses: actions/checkout@v4
+        with:
+          path: local/mail
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: local/mail/svelte/package-lock.json
+
+      # The only file the plugin needs from core. Pinned to a tag rather than a
+      # branch so upstream cannot turn this gate red without a commit here; bump
+      # the tag when the supported range moves. Note the path is public/lib, the
+      # 5.x split layout — on a 4.05 tag the same file lives at lib/.
+      - name: Fetch the TinyMCE type declarations from Moodle core
+        working-directory: ${{ github.workspace }}
+        run: |
+          mkdir -p lib/editor/tiny/js/tinymce
+          curl -fsSL --retry 3 --retry-delay 2 \
+            -o lib/editor/tiny/js/tinymce/tinymce.d.ts \
+            "https://raw.githubusercontent.com/moodle/moodle/v5.2.2/public/lib/editor/tiny/js/tinymce/tinymce.d.ts"
+
+      # npm ci, never npm install: it installs strictly from package-lock.json,
+      # which is what makes comparing the rebuilt bytes meaningful, and it fails
+      # outright when the lockfile and package.json disagree.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting and lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run check
+
+      - name: Rebuild the bundle
+        run: npm run build
+
+      # git status rather than git diff: vite empties the output directory, so a
+      # rebuilt bundle shows up as deleted old files plus UNTRACKED new ones, and
+      # git diff does not report untracked files. Reporting them is also what tells
+      # the developer which paths to add.
+      - name: Verify the committed bundle matches its sources
+        working-directory: local/mail
+        run: |
+          changes="$(git status --porcelain -- svelte/build/)"
+          if [ -n "$changes" ]; then
+            echo "$changes"
+            echo "::error::svelte/build/ does not match a fresh build of svelte/src/. Rebuild it and commit the result: cd svelte && npm ci && npm run build, then git add the new hashed files and git rm the superseded ones."
+            exit 1
+          fi
+          echo "svelte/build/ is current."

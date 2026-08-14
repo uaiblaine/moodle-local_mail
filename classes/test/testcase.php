@@ -322,6 +322,8 @@ abstract class testcase extends \advanced_testcase {
         $deletedcontentfreq = 0.1;
         $attachmentfreq = 0.2;
         $inctimefreq = 0.9;
+        $componentfreq = 0.2;
+        $components = ['mod_forum', 'mod_assign', 'moodle'];
         $words = [
             'Xiuxiuejar', 'Aixopluc', 'Caliu', 'Tendresa', 'Llibertat',
             'Moixaina', 'Amanyagar', 'Enraonar', 'Ginesta', 'Atzavara', 'Paral·lel',
@@ -424,6 +426,15 @@ abstract class testcase extends \advanced_testcase {
                 $data = message_data::reply($reference, $sender, false);
             } else {
                 $data = message_data::new(self::random_item($courses), self::random_item($participants));
+                /*
+                 * Only messages composed from scratch get a component, never replies:
+                 * a person answering a notification is writing their own mail. Without
+                 * this the whole fixture would carry a null component and every test
+                 * comparing stored records would be blind to the field.
+                 */
+                if (self::random_bool($componentfreq)) {
+                    $data->component = self::random_item($components);
+                }
             }
 
             if (self::random_bool($attachmentfreq)) {
@@ -510,6 +521,37 @@ abstract class testcase extends \advanced_testcase {
             $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
             $search->unread = true;
             $cases[] = $search;
+
+            // Primary, the inbox once generated mail is separated out.
+            $search = new message_search($user);
+            $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
+            $search->category = message::CATEGORY_PRIMARY;
+            $cases[] = $search;
+
+            // Updates.
+            $search = new message_search($user);
+            $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
+            $search->category = message::CATEGORY_UPDATES;
+            $cases[] = $search;
+
+            // Unread updates, the count behind the tray badge.
+            $search = new message_search($user);
+            $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
+            $search->category = message::CATEGORY_UPDATES;
+            $search->unread = true;
+            $cases[] = $search;
+
+            /*
+             * A category combined with a label. Nothing in the interface asks for this,
+             * but it is the one combination that reaches the message table instead of
+             * the denormalized column, so it needs to agree with the rest.
+             */
+            $search = new message_search($user);
+            $search->category = message::CATEGORY_UPDATES;
+            $search->label = self::random_item(label::get_by_user($user));
+            if ($search->label) {
+                $cases[] = $search;
+            }
 
             // Starred.
             $search = new message_search($user);

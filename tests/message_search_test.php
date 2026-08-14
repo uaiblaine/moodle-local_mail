@@ -126,6 +126,7 @@ final class message_search_test extends test\testcase {
                 $search->user->id != $message->sender()->id && $message->draft ||
                 $search->label && !$message->has_label($search->label) ||
                 $search->draft !== null && $search->draft != $message->draft ||
+                $search->category !== null && $search->category != $message->category() ||
                 $search->roles && !in_array($message->role($search->user), $search->roles) ||
                 $search->unread !== null && $message->unread($search->user) != $search->unread ||
                 $search->starred !== null && $message->starred($search->user) != $search->starred ||

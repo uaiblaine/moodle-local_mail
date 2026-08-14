@@ -48,6 +48,11 @@ final class external_test extends test\testcase {
         set_config('coursetraysname', 'shortname', 'local_mail');
         set_config('coursebadges', 'hidden', 'local_mail');
         set_config('coursebadgeslength', '10', 'local_mail');
+        set_config('retentionenabled', '1', 'local_mail');
+        set_config('retentionupdatesdays', '45', 'local_mail');
+        set_config('retentionupdatestrashdays', '120', 'local_mail');
+        set_config('retentiontrashdays', '15', 'local_mail');
+        set_config('retentionpurge', '1', 'local_mail');
         set_config('filterbycourse', 'hidden', 'local_mail');
         set_config('incrementalsearch', '0', 'local_mail');
         set_config('incrementalsearchlimit', '2000', 'local_mail');
@@ -74,6 +79,11 @@ final class external_test extends test\testcase {
             'coursetraysname' => 'shortname',
             'coursebadges' => 'hidden',
             'coursebadgeslength' => 10,
+            'retentionenabled' => true,
+            'retentionupdatesdays' => 45,
+            'retentionupdatestrashdays' => 120,
+            'retentiontrashdays' => 15,
+            'retentionpurge' => true,
             'filterbycourse' => 'hidden',
             'incrementalsearch' => false,
             'incrementalsearchlimit' => 2000,
@@ -284,6 +294,12 @@ final class external_test extends test\testcase {
                 $unread = $search->count();
                 $search = new message_search($user);
                 $search->course = $course;
+                $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
+                $search->unread = true;
+                $search->category = message::CATEGORY_UPDATES;
+                $unreadupdates = $search->count();
+                $search = new message_search($user);
+                $search->course = $course;
                 $search->roles = [message::ROLE_FROM];
                 $search->draft = true;
                 $drafts = $search->count();
@@ -294,6 +310,7 @@ final class external_test extends test\testcase {
                     'visible' => $course->visible,
                     'groupmode' => $course->groupmode,
                     'unread' => $unread,
+                    'unreadupdates' => $unreadupdates,
                     'drafts' => $drafts,
                 ];
             }
@@ -374,6 +391,9 @@ final class external_test extends test\testcase {
                 foreach ($search->roles as $role) {
                     $query['roles'][] = message::role_names()[$role];
                 }
+            }
+            if ($search->category !== null) {
+                $query['category'] = $search->category == message::CATEGORY_UPDATES ? 'updates' : 'primary';
             }
             if ($search->unread !== null) {
                 $query['unread'] = $search->unread;
@@ -497,6 +517,9 @@ final class external_test extends test\testcase {
                     $query['roles'][] = message::role_names()[$role];
                 }
             }
+            if ($search->category !== null) {
+                $query['category'] = $search->category == message::CATEGORY_UPDATES ? 'updates' : 'primary';
+            }
             if ($search->unread !== null) {
                 $query['unread'] = $search->unread;
             }
@@ -588,6 +611,60 @@ final class external_test extends test\testcase {
             self::assertEquals('errormessagenotfound', $e->errorcode);
             self::assertEquals($query['stopid'], $e->a);
         }
+    }
+
+    public function test_get_message_hides_a_reference_the_user_deleted(): void {
+        $generator = $this->getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $generator->enrol_user($user1->id, $course->id);
+        $generator->enrol_user($user2->id, $course->id);
+        $time = time() - 24 * 3600;
+
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $data->content = 'Secret content';
+        $data->format = FORMAT_PLAIN;
+        $data->time = $time;
+        $message1 = message::create($data);
+        $message1->send($time);
+
+        $data = message_data::reply($message1, $user2, false);
+        $data->subject = 'Re: Subject';
+        $data->content = 'Reply content';
+        $data->format = FORMAT_PLAIN;
+        $data->time = $time;
+        $message2 = message::create($data);
+        $message2->send($time);
+
+        // The thread quotes the message being answered.
+        self::setUser($user2->id);
+        $result = external::get_message($message2->id);
+        self::assertCount(1, $result['references']);
+        self::assertEquals($message1->id, $result['references'][0]['id']);
+
+        $message1->set_deleted($user2, message::DELETED_FOREVER);
+
+        /*
+         * Once deleted it is gone from the thread as well. Before this rule the loop
+         * rendered every ancestor unconditionally, so the subject, the whole body and
+         * live attachment URLs survived in any reply and deleting a message -- or a
+         * retention policy deleting it -- achieved nothing.
+         */
+        $result = external::get_message($message2->id);
+        self::assertEquals([], $result['references']);
+
+        /*
+         * Control: the rule is per user, not a property of the message. User 1 never
+         * deleted anything and still sees the same thread in full. Without this the
+         * test would keep passing if references stopped being rendered at all.
+         */
+        self::setUser($user1->id);
+        $result = external::get_message($message2->id);
+        self::assertCount(1, $result['references']);
+        self::assertEquals($message1->id, $result['references'][0]['id']);
     }
 
     public function test_get_message(): void {

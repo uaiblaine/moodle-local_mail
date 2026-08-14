@@ -29,11 +29,18 @@ export const init = () => {
         return;
     }
 
+    /*
+     * Primary only, matching what the inbox lists. Counting both categories here would
+     * make this badge disagree with the first screen the user lands on, which is the
+     * one place a wrong number is guaranteed to be noticed. Unread generated mail is
+     * counted by the updates tray inside the mailbox instead.
+     */
     const request = {
         methodname: 'local_mail_count_messages',
         args: {
             query: {
                 roles: ['to', 'cc', 'bcc'],
+                category: 'primary',
                 unread: true,
             },
         },
