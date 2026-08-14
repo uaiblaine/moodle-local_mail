@@ -41,19 +41,21 @@ SPDX-License-Identifier: GPL-3.0-or-later
     $: heading =
         tray == 'inbox'
             ? $store.strings.inbox
-            : tray == 'starred'
-              ? $store.strings.starredplural
-              : tray == 'sent'
-                ? $store.strings.sentplural
-                : tray == 'drafts'
-                  ? $store.strings.drafts
-                  : tray == 'trash'
-                    ? $store.strings.trash
-                    : tray == 'label'
-                      ? label?.name || ''
-                      : tray == 'course'
-                        ? formatCourseName(course, 'fullname')
-                        : '';
+            : tray == 'updates'
+              ? $store.strings.updates
+              : tray == 'starred'
+                ? $store.strings.starredplural
+                : tray == 'sent'
+                  ? $store.strings.sentplural
+                  : tray == 'drafts'
+                    ? $store.strings.drafts
+                    : tray == 'trash'
+                      ? $store.strings.trash
+                      : tray == 'label'
+                        ? label?.name || ''
+                        : tray == 'course'
+                          ? formatCourseName(course, 'fullname')
+                          : '';
 
     $: title = $store.message ? $store.message.subject.trim() || $store.strings.nosubject : heading;
 

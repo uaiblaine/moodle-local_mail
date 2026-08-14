@@ -59,7 +59,7 @@ classes/message_data.php   Input DTO for create()/update(); reply()/forward().
 classes/message_search.php Every listing and count query; per-user by design.
 classes/external.php       ~40 external functions; the whole UI talks to these.
 classes/output/strings.php Ships lang strings to the JS app.
-svelte/src/                The mailbox SPA (TypeScript + Svelte 5).
+svelte/src/                The mailbox SPA (TypeScript + Svelte 4, no runes).
 svelte/build/              COMMITTED compiled bundle; view.php reads manifest.json.
 amd/src/navbar.js          Site-wide envelope badge, loaded on EVERY page.
 templates/                 Only the notification email templates, not the UI.

@@ -31,6 +31,15 @@
   release zip, which previously shipped all of them; the compiled bundle under
   "svelte/build" still ships, since that is what the browser loads.
 
+- An **Updates** tray, holding the mail Moodle generates. The inbox now shows
+  only what people wrote, and everything delivered by a message processor —
+  forum posts, assignment feedback, course announcements — goes to a tray of its
+  own, carrying a badge with its own unread count so nothing arrives unnoticed.
+  It is always in the menu, since the inbox no longer lists that mail and there
+  would otherwise be no way to reach it. The site-wide envelope badge counts the
+  inbox only, to agree with the first screen a user lands on. Labels, the trash
+  and course trays are unchanged and still show mail of both kinds.
+
 - Listings can be filtered by category. Searches and counts accept "primary" or
   "updates", and the courses web service reports how many of the unread messages
   in each course are generated mail. The existing unread count keeps its meaning

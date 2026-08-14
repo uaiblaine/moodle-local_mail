@@ -27,8 +27,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
     export let onClick: ((params: ViewParams) => void) | undefined = undefined;
     export let onCourseChange: (courseid?: number) => void;
 
-    $: unread = courses.reduce((acc, course) => acc + course.unread, 0);
+    /*
+     * course.unread counts every unread message received, of both categories, and is
+     * what decides whether a course appears in the sidebar at all. The inbox no longer
+     * lists generated mail, so its badge is that total minus the generated part, and
+     * the updates tray carries the rest. Neither badge can disagree with its own
+     * listing, because both come from the same sweep.
+     */
+    $: unread = courses.reduce((acc, course) => acc + course.unread - course.unreadupdates, 0);
+    $: unreadUpdates = courses.reduce((acc, course) => acc + course.unreadupdates, 0);
     $: drafts = courses.reduce((acc, course) => acc + course.drafts, 0);
+
+    $: courseUnread = (course?: Course): number | undefined =>
+        course && course.unread - course.unreadupdates;
 
     $: trayVisible = (type: Tray): boolean => {
         return settings.globaltrays.includes(type) || params.tray == type;
@@ -71,9 +82,22 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <MenuItem
         icon="fa-inbox"
         text={strings.inbox}
-        count={courseid ? courses.find((c) => c.id == courseid)?.unread : unread}
+        count={courseid ? courseUnread(courses.find((c) => c.id == courseid)) : unread}
         params={{ tray: 'inbox', courseid, search }}
         active={params.tray == 'inbox'}
+        {onClick}
+    />
+    <!--
+        Always shown, like the inbox and unlike the optional trays. The inbox no longer
+        lists generated mail, so a site that could hide this one would have no way to
+        reach it at all.
+    -->
+    <MenuItem
+        icon="fa-bell"
+        text={strings.updates}
+        count={courseid ? courses.find((c) => c.id == courseid)?.unreadupdates : unreadUpdates}
+        params={{ tray: 'updates', courseid, search }}
+        active={params.tray == 'updates'}
         {onClick}
     />
     {#if trayVisible('starred')}

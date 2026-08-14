@@ -70,6 +70,7 @@ export interface MessageQuery {
     readonly labelid?: number;
     readonly draft?: boolean;
     readonly roles?: ReadonlyArray<string>;
+    readonly category?: 'primary' | 'updates';
     readonly unread?: boolean;
     readonly starred?: boolean;
     readonly deleted?: boolean;

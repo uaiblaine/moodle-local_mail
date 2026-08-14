@@ -256,4 +256,5 @@ $string['trays'] = 'Trays';
 $string['undo'] = 'Undo';
 $string['unread'] = 'Unread';
 $string['unstarred'] = 'Not starred';
+$string['updates'] = 'Updates';
 $string['viewmessage'] = 'View message';

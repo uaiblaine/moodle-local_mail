@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { type Dialog, type SearchParams, type Tray, type ViewParams } from './state';
+import { type Dialog, parseTray, type SearchParams, type ViewParams } from './state';
 
 function baseUrl() {
     return window.M.cfg.wwwroot + '/local/mail/';
@@ -21,7 +21,7 @@ export function downloadAllUrl(messageid: number): string {
 export function getViewParamsFromUrl(): ViewParams {
     const url = new URL(window.location.href);
     const params: ViewParams = {
-        tray: (url.searchParams.get('t') as Tray) || undefined,
+        tray: parseTray(url.searchParams.get('t')),
         courseid: parseInt(url.searchParams.get('c') || '') || undefined,
         labelid: parseInt(url.searchParams.get('l') || '') || undefined,
         messageid: parseInt(url.searchParams.get('m') || '') || undefined,
