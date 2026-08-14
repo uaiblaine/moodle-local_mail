@@ -53,6 +53,9 @@ class retention {
     /** Stage: any other mail that has been in the trash long enough to be removed. */
     const STAGE_EXPIRE_TRASH = 'expiretrash';
 
+    /** Stage: messages nobody holds any more, whose rows and files can go. */
+    const STAGE_PURGE = 'purge';
+
     /** @var settings Stored settings of the plugin. */
     private settings $settings;
 
@@ -76,7 +79,12 @@ class retention {
      * @return string[] Array of STAGE_* constants.
      */
     public static function stages(): array {
-        return [self::STAGE_TRASH_UPDATES, self::STAGE_EXPIRE_UPDATES, self::STAGE_EXPIRE_TRASH];
+        return [
+            self::STAGE_TRASH_UPDATES,
+            self::STAGE_EXPIRE_UPDATES,
+            self::STAGE_EXPIRE_TRASH,
+            self::STAGE_PURGE,
+        ];
     }
 
     /**
@@ -91,6 +99,17 @@ class retention {
     public function stage_enabled(string $stage): bool {
         if (!$this->settings->retentionenabled) {
             return false;
+        }
+
+        if ($stage == self::STAGE_PURGE) {
+            /*
+             * Its own switch, and the only stage with one. Every other stage is
+             * reversible until this runs, and this is the one that cannot be undone.
+             * It also has no threshold of its own: the two clocks above already decided
+             * how long to wait, and a message only becomes eligible once every single
+             * participant has let go of it.
+             */
+            return $this->settings->retentionpurge;
         }
 
         return $this->days($stage) > 0;
@@ -110,6 +129,8 @@ class retention {
                 return $this->settings->retentionupdatestrashdays;
             case self::STAGE_EXPIRE_TRASH:
                 return $this->settings->retentiontrashdays;
+            case self::STAGE_PURGE:
+                return 0;
             default:
                 throw new \coding_exception('unknown retention stage: ' . $stage);
         }
@@ -138,9 +159,68 @@ class retention {
             return 0;
         }
 
+        if ($stage == self::STAGE_PURGE) {
+            [$sql, $params] = $this->select_purgeable();
+            return $DB->count_records_sql('SELECT COUNT(1) ' . $sql, $params);
+        }
+
         [$sql, $params] = $this->select($stage);
 
         return $DB->count_records_sql('SELECT COUNT(1) ' . $sql, $params);
+    }
+
+    /**
+     * Returns a batch of the messages nobody holds any more, ordered by id.
+     *
+     * @param int $afterid Return messages after this id only.
+     * @param int $limit Maximum number of messages to return.
+     * @return int[] Message ids.
+     */
+    public function purgeable(int $afterid = 0, int $limit = 100): array {
+        global $DB;
+
+        if (!$this->stage_enabled(self::STAGE_PURGE)) {
+            return [];
+        }
+
+        [$sql, $params] = $this->select_purgeable($afterid);
+        $records = $DB->get_records_sql('SELECT m.id ' . $sql . ' ORDER BY m.id', $params, 0, $limit);
+
+        return array_map('intval', array_keys($records));
+    }
+
+    /**
+     * Builds the FROM and WHERE that finds messages nobody holds any more.
+     *
+     * @param int $afterid Restrict to messages after this id, or 0 for all of them.
+     * @return array Array with the SQL fragment and its parameters.
+     */
+    private function select_purgeable(int $afterid = 0): array {
+        /*
+         * Two conditions, and both are about other people rather than about time.
+         *
+         * Nobody can still see it: every participant is at DELETED_FOREVER or beyond.
+         * Anything below that is somebody's copy, whether they let it expire or never
+         * touched it, and a message stays whole as long as one person holds it. Note
+         * this also catches messages everybody deleted by hand long before any policy
+         * existed, which is a large one-time reclaim on an old site -- the dry-run
+         * reports it before this is ever switched on.
+         *
+         * And nothing points at it: a surviving reply would lose the message it is
+         * answering. get_references() joins the message table so a dangling reference
+         * disappears quietly rather than breaking, but the thread would then read as a
+         * non sequitur, and a draft pinned to its course by that reference would come
+         * unpinned. Waiting until the reply is gone too costs nothing.
+         */
+        $where = [
+            'm.id > :afterid',
+            'NOT EXISTS (SELECT 1 FROM {local_mail_message_users} u'
+                . ' WHERE u.messageid = m.id AND u.deleted < :deletedforever)',
+            'NOT EXISTS (SELECT 1 FROM {local_mail_message_refs} r WHERE r.reference = m.id)',
+        ];
+        $params = ['afterid' => $afterid, 'deletedforever' => message::DELETED_FOREVER];
+
+        return ['FROM {local_mail_messages} m WHERE ' . implode(' AND ', $where), $params];
     }
 
     /**

@@ -45,6 +45,7 @@ require_once($CFG->libdir . '/clilib.php');
     [
         'dry-run' => false,
         'days' => '',
+        'purge' => false,
         'help' => false,
     ],
     ['h' => 'help', 'n' => 'dry-run']
@@ -64,6 +65,7 @@ if ($options['help'] || !$options['dry-run']) {
     echo "      --days=A,B,C  Override the configured thresholds, in days, as\n";
     echo "                  updates-to-trash, updates-in-trash, other-in-trash. Use\n";
     echo "                  this to see the effect of a setting before saving it.\n";
+    echo "      --purge     Report deletions as though the purge were switched on.\n";
     echo "  -h, --help      Print this help.\n\n";
     echo "Example:\n";
     echo "  php local/mail/cli/retention.php --dry-run --days=30,90,30\n";
@@ -88,6 +90,10 @@ if ($options['days'] !== '') {
     cli_writeln('');
 }
 
+if ($options['purge']) {
+    $settings->retentionpurge = true;
+}
+
 if (!$settings->retentionenabled) {
     cli_writeln('The retention policy is switched off, so nothing would be removed.');
     cli_writeln('Pass --days to see what a given set of thresholds would reach anyway.');
@@ -100,32 +106,31 @@ $labels = [
     retention::STAGE_TRASH_UPDATES => 'Updates moved to the trash',
     retention::STAGE_EXPIRE_UPDATES => 'Updates removed from the trash',
     retention::STAGE_EXPIRE_TRASH => 'Other mail removed from the trash',
+    retention::STAGE_PURGE => 'Messages deleted with their files',
 ];
-
-$total = 0;
 
 foreach (retention::stages() as $stage) {
     $days = $retention->days($stage);
     $count = $retention->count($stage);
-    $total += $count;
     $line = str_pad($labels[$stage], 36) . str_pad((string) $count, 10, ' ', STR_PAD_LEFT);
     if (!$retention->stage_enabled($stage)) {
         cli_writeln($line . '   (off)');
+    } else if ($stage == retention::STAGE_PURGE) {
+        cli_writeln($line . '   once every participant has removed them');
     } else {
         cli_writeln($line . '   after ' . $days . ' days, before ' . userdate($retention->cutoff($stage)));
     }
 }
 
 cli_writeln('');
-cli_writeln(str_pad('Rows affected in total', 36) . str_pad((string) $total, 10, ' ', STR_PAD_LEFT));
-cli_writeln('');
 
 /*
- * Rows rather than messages, and the difference matters. Every count above is a
- * per-user copy: a message with three recipients contributes three rows and disappears
- * for each of them separately. Storage is only reclaimed once the last copy is gone.
+ * No grand total on purpose: the first three figures and the last one count different
+ * things, and adding them would produce a number that means nothing.
  */
-cli_writeln('Each row is one person\'s copy of a message, not a message.');
+cli_writeln('The first three figures count one person\'s copy of a message, not a message:');
+cli_writeln('a message with three recipients disappears for each of them separately, and');
+cli_writeln('the storage it uses is only reclaimed by the last line.');
 cli_writeln('Nothing was changed.');
 
 exit(0);

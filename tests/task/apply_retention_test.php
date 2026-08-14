@@ -86,6 +86,26 @@ final class apply_retention_test extends \local_mail\test\testcase {
     }
 
     /**
+     * Sends an old message carrying one attachment.
+     *
+     * @return message Sent message.
+     */
+    private function send_old_with_attachment(): message {
+        $time = time() - 400 * DAYSECS;
+        $data = message_data::new($this->course, $this->sender);
+        $data->to = [$this->recipient];
+        $data->subject = 'Subject';
+        $data->content = 'Content';
+        $data->format = (int) FORMAT_PLAIN;
+        $data->time = $time;
+        self::create_draft_file($data->draftitemid, 'file.txt', 'File');
+        $message = message::create($data);
+        $message->send($time);
+
+        return $message;
+    }
+
+    /**
      * Puts a message in the trash and backdates the moment it got there.
      *
      * @param message $message Message to trash.
@@ -209,6 +229,84 @@ final class apply_retention_test extends \local_mail\test\testcase {
          */
         self::assertEquals(message::DELETED_FOREVER, $this->deleted_status($message));
         self::assertFalse($DB->record_exists('local_mail_message_labels', $conditions));
+    }
+
+    public function test_a_message_nobody_holds_is_deleted_with_its_files(): void {
+        global $DB;
+
+        $fs = get_file_storage();
+        $contextid = $this->course->get_context()->id;
+
+        $gone = $this->send_old_with_attachment();
+        $kept = $this->send_old_with_attachment();
+
+        foreach ([$this->sender, $this->recipient] as $user) {
+            $gone->set_deleted($user, message::DELETED_FOREVER);
+        }
+
+        // The control keeps one participant who never let go of it.
+        $kept->set_deleted($this->recipient, message::DELETED_FOREVER);
+
+        $this->run_task(['retentionpurge' => 1]);
+
+        self::assertFalse($DB->record_exists('local_mail_messages', ['id' => $gone->id]));
+        self::assertFalse($DB->record_exists('local_mail_message_users', ['messageid' => $gone->id]));
+        self::assertEmpty($fs->get_area_files($contextid, 'local_mail', 'message', $gone->id, '', false));
+
+        self::assertTrue($DB->record_exists('local_mail_messages', ['id' => $kept->id]));
+        self::assertNotEmpty($fs->get_area_files($contextid, 'local_mail', 'message', $kept->id, '', false));
+    }
+
+    public function test_a_message_something_still_answers_is_kept(): void {
+        global $DB;
+
+        $answered = $this->send_old('mod_forum');
+        $data = message_data::reply($answered, $this->recipient, false);
+        $data->subject = 'Re: Subject';
+        $data->content = 'Reply';
+        $data->format = (int) FORMAT_PLAIN;
+        $data->time = time() - 400 * DAYSECS;
+        $reply = message::create($data);
+        $reply->send($data->time);
+
+        foreach ([$this->sender, $this->recipient] as $user) {
+            $answered->set_deleted($user, message::DELETED_FOREVER);
+        }
+
+        $this->run_task(['retentionpurge' => 1]);
+
+        /*
+         * Nobody can see it any more, but the reply still points at it. Deleting it now
+         * would leave that thread reading as a non sequitur, and any draft pinned to its
+         * course by the same reference would come unpinned.
+         */
+        self::assertTrue($DB->record_exists('local_mail_messages', ['id' => $answered->id]));
+
+        // Control: once the reply is gone too, the message goes.
+        foreach ([$this->sender, $this->recipient] as $user) {
+            $reply->set_deleted($user, message::DELETED_FOREVER);
+        }
+        $this->run_task(['retentionpurge' => 1]);
+
+        self::assertFalse($DB->record_exists('local_mail_messages', ['id' => $answered->id]));
+        self::assertFalse($DB->record_exists('local_mail_messages', ['id' => $reply->id]));
+        self::assertFalse($DB->record_exists('local_mail_message_refs', ['reference' => $answered->id]));
+    }
+
+    public function test_nothing_is_deleted_while_the_purge_is_off(): void {
+        global $DB;
+
+        $message = $this->send_old('mod_forum');
+        foreach ([$this->sender, $this->recipient] as $user) {
+            $message->set_deleted($user, message::DELETED_FOREVER);
+        }
+
+        $this->run_task(['retentionpurge' => 0]);
+        self::assertTrue($DB->record_exists('local_mail_messages', ['id' => $message->id]));
+
+        // Control: the same fixture, with the purge on.
+        $this->run_task(['retentionpurge' => 1]);
+        self::assertFalse($DB->record_exists('local_mail_messages', ['id' => $message->id]));
     }
 
     public function test_a_run_reports_what_it_did(): void {

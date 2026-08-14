@@ -76,6 +76,9 @@ class settings {
     /** @var int Days any other mail stays in the trash before being removed, or 0 to keep it. */
     public int $retentiontrashdays = 0;
 
+    /** @var bool Whether messages nobody holds any more are deleted along with their attachments. */
+    public bool $retentionpurge = false;
+
     /** @var string Type of course name used in the filter by course: "hidden", "shortname" or "fullname". */
     public string $filterbycourse = 'fullname';
 
@@ -167,6 +170,9 @@ class settings {
         }
         if (isset($config->retentiontrashdays)) {
             $settings->retentiontrashdays = max(0, (int) $config->retentiontrashdays);
+        }
+        if (isset($config->retentionpurge)) {
+            $settings->retentionpurge = (bool) $config->retentionpurge;
         }
         if (isset($config->filterbycourse)) {
             $settings->filterbycourse = $config->filterbycourse;

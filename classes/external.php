@@ -122,6 +122,10 @@ class external extends \external_api {
                 PARAM_INT,
                 'Days any other mail stays in the trash before being removed, or 0 to keep it'
             ),
+            'retentionpurge' => new \external_value(
+                PARAM_BOOL,
+                'Whether messages nobody holds any more are deleted with their attachments'
+            ),
             'filterbycourse' => new \external_value(
                 PARAM_ALPHA,
                 'Type of course name used in the filter by course: "hidden", "shortname" or "fullname"'

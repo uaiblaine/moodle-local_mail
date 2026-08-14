@@ -222,6 +222,13 @@ if ($hassiteconfig) {
     $paramtype = PARAM_INT;
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
 
+    // Delete messages nobody holds any more.
+    $name = 'local_mail/retentionpurge';
+    $visiblename = strings::get('configretentionpurge');
+    $description = strings::get('configretentionpurgedesc');
+    $defaultsetting = $defaults->retentionpurge;
+    $settings->add(new admin_setting_configcheckbox($name, $visiblename, $description, $defaultsetting));
+
     // Navigation.
     $settings->add(new admin_setting_heading('local_mail_navigation', strings::get('navigation'), ''));
 

@@ -190,6 +190,7 @@ export interface Settings {
     readonly retentionupdatesdays: number;
     readonly retentionupdatestrashdays: number;
     readonly retentiontrashdays: number;
+    readonly retentionpurge: boolean;
     readonly filterbycourse: 'hidden' | 'shortname' | 'fullname';
     readonly incrementalsearch: boolean;
     readonly incrementalsearchlimit: number;

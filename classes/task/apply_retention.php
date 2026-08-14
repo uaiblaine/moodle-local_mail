@@ -69,9 +69,15 @@ class apply_retention extends \core\task\scheduled_task {
             if (!$retention->stage_enabled($stage)) {
                 continue;
             }
-            $counts[$stage] = $this->run_stage($retention, $stage);
-            mtrace('local_mail: ' . $stage . ': ' . $counts[$stage] . ' messages per user, '
-                . 'threshold ' . $retention->days($stage) . ' days');
+            $counts[$stage] = $stage == retention::STAGE_PURGE
+                ? $this->run_purge($retention)
+                : $this->run_stage($retention, $stage);
+            if ($stage == retention::STAGE_PURGE) {
+                mtrace('local_mail: ' . $stage . ': ' . $counts[$stage] . ' messages deleted with their files');
+            } else {
+                mtrace('local_mail: ' . $stage . ': ' . $counts[$stage] . ' messages per user, '
+                    . 'threshold ' . $retention->days($stage) . ' days');
+            }
         }
 
         if (!$counts) {
@@ -113,6 +119,39 @@ class apply_retention extends \core\task\scheduled_task {
                     $done++;
                 }
             }
+        }
+
+        return $done;
+    }
+
+    /**
+     * Deletes the messages nobody holds any more.
+     *
+     * @param retention $retention Selection to read the ids from.
+     * @return int Number of messages deleted.
+     */
+    private function run_purge(retention $retention): int {
+        $done = 0;
+
+        while ($done < self::LIMIT) {
+            /*
+             * Always from the start, unlike the other stages. Every message this returns
+             * is gone by the next query, so there is no cursor to carry -- and carrying
+             * one would be wrong, because a message the batch could not delete has to be
+             * reconsidered rather than skipped past for good.
+             */
+            $ids = $retention->purgeable(0, self::BATCH);
+            if (!$ids) {
+                break;
+            }
+
+            $deleted = message::purge($ids);
+            if (!$deleted) {
+                // Nothing moved; stop rather than ask the same question for ever.
+                break;
+            }
+
+            $done += $deleted;
         }
 
         return $done;

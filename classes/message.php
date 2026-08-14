@@ -236,6 +236,79 @@ class message {
     }
 
     /**
+     * Permanently deletes messages, with their rows and their attachments.
+     *
+     * The only way a sent message ever leaves the database other than its course being
+     * deleted. Callers are responsible for deciding what is eligible: this method just
+     * removes what it is given.
+     *
+     * Deliberately raw SQL over ids, with no message object built. get_many() resolves
+     * the course of every message and throws when one has gone, which is precisely the
+     * state some of these rows will be in.
+     *
+     * @param int[] $ids Ids of the messages to delete.
+     * @return int Number of messages deleted.
+     */
+    public static function purge(array $ids): int {
+        global $DB;
+
+        if (!$ids) {
+            return 0;
+        }
+
+        $fs = get_file_storage();
+        [$sqlid, $params] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'id');
+
+        /*
+         * The files to remove are read before the rows go, and taken from the file table
+         * itself rather than derived from each message's course context: a course that
+         * has been deleted no longer has one, and this is bounded by the ids either way.
+         */
+        $filesql = "SELECT DISTINCT contextid, itemid
+                      FROM {files}
+                     WHERE component = :component AND filearea = :filearea AND itemid $sqlid";
+        $fileparams = $params + ['component' => 'local_mail', 'filearea' => 'message'];
+
+        /*
+         * A recordset, not get_records_select: that keys the result by the first column,
+         * so every area sharing a context would collapse into one and the rest of the
+         * files would survive the message they belong to.
+         */
+        $areas = [];
+        $rs = $DB->get_recordset_sql($filesql, $fileparams);
+        foreach ($rs as $record) {
+            $areas[] = $record;
+        }
+        $rs->close();
+
+        $transaction = $DB->start_delegated_transaction();
+
+        $DB->delete_records_select('local_mail_message_labels', "messageid $sqlid", $params);
+        $DB->delete_records_select('local_mail_message_users', "messageid $sqlid", $params);
+
+        /*
+         * References in both directions. set_deleted() only ever clears the first, which
+         * is correct there because it physically deletes drafts alone and a draft can
+         * never be the target of a reference. A sent message can, so leaving the other
+         * direction would strand rows pointing at nothing.
+         */
+        $DB->delete_records_select('local_mail_message_refs', "messageid $sqlid", $params);
+        $DB->delete_records_select('local_mail_message_refs', "reference $sqlid", $params);
+
+        $count = $DB->count_records_select('local_mail_messages', "id $sqlid", $params);
+        $DB->delete_records_select('local_mail_messages', "id $sqlid", $params);
+
+        $transaction->allow_commit();
+
+        // After the transaction, in case it is rolled back, as set_deleted() also does.
+        foreach ($areas as $area) {
+            $fs->delete_area_files($area->contextid, 'local_mail', 'message', $area->itemid);
+        }
+
+        return $count;
+    }
+
+    /**
      * Gets a message from the database.
      *
      * @param int $id ID of the message to get.

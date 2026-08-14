@@ -31,6 +31,17 @@
   release zip, which previously shipped all of them; the compiled bundle under
   "svelte/build" still ships, since that is what the browser loads.
 
+- **Storage is reclaimed.** Once every single participant has removed a message —
+  through the policy, or by emptying their own trash — the message, its
+  attachments and everything recorded about it are deleted. This has its own
+  switch and starts off, because it is the only part of the policy that cannot
+  be undone; the rest is reversible from the trash until it runs. It waits for
+  anything still answering a message, so a surviving reply never loses the
+  message it quotes. Switching it on for the first time on an established site
+  can remove a great deal at once, since it also reaches mail everyone deleted
+  by hand long before any of this existed — `cli/retention.php --dry-run
+  --purge` reports how much before anything happens.
+
 - **The retention policy now runs.** A nightly task moves generated mail to the
   trash once it is old enough, and takes mail out of the trash once it has been
   there long enough. It still never removes a row or a file — a message that has

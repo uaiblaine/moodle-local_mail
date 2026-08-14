@@ -52,6 +52,7 @@ final class external_test extends test\testcase {
         set_config('retentionupdatesdays', '45', 'local_mail');
         set_config('retentionupdatestrashdays', '120', 'local_mail');
         set_config('retentiontrashdays', '15', 'local_mail');
+        set_config('retentionpurge', '1', 'local_mail');
         set_config('filterbycourse', 'hidden', 'local_mail');
         set_config('incrementalsearch', '0', 'local_mail');
         set_config('incrementalsearchlimit', '2000', 'local_mail');
@@ -82,6 +83,7 @@ final class external_test extends test\testcase {
             'retentionupdatesdays' => 45,
             'retentionupdatestrashdays' => 120,
             'retentiontrashdays' => 15,
+            'retentionpurge' => true,
             'filterbycourse' => 'hidden',
             'incrementalsearch' => false,
             'incrementalsearchlimit' => 2000,

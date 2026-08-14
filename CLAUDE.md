@@ -97,8 +97,12 @@ a blank heading.
 **`set_deleted()` is the only state-transition API, and it never deletes a sent
 message.** `$fulldelete` requires `$this->draft`, so a sent message every
 participant set to `DELETED_FOREVER` keeps its row, every per-user row and all
-its attachment bytes. The only physical delete of a sent message is
-`delete_course_data()`, on course deletion.
+its attachment bytes. Physical removal of a sent message happens in exactly two
+other places: `delete_course_data()` on course deletion, and `message::purge()`,
+which the retention task calls once every participant has let go. Both work in
+raw SQL over ids and build no message object, because `get_many()` resolves each
+message's course and throws when one has gone — which is the state some of those
+rows are in.
 
 **`DELETED_CONTENT` (3) is not a fourth per-user state.** Its assert requires
 `ROLE_FROM`: it is the sender's global content erase, blanking subject/content
