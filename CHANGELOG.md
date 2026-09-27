@@ -2,9 +2,17 @@
 
 ## [Unreleased]
 
+### Added
+
+- Compatibility with Moodle 5.3.
+
 ### Fixed
 
 - Alternative full name not shown to users with the `moodle/site:viewfullnames` capability (e.g. teachers).
+
+### Removed
+
+- Compatibility with unsupported Moodle versions (4.1-4.4).
 
 ## [2.17] - 2026-05-14
 
