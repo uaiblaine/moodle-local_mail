@@ -62,7 +62,7 @@ if ($user && course::get_by_user($user)) {
     ];
 
     // Prepare script and styles before sending header.
-    $renderer = $PAGE->get_renderer('local_mail');
+    $renderer = \local_mail\output\renderer::get_instance();
     $sveltescript = $renderer->svelte_script('src/view.ts');
 
     // Print content.

@@ -529,8 +529,7 @@ class external extends external_api {
     }
 
     public static function search_messages_response(user $user, array $messages) {
-        global $PAGE;
-        $renderer = $PAGE->get_renderer('local_mail');
+        $renderer = \local_mail\output\renderer::get_instance();
 
         $result = [];
 
@@ -673,7 +672,8 @@ class external extends external_api {
 
     public static function get_message_response(user $user, message $message) {
         global $OUTPUT, $PAGE;
-        $renderer = $PAGE->get_renderer('local_mail');
+
+        $renderer = \local_mail\output\renderer::get_instance();
 
         $PAGE->initialise_theme_and_output();
         $OUTPUT->header(); // Hack alert: Forcing bootstrap_renderer to initiate moodle page.
@@ -1623,8 +1623,6 @@ class external extends external_api {
     }
 
     public static function send_message() {
-        global $PAGE;
-
         $params = self::validate_call(self::send_message_parameters(), func_get_args());
 
         $user = user::current();
@@ -1663,7 +1661,7 @@ class external extends external_api {
 
         event\message_sent::create_from_message($message)->trigger();
 
-        $renderer = $PAGE->get_renderer('local_mail');
+        $renderer = \local_mail\output\renderer::get_instance();
         foreach ($message->recipients() as $recipient) {
             $notificationid = message_send($renderer->notification($message, $recipient));
             if ($notificationid && get_user_preferences('local_mail_markasread', false, $recipient->id)) {

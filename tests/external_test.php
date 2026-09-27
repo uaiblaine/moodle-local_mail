@@ -576,7 +576,7 @@ final class external_test extends test\testcase {
         global $PAGE;
 
         $fs = get_file_storage();
-        $renderer = $PAGE->get_renderer('local_mail');
+        $renderer = \local_mail\output\renderer::get_instance();
         $generator = $this->getDataGenerator();
         $course = new course($generator->create_course());
         $context = $course->get_context();
@@ -2180,8 +2180,7 @@ final class external_test extends test\testcase {
     }
 
     public function test_send_message(): void {
-        global $PAGE;
-        $renderer = $PAGE->get_renderer('local_mail');
+        $renderer = \local_mail\output\renderer::get_instance();
 
         $generator = $this->getDataGenerator();
         $course = new course($generator->create_course());

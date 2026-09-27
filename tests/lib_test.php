@@ -1,7 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -112,7 +112,7 @@ final class lib_test extends test\testcase {
 
         $PAGE->set_course(get_course($course1->id));
         $output = new \core_renderer($PAGE, RENDERER_TARGET_GENERAL);
-        $renderer = $PAGE->get_renderer('local_mail');
+        $renderer = \local_mail\output\renderer::get_instance();
 
         // View page.
 

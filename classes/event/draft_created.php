@@ -1,6 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -32,7 +33,7 @@ class draft_created extends \core\event\base {
         return "The user with id '$this->userid' has created the draft with id '$this->objectid'.";
     }
 
-    public static function get_objectid_mapping() {
+    public static function get_objectid_mapping(): array {
         return ['db' => 'local_mail_messages', 'restore' => 'local_mail_message'];
     }
 

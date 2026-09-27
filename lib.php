@@ -2,7 +2,7 @@
 /*
  * SPDX-FileCopyrightText: 2012-2014 Institut Obert de Catalunya <https://ioc.gencat.cat>
  * SPDX-FileCopyrightText: 2014-2020 Marc Català <reskit@gmail.com>
- * SPDX-FileCopyrightText: 2016-2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2016-2026 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -138,7 +138,7 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
             'labels' => external::get_labels_raw(),
         ];
         $output .= html_writer::script('window.local_mail_navbar_data = ' . json_encode($data));
-        $renderer = $PAGE->get_renderer('local_mail');
+        $renderer = \local_mail\output\renderer::get_instance();
         $output .= $renderer->svelte_script('src/navigation.ts');
     }
 
