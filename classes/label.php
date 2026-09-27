@@ -3,7 +3,7 @@
  * SPDX-FileCopyrightText: 2012-2013 Institut Obert de Catalunya <https://ioc.gencat.cat>
  * SPDX-FileCopyrightText: 2014-2015 Marc Català <reskit@gmail.com>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2025-2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -119,7 +119,7 @@ class label {
     /**
      * Gets multiple labels from the database.
      *
-     * @param int[] $id IDs of the labels to get.
+     * @param int[] $ids IDs of the labels to get.
      * @return self[] Array of labels indexed by ID.
      */
     public static function get_many(array $ids): array {

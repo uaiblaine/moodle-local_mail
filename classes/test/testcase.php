@@ -3,7 +3,7 @@
  * SPDX-FileCopyrightText: 2012-2013 Institut Obert de Catalunya <https://ioc.gencat.cat>
  * SPDX-FileCopyrightText: 2014-2021 Marc Català <reskit@gmail.com>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -68,9 +68,6 @@ abstract class testcase extends \advanced_testcase {
      *
      * @param string[] $expected Files: filename => content.
      * @param message $message Message.
-     * @param string $component Component.
-     * @param string $filearea File area.
-     * @param string $itemid Item ID.
      * @throws \PHPUnit\Framework\ExpectationFailedException
      */
     protected static function assert_attachments(array $expected, message $message) {
@@ -88,7 +85,7 @@ abstract class testcase extends \advanced_testcase {
      * Asserts stored files.
      *
      * @param string[] $expected Files: filename => content.
-     * @param int $userid Draft item ID.
+     * @param int $draftitemid Draft item ID.
      * @throws \PHPUnit\Framework\ExpectationFailedException
      */
     protected static function assert_draft_files(array $expected, int $draftitemid) {
