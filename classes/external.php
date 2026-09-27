@@ -1,6 +1,6 @@
 <?php
 /*
- * SPDX-FileCopyrightText: 2017-2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2017-2026 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -8,13 +8,21 @@
 
 namespace local_mail;
 
+use core_external\external_api;
+use core_external\external_multiple_structure;
+use core_external\external_format_value;
+use core_external\external_function_parameters;
+use core_external\external_single_structure;
+use core_external\external_value;
+use core_external\util;
+
 defined('MOODLE_INTERNAL') || die;
 
 require_once("$CFG->libdir/externallib.php");
 
-class external extends \external_api {
+class external extends external_api {
     public static function get_settings_parameters() {
-        return new \external_function_parameters([]);
+        return new external_function_parameters([]);
     }
 
     public static function get_settings() {
@@ -24,80 +32,80 @@ class external extends \external_api {
     }
 
     public static function get_settings_returns() {
-        return new \external_single_structure([
-            'enablebackup' => new \external_value(
+        return new external_single_structure([
+            'enablebackup' => new external_value(
                 PARAM_BOOL,
                 'Backup and restore enabled'
             ),
-            'maxrecipients' => new \external_value(
+            'maxrecipients' => new external_value(
                 PARAM_INT,
                 'Maximum number of recipients allowed per message'
             ),
-            'usersearchlimit' => new \external_value(
+            'usersearchlimit' => new external_value(
                 PARAM_INT,
                 'Maximum number of results displayed in the user search'
             ),
-            'maxfiles' => new \external_value(
+            'maxfiles' => new external_value(
                 PARAM_INT,
                 'Maximum size of attachments allowed per message'
             ),
-            'maxbytes' => new \external_value(
+            'maxbytes' => new external_value(
                 PARAM_INT,
                 'Maximum size of attachments allowed per message'
             ),
-            'autosaveinterval' => new \external_value(
+            'autosaveinterval' => new external_value(
                 PARAM_INT,
                 'Interval in seconds between automatic draft saves'
             ),
-            'globaltrays' => new \external_multiple_structure(
-                new \external_value(PARAM_ALPHA, 'Type of ray: "starred", "sent", "drafts" or "trash"'),
+            'globaltrays' => new external_multiple_structure(
+                new external_value(PARAM_ALPHA, 'Type of ray: "starred", "sent", "drafts" or "trash"'),
                 'Global trays displayed in menus'
             ),
-            'coursetrays' => new \external_value(
+            'coursetrays' => new external_value(
                 PARAM_ALPHA,
                 'Course trays displayed in menus: "none", "unread", or "all"'
             ),
-            'coursetraysname' => new \external_value(
+            'coursetraysname' => new external_value(
                 PARAM_ALPHA,
                 'Type of course name displayed in menus: "shortname" or "fullname"'
             ),
-            'coursebadges' => new \external_value(
+            'coursebadges' => new external_value(
                 PARAM_ALPHA,
                 'Type of course name displayed in messagess: "hidden", "shortname", or "fullname"'
             ),
-            'coursebadgeslength' => new \external_value(
+            'coursebadgeslength' => new external_value(
                 PARAM_INT,
                 'Course badges are truncated to this approximate length'
             ),
-            'filterbycourse' => new \external_value(
+            'filterbycourse' => new external_value(
                 PARAM_ALPHA,
                 'Type of course name used in the filter by course: "hidden", "shortname" or "fullname"'
             ),
-            'incrementalsearch' => new \external_value(
+            'incrementalsearch' => new external_value(
                 PARAM_BOOL,
                 'Incremental search enabled',
             ),
-            'incrementalsearchlimit' => new \external_value(
+            'incrementalsearchlimit' => new external_value(
                 PARAM_INT,
                 'Maximum number of recent messages included in incremental search',
             ),
-            'courselink' => new \external_value(
+            'courselink' => new external_value(
                 PARAM_ALPHA,
                 'Type of course name displayed in the course link: "hidden", "shortname" or "fullname"'
             ),
-            'messageprocessors' => new \external_multiple_structure(
-                new \external_single_structure([
-                    'name' => new \external_value(PARAM_PLUGIN, 'Name of the message processor'),
-                    'displayname' => new \external_value(PARAM_RAW, 'Display name of the message processor'),
-                    'enabled' => new \external_value(PARAM_BOOL, 'Message processor is enabled'),
-                    'locked' => new \external_value(PARAM_BOOL, 'Message processor is locked'),
+            'messageprocessors' => new external_multiple_structure(
+                new external_single_structure([
+                    'name' => new external_value(PARAM_PLUGIN, 'Name of the message processor'),
+                    'displayname' => new external_value(PARAM_RAW, 'Display name of the message processor'),
+                    'enabled' => new external_value(PARAM_BOOL, 'Message processor is enabled'),
+                    'locked' => new external_value(PARAM_BOOL, 'Message processor is locked'),
                 ])
             ),
         ]);
     }
 
     public static function get_strings_parameters() {
-        return new \external_function_parameters([]);
+        return new external_function_parameters([]);
     }
 
     public static function get_strings() {
@@ -109,13 +117,13 @@ class external extends \external_api {
     public static function get_strings_returns() {
         $stringkeys = [];
         foreach (output\strings::get_ids() as $id) {
-            $stringkeys[$id] = new \external_value(PARAM_RAW, 'Localized content of language string "' . $id . '"');
+            $stringkeys[$id] = new external_value(PARAM_RAW, 'Localized content of language string "' . $id . '"');
         }
-        return new \external_single_structure($stringkeys);
+        return new external_single_structure($stringkeys);
     }
 
     public static function get_preferences_parameters() {
-        return new \external_function_parameters([]);
+        return new external_function_parameters([]);
     }
 
     public static function get_preferences() {
@@ -146,30 +154,30 @@ class external extends \external_api {
     }
 
     public static function get_preferences_returns() {
-        return new \external_single_structure([
-            'perpage' => new \external_value(PARAM_INT, 'Number of messages to display per page (5-100)'),
-            'markasread' => new \external_value(PARAM_BOOL, 'Mark new messages as read if a notification is sent'),
-            'notifications' => new \external_multiple_structure(
-                new \external_value(PARAM_PLUGIN, 'Name of the message processor')
+        return new external_single_structure([
+            'perpage' => new external_value(PARAM_INT, 'Number of messages to display per page (5-100)'),
+            'markasread' => new external_value(PARAM_BOOL, 'Mark new messages as read if a notification is sent'),
+            'notifications' => new external_multiple_structure(
+                new external_value(PARAM_PLUGIN, 'Name of the message processor')
             ),
         ]);
     }
 
     public static function set_preferences_parameters() {
-        return new \external_function_parameters([
-            'preferences' => new \external_single_structure([
-                'perpage' => new \external_value(
+        return new external_function_parameters([
+            'preferences' => new external_single_structure([
+                'perpage' => new external_value(
                     PARAM_INT,
                     'Number of messages to display per page (5-100)',
                     VALUE_OPTIONAL
                 ),
-                'markasread' => new \external_value(
+                'markasread' => new external_value(
                     PARAM_BOOL,
                     'Mark new messages as read if a notification is sent',
                     VALUE_OPTIONAL
                 ),
-                'notifications' => new \external_multiple_structure(
-                    new \external_value(PARAM_PLUGIN, 'Name of the message processor'),
+                'notifications' => new external_multiple_structure(
+                    new external_value(PARAM_PLUGIN, 'Name of the message processor'),
                     'Notifications',
                     VALUE_OPTIONAL
                 ),
@@ -211,7 +219,7 @@ class external extends \external_api {
     }
 
     public static function get_courses_parameters() {
-        return new \external_function_parameters([]);
+        return new external_function_parameters([]);
     }
 
     public static function get_courses() {
@@ -243,8 +251,8 @@ class external extends \external_api {
             $context = $course->get_context();
             $result[] = [
                 'id' => $course->id,
-                'shortname' => external_format_string($course->shortname, $context),
-                'fullname' => external_format_string($course->fullname, $context),
+                'shortname' => util::format_string($course->shortname, $context),
+                'fullname' => util::format_string($course->fullname, $context),
                 'visible' => $course->visible,
                 'groupmode' => $course->groupmode,
                 'unread' => $unread[$course->id] ?? 0,
@@ -256,21 +264,21 @@ class external extends \external_api {
     }
 
     public static function get_courses_returns() {
-        return new \external_multiple_structure(
-            new \external_single_structure([
-                'id' => new \external_value(PARAM_INT, 'Id of the course'),
-                'shortname' => new \external_value(PARAM_RAW, 'Short name of the course'),
-                'fullname' => new \external_value(PARAM_RAW, 'Full name of the course'),
-                'visible' => new \external_value(PARAM_BOOL, 'Course visibility'),
-                'groupmode' => new \external_value(PARAM_INT, 'Group mode: 0 (no), 1 (separate) or 2 (visible)'),
-                'unread' => new \external_value(PARAM_INT, 'Number of unread messages'),
-                'drafts' => new \external_value(PARAM_INT, 'Number of drafts'),
+        return new external_multiple_structure(
+            new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'Id of the course'),
+                'shortname' => new external_value(PARAM_RAW, 'Short name of the course'),
+                'fullname' => new external_value(PARAM_RAW, 'Full name of the course'),
+                'visible' => new external_value(PARAM_BOOL, 'Course visibility'),
+                'groupmode' => new external_value(PARAM_INT, 'Group mode: 0 (no), 1 (separate) or 2 (visible)'),
+                'unread' => new external_value(PARAM_INT, 'Number of unread messages'),
+                'drafts' => new external_value(PARAM_INT, 'Number of drafts'),
             ])
         );
     }
 
     public static function get_labels_parameters() {
-        return new \external_function_parameters([]);
+        return new external_function_parameters([]);
     }
 
     public static function get_labels() {
@@ -307,16 +315,16 @@ class external extends \external_api {
     }
 
     public static function get_labels_returns() {
-        return new \external_multiple_structure(
-            new \external_single_structure([
-                'id' => new \external_value(PARAM_INT, 'Id of the label'),
-                'name' => new \external_value(PARAM_RAW, 'Nane of the label'),
-                'color' => new \external_value(PARAM_ALPHA, 'Color of the label'),
-                'unread' => new \external_value(PARAM_INT, 'Number of unread messages'),
-                'courses' => new \external_multiple_structure(
-                    new \external_single_structure([
-                        'id' => new \external_value(PARAM_INT, 'Id of the course'),
-                        'unread' => new \external_value(PARAM_INT, 'Number of unread messages'),
+        return new external_multiple_structure(
+            new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'Id of the label'),
+                'name' => new external_value(PARAM_RAW, 'Nane of the label'),
+                'color' => new external_value(PARAM_ALPHA, 'Color of the label'),
+                'unread' => new external_value(PARAM_INT, 'Number of unread messages'),
+                'courses' => new external_multiple_structure(
+                    new external_single_structure([
+                        'id' => new external_value(PARAM_INT, 'Id of the course'),
+                        'unread' => new external_value(PARAM_INT, 'Number of unread messages'),
                     ]),
                 ),
             ])
@@ -324,89 +332,89 @@ class external extends \external_api {
     }
 
     private static function message_query_parameters() {
-        return new \external_single_structure([
-            'courseid' => new \external_value(
+        return new external_single_structure([
+            'courseid' => new external_value(
                 PARAM_INT,
                 'Search messages in this course',
                 VALUE_DEFAULT,
                 0
             ),
-            'labelid' => new \external_value(
+            'labelid' => new external_value(
                 PARAM_INT,
                 'Search messages with this label',
                 VALUE_DEFAULT,
                 0
             ),
-            'draft' => new \external_value(
+            'draft' => new external_value(
                 PARAM_BOOL,
                 'Search messages with this draft status',
                 VALUE_OPTIONAL
             ),
-            'roles' => new \external_multiple_structure(
-                new \external_value(PARAM_ALPHA, 'Role: "from", "to", "cc" or "bcc"'),
+            'roles' => new external_multiple_structure(
+                new external_value(PARAM_ALPHA, 'Role: "from", "to", "cc" or "bcc"'),
                 'Search messages in which the user has one of these roles',
                 VALUE_DEFAULT,
                 []
             ),
-            'unread' => new \external_value(
+            'unread' => new external_value(
                 PARAM_BOOL,
                 'Search messages with this unread status',
                 VALUE_OPTIONAL
             ),
-            'starred' => new \external_value(
+            'starred' => new external_value(
                 PARAM_BOOL,
                 'Search messages with this starred status',
                 VALUE_OPTIONAL
             ),
-            'deleted' => new \external_value(
+            'deleted' => new external_value(
                 PARAM_BOOL,
                 'Search deleted messages.',
                 VALUE_DEFAULT,
                 false
             ),
-            'content' => new \external_value(
+            'content' => new external_value(
                 PARAM_RAW,
                 'Search messages with this text in ',
                 VALUE_DEFAULT,
                 ''
             ),
-            'sendername' => new \external_value(
+            'sendername' => new external_value(
                 PARAM_RAW,
                 'Text to search the name of the sender',
                 VALUE_DEFAULT,
                 ''
             ),
-            'recipientname' => new \external_value(
+            'recipientname' => new external_value(
                 PARAM_RAW,
                 'Text to search the names of the recipients',
                 VALUE_DEFAULT,
                 ''
             ),
-            'withfilesonly' => new \external_value(
+            'withfilesonly' => new external_value(
                 PARAM_BOOL,
                 'Search only messages with attachments',
                 VALUE_DEFAULT,
                 false
             ),
-            'maxtime' => new \external_value(
+            'maxtime' => new external_value(
                 PARAM_INT,
                 'Searh only messages older than this timestamp',
                 VALUE_DEFAULT,
                 0
             ),
-            'startid' => new \external_value(
+            'startid' => new external_value(
                 PARAM_INT,
                 'Start searching from the position of this message (excluded).',
                 VALUE_DEFAULT,
                 0
             ),
-            'stopid' => new \external_value(
+            'stopid' => new external_value(
                 PARAM_INT,
                 'Stop serching at the position of this message (excluded).',
                 VALUE_DEFAULT,
                 0
             ),
-            'reverse' => new \external_value(
+            'reverse' => new external_value(
                 PARAM_BOOL,
                 'Search messages from older to newer instead of from newer to older.',
                 VALUE_DEFAULT,
@@ -475,7 +483,7 @@ class external extends \external_api {
     }
 
     public static function count_messages_parameters() {
-        return new \external_function_parameters([
+        return new external_function_parameters([
             'query' => self::message_query_parameters(),
         ]);
     }
@@ -489,19 +497,19 @@ class external extends \external_api {
     }
 
     public static function count_messages_returns() {
-        return new \external_value(PARAM_INT, 'Number of messages');
+        return new external_value(PARAM_INT, 'Number of messages');
     }
 
     public static function search_messages_parameters() {
-        return new \external_function_parameters([
+        return new external_function_parameters([
             'query' => self::message_query_parameters(),
-            'offset' => new \external_value(
+            'offset' => new external_value(
                 PARAM_INT,
                 'Skip this number of messages',
                 VALUE_DEFAULT,
                 0
             ),
-            'limit' => new \external_value(
+            'limit' => new external_value(
                 PARAM_INT,
                 'Maximum number of messages',
                 VALUE_DEFAULT,
@@ -569,8 +577,8 @@ class external extends \external_api {
                 'deleted' => $message->deleted($user) != message::NOT_DELETED,
                 'course' => [
                     'id' => $course->id,
-                    'shortname' => external_format_string($course->shortname, $context),
-                    'fullname' => external_format_string($course->fullname, $context),
+                    'shortname' => util::format_string($course->shortname, $context),
+                    'fullname' => util::format_string($course->fullname, $context),
                     'visible' => $course->visible,
                     'groupmode' => $course->groupmode,
                 ],
@@ -592,51 +600,51 @@ class external extends \external_api {
     }
 
     public static function search_messages_returns() {
-        return new \external_multiple_structure(
-            new \external_single_structure([
-                'id' => new \external_value(PARAM_INT, 'Id of the message'),
-                'subject' => new \external_value(PARAM_RAW, 'Subject of the message'),
-                'numattachments' => new \external_value(PARAM_INT, 'Number of attachments'),
-                'draft' => new \external_value(PARAM_BOOL, 'Draft status'),
-                'time' => new \external_value(PARAM_INT, 'Time of the message'),
-                'shorttime' => new \external_value(PARAM_RAW, 'Formatted short time'),
-                'fulltime' => new \external_value(PARAM_RAW, 'Formatted full time'),
-                'unread' => new \external_value(PARAM_BOOL, 'Unread status'),
-                'starred' => new \external_value(PARAM_BOOL, 'Starred status'),
-                'deleted' => new \external_value(PARAM_BOOL, 'Deleted status'),
-                'course' => new \external_single_structure([
-                    'id' => new \external_value(PARAM_INT, 'Id of the course'),
-                    'shortname' => new \external_value(PARAM_RAW, 'Short name of the course'),
-                    'fullname' => new \external_value(PARAM_RAW, 'Full name of the course'),
-                    'visible' => new \external_value(PARAM_BOOL, 'Course visibility'),
-                    'groupmode' => new \external_value(PARAM_INT, 'Group mode: 0 (no), 1 (separate) or 2 (visible)'),
+        return new external_multiple_structure(
+            new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'Id of the message'),
+                'subject' => new external_value(PARAM_RAW, 'Subject of the message'),
+                'numattachments' => new external_value(PARAM_INT, 'Number of attachments'),
+                'draft' => new external_value(PARAM_BOOL, 'Draft status'),
+                'time' => new external_value(PARAM_INT, 'Time of the message'),
+                'shorttime' => new external_value(PARAM_RAW, 'Formatted short time'),
+                'fulltime' => new external_value(PARAM_RAW, 'Formatted full time'),
+                'unread' => new external_value(PARAM_BOOL, 'Unread status'),
+                'starred' => new external_value(PARAM_BOOL, 'Starred status'),
+                'deleted' => new external_value(PARAM_BOOL, 'Deleted status'),
+                'course' => new external_single_structure([
+                    'id' => new external_value(PARAM_INT, 'Id of the course'),
+                    'shortname' => new external_value(PARAM_RAW, 'Short name of the course'),
+                    'fullname' => new external_value(PARAM_RAW, 'Full name of the course'),
+                    'visible' => new external_value(PARAM_BOOL, 'Course visibility'),
+                    'groupmode' => new external_value(PARAM_INT, 'Group mode: 0 (no), 1 (separate) or 2 (visible)'),
                 ], '', VALUE_OPTIONAL),
-                'sender' => new \external_single_structure([
-                    'id' => new \external_value(PARAM_INT, 'Id of the user'),
-                    'firstname' => new \external_value(PARAM_NOTAGS, 'First name of the user'),
-                    'lastname' => new \external_value(PARAM_NOTAGS, 'Last name of the user'),
-                    'fullname' => new \external_value(PARAM_NOTAGS, 'Full name of the user'),
-                    'pictureurl' => new \external_value(PARAM_URL, 'User image URL', VALUE_OPTIONAL),
-                    'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
-                    'sortorder' => new \external_value(PARAM_RAW, 'User sort order'),
+                'sender' => new external_single_structure([
+                    'id' => new external_value(PARAM_INT, 'Id of the user'),
+                    'firstname' => new external_value(PARAM_NOTAGS, 'First name of the user'),
+                    'lastname' => new external_value(PARAM_NOTAGS, 'Last name of the user'),
+                    'fullname' => new external_value(PARAM_NOTAGS, 'Full name of the user'),
+                    'pictureurl' => new external_value(PARAM_URL, 'User image URL', VALUE_OPTIONAL),
+                    'profileurl' => new external_value(PARAM_URL, 'User profile URL'),
+                    'sortorder' => new external_value(PARAM_RAW, 'User sort order'),
                 ]),
-                'recipients' => new \external_multiple_structure(
-                    new \external_single_structure([
-                        'type' => new \external_value(PARAM_ALPHA, 'Role of the user: "to", "cc" or "bcc"'),
-                        'id' => new \external_value(PARAM_INT, 'Id of the user'),
-                        'firstname' => new \external_value(PARAM_NOTAGS, 'First name of the user'),
-                        'lastname' => new \external_value(PARAM_NOTAGS, 'Last name of the user'),
-                        'fullname' => new \external_value(PARAM_NOTAGS, 'Full name of the user'),
-                        'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
-                        'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
-                        'sortorder' => new \external_value(PARAM_RAW, 'User sort order'),
+                'recipients' => new external_multiple_structure(
+                    new external_single_structure([
+                        'type' => new external_value(PARAM_ALPHA, 'Role of the user: "to", "cc" or "bcc"'),
+                        'id' => new external_value(PARAM_INT, 'Id of the user'),
+                        'firstname' => new external_value(PARAM_NOTAGS, 'First name of the user'),
+                        'lastname' => new external_value(PARAM_NOTAGS, 'Last name of the user'),
+                        'fullname' => new external_value(PARAM_NOTAGS, 'Full name of the user'),
+                        'pictureurl' => new external_value(PARAM_URL, 'User image URL'),
+                        'profileurl' => new external_value(PARAM_URL, 'User profile URL'),
+                        'sortorder' => new external_value(PARAM_RAW, 'User sort order'),
                     ])
                 ),
-                'labels' => new \external_multiple_structure(
-                    new \external_single_structure([
-                        'id' => new \external_value(PARAM_INT, 'Id of the label'),
-                        'name' => new \external_value(PARAM_RAW, 'Name of the label'),
-                        'color' => new \external_value(PARAM_ALPHA, 'Color of the label'),
+                'labels' => new external_multiple_structure(
+                    new external_single_structure([
+                        'id' => new external_value(PARAM_INT, 'Id of the label'),
+                        'name' => new external_value(PARAM_RAW, 'Name of the label'),
+                        'color' => new external_value(PARAM_ALPHA, 'Color of the label'),
                     ])
                 ),
             ])
@@ -644,8 +652,8 @@ class external extends \external_api {
     }
 
     public static function get_message_parameters() {
-        return new \external_function_parameters([
-            'messageid' => new \external_value(PARAM_INT, 'ID of the message'),
+        return new external_function_parameters([
+            'messageid' => new external_value(PARAM_INT, 'ID of the message'),
         ]);
     }
 
@@ -691,8 +699,8 @@ class external extends \external_api {
             'deleted' => (bool) $message->deleted($user),
             'course' => [
                 'id' => $course->id,
-                'shortname' => external_format_string($course->shortname, $context),
-                'fullname' => external_format_string($course->fullname, $context),
+                'shortname' => util::format_string($course->shortname, $context),
+                'fullname' => util::format_string($course->fullname, $context),
                 'visible' => $course->visible,
                 'groupmode' => $course->groupmode,
             ],
@@ -801,102 +809,102 @@ class external extends \external_api {
     }
 
     public static function get_message_returns() {
-        return new \external_single_structure([
-            'id' => new \external_value(PARAM_INT, 'Id of the message'),
-            'subject' => new \external_value(PARAM_RAW, 'Subject of the message'),
-            'content' => new \external_value(PARAM_RAW, 'Content of the message'),
-            'format' => new \external_format_value('Format of the message content'),
-            'numattachments' => new \external_value(PARAM_INT, 'Number of attachments'),
-            'draft' => new \external_value(PARAM_BOOL, 'Draft status'),
-            'time' => new \external_value(PARAM_INT, 'Time of the message'),
-            'shorttime' => new \external_value(PARAM_RAW, 'Formatted short time'),
-            'fulltime' => new \external_value(PARAM_RAW, 'Formatted full time'),
-            'unread' => new \external_value(PARAM_BOOL, 'Unread status'),
-            'starred' => new \external_value(PARAM_BOOL, 'Starred status'),
-            'deleted' => new \external_value(PARAM_BOOL, 'Deleted status'),
-            'course' => new \external_single_structure([
-                'id' => new \external_value(PARAM_INT, 'Id of the course'),
-                'shortname' => new \external_value(PARAM_RAW, 'Short name of the course'),
-                'fullname' => new \external_value(PARAM_RAW, 'Full name of the course'),
-                'visible' => new \external_value(PARAM_BOOL, 'Course visibility'),
-                'groupmode' => new \external_value(PARAM_INT, 'Group mode: 0 (no), 1 (separate) or 2 (visible)'),
+        return new external_single_structure([
+            'id' => new external_value(PARAM_INT, 'Id of the message'),
+            'subject' => new external_value(PARAM_RAW, 'Subject of the message'),
+            'content' => new external_value(PARAM_RAW, 'Content of the message'),
+            'format' => new external_format_value('Format of the message content'),
+            'numattachments' => new external_value(PARAM_INT, 'Number of attachments'),
+            'draft' => new external_value(PARAM_BOOL, 'Draft status'),
+            'time' => new external_value(PARAM_INT, 'Time of the message'),
+            'shorttime' => new external_value(PARAM_RAW, 'Formatted short time'),
+            'fulltime' => new external_value(PARAM_RAW, 'Formatted full time'),
+            'unread' => new external_value(PARAM_BOOL, 'Unread status'),
+            'starred' => new external_value(PARAM_BOOL, 'Starred status'),
+            'deleted' => new external_value(PARAM_BOOL, 'Deleted status'),
+            'course' => new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'Id of the course'),
+                'shortname' => new external_value(PARAM_RAW, 'Short name of the course'),
+                'fullname' => new external_value(PARAM_RAW, 'Full name of the course'),
+                'visible' => new external_value(PARAM_BOOL, 'Course visibility'),
+                'groupmode' => new external_value(PARAM_INT, 'Group mode: 0 (no), 1 (separate) or 2 (visible)'),
             ]),
-            'sender' => new \external_single_structure([
-                'id' => new \external_value(PARAM_INT, 'Id of the user'),
-                'firstname' => new \external_value(PARAM_NOTAGS, 'First name of the user'),
-                'lastname' => new \external_value(PARAM_NOTAGS, 'Last name of the user'),
-                'fullname' => new \external_value(PARAM_NOTAGS, 'Full name of the user'),
-                'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
-                'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
-                'sortorder' => new \external_value(PARAM_RAW, 'User sort order'),
+            'sender' => new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'Id of the user'),
+                'firstname' => new external_value(PARAM_NOTAGS, 'First name of the user'),
+                'lastname' => new external_value(PARAM_NOTAGS, 'Last name of the user'),
+                'fullname' => new external_value(PARAM_NOTAGS, 'Full name of the user'),
+                'pictureurl' => new external_value(PARAM_URL, 'User image URL'),
+                'profileurl' => new external_value(PARAM_URL, 'User profile URL'),
+                'sortorder' => new external_value(PARAM_RAW, 'User sort order'),
             ]),
-            'recipients' => new \external_multiple_structure(
-                new \external_single_structure([
-                    'type' => new \external_value(PARAM_ALPHA, 'Role of the user: "to", "cc" or "bcc"'),
-                    'id' => new \external_value(PARAM_INT, 'Id of the user'),
-                    'firstname' => new \external_value(PARAM_NOTAGS, 'First name of the user'),
-                    'lastname' => new \external_value(PARAM_NOTAGS, 'Last name of the user'),
-                    'fullname' => new \external_value(PARAM_NOTAGS, 'Full name of the user'),
-                    'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
-                    'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
-                    'sortorder' => new \external_value(PARAM_RAW, 'User sort order'),
-                    'isvalid' => new \external_value(PARAM_BOOL, 'This user can receive messages.'),
+            'recipients' => new external_multiple_structure(
+                new external_single_structure([
+                    'type' => new external_value(PARAM_ALPHA, 'Role of the user: "to", "cc" or "bcc"'),
+                    'id' => new external_value(PARAM_INT, 'Id of the user'),
+                    'firstname' => new external_value(PARAM_NOTAGS, 'First name of the user'),
+                    'lastname' => new external_value(PARAM_NOTAGS, 'Last name of the user'),
+                    'fullname' => new external_value(PARAM_NOTAGS, 'Full name of the user'),
+                    'pictureurl' => new external_value(PARAM_URL, 'User image URL'),
+                    'profileurl' => new external_value(PARAM_URL, 'User profile URL'),
+                    'sortorder' => new external_value(PARAM_RAW, 'User sort order'),
+                    'isvalid' => new external_value(PARAM_BOOL, 'This user can receive messages.'),
                 ])
             ),
-            'attachments' => new \external_multiple_structure(
-                new \external_single_structure([
-                    'filepath' => new \external_value(PARAM_PATH, 'File directory'),
-                    'filename' => new \external_value(PARAM_FILE, 'File name'),
-                    'mimetype' => new \external_value(PARAM_RAW, 'Mime type'),
-                    'filesize' => new \external_value(PARAM_INT, 'File size'),
-                    'fileurl'  => new \external_value(PARAM_URL, 'Download URL'),
-                    'iconurl'  => new \external_value(PARAM_URL, 'Icon URL'),
+            'attachments' => new external_multiple_structure(
+                new external_single_structure([
+                    'filepath' => new external_value(PARAM_PATH, 'File directory'),
+                    'filename' => new external_value(PARAM_FILE, 'File name'),
+                    'mimetype' => new external_value(PARAM_RAW, 'Mime type'),
+                    'filesize' => new external_value(PARAM_INT, 'File size'),
+                    'fileurl'  => new external_value(PARAM_URL, 'Download URL'),
+                    'iconurl'  => new external_value(PARAM_URL, 'Icon URL'),
                 ])
             ),
-            'references' => new \external_multiple_structure(
-                new \external_single_structure([
-                    'id' => new \external_value(PARAM_INT, 'Id of the message'),
-                    'subject' => new \external_value(PARAM_RAW, 'Subject of the message'),
-                    'content' => new \external_value(PARAM_RAW, 'Content of the message'),
-                    'format' => new \external_format_value('Format of the message content'),
-                    'time' => new \external_value(PARAM_INT, 'Time of the message'),
-                    'shorttime' => new \external_value(PARAM_RAW, 'Formatted short time'),
-                    'fulltime' => new \external_value(PARAM_RAW, 'Formatted full time'),
-                    'sender' => new \external_single_structure([
-                        'id' => new \external_value(PARAM_INT, 'Id of the user'),
-                        'firstname' => new \external_value(PARAM_NOTAGS, 'First name of the user'),
-                        'lastname' => new \external_value(PARAM_NOTAGS, 'Last name of the user'),
-                        'fullname' => new \external_value(PARAM_NOTAGS, 'Full name of the user'),
-                        'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
-                        'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
-                        'sortorder' => new \external_value(PARAM_RAW, 'User sort order'),
+            'references' => new external_multiple_structure(
+                new external_single_structure([
+                    'id' => new external_value(PARAM_INT, 'Id of the message'),
+                    'subject' => new external_value(PARAM_RAW, 'Subject of the message'),
+                    'content' => new external_value(PARAM_RAW, 'Content of the message'),
+                    'format' => new external_format_value('Format of the message content'),
+                    'time' => new external_value(PARAM_INT, 'Time of the message'),
+                    'shorttime' => new external_value(PARAM_RAW, 'Formatted short time'),
+                    'fulltime' => new external_value(PARAM_RAW, 'Formatted full time'),
+                    'sender' => new external_single_structure([
+                        'id' => new external_value(PARAM_INT, 'Id of the user'),
+                        'firstname' => new external_value(PARAM_NOTAGS, 'First name of the user'),
+                        'lastname' => new external_value(PARAM_NOTAGS, 'Last name of the user'),
+                        'fullname' => new external_value(PARAM_NOTAGS, 'Full name of the user'),
+                        'pictureurl' => new external_value(PARAM_URL, 'User image URL'),
+                        'profileurl' => new external_value(PARAM_URL, 'User profile URL'),
+                        'sortorder' => new external_value(PARAM_RAW, 'User sort order'),
                     ]),
-                    'attachments' => new \external_multiple_structure(
-                        new \external_single_structure([
-                            'filepath' => new \external_value(PARAM_PATH, 'File directory'),
-                            'filename' => new \external_value(PARAM_FILE, 'File name'),
-                            'mimetype' => new \external_value(PARAM_RAW, 'Mime type'),
-                            'filesize' => new \external_value(PARAM_INT, 'File size'),
-                            'fileurl'  => new \external_value(PARAM_URL, 'Download URL'),
-                            'iconurl'  => new \external_value(PARAM_URL, 'Icon URL'),
+                    'attachments' => new external_multiple_structure(
+                        new external_single_structure([
+                            'filepath' => new external_value(PARAM_PATH, 'File directory'),
+                            'filename' => new external_value(PARAM_FILE, 'File name'),
+                            'mimetype' => new external_value(PARAM_RAW, 'Mime type'),
+                            'filesize' => new external_value(PARAM_INT, 'File size'),
+                            'fileurl'  => new external_value(PARAM_URL, 'Download URL'),
+                            'iconurl'  => new external_value(PARAM_URL, 'Icon URL'),
                         ])
                     ),
                 ])
             ),
-            'labels' => new \external_multiple_structure(
-                new \external_single_structure([
-                    'id' => new \external_value(PARAM_INT, 'Id of the label'),
-                    'name' => new \external_value(PARAM_RAW, 'Name of the label'),
-                    'color' => new \external_value(PARAM_ALPHA, 'Color of the label'),
+            'labels' => new external_multiple_structure(
+                new external_single_structure([
+                    'id' => new external_value(PARAM_INT, 'Id of the label'),
+                    'name' => new external_value(PARAM_RAW, 'Name of the label'),
+                    'color' => new external_value(PARAM_ALPHA, 'Color of the label'),
                 ])
             ),
-            'javascript' => new \external_value(PARAM_RAW, 'Required Javascript HTML elements'),
+            'javascript' => new external_value(PARAM_RAW, 'Required Javascript HTML elements'),
         ]);
     }
 
     public static function view_message_parameters() {
-        return new \external_function_parameters([
-            'messageid' => new \external_value(PARAM_INT, 'ID of the message'),
+        return new external_function_parameters([
+            'messageid' => new external_value(PARAM_INT, 'ID of the message'),
         ]);
     }
 
@@ -927,9 +935,9 @@ class external extends \external_api {
     }
 
     public static function set_unread_parameters() {
-        return new \external_function_parameters([
-            'messageid' => new \external_value(PARAM_INT, 'ID of the message'),
-            'unread' => new \external_value(PARAM_BOOL, 'New unread status'),
+        return new external_function_parameters([
+            'messageid' => new external_value(PARAM_INT, 'ID of the message'),
+            'unread' => new external_value(PARAM_BOOL, 'New unread status'),
         ]);
     }
 
@@ -953,9 +961,9 @@ class external extends \external_api {
     }
 
     public static function set_starred_parameters() {
-        return new \external_function_parameters([
-            'messageid' => new \external_value(PARAM_INT, 'ID of the message'),
-            'starred' => new \external_value(PARAM_BOOL, 'New starred status'),
+        return new external_function_parameters([
+            'messageid' => new external_value(PARAM_INT, 'ID of the message'),
+            'starred' => new external_value(PARAM_BOOL, 'New starred status'),
         ]);
     }
 
@@ -979,9 +987,9 @@ class external extends \external_api {
     }
 
     public static function set_deleted_parameters() {
-        return new \external_function_parameters([
-            'messageid' => new \external_value(PARAM_INT, 'ID of the message'),
-            'deleted' => new \external_value(
+        return new external_function_parameters([
+            'messageid' => new external_value(PARAM_INT, 'ID of the message'),
+            'deleted' => new external_value(
                 PARAM_INT,
                 'New deleted status: 0 (not deleted), 1 (deleted), 2 (deleted forever)'
             ),
@@ -1016,8 +1024,8 @@ class external extends \external_api {
     }
 
     public static function empty_trash_parameters() {
-        return new \external_function_parameters([
-            'courseid' => new \external_value(PARAM_INT, 'ID of the course', VALUE_DEFAULT, 0),
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'ID of the course', VALUE_DEFAULT, 0),
         ]);
     }
 
@@ -1058,11 +1066,11 @@ class external extends \external_api {
 
     public static function create_label_parameters() {
         $colors = implode(', ', label::COLORS);
-        return new \external_function_parameters([
-            'name' => new \external_value(PARAM_RAW, 'Name of the label'),
-            'color' => new \external_value(PARAM_ALPHA, "Color of the label. Valid values: $colors", VALUE_DEFAULT, ''),
-            'messageids' => new \external_multiple_structure(
-                new \external_value(PARAM_INT),
+        return new external_function_parameters([
+            'name' => new external_value(PARAM_RAW, 'Name of the label'),
+            'color' => new external_value(PARAM_ALPHA, "Color of the label. Valid values: $colors", VALUE_DEFAULT, ''),
+            'messageids' => new external_multiple_structure(
+                new external_value(PARAM_INT),
                 'IDs of the messages to which the label will be set',
                 VALUE_DEFAULT,
                 []
@@ -1109,15 +1117,15 @@ class external extends \external_api {
     }
 
     public static function create_label_returns() {
-        return new \external_value(PARAM_INT, 'ID of the label');
+        return new external_value(PARAM_INT, 'ID of the label');
     }
 
     public static function update_label_parameters() {
         $colors = implode(', ', label::COLORS);
-        return new \external_function_parameters([
-            'labelid' => new \external_value(PARAM_INT, 'ID of the label'),
-            'name' => new \external_value(PARAM_RAW, 'Name of the label'),
-            'color' => new \external_value(PARAM_ALPHA, "Color of the label: $colors", VALUE_DEFAULT, ''),
+        return new external_function_parameters([
+            'labelid' => new external_value(PARAM_INT, 'ID of the label'),
+            'name' => new external_value(PARAM_RAW, 'Name of the label'),
+            'color' => new external_value(PARAM_ALPHA, "Color of the label: $colors", VALUE_DEFAULT, ''),
         ]);
     }
 
@@ -1156,8 +1164,8 @@ class external extends \external_api {
     }
 
     public static function delete_label_parameters() {
-        return new \external_function_parameters([
-            'labelid' => new \external_value(PARAM_INT, 'ID of the label'),
+        return new external_function_parameters([
+            'labelid' => new external_value(PARAM_INT, 'ID of the label'),
         ]);
     }
 
@@ -1181,10 +1189,10 @@ class external extends \external_api {
     }
 
     public static function set_labels_parameters() {
-        return new \external_function_parameters([
-            'messageid' => new \external_value(PARAM_INT, 'ID of the message'),
-            'labelids' => new \external_multiple_structure(
-                new \external_value(
+        return new external_function_parameters([
+            'messageid' => new external_value(PARAM_INT, 'ID of the message'),
+            'labelids' => new external_multiple_structure(
+                new external_value(
                     PARAM_INT,
                     'ID of a label'
                 ),
@@ -1219,8 +1227,8 @@ class external extends \external_api {
     }
 
     public static function get_roles_parameters() {
-        return new \external_function_parameters([
-            'courseid' => new \external_value(PARAM_INT, 'ID of the course'),
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'ID of the course'),
         ]);
     }
 
@@ -1242,17 +1250,17 @@ class external extends \external_api {
     }
 
     public static function get_roles_returns() {
-        return new \external_multiple_structure(
-            new \external_single_structure([
-                'id' => new \external_value(PARAM_INT, 'ID of the role'),
-                'name' => new \external_value(PARAM_RAW, 'Name of the role'),
+        return new external_multiple_structure(
+            new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'ID of the role'),
+                'name' => new external_value(PARAM_RAW, 'Name of the role'),
             ])
         );
     }
 
     public static function get_groups_parameters() {
-        return new \external_function_parameters([
-            'courseid' => new \external_value(PARAM_INT, 'ID of the course'),
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'ID of the course'),
         ]);
     }
 
@@ -1274,54 +1282,54 @@ class external extends \external_api {
     }
 
     public static function get_groups_returns() {
-        return new \external_multiple_structure(
-            new \external_single_structure([
-                'id' => new \external_value(PARAM_INT, 'ID of the group'),
-                'name' => new \external_value(PARAM_RAW, 'Name of the group'),
+        return new external_multiple_structure(
+            new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'ID of the group'),
+                'name' => new external_value(PARAM_RAW, 'Name of the group'),
             ])
         );
     }
 
     public static function search_users_parameters() {
-        return new \external_function_parameters([
-            'query' => new \external_single_structure([
-                'courseid' => new \external_value(
+        return new external_function_parameters([
+            'query' => new external_single_structure([
+                'courseid' => new external_value(
                     PARAM_INT,
                     'Search messages in this course',
                     VALUE_REQUIRED,
                 ),
-                'roleid' => new \external_value(
+                'roleid' => new external_value(
                     PARAM_INT,
                     'Search users with this role',
                     VALUE_DEFAULT,
                     0
                 ),
-                'groupid' => new \external_value(
+                'groupid' => new external_value(
                     PARAM_INT,
                     'Search users in this group',
                     VALUE_DEFAULT,
                     0
                 ),
-                'fullname' => new \external_value(
+                'fullname' => new external_value(
                     PARAM_RAW,
                     'Search users with a full name that contains this text',
                     VALUE_DEFAULT,
                     ''
                 ),
-                'include' => new \external_multiple_structure(
-                    new \external_value(PARAM_INT),
+                'include' => new external_multiple_structure(
+                    new external_value(PARAM_INT),
                     'Search users with one of these IDs.',
                     VALUE_DEFAULT,
                     []
                 ),
             ]),
-            'offset' => new \external_value(
+            'offset' => new external_value(
                 PARAM_INT,
                 'Skip this number of messages',
                 VALUE_DEFAULT,
                 0
             ),
-            'limit' => new \external_value(
+            'limit' => new external_value(
                 PARAM_INT,
                 'Maximum number of messages',
                 VALUE_DEFAULT,
@@ -1386,22 +1394,22 @@ class external extends \external_api {
     }
 
     public static function search_users_returns() {
-        return new \external_multiple_structure(
-            new \external_single_structure([
-                'id' => new \external_value(PARAM_INT, 'Id of the user'),
-                'firstname' => new \external_value(PARAM_NOTAGS, 'First name of the user'),
-                'lastname' => new \external_value(PARAM_NOTAGS, 'Last name of the user'),
-                'fullname' => new \external_value(PARAM_NOTAGS, 'Full name of the user'),
-                'pictureurl' => new \external_value(PARAM_URL, 'User image URL'),
-                'profileurl' => new \external_value(PARAM_URL, 'User profile URL'),
-                'sortorder' => new \external_value(PARAM_RAW, 'User sort order'),
+        return new external_multiple_structure(
+            new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'Id of the user'),
+                'firstname' => new external_value(PARAM_NOTAGS, 'First name of the user'),
+                'lastname' => new external_value(PARAM_NOTAGS, 'Last name of the user'),
+                'fullname' => new external_value(PARAM_NOTAGS, 'Full name of the user'),
+                'pictureurl' => new external_value(PARAM_URL, 'User image URL'),
+                'profileurl' => new external_value(PARAM_URL, 'User profile URL'),
+                'sortorder' => new external_value(PARAM_RAW, 'User sort order'),
             ])
         );
     }
 
     public static function get_message_form_parameters() {
-        return new \external_function_parameters([
-            'messageid' => new \external_value(PARAM_INT, 'Id of the message'),
+        return new external_function_parameters([
+            'messageid' => new external_value(PARAM_INT, 'Id of the message'),
         ]);
     }
 
@@ -1457,17 +1465,17 @@ class external extends \external_api {
     }
 
     public static function get_message_form_returns() {
-        return new \external_single_structure([
-            'draftitemid' => new \external_value(PARAM_INT, 'Id of the file draft item.'),
-            'editorhtml' => new \external_value(PARAM_RAW, 'HTML fragment of the editor'),
-            'filemanagerhtml' => new \external_value(PARAM_RAW, 'HTML fragment of the file manager'),
-            'javascript' => new \external_value(PARAM_RAW, 'Required Javascript HTML elements'),
+        return new external_single_structure([
+            'draftitemid' => new external_value(PARAM_INT, 'Id of the file draft item.'),
+            'editorhtml' => new external_value(PARAM_RAW, 'HTML fragment of the editor'),
+            'filemanagerhtml' => new external_value(PARAM_RAW, 'HTML fragment of the file manager'),
+            'javascript' => new external_value(PARAM_RAW, 'Required Javascript HTML elements'),
         ]);
     }
 
     public static function create_message_parameters() {
-        return new \external_function_parameters([
-            'courseid' => new \external_value(PARAM_INT, 'ID of the course'),
+        return new external_function_parameters([
+            'courseid' => new external_value(PARAM_INT, 'ID of the course'),
         ]);
     }
 
@@ -1489,13 +1497,13 @@ class external extends \external_api {
     }
 
     public static function create_message_returns() {
-        return new \external_value(PARAM_INT, 'Id of the created message');
+        return new external_value(PARAM_INT, 'Id of the created message');
     }
 
     public static function reply_message_parameters() {
-        return new \external_function_parameters([
-            'messageid' => new \external_value(PARAM_INT, 'Id of the message to reply.'),
-            'all' => new \external_value(PARAM_BOOL, 'Reply to all users.'),
+        return new external_function_parameters([
+            'messageid' => new external_value(PARAM_INT, 'Id of the message to reply.'),
+            'all' => new external_value(PARAM_BOOL, 'Reply to all users.'),
         ]);
     }
 
@@ -1514,12 +1522,12 @@ class external extends \external_api {
     }
 
     public static function reply_message_returns() {
-        return new \external_value(PARAM_INT, 'Id of the created message');
+        return new external_value(PARAM_INT, 'Id of the created message');
     }
 
     public static function forward_message_parameters() {
-        return new \external_function_parameters([
-            'messageid' => new \external_value(PARAM_INT, 'Id of the message to reply.'),
+        return new external_function_parameters([
+            'messageid' => new external_value(PARAM_INT, 'Id of the message to reply.'),
         ]);
     }
 
@@ -1538,36 +1546,36 @@ class external extends \external_api {
     }
 
     public static function forward_message_returns() {
-        return new \external_value(PARAM_INT, 'Id of the created message');
+        return new external_value(PARAM_INT, 'Id of the created message');
     }
 
     public static function update_message_parameters() {
-        return new \external_function_parameters([
-            'messageid' => new \external_value(PARAM_INT, 'Id of the message'),
-            'data' => new \external_single_structure([
-                'courseid' => new \external_value(PARAM_INT, 'Id of the course'),
-                'to' => new \external_multiple_structure(
-                    new \external_value(PARAM_INT),
+        return new external_function_parameters([
+            'messageid' => new external_value(PARAM_INT, 'Id of the message'),
+            'data' => new external_single_structure([
+                'courseid' => new external_value(PARAM_INT, 'Id of the course'),
+                'to' => new external_multiple_structure(
+                    new external_value(PARAM_INT),
                     'Ids of TO recipients.',
                     VALUE_DEFAULT,
                     [],
                 ),
-                'cc' => new \external_multiple_structure(
-                    new \external_value(PARAM_INT),
+                'cc' => new external_multiple_structure(
+                    new external_value(PARAM_INT),
                     'Ids of CC recipients.',
                     VALUE_DEFAULT,
                     [],
                 ),
-                'bcc' => new \external_multiple_structure(
-                    new \external_value(PARAM_INT),
+                'bcc' => new external_multiple_structure(
+                    new external_value(PARAM_INT),
                     'Ids of BCC recipients.',
                     VALUE_DEFAULT,
                     [],
                 ),
-                'subject' => new \external_value(PARAM_RAW, 'Subject of the message'),
-                'content' => new \external_value(PARAM_RAW, 'Content of the message'),
-                'format' => new \external_format_value('Format of the message'),
-                'draftitemid' => new \external_value(PARAM_INT, 'Id of the file draft item.'),
+                'subject' => new external_value(PARAM_RAW, 'Subject of the message'),
+                'content' => new external_value(PARAM_RAW, 'Content of the message'),
+                'format' => new external_format_value('Format of the message'),
+                'draftitemid' => new external_value(PARAM_INT, 'Id of the file draft item.'),
             ]),
         ]);
     }
@@ -1609,8 +1617,8 @@ class external extends \external_api {
     }
 
     public static function send_message_parameters() {
-        return new \external_function_parameters([
-            'messageid' => new \external_value(PARAM_INT, 'Id of the message', VALUE_DEFAULT, 0),
+        return new external_function_parameters([
+            'messageid' => new external_value(PARAM_INT, 'Id of the message', VALUE_DEFAULT, 0),
         ]);
     }
 
@@ -1673,11 +1681,11 @@ class external extends \external_api {
     /**
      * Validates user and parameters.
      *
-     * @param \external_function_parameters $description Description of function parameters.
+     * @param external_function_parameters $description Description of function parameters.
      * @param array $args Argument list of function obtanied by calling func_get_args().
      * @return mixed[] Validated parameters.
      */
-    private static function validate_call(\external_function_parameters $description, array $args): array {
+    private static function validate_call(external_function_parameters $description, array $args): array {
         self::validate_context(\context_system::instance());
         if (!settings::is_installed()) {
             throw new exception('errorpluginnotinstalled');

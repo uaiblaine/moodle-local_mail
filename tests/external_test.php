@@ -1,6 +1,6 @@
 <?php
 /*
- * SPDX-FileCopyrightText: 2017-2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2017-2026 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2021 Marc Català <reskit@gmail.com>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
  *
@@ -8,6 +8,8 @@
  */
 
 namespace local_mail;
+
+use core_external\util;
 
 /**
  * @covers \local_mail\external
@@ -640,8 +642,8 @@ final class external_test extends test\testcase {
             'deleted' => (bool) $message2->deleted($user1),
             'course' => [
                 'id' => $course->id,
-                'shortname' => external_format_string($course->shortname, $course->get_context()),
-                'fullname' => external_format_string($course->fullname, $course->get_context()),
+                'shortname' => util::format_string($course->shortname, $course->get_context()),
+                'fullname' => util::format_string($course->fullname, $course->get_context()),
                 'visible' => $course->visible,
                 'groupmode' => $course->groupmode,
             ],
