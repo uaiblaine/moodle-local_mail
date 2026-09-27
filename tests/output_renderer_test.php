@@ -1,7 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -169,6 +169,8 @@ final class output_renderer_test extends test\testcase {
 
     public function test_svelte_script(): void {
         global $CFG, $PAGE, $OUTPUT;
+
+        $PAGE->set_url(new \moodle_url('/local/mail/view.php'));
 
         $renderer = $PAGE->get_renderer('local_mail');
 
