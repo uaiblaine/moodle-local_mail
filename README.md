@@ -16,7 +16,7 @@ Project page: https://moodle.org/plugins/local_mail
 Unpack archive inside `/path/to/moodle/local/mail`
 
 For general instructions on installing plugins see:
-https://docs.moodle.org/401/en/Installing_plugins
+https://docs.moodle.org/503/en/Installing_plugins
 
 ## Contributing
 
