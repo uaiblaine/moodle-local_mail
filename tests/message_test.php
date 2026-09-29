@@ -187,6 +187,15 @@ final class message_test extends test\testcase {
 
         self::assertEquals($message1, message::get($message1->id));
 
+        // Message with deleted content of the sender.
+
+        $message1->set_deleted($user1, message::DELETED_CONTENT);
+        $message = message::get($message1->id);
+
+        self::assertEquals(strings::get('deletedmessagesubject'), $message->subject);
+        self::assertEquals(strings::get('deletedmessagecontent'), $message->content);
+        self::assertEquals(FORMAT_PLAIN, $message->format);
+
         // Missing message.
         try {
             message::get(123);
@@ -749,6 +758,13 @@ final class message_test extends test\testcase {
         $message = message::create($data);
         $message->send($time);
         $message->set_labels($user2, [$label]);
+
+        // Set starred to the same status.
+
+        $message->set_starred($user2, false);
+
+        self::assertFalse($message->starred($user2));
+        self::assert_message($message);
 
         // Set starred.
 
