@@ -1,7 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -27,7 +27,7 @@ final class backup_test extends test\testcase {
 
         set_config('enablebackup', 1, 'local_mail');
 
-        self::generate_random_data(true);
+        self::generate_data();
         self::setAdminUser();
 
         foreach (array_keys(get_courses()) as $oldcourseid) {
@@ -48,10 +48,10 @@ final class backup_test extends test\testcase {
             // Backup course.
             $backupid = self::backup_course($oldcourseid, true);
 
-            // Delete the course and a random label.
+            // Delete the course and the first label.
             delete_course($oldcourseid, false);
             if ($oldmessagelabels) {
-                label::get(self::random_item($oldmessagelabels)->labelid)->delete();
+                label::get(reset($oldmessagelabels)->labelid)->delete();
             }
 
             // Restore course.

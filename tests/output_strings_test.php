@@ -1,7 +1,7 @@
 <?php
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -28,7 +28,8 @@ final class output_strings_test extends test\testcase {
 
     public function test_get_many(): void {
         $strings = self::load_strings();
-        $ids = self::random_items(array_keys($strings), 10);
+        $ids = array_keys($strings);
+        $ids = [...array_slice($ids, 0, 5), ...array_slice($ids, -5)];
         self::assertEquals(
             array_intersect_key($strings, array_combine($ids, $ids)),
             output\strings::get_many($ids)

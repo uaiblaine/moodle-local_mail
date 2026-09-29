@@ -1,6 +1,6 @@
 <?php
 /*
- * SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2025-2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -84,7 +84,7 @@ final class privacy_provider_test extends test\testcase {
     }
 
     public function test_get_contexts_for_userid(): void {
-        [$users, $messages] = self::generate_random_data(true);
+        ['users' => $users, 'messages' => $messages] = self::generate_data();
 
         foreach ($users as $user) {
             $courses = [];
@@ -123,7 +123,7 @@ final class privacy_provider_test extends test\testcase {
     }
 
     public function test_get_users_in_context(): void {
-        [$users, $messages] = self::generate_random_data(true);
+        ['users' => $users, 'messages' => $messages] = self::generate_data();
 
         foreach (get_courses() as $course) {
             $courseusers = [];
@@ -170,7 +170,7 @@ final class privacy_provider_test extends test\testcase {
     }
 
     public function test_export_user_data(): void {
-        [$users, $messages] = self::generate_random_data(true);
+        ['users' => $users, 'messages' => $messages] = self::generate_data();
 
         $contexts = [\context_system::instance()];
         foreach (get_courses() as $course) {
@@ -253,7 +253,7 @@ final class privacy_provider_test extends test\testcase {
     }
 
     public function test_delete_data_for_all_users_in_context(): void {
-        [$users, $messages] = self::generate_random_data(true);
+        ['users' => $users, 'messages' => $messages] = self::generate_data();
 
         $course = $messages[0]->course;
         $context = $course->get_context();
@@ -277,7 +277,7 @@ final class privacy_provider_test extends test\testcase {
     }
 
     public function test_delete_data_for_user(): void {
-        [$users, $messages] = self::generate_random_data(true);
+        ['users' => $users, 'messages' => $messages] = self::generate_data();
 
         // Course context.
 
@@ -307,7 +307,7 @@ final class privacy_provider_test extends test\testcase {
     }
 
     public function test_delete_data_for_users(): void {
-        [$users, $messages] = self::generate_random_data(true);
+        ['users' => $users, 'messages' => $messages] = self::generate_data();
 
         $course = $messages[0]->course;
         $context = $course->get_context();
