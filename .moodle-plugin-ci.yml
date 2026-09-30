@@ -1,0 +1,7 @@
+# Exclude client-side code and local artifacts from all moodle-plugin-ci
+# commands (CodeSniffer, PHPUnit coverage, etc.). The same exclusions are
+# in .phpcs.xml and .gitignore.
+filter:
+  notPaths:
+    - svelte
+    - coverage
