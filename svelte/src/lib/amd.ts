@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import type * as TinyMCE from '../../../../../lib/editor/tiny/js/tinymce/tinymce.d.ts';
+import type * as TinyMCE from 'tinymce';
 
 /** Module "core/ajax" */
 export interface CoreAjax {
