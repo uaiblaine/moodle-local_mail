@@ -14,16 +14,16 @@ use local_mail\output\strings;
 
 class message {
     // Deleted stataus constants.
-    const NOT_DELETED = 0;
-    const DELETED = 1;
-    const DELETED_FOREVER = 2;
-    const DELETED_CONTENT = 3;
+    public const NOT_DELETED = 0;
+    public const DELETED = 1;
+    public const DELETED_FOREVER = 2;
+    public const DELETED_CONTENT = 3;
 
     // Role constants.
-    const ROLE_FROM = 1;
-    const ROLE_TO = 2;
-    const ROLE_CC = 3;
-    const ROLE_BCC = 4;
+    public const ROLE_FROM = 1;
+    public const ROLE_TO = 2;
+    public const ROLE_CC = 3;
+    public const ROLE_BCC = 4;
 
     /** @var int Message ID. */
     public int $id;

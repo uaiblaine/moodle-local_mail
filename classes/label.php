@@ -12,7 +12,7 @@ namespace local_mail;
 
 class label {
     /** @var string[] List of valid colors. */
-    const COLORS = ['gray', 'blue', 'indigo', 'purple', 'pink', 'red', 'orange', 'yellow', 'green', 'teal', 'cyan'];
+    public const COLORS = ['gray', 'blue', 'indigo', 'purple', 'pink', 'red', 'orange', 'yellow', 'green', 'teal', 'cyan'];
 
     /** @var int Label ID. */
     public int $id;

@@ -64,8 +64,7 @@ See: https://moodledev.io/general/development/tools/phpcs
 
 Install latest Moodle rules:
 ```
-composer global config minimum-stability dev
-composer global require moodlehq/moodle-cs
+composer global require moodlehq/moodle-cs:3.7
 ```
 
 Check code:
