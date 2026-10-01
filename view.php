@@ -22,6 +22,7 @@ global $PAGE;
 $appid = optional_param('appid', '', PARAM_NOTAGS);
 $applang = optional_param('applang', '', PARAM_LANG);
 $appzoom = optional_param('appzoom', 0, PARAM_FLOAT);
+$appdarkmode = optional_param('appdarkmode', false, PARAM_BOOL);
 
 // Use languuage from the app.
 if ($appid != '' && $applang != '') {
@@ -35,6 +36,15 @@ if ($appzoom > 0) {
         'style.setProperty("--appzoom", "' . $appzoom . '");' .
         'style.setProperty("zoom", "var(--appzoom)");'
     );
+}
+
+// Use dark mode if enabled in the app.
+if ($appdarkmode) {
+    $PAGE->requires->js_init_code('
+        const root = document.documentElement;
+        root.setAttribute("data-colourmode", "dark");
+        root.setAttribute("data-bs-theme", "dark");
+    ');
 }
 
 require_login(null, false);

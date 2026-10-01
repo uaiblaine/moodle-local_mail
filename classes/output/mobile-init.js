@@ -45,6 +45,7 @@ class AddonLocalMaiMainMenuHandler {
                     title: 'plugin.local_mail.pluginname',
                     args: {
                         appzoom: parseFloat(root.style.getPropertyValue('--zoom-ratio')),
+                        appdarkmode: root.classList.contains('dark') ? 1 : 0,
                     },
                 };
             },
