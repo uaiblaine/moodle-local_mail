@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -40,11 +40,11 @@ class AddonLocalMaiMainMenuHandler {
             icon: 'far-envelope',
             page: 'siteplugins/content/local_mail/view/0',
             get pageParams() {
-                const zoomLevel = document.documentElement.style.getPropertyValue('--zoom-level');
+                const root = document.documentElement;
                 return {
                     title: 'plugin.local_mail.pluginname',
                     args: {
-                        appzoom: parseInt(zoomLevel) / 100,
+                        appzoom: parseFloat(root.style.getPropertyValue('--zoom-ratio')),
                     },
                 };
             },

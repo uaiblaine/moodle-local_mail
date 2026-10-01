@@ -46,7 +46,8 @@ final class output_mobile_test extends test\testcase {
                 'templates' => [
                     [
                         'id' => 'main',
-                        'html' => '<core-iframe src="' . $CFG->wwwroot . '/local/mail/view.php?t=inbox&m=123"></core-iframe>',
+                        'html' => '<core-iframe src="' . $CFG->wwwroot . '/local/mail/view.php?t=inbox&m=123"'
+                            . ' style="display: block; height: 100%"></core-iframe>',
                     ],
                 ],
                 'javascript' => file_get_contents("$CFG->dirroot/local/mail/classes/output/mobile-view.js"),

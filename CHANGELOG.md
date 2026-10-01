@@ -9,6 +9,7 @@
 ### Fixed
 
 - Alternative full name not shown to users with the `moodle/site:viewfullnames` capability (e.g. teachers).
+- Compatibility with current Moodle App version (5.2).
 
 ### Removed
 
