@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
-SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
+SPDX-FileCopyrightText: 2025-2026 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -17,7 +17,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     export let reference: Reference;
 </script>
 
-<div class="card mb-4">
+<div class="local-mail-message-reference card mb-4">
     <div class="card-body p-3 px-xl-4">
         <h5 class="h5 card-title mb-3">
             {reference.subject}
@@ -45,6 +45,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 </div>
 
 <style>
+    .local-mail-message-reference {
+        background: transparent;
+    }
+
     .local-mail-message-reference-user-and-date {
         margin-bottom: -0.25rem;
     }

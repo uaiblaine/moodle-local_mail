@@ -5,6 +5,7 @@
 ### Added
 
 - Compatibility with Moodle 5.3.
+- Dark mode support.
 
 ### Fixed
 

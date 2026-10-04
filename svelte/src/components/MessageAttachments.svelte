@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
-SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
+SPDX-FileCopyrightText: 2025-2026 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -23,7 +23,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {#each message.attachments as file}
         <a
             href={file.fileurl}
-            class="local-mail-message-attachments-file btn btn-light d-flex align-items-center px-2 py-1 mr-3 mb-3"
+            class="local-mail-message-attachments-file btn bg-light d-flex align-items-center px-2 py-1 mr-3 mb-3"
         >
             <img
                 aria-hidden="true"
@@ -32,6 +32,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 width="24"
                 height="24"
                 class="flex-shrink-0"
+            />
+            <i
+                class="fa fa-file d-none justify-content-center align-items-center flex-shrink-0"
+                aria-hidden="true"
+                style="width: 24px; height: 24px"
             />
             <i
                 class="fa fa-download d-flex justify-content-center align-items-center flex-shrink-0"
@@ -47,7 +52,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     {#if message.attachments.length > 1}
         <a
             href={downloadAllUrl(message.id)}
-            class="btn btn-light d-flex align-items-center p-2 mr-3 mb-3"
+            class="btn btn-outline d-flex align-items-center p-2 mr-3 mb-3"
         >
             <i
                 class="fa fa-download d-flex justify-content-center align-items-center flex-shrink-0"
@@ -74,6 +79,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
     .local-mail-message-attachments-file:not(:hover) .fa-download {
         display: none !important;
     }
+
+    [data-bs-theme='dark'] .local-mail-message-attachments-file:not(:hover) .fa-file {
+        display: flex !important;
+    }
+
+    [data-bs-theme='dark'] .local-mail-message-attachments-file img,
     .local-mail-message-attachments-file:hover img {
         display: none !important;
     }
