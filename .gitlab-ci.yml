@@ -32,7 +32,7 @@ variables:
     # Install nvm (Node Version Manager). moodle-plugin-ci install uses it
     # (when NVM_DIR is set) to install the Node.js version pinned in the
     # cloned Moodle's .nvmrc (currently lts/jod, Node 22, for both 4.5 and
-    # main). NODE_VERSION can override it if ever needed.
+    # 5.3). NODE_VERSION can override it if ever needed.
     - export NVM_DIR="$HOME/.nvm"
     - mkdir -p "$NVM_DIR"
     - curl -sSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.8/install.sh | bash
@@ -105,8 +105,8 @@ phpunit:
       - MOODLE_BRANCH: "MOODLE_405_STABLE"
         PHP_IMAGE: "8.1"
         DB_IMAGE: "mariadb:11"
-      # Execution 2: Moodle main (development), PHP 8.4, PostgreSQL.
-      - MOODLE_BRANCH: "main"
+      # Execution 2: Moodle 5.3 (LTS), PHP 8.4, PostgreSQL.
+      - MOODLE_BRANCH: "MOODLE_503_STABLE"
         PHP_IMAGE: "8.4"
         DB_IMAGE: "postgres:17"
   script:
