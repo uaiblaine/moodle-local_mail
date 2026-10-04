@@ -173,6 +173,10 @@ class message_data {
      * @return self Initial data for the new message.
      */
     public static function new(course $course, user $sender): self {
+        global $CFG;
+
+        require_once("{$CFG->libdir}/filelib.php");
+
         $data = new self();
         $data->sender = $sender;
         $data->course = $course;
