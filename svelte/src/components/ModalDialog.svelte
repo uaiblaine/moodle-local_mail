@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
-SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
+SPDX-FileCopyrightText: 2025-2026 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -55,13 +55,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 <h5 class="modal-title">
                     {title}
                 </h5>
-                <button
-                    type="button"
-                    class="close d-flex align-items-center justify-content ml-auto"
-                    aria-label={cancelText}
-                    on:click={onCancel}
-                >
-                    <span aria-hidden="true" class="fa fa-times" />
+                <button type="button" class="btn-close" aria-label={cancelText} on:click={onCancel}>
+                    <!-- Hack alert: visually-hidden and aria-hidden prevents a double cross in Bootstrap 5 -->
+                    <span aria-hidden="true" class="visually-hidden">&times</span>
                 </button>
             </div>
             <div class="modal-body">
