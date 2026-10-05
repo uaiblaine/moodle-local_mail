@@ -2,6 +2,8 @@
 /*
  * SPDX-FileCopyrightText: 2017-2026 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
+ * SPDX-FileCopyrightText: 2026 Gaël B <g.bordas@boginfo.fr>
+ * SPDX-FileCopyrightText: 2026 Jorge Matamala <jorge.matamala@iacc.cl>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
