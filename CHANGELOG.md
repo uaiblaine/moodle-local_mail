@@ -11,9 +11,9 @@ navbar badge — is unchanged.
 - Dark mode support, from upstream: label colours, dropdowns and the modal
   dialogue follow `data-bs-theme`, and the mailbox opened from the Moodle App
   switches to dark mode when the app asks for it.
-- Upstream's Moodle 5.3 compatibility work (deprecated classes and functions
-  replaced, styles adjusted). `$plugin->supported` still ends at 5.2: this fork
-  has not been tested on 5.3 yet.
+- Moodle 5.3 support. Upstream's compatibility work (deprecated classes and
+  functions replaced, styles adjusted) arrives with the merge, and
+  `$plugin->supported` now ends at 5.3, with a CI job for it.
 
 ### Fixed
 

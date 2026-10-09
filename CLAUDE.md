@@ -13,10 +13,10 @@ frontend and a full external-function API. It owns five tables
 carries a full metadata + request + userlist privacy provider. The sibling
 plugin `message_localmail` (`~/dev/moodle-message_localmail`) is a **message
 processor that delivers core notifications into this mailbox** and depends on
-this plugin. Supports Moodle **4.5 through 5.2** (`$plugin->requires =
-2024100700`, `$plugin->supported = [405, 502]`); CI runs four jobs (5.02 full
-matrix, then 5.01 / 5.00 / 4.05 with `one-db-only`) — **update those jobs when
-`supported` changes**. Mounted into m405, m501 and m502 at `local/mail`.
+this plugin. Supports Moodle **4.5 through 5.3** (`$plugin->requires =
+2024100700`, `$plugin->supported = [405, 503]`); CI runs five jobs (5.03 full
+matrix, then 5.02 / 5.01 / 5.00 / 4.05 with `one-db-only`) — **update those jobs
+when `supported` changes**. Mounted into m405, m501, m502 and m503 at `local/mail`.
 
 **This is a fork of `gitlab.com/moodle-local_mail/moodle-local_mail`, and as of
 2026-08-13 it diverges permanently.** Diff size against upstream is no longer a

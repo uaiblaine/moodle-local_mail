@@ -13,9 +13,8 @@ Project page: https://moodle.org/plugins/local_mail
 
 ## Compatibility
 
-This fork is developed and tested against Moodle 4.5, 5.0, 5.1 and 5.2
-(`$plugin->supported = [405, 502]`). It still installs on Moodle 4.1 and later,
-but only the branches above are covered by CI.
+This fork is developed and tested against Moodle 4.5, 5.0, 5.1, 5.2 and 5.3
+(`$plugin->supported = [405, 503]`), and requires Moodle 4.5.
 
 ## Installation
 
