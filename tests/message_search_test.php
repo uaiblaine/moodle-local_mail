@@ -16,7 +16,7 @@
 
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2025-2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -33,20 +33,20 @@ namespace local_mail;
  */
 final class message_search_test extends test\testcase {
     public function test_count(): void {
-        [$users, $messages] = self::generate_random_data(true);
+        $data = self::generate_data();
 
-        foreach ($this->messages_search_cases($users, $messages) as $search) {
-            $expected = count(self::search_result($messages, $search));
+        foreach (self::messages_search_cases($data) as $search) {
+            $expected = count(self::search_result($data['messages'], $search));
             self::assertEquals($expected, $search->count(), $search);
         }
     }
 
     public function test_count_per_course(): void {
-        [$users, $messages] = self::generate_random_data(true);
+        $data = self::generate_data();
 
-        foreach ($this->messages_search_cases($users, $messages) as $search) {
+        foreach (self::messages_search_cases($data) as $search) {
             $expected = [];
-            foreach (self::search_result($messages, $search) as $message) {
+            foreach (self::search_result($data['messages'], $search) as $message) {
                 $expected[$message->course->id] = ($expected[$message->course->id] ?? 0) + 1;
             }
             self::assertEquals($expected, $search->count_per_course(), $search);
@@ -54,14 +54,15 @@ final class message_search_test extends test\testcase {
     }
 
     public function test_count_per_label(): void {
-        [$users, $messages] = self::generate_random_data(true);
+        $data = self::generate_data();
 
-        foreach ($this->messages_search_cases($users, $messages) as $search) {
+        foreach (self::messages_search_cases($data) as $search) {
             $expected = [];
-            foreach (self::search_result($messages, $search) as $message) {
+            foreach (self::search_result($data['messages'], $search) as $message) {
                 foreach ($message->get_labels($search->user) as $label) {
                     if (!$search->label || $search->label->id == $label->id) {
-                        $expected[$label->id][$message->course->id] = ($expected[$label->id][$message->course->id] ?? 0) + 1;
+                        $expected[$label->id][$message->course->id] =
+                            ($expected[$label->id][$message->course->id] ?? 0) + 1;
                     }
                 }
             }
@@ -70,10 +71,10 @@ final class message_search_test extends test\testcase {
     }
 
     public function test_get(): void {
-        [$users, $messages] = self::generate_random_data(true);
+        $data = self::generate_data();
 
-        foreach ($this->messages_search_cases($users, $messages) as $search) {
-            $expected = self::search_result($messages, $search);
+        foreach (self::messages_search_cases($data) as $search) {
+            $expected = self::search_result($data['messages'], $search);
             $result = $search->get(0, 0);
             self::assert_array_of_objects($expected, $result, $search);
 
@@ -85,7 +86,7 @@ final class message_search_test extends test\testcase {
 
         // Invalid startid.
         try {
-            $search = new message_search($users[0]);
+            $search = new message_search($data['users'][0]);
             $search->startid = 123;
             $search->get();
             self::fail();
@@ -96,7 +97,7 @@ final class message_search_test extends test\testcase {
 
         // Invalid stopid.
         try {
-            $search = new message_search($users[0]);
+            $search = new message_search($data['users'][0]);
             $search->stopid = 123;
             $search->get();
             self::fail();
@@ -106,9 +107,8 @@ final class message_search_test extends test\testcase {
         }
     }
 
-
     /**
-     * Returns thee generated messages filtered by search parameters.
+     * Returns the generated messages filtered by search parameters.
      *
      * @param message[] $messages Array of messages.
      * @param message_search $search Search parameters.

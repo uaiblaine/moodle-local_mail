@@ -13,16 +13,15 @@ Project page: https://moodle.org/plugins/local_mail
 
 ## Compatibility
 
-This fork is developed and tested against Moodle 4.5, 5.0, 5.1 and 5.2
-(`$plugin->supported = [405, 502]`). It still installs on Moodle 4.1 and later,
-but only the branches above are covered by CI.
+This fork is developed and tested against Moodle 4.5, 5.0, 5.1, 5.2 and 5.3
+(`$plugin->supported = [405, 503]`), and requires Moodle 4.5.
 
 ## Installation
 
 Unpack archive inside `/path/to/moodle/local/mail`
 
 For general instructions on installing plugins see:
-https://docs.moodle.org/401/en/Installing_plugins
+https://docs.moodle.org/503/en/Installing_plugins
 
 ## Contributing
 
@@ -40,6 +39,8 @@ Contributors:
 - Daniel Barnett
 - Manuel Cagigas
 - Russell Smith
+- Gaël B
+- Jorge Matamala
 
 Version 2.0 of the project implemented by the "Recovery, Transformation and Resilience Plan". Funded by the European Union - Next Generation EU. Produced by the UNIMOODLE University Group: Universities of Valladolid, Complutense de Madrid, UPV/EHU, León, Salamanca, Illes Balears, València, Rey Juan Carlos, La Laguna, Zaragoza, Málaga, Córdoba, Extremadura, Vigo, Las Palmas de Gran Canaria and Burgos.
 

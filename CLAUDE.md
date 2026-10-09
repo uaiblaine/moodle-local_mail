@@ -13,10 +13,10 @@ frontend and a full external-function API. It owns five tables
 carries a full metadata + request + userlist privacy provider. The sibling
 plugin `message_localmail` (`~/dev/moodle-message_localmail`) is a **message
 processor that delivers core notifications into this mailbox** and depends on
-this plugin. Supports Moodle **4.5 through 5.2** (`$plugin->requires =
-2022112800`, `$plugin->supported = [405, 502]`); CI runs four jobs (5.02 full
-matrix, then 5.01 / 5.00 / 4.05 with `one-db-only`) — **update those jobs when
-`supported` changes**. Mounted into m405, m501 and m502 at `local/mail`.
+this plugin. Supports Moodle **4.5 through 5.3** (`$plugin->requires =
+2024100700`, `$plugin->supported = [405, 503]`); CI runs five jobs (5.03 full
+matrix, then 5.02 / 5.01 / 5.00 / 4.05 with `one-db-only`) — **update those jobs
+when `supported` changes**. Mounted into m405, m501, m502 and m503 at `local/mail`.
 
 **This is a fork of `gitlab.com/moodle-local_mail/moodle-local_mail`, and as of
 2026-08-13 it diverges permanently.** Diff size against upstream is no longer a
@@ -63,14 +63,11 @@ cd svelte && npm run build               # rebuild the mailbox bundle (see below
 ```
 
 The host carries no node, so the Svelte gate reproduces through a container. This
-runs what `.github/workflows/svelte.yml` runs, from the plugin root — the mount
-path puts the plugin where its TinyMCE type import expects it, and the bundle it
-writes into `svelte/build/` is the one to commit:
+runs what `.github/workflows/svelte.yml` runs, from the plugin root, and the
+bundle it writes into `svelte/build/` is the one to commit:
 
 ```sh
-docker run --rm -v "$PWD":/moodle/public/local/mail \
-  -v "$HOME/dev/moodle-502/public/lib/editor/tiny/js/tinymce/tinymce.d.ts":/moodle/public/lib/editor/tiny/js/tinymce/tinymce.d.ts:ro \
-  -w /moodle/public/local/mail/svelte node:22-alpine \
+docker run --rm -v "$PWD":/plugin -w /plugin/svelte node:22-alpine \
   sh -c 'npm ci && npm run lint && npm run check && npm run build'
 git status --porcelain -- svelte/build/   # anything listed here must be committed
 ```
@@ -105,12 +102,7 @@ but forgetting it is now an error instead of silence. It used to be silence
 because the filenames are content-hashed and a stale manifest loads the
 **previous** bundle rather than erroring.
 
-Two things about that workflow are load-bearing. It checks the plugin out at
-`local/mail`, because `svelte/src/lib/amd.ts` imports the TinyMCE types five
-levels up, which is the Moodle root on 4.5 and `public/` on 5.x — at the
-workspace root that path escapes the checkout, and `npm run check` reports two
-errors that are an artefact of the layout rather than a defect. And it detects
-staleness with `git status`, not `git diff`: vite empties the output directory,
+One thing about that workflow is load-bearing: it detects staleness with `git status`, not `git diff`: vite empties the output directory,
 so a rebuild leaves the new bundle **untracked**, which `git diff` does not
 report. `npm run check` and `npm run lint` both fail on warnings, per the fleet
 zero-warning policy.

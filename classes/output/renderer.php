@@ -17,7 +17,7 @@
 /*
  * SPDX-FileCopyrightText: 2012-2014 Institut Obert de Catalunya <https://ioc.gencat.cat>
  * SPDX-FileCopyrightText: 2014-2019 Marc Català <reskit@gmail.com>
- * SPDX-FileCopyrightText: 2016-2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2016-2026 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -36,6 +36,19 @@ use local_mail\user;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class renderer extends \plugin_renderer_base {
+    /**
+     * Helper method that returns the renderer instance with the correct return type.
+     *
+     * @return static
+     */
+    public static function get_instance(): static {
+        // phpcs:ignore
+        global $PAGE;
+
+        // phpcs:ignore
+        return $PAGE->get_renderer('local_mail');
+    }
+
     /**
      * Returns the URL of the icon representing the format of a file.
      *

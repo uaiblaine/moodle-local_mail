@@ -1,5 +1,6 @@
 /.phpunit.cache
 /coverage
+/coverage.xml
 /phpunit.xml
 /svelte/build/source-map.html
 /svelte/build/*.map

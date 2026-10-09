@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
-SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
+SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -139,7 +139,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <div class="list-group-item d-sm-flex px-2 py-2">
                 <div class="flex-grow-1 mx-2">
                     <select
-                        class="form-control custom-select w-100 text-truncate bg-transparent"
+                        class="form-control form-select w-100 text-truncate bg-transparent"
                         bind:value={roleid}
                         on:change={() => search(false)}
                     >

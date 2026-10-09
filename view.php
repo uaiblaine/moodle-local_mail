@@ -18,7 +18,7 @@
  * SPDX-FileCopyrightText: 2012-2014 Institut Obert de Catalunya <https://ioc.gencat.cat>
  * SPDX-FileCopyrightText: 2014-2019 Marc Català <reskit@gmail.com>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -45,6 +45,7 @@ global $PAGE;
 $appid = optional_param('appid', '', PARAM_NOTAGS);
 $applang = optional_param('applang', '', PARAM_LANG);
 $appzoom = optional_param('appzoom', 0, PARAM_FLOAT);
+$appdarkmode = optional_param('appdarkmode', false, PARAM_BOOL);
 
 // Use languuage from the app.
 if ($appid != '' && $applang != '') {
@@ -58,6 +59,15 @@ if ($appzoom > 0) {
         'style.setProperty("--appzoom", "' . $appzoom . '");' .
         'style.setProperty("zoom", "var(--appzoom)");'
     );
+}
+
+// Use dark mode if enabled in the app.
+if ($appdarkmode) {
+    $PAGE->requires->js_init_code('
+        const root = document.documentElement;
+        root.setAttribute("data-colourmode", "dark");
+        root.setAttribute("data-bs-theme", "dark");
+    ');
 }
 
 require_login(null, false);
@@ -85,7 +95,7 @@ if ($user && course::get_by_user($user)) {
     ];
 
     // Prepare script and styles before sending header.
-    $renderer = $PAGE->get_renderer('local_mail');
+    $renderer = \local_mail\output\renderer::get_instance();
     $sveltescript = $renderer->svelte_script('src/view.ts');
 
     // Print content.

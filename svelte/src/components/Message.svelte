@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
-SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
+SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -31,7 +31,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <HtmlHead javascript={message.javascript} />
 
-<div class="card">
+<div class="local-mail-message card">
     <div class="card-body p-3 px-xl-4">
         <h3 class="h4 card-title mb-3 mb-md-2">
             {message.subject}
@@ -64,15 +64,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
 </div>
 
 {#if message.references.length > 0}
-    <div class="alert alert-secondary mt-4 mb-4 text-center">
+    <h4 class="local-mail-message-references-heading">
         {$store.strings.references}
-    </div>
+    </h4>
     {#each message.references as reference (reference.id)}
         <MessageReference strings={$store.strings} {reference} />
     {/each}
 {/if}
 
 <style>
+    .local-mail-message {
+        background: transparent;
+    }
+
     .local-mail-message-actions {
         margin-left: 1rem;
         margin-right: -0.5rem;
@@ -88,5 +92,28 @@ SPDX-License-Identifier: GPL-3.0-or-later
         margin-top: 0.5rem;
         margin-left: -0.5rem;
         margin-right: -0.5rem;
+    }
+
+    .local-mail-message-references-heading {
+        display: flex;
+        text-align: center;
+        align-items: center;
+        margin: 2rem 0;
+        font-size: 1rem;
+    }
+
+    .local-mail-message-references-heading::before,
+    .local-mail-message-references-heading::after {
+        content: '';
+        flex: 1;
+        border-bottom: var(--bs-border-width, 1px) solid var(--bs-border-color, #e5e5e5);
+    }
+
+    .local-mail-message-references-heading::before {
+        margin-right: 1em;
+    }
+
+    .local-mail-message-references-heading::after {
+        margin-left: 1em;
     }
 </style>

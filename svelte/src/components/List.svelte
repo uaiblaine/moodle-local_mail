@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
-SPDX-FileCopyrightText: 2025 Albert Gasset <albertgasset@fsfe.org>
+SPDX-FileCopyrightText: 2025-2026 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -106,10 +106,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 {/key}
 
 <style>
-    .local-mail-list-message {
-        color: var(--dark) !important;
-    }
-
     .local-mail-list-message:focus,
     .local-mail-list-message :global(.btn:focus) {
         z-index: 3;

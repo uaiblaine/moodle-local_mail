@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -15,26 +15,11 @@ const messageHandler = async (event) => {
     if (event.data.addon != 'local_mail') {
         return;
     }
+
     if (event.data.setLoading != null) {
         const toolbar = getPluginElement()?.querySelector('ion-toolbar');
-        if (toolbar) {
-            let spinner = toolbar.querySelector('ion-spinner');
-            if (!spinner) {
-                spinner = document.createElement('ion-spinner');
-                spinner.setAttribute('slot', 'end');
-                spinner.setAttribute('color', 'primary');
-                spinner.setAttribute('paused', 'true');
-                spinner.style.marginRight = '15px';
-                spinner.style.opacity = 0;
-                spinner.style.transitionDuration = '400ms';
-                spinner.style.transitionProperty = 'opacity';
-                spinner.addEventListener("transitionend", () => {
-                    if (spinner.style.opacity == 0) {
-                        spinner.setAttribute('paused', 'true');
-                    }
-                });
-                toolbar.append(spinner);
-            }
+        const spinner = toolbar?.querySelector('ion-spinner');
+        if (spinner) {
             if (event.data.setLoading) {
                 spinner.setAttribute('paused', 'false');
                 spinner.style.opacity = 1;
@@ -43,12 +28,14 @@ const messageHandler = async (event) => {
             }
         }
     }
+
     if (event.data.setTitle != null) {
         const element = getPluginElement()?.querySelector('h1');
         if (element) {
             element.textContent = event.data.setTitle;
         }
     }
+
     if (event.data.captureBack != null) {
         const element = getPluginElement()?.querySelector('ion-back-button');
         if (element) {
@@ -59,6 +46,7 @@ const messageHandler = async (event) => {
             }
         }
     }
+
     if (event.data.openUrl) {
         const action = await that.CoreContentLinksHelperProvider.getFirstValidActionFor(
             event.data.openUrl,
@@ -80,9 +68,25 @@ const backButtonHandler = (event) => {
     }
 };
 
-that.ionViewWillEnter = () => {
-    window.addEventListener('message', messageHandler);
-};
+const toolbar = getPluginElement()?.querySelector('ion-toolbar');
+if (toolbar) {
+    const spinner = document.createElement('ion-spinner');
+    spinner.setAttribute('slot', 'end');
+    spinner.setAttribute('color', 'dark');
+    spinner.setAttribute('paused', 'true');
+    spinner.style.marginRight = '15px';
+    spinner.style.opacity = 0;
+    spinner.style.transitionDuration = '400ms';
+    spinner.style.transitionProperty = 'opacity';
+    spinner.addEventListener("transitionend", () => {
+        if (spinner.style.opacity == 0) {
+            spinner.setAttribute('paused', 'true');
+        }
+    });
+    toolbar.append(spinner);
+}
+
+window.addEventListener('message', messageHandler);
 
 that.ionViewWillLeave = () => {
     window.removeEventListener('message', messageHandler);

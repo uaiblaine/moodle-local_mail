@@ -16,16 +16,12 @@
 
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 namespace local_mail;
-
-defined('MOODLE_INTERNAL') || die;
-
-require_once("$CFG->dirroot/repository/lib.php");
 
 /**
  * Data for creating and updating messages.
@@ -132,12 +128,14 @@ class message_data {
     public static function file_options(): array {
         global $CFG;
 
-        $context = \context_system::instance();
+        require_once("$CFG->dirroot/repository/lib.php");
 
+        $context = \context_system::instance();
         $configmaxbytes = get_config('local_mail', 'maxbytes') ?: $CFG->maxbytes;
         $configmaxfiles = get_config('local_mail', 'maxfiles');
         $maxbytes = get_user_max_upload_file_size($context, $CFG->maxbytes, 0, $configmaxbytes);
         $maxfiles = is_numeric($configmaxfiles) ? (int) $configmaxfiles : 20;
+
         return [
             'accepted_types' => '*',
             'maxbytes' => $maxbytes,
@@ -206,6 +204,10 @@ class message_data {
      * @return self Initial data for the new message.
      */
     public static function new(course $course, user $sender): self {
+        global $CFG;
+
+        require_once("{$CFG->libdir}/filelib.php");
+
         $data = new self();
         $data->sender = $sender;
         $data->course = $course;

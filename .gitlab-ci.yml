@@ -1,0 +1,170 @@
+# GitLab CI configuration for the local_mail plugin.
+#
+# Runs the Moodle CodeSniffer (phpcs) and the PHPUnit tests (with code
+# coverage) using moodle-plugin-ci: https://github.com/moodlehq/moodle-plugin-ci
+
+stages:
+  - static
+  - unit
+
+variables:
+  MOODLE_REPO: "https://github.com/moodle/moodle.git"
+  # Plugin path, understood by all moodle-plugin-ci commands.
+  PLUGIN_DIR: "$CI_PROJECT_DIR"
+
+# Common setup: the moodlehq/moodle-php-apache image ships git, zip, the
+# pcov and xdebug coverage extensions and all PHP extensions required by
+# Moodle, but it does not include Composer.
+.setup:
+  image: moodlehq/moodle-php-apache:8.3
+  before_script:
+    # Install Composer (also to a user-writable location, in case the
+    # runner does not run as root).
+    - mkdir -p /tmp/bin
+    - curl -sSL https://getcomposer.org/installer | php -- --install-dir=/tmp/bin --filename=composer
+    # Install moodle-plugin-ci outside the plugin directory, so that it
+    # does not interfere with the code analysis of the plugin. Scripts
+    # are skipped because they only install the vnu.jar HTML validator
+    # (for `moodle-plugin-ci mustache`), which is not needed for
+    # phpcs/phpunit. Remove --no-scripts if Mustache lint is ever added.
+    - /tmp/bin/composer create-project -n --no-dev --prefer-dist --no-scripts moodlehq/moodle-plugin-ci /tmp/ci ^4
+    - export PATH="/tmp/bin:/tmp/ci/bin:/tmp/ci/vendor/bin:$PATH"
+    # Install nvm (Node Version Manager). moodle-plugin-ci install uses it
+    # (when NVM_DIR is set) to install the Node.js version pinned in the
+    # cloned Moodle's .nvmrc (currently lts/jod, Node 22, for both 4.5 and
+    # 5.3). NODE_VERSION can override it if ever needed.
+    - export NVM_DIR="$HOME/.nvm"
+    - mkdir -p "$NVM_DIR"
+    - curl -sSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.8/install.sh | bash
+    - . "$NVM_DIR/nvm.sh" --no-use
+
+codesniffer:
+  extends: .setup
+  stage: static
+  script:
+    # Use the plugin's own ruleset (.phpcs.xml), which enables the
+    # moodle-extra standard and relaxes some sniffs. See CONTRIBUTING.md.
+    - moodle-plugin-ci phpcs --standard="$CI_PROJECT_DIR/.phpcs.xml" --max-warnings 0
+
+# Check the Svelte code: TypeScript/Svelte diagnostics, linting, and that
+# the compiled files in svelte/build are up to date (they are rebuilt and
+# compared against the ones committed in the repository).
+svelte:
+  stage: static
+  # Node 22 (lts/jod), the version pinned by Moodle's .nvmrc. The build
+  # output is deterministic given the committed package-lock.json, so a
+  # different Node version would not produce false positives anyway.
+  # No PHP tooling is needed, hence a plain Node image instead of the
+  # .setup image (Composer, moodle-plugin-ci, nvm, ...).
+  image: node:22
+  script:
+    - cd svelte
+    # Deterministic install from the committed package-lock.json.
+    - npm ci
+    # TypeScript/Svelte diagnostics and linting (prettier + eslint).
+    - npm run check
+    - npm run lint
+    # Check that the compiled files are up to date: back up the committed
+    # build output, then rebuild in place (svelte/build), because the
+    # source maps embed paths relative to the output directory and Vite
+    # empties the directory first. diff -r also catches stale files
+    # present in the committed build but no longer produced by it.
+    - cp -a build /tmp/committed-build
+    - npm run build
+    - diff -r /tmp/committed-build build
+      || (echo "Compiled Svelte files do not match the sources. Run 'npm run build' in svelte/ and commit the result." && exit 1)
+
+phpunit:
+  extends: .setup
+  # Each matrix leg uses its own PHP version (the image is resolved using
+  # the PHP_IMAGE variable of the leg, overriding the .setup image).
+  image: "moodlehq/moodle-php-apache:$PHP_IMAGE"
+  stage: unit
+  services:
+    # Only the database needed by each matrix leg is started. The image
+    # name is expanded by the runner from the DB_IMAGE variable of the leg.
+    - name: "$DB_IMAGE"
+      alias: db
+  variables:
+    # Host name under which the job reaches the database service
+    # container (its alias). Constant for all matrix legs.
+    DB_HOST: "db"
+    # Service container initialisation variables. Each database image
+    # only reads the variables of its own family.
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+    MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "1"
+    MYSQL_CHARACTER_SET_SERVER: "utf8mb4"
+    MYSQL_COLLATION_SERVER: "utf8mb4_unicode_ci"
+  parallel:
+    matrix:
+      # Only the true test-matrix axes (Moodle branch, PHP version and
+      # database image) are declared here; the remaining database
+      # settings are derived from DB_IMAGE in the script.
+      # Execution 1: Moodle 4.5 LTS, PHP 8.1, MariaDB.
+      - MOODLE_BRANCH: "MOODLE_405_STABLE"
+        PHP_IMAGE: "8.1"
+        DB_IMAGE: "mariadb:11"
+      # Execution 2: Moodle 5.3 (LTS), PHP 8.4, PostgreSQL.
+      - MOODLE_BRANCH: "MOODLE_503_STABLE"
+        PHP_IMAGE: "8.4"
+        DB_IMAGE: "postgres:17"
+  script:
+    # Derive the database settings from the service image, so that the
+    # matrix can stay minimal. They are exported because moodle-plugin-ci
+    # reads them (DB, DB_USER, DB_PASS, DB_HOST, DB_PORT) from the
+    # environment. Must run before the steps below, which rely on $DB
+    # and $DB_PORT.
+    - |
+      case "$DB_IMAGE" in
+        postgres*) export DB=pgsql DB_PORT=5432 DB_USER=postgres DB_PASS=postgres ;;
+        *)          export DB=mariadb DB_PORT=3306 DB_USER=root DB_PASS= ;;
+      esac
+    # moodle-plugin-ci needs the database client to create the test
+    # database, but the moodlehq images only ship the MySQL/MariaDB
+    # client. Install the PostgreSQL client for the pgsql matrix leg
+    # only (the job runs as root, so no sudo needed).
+    - |
+      if [ "$DB" = "pgsql" ]; then
+        apt-get update -qq && apt-get install -y -qq postgresql-client
+      fi
+    # GitLab provides no health checks for service containers, so wait
+    # until the database port of this matrix leg is accepting connections.
+    - |
+      for i in $(seq 1 30); do
+        php -r 'exit(@fsockopen(getenv("DB_HOST"), (int)getenv("DB_PORT"), $e, $s, 2) ? 0 : 1);' && break
+        echo "Waiting for database $DB_HOST:$DB_PORT..."
+        sleep 2
+      done
+      php -r 'exit(@fsockopen(getenv("DB_HOST"), (int)getenv("DB_PORT"), $e, $s, 2) ? 0 : 1);' \
+        || (echo "Database $DB_HOST:$DB_PORT is not reachable" && exit 1)
+    # Clone Moodle and install it with the plugin in place, OUTSIDE the
+    # plugin directory. If the clone were inside $CI_PROJECT_DIR (the
+    # default when the job runs in the plugin repository), moodle-plugin-ci
+    # would mistake the core .feature files of the nested clone for the
+    # plugin's own Behat features and would wrongly initialise Behat
+    # (Behat site install + enable), which fails and wastes time. /tmp is
+    # used because it is private to the job: always clean (the clone would
+    # fail if the directory already existed) and always writable.
+    - moodle-plugin-ci install --plugin . --moodle /tmp/moodle --data /tmp/moodledata
+    # Run the tests against the plugin COPY inside the cloned Moodle, so
+    # that the component configuration generated by the install step
+    # (phpunit.xml with the local_mail_testsuite and the coverage lists
+    # from tests/coverage.php) is picked up automatically. The code
+    # coverage report (pcov) is then limited to the plugin sources. The
+    # text report is printed to the job log and the Clover XML report is
+    # stored as an artifact. Moodle 5.1+ uses a restructured layout with
+    # the web root in a public/ directory, so the location of the copy
+    # depends on the Moodle branch.
+    - |
+      if [ -f /tmp/moodle/public/version.php ]; then
+        MOODLE_PLUGIN=/tmp/moodle/public/local/mail
+      else
+        MOODLE_PLUGIN=/tmp/moodle/local/mail
+      fi
+    - moodle-plugin-ci phpunit "$MOODLE_PLUGIN" --coverage-pcov --coverage-text --coverage-clover --fail-on-warning
+  coverage: '/^\s*Lines:\s*\d+\.\d+\%/'
+  artifacts:
+    paths:
+      - coverage.xml
+    expire_in: 1 week
