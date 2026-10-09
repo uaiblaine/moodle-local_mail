@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /*
- * SPDX-FileCopyrightText: 2017-2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2017-2026 Albert Gasset <albertgasset@fsfe.org>
  * SPDX-FileCopyrightText: 2021 Marc Català <reskit@gmail.com>
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
  *
@@ -23,6 +23,8 @@
  */
 
 namespace local_mail;
+
+use core_external\util;
 
 /**
  * Unit tests for the external web service functions of the plugin.
@@ -281,9 +283,9 @@ final class external_test extends test\testcase {
 
     public function test_get_courses(): void {
         $generator = $this->getDataGenerator();
-        [$users] = self::generate_random_data(true);
+        $data = self::generate_data();
 
-        foreach ($users as $user) {
+        foreach ($data['users'] as $user) {
             $this->setUser($user->id);
             $expected = [];
             foreach (course::get_by_user($user) as $course) {
@@ -328,9 +330,9 @@ final class external_test extends test\testcase {
 
     public function test_get_labels(): void {
         $generator = $this->getDataGenerator();
-        [$users] = self::generate_random_data(true);
+        $data = self::generate_data();
 
-        foreach ($users as $user) {
+        foreach ($data['users'] as $user) {
             if ($user->deleted) {
                 continue;
             }
@@ -369,9 +371,9 @@ final class external_test extends test\testcase {
     public function test_count_messages(): void {
         $generator = self::getDataGenerator();
 
-        [$users, $messages] = self::generate_random_data(true);
+        $data = self::generate_data();
 
-        foreach ($this->messages_search_cases($users, $messages) as $search) {
+        foreach (self::messages_search_cases($data) as $search) {
             if ($search->user->deleted) {
                 continue;
             }
@@ -435,7 +437,7 @@ final class external_test extends test\testcase {
         }
 
         // Invalid course.
-        self::setUser($users[0]->id);
+        self::setUser($data['users'][0]->id);
         $course = $generator->create_course();
         $query = ['courseid' => $course->id];
         try {
@@ -447,8 +449,8 @@ final class external_test extends test\testcase {
         }
 
         // Invalid label.
-        self::setUser($users[0]->id);
-        $labels = label::get_by_user($users[1]);
+        self::setUser($data['users'][0]->id);
+        $labels = label::get_by_user($data['users'][1]);
         $query = ['labelid' => reset($labels)->id];
         try {
             external::count_messages($query);
@@ -459,7 +461,7 @@ final class external_test extends test\testcase {
         }
 
         // Invalid role.
-        self::setUser($users[0]->id);
+        self::setUser($data['users'][0]->id);
         $query = ['roles' => ['xx']];
         try {
             external::count_messages($query);
@@ -469,7 +471,7 @@ final class external_test extends test\testcase {
         }
 
         // Invalid startid.
-        self::setUser($users[0]->id);
+        self::setUser($data['users'][0]->id);
         $query = ['startid' => '123'];
         try {
             external::count_messages($query);
@@ -480,7 +482,7 @@ final class external_test extends test\testcase {
         }
 
         // Invalid stopid.
-        self::setUser($users[0]->id);
+        self::setUser($data['users'][0]->id);
         $query = ['stopid' => '123'];
         try {
             external::count_messages($query);
@@ -494,9 +496,9 @@ final class external_test extends test\testcase {
     public function test_search_messages(): void {
         $generator = self::getDataGenerator();
 
-        [$users, $messages] = self::generate_random_data(true);
+        $data = self::generate_data();
 
-        foreach ($this->messages_search_cases($users, $messages) as $search) {
+        foreach (self::messages_search_cases($data) as $search) {
             if ($search->user->deleted) {
                 continue;
             }
@@ -567,7 +569,7 @@ final class external_test extends test\testcase {
         }
 
         // Invalid course.
-        self::setUser($users[0]->id);
+        self::setUser($data['users'][0]->id);
         $course = $generator->create_course();
         $query = ['courseid' => $course->id];
         try {
@@ -579,8 +581,8 @@ final class external_test extends test\testcase {
         }
 
         // Invalid label.
-        self::setUser($users[0]->id);
-        $labels = label::get_by_user($users[1]);
+        self::setUser($data['users'][0]->id);
+        $labels = label::get_by_user($data['users'][1]);
         $query = ['labelid' => reset($labels)->id];
         try {
             external::search_messages($query);
@@ -591,7 +593,7 @@ final class external_test extends test\testcase {
         }
 
         // Invalid startid.
-        self::setUser($users[0]->id);
+        self::setUser($data['users'][0]->id);
         $query = ['startid' => '123'];
         try {
             external::search_messages($query);
@@ -602,7 +604,7 @@ final class external_test extends test\testcase {
         }
 
         // Invalid stopid.
-        self::setUser($users[0]->id);
+        self::setUser($data['users'][0]->id);
         $query = ['stopid' => '123'];
         try {
             external::search_messages($query);
@@ -671,7 +673,7 @@ final class external_test extends test\testcase {
         global $PAGE;
 
         $fs = get_file_storage();
-        $renderer = $PAGE->get_renderer('local_mail');
+        $renderer = \local_mail\output\renderer::get_instance();
         $generator = $this->getDataGenerator();
         $course = new course($generator->create_course());
         $context = $course->get_context();
@@ -737,8 +739,8 @@ final class external_test extends test\testcase {
             'deleted' => (bool) $message2->deleted($user1),
             'course' => [
                 'id' => $course->id,
-                'shortname' => external_format_string($course->shortname, $course->get_context()),
-                'fullname' => external_format_string($course->fullname, $course->get_context()),
+                'shortname' => util::format_string($course->shortname, $course->get_context()),
+                'fullname' => util::format_string($course->fullname, $course->get_context()),
                 'visible' => $course->visible,
                 'groupmode' => $course->groupmode,
             ],
@@ -1780,13 +1782,9 @@ final class external_test extends test\testcase {
 
     public function test_search_users(): void {
         $generator = self::getDataGenerator();
+        $data = self::generate_data();
 
-        [$users] = self::generate_random_data(false);
-
-        foreach (self::user_search_cases($users) as $search) {
-            if ($search->user->deleted) {
-                continue;
-            }
+        foreach (self::user_search_cases($data) as [$search, $users]) {
             $this->setUser($search->user->id);
             $query = ['courseid' => $search->course->id];
             if ($search->roleid) {
@@ -1815,22 +1813,24 @@ final class external_test extends test\testcase {
 
             // No offset or limit.
 
-            $expected = external::search_users_response($search->course, $search->get());
+            $expected = external::search_users_response($search->course, $users);
             $result = external::search_users($query);
             external::validate_parameters(external::search_users_returns(), $result);
             self::assertEquals($expected, $result, $search);
 
             // Offset and limit.
 
-            $expected = external::search_users_response($search->course, $search->get(5, 10));
-            $result = external::search_users($query, 5, 10);
+            $expected = external::search_users_response($search->course, array_slice($users, 1, 2, true));
+            $result = external::search_users($query, 1, 2);
             external::validate_parameters(external::search_users_returns(), $result);
-            self::assertEquals($expected, $result, $search . "\noffset: 5\n limit: 10");
+            self::assertEquals($expected, $result, $search . "\noffset: 1\nlimit: 2");
         }
 
         // User not enrolled in course.
 
+        $user = new user($generator->create_user());
         $course = new course($generator->create_course());
+        $this->setUser($user->id);
         $query = ['courseid' => $course->id];
         try {
             external::search_users($query);
@@ -2275,8 +2275,7 @@ final class external_test extends test\testcase {
     }
 
     public function test_send_message(): void {
-        global $PAGE;
-        $renderer = $PAGE->get_renderer('local_mail');
+        $renderer = \local_mail\output\renderer::get_instance();
 
         $generator = $this->getDataGenerator();
         $course = new course($generator->create_course());

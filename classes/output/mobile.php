@@ -63,12 +63,12 @@ class mobile {
         global $CFG;
 
         $url = new \moodle_url('/local/mail/view.php', $args);
-
+        $style = 'display: block; height: 100%';
         return [
             'templates' => [
                 [
                     'id' => 'main',
-                    'html' => '<core-iframe src="' . $url->out(false) . '"></core-iframe>',
+                    'html' => '<core-iframe src="' . $url->out(false) . '" style="' . $style . '"></core-iframe>',
                 ],
             ],
             'javascript' => file_get_contents("$CFG->dirroot/local/mail/classes/output/mobile-view.js"),

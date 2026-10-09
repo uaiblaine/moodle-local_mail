@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
-SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
+SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -18,7 +18,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
     export let selected: number | undefined;
     export let required = false;
     export let readonly = false;
-    export let buttonClass = '';
     export let dropdownAlign: 'left' | 'right' = 'left';
     export let onChange: (id?: number) => void;
 
@@ -79,7 +78,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             : 'fa-caret-up'}
     rightIconLabel={entering && inputText ? strings.clearsearch : strings.changecourse}
     buttonText={currentCourseName || label}
-    {buttonClass}
+    buttonClass="btn-secondary"
     readonlyText={currentCourseName || label}
     readonlyClass="alert-secondary"
     onBlur={closeDropdown}
@@ -134,10 +133,5 @@ SPDX-License-Identifier: GPL-3.0-or-later
         padding-right: 0;
         background-color: rgba(255, 255, 0, 0.2);
         color: inherit;
-    }
-
-    .local-mail-select-course-item:not(:focus):hover {
-        color: inherit;
-        background-color: #eee;
     }
 </style>

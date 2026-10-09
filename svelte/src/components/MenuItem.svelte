@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
-SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
+SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -32,6 +32,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <a
     class="local-mail-menu-item list-group-item list-group-item-action d-flex align-items-center px-3 py-2"
     class:list-group-item-primary={active}
+    class:font-weight-bold={active}
     class:disabled
     aria-current={active}
     aria-disabled={disabled}
@@ -40,14 +41,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
     on:click={handleClick}
     style={color && !active ? `color: var(--local-mail-color-${color}-fg)` : ''}
 >
-    <i
-        class="fa {icon} fa-fw"
-        aria-hidden="true"
-        style={color && !active ? `color: var(--local-mail-color-${color}-bg)` : ''}
-    />
+    <i class="fa {icon} fa-fw" aria-hidden="true" />
     <span class="flex-fill px-2" use:truncate={text}>{text}</span>
     {#if count > 0}
-        <span class="badge text-dark">{formatNumber(count)}</span>
+        <span class="local-mail-menu-item-badge">{formatNumber(count)}</span>
     {/if}
 </a>
 
@@ -58,5 +55,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     .local-mail-menu-item:focus {
         z-index: 3;
+    }
+
+    .local-mail-menu-item-badge {
+        font-size: var(--bs-badge-font-size, 75%);
+        font-weight: var(--bs-badge-font-weight, 700);
     }
 </style>

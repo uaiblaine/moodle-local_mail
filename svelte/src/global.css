@@ -1,11 +1,12 @@
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-:root {
+:root,
+[data-bs-theme='light'] {
     --local-mail-color-gray-bg: #dee2e6;
     --local-mail-color-blue-bg: #9ec5fe;
     --local-mail-color-indigo-bg: #c29ffa;
@@ -31,6 +32,32 @@
     --local-mail-color-cyan-fg: #055160;
 }
 
+[data-bs-theme='dark'] {
+    --local-mail-color-gray-bg: #343a40;
+    --local-mail-color-blue-bg: #052c65;
+    --local-mail-color-indigo-bg: #290661;
+    --local-mail-color-purple-bg: #2c1a4d;
+    --local-mail-color-pink-bg: #561435;
+    --local-mail-color-red-bg: #58151c;
+    --local-mail-color-orange-bg: #653208;
+    --local-mail-color-yellow-bg: #664d03;
+    --local-mail-color-green-bg: #0a3622;
+    --local-mail-color-teal-bg: #0d503c;
+    --local-mail-color-cyan-bg: #055160;
+
+    --local-mail-color-gray-fg: #dee2e6;
+    --local-mail-color-blue-fg: #9ec5fe;
+    --local-mail-color-indigo-fg: #c29ffa;
+    --local-mail-color-purple-fg: #c5b3e6;
+    --local-mail-color-pink-fg: #efadce;
+    --local-mail-color-red-fg: #f1aeb5;
+    --local-mail-color-orange-fg: #fecba1;
+    --local-mail-color-yellow-fg: #ffe69c;
+    --local-mail-color-green-fg: #a3cfbb;
+    --local-mail-color-teal-fg: #a6e9d5;
+    --local-mail-color-cyan-fg: #9eeaf9;
+}
+
 .local-mail {
     --bs-list-group-border-width: 1px;
     --bs-list-group-border-color: rgba(0, 0, 0, 0.125);
@@ -41,14 +68,10 @@
     opacity: 0.4;
 }
 
-.local-mail .btn-light:disabled {
-    opacity: 0.2;
-}
-
 .local-mail .dropdown-menu {
     top: 100%;
     margin-top: 0.125rem;
-    background-color: var(--light, var(--bs-gray-100));
+    background-color: var(--bs-dropdown-bg, var(--light));
 }
 
 .local-mail .dropdown-menu-right {
@@ -63,28 +86,8 @@
     margin-bottom: 0.125rem;
 }
 
-.local-mail .dropdown-item:not(:focus):hover {
-    color: inherit;
-    background-color: #eee;
-}
-
 .local-mail .fa {
     font-size: 16px;
-}
-
-.local-mail .form-control {
-    height: auto;
-}
-
-.local-mail input.form-control:not(.is-invalid),
-.local-mail .fp-navbar,
-.local-mail .filemanager-container {
-    border-color: rgba(0, 0, 0, 0.125);
-}
-
-.local-mail .dropdown-menu {
-    z-index: 1040;
-    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .local-mail-busy {
@@ -117,10 +120,14 @@
     margin-top: 0;
 }
 
+#page-local-mail-view #page-footer {
+    margin-top: 1rem;
+}
+
 #page-local-mail-view .btn-footer-popover {
     display: block;
     position: static;
-    margin: 2rem 2rem 2rem auto;
+    margin: 1rem 2rem 1rem auto;
 }
 
 #page-local-mail-view.pagelayout-embedded,

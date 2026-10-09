@@ -23,6 +23,8 @@
 /.gitattributes        export-ignore
 /.github               export-ignore
 /.gitignore            export-ignore
+/.gitlab-ci.yml        export-ignore
+/.moodle-plugin-ci.yml export-ignore
 /.phpcs.xml            export-ignore
 /.prettierrc           export-ignore
 /.vscode               export-ignore

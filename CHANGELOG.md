@@ -1,5 +1,45 @@
 # Changelog
 
+## [2.18.1] - 2026-10-08
+
+Merges upstream release 2.18 (2026-10-05) into this fork. Everything the fork
+added — the Updates tray, message provenance, the retention policy and the
+navbar badge — is unchanged.
+
+### Added
+
+- Dark mode support, from upstream: label colours, dropdowns and the modal
+  dialogue follow `data-bs-theme`, and the mailbox opened from the Moodle App
+  switches to dark mode when the app asks for it.
+- Upstream's Moodle 5.3 compatibility work (deprecated classes and functions
+  replaced, styles adjusted). `$plugin->supported` still ends at 5.2: this fork
+  has not been tested on 5.3 yet.
+
+### Fixed
+
+- From upstream: compatibility with the current Moodle App (5.2), a regression
+  editing a message on Moodle 4.5, the modal close button in dark mode, the
+  background colour of messages and draft forms, and the nondeterministic order
+  of grouped count queries.
+
+### Changed
+
+- Requires Moodle 4.5. `$plugin->requires` was still 4.1 although
+  `$plugin->supported` already started at 4.5.
+- The external API uses the `core_external` classes instead of the global
+  aliases from `lib/externallib.php`.
+- The test fixture is upstream's new deterministic data set instead of the
+  random one. Five of its messages carry a component, one of them answered by a
+  person, so the Updates category, its unread count, its combination with labels
+  and the backup's exclusion of generated mail and of references to it are all
+  exercised.
+- The TinyMCE type declarations come from the `tinymce` npm package, so the
+  Svelte type-check no longer needs a Moodle tree around the plugin.
+
+### Removed
+
+- Compatibility with Moodle 4.1 to 4.4, as upstream.
+
 ## [2.18.0] - 2026-08-14
 
 ### Added

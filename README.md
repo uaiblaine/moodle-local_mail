@@ -22,7 +22,7 @@ but only the branches above are covered by CI.
 Unpack archive inside `/path/to/moodle/local/mail`
 
 For general instructions on installing plugins see:
-https://docs.moodle.org/401/en/Installing_plugins
+https://docs.moodle.org/503/en/Installing_plugins
 
 ## Contributing
 
@@ -40,6 +40,8 @@ Contributors:
 - Daniel Barnett
 - Manuel Cagigas
 - Russell Smith
+- Gaël B
+- Jorge Matamala
 
 Version 2.0 of the project implemented by the "Recovery, Transformation and Resilience Plan". Funded by the European Union - Next Generation EU. Produced by the UNIMOODLE University Group: Universities of Valladolid, Complutense de Madrid, UPV/EHU, León, Salamanca, Illes Balears, València, Rey Juan Carlos, La Laguna, Zaragoza, Málaga, Córdoba, Extremadura, Vigo, Las Palmas de Gran Canaria and Burgos.
 

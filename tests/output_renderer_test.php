@@ -16,7 +16,7 @@
 
 /*
  * SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
- * SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
+ * SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -33,7 +33,7 @@ namespace local_mail;
  */
 final class output_renderer_test extends test\testcase {
     public function test_file_url(): void {
-        global $CFG, $PAGE;
+        global $CFG;
 
         $generator = self::getDataGenerator();
         $user = new user($generator->create_user());
@@ -43,14 +43,14 @@ final class output_renderer_test extends test\testcase {
         $file = self::create_draft_file($data->draftitemid, 'file.txt', 'File content');
         $context = \context_user::instance($user->id);
 
-        $renderer = $PAGE->get_renderer('local_mail');
+        $renderer = \local_mail\output\renderer::get_instance();
 
         $expected = "$CFG->wwwroot/pluginfile.php/$context->id/user/draft/$data->draftitemid/file.txt";
         self::assertEquals($expected, $renderer->file_url($file));
     }
 
     public function test_file_icon_url(): void {
-        global $CFG, $PAGE;
+        global $CFG;
 
         $generator = self::getDataGenerator();
         $user = new user($generator->create_user());
@@ -60,7 +60,7 @@ final class output_renderer_test extends test\testcase {
         $file1 = self::create_draft_file($data->draftitemid, 'file1.txt', 'File content');
         $file2 = self::create_draft_file($data->draftitemid, 'file2.html', 'File content');
 
-        $renderer = $PAGE->get_renderer('local_mail');
+        $renderer = \local_mail\output\renderer::get_instance();
 
         $size = $CFG->branch >= 403 ? null : 24; // Size is deprecated since Moodle 4.3.
         self::assertEquals($renderer->image_url(file_extension_icon('file1.txt', $size)), $renderer->file_icon_url($file1));
@@ -68,9 +68,7 @@ final class output_renderer_test extends test\testcase {
     }
 
     public function test_formatted_message_content(): void {
-        global $PAGE;
-
-        $renderer = $PAGE->get_renderer('local_mail');
+        $renderer = \local_mail\output\renderer::get_instance();
         $generator = self::getDataGenerator();
         $course = new course($generator->create_course());
         $user = new user($generator->create_user());
@@ -89,15 +87,13 @@ final class output_renderer_test extends test\testcase {
     }
 
     public function test_formatted_time(): void {
-        global $PAGE;
-
         $generator = self::getDataGenerator();
         $user = new user($generator->create_user());
         self::setUser($user->id);
 
         $tz = \core_date::get_user_timezone();
 
-        $renderer = $PAGE->get_renderer('local_mail');
+        $renderer = \local_mail\output\renderer::get_instance();
 
         $now = new \DateTime('2021-10-11 12:13:14', new \DateTimeZone($tz));
 
@@ -131,7 +127,7 @@ final class output_renderer_test extends test\testcase {
     }
 
     public function test_notification(): void {
-        global $PAGE, $SITE;
+        global $SITE;
 
         $generator = self::getDataGenerator();
         $user1 = new user($generator->create_user());
@@ -152,7 +148,7 @@ final class output_renderer_test extends test\testcase {
         $message->send(time());
         $url = new \moodle_url('local/mail/view.php', ['t' => 'inbox', 'm' => $message->id]);
 
-        $renderer = $PAGE->get_renderer('local_mail');
+        $renderer = \local_mail\output\renderer::get_instance();
         $notification = $renderer->notification($message, $user2);
 
         self::assertEquals($course->id, $notification->courseid);
@@ -190,7 +186,9 @@ final class output_renderer_test extends test\testcase {
     public function test_svelte_script(): void {
         global $CFG, $PAGE, $OUTPUT;
 
-        $renderer = $PAGE->get_renderer('local_mail');
+        $PAGE->set_url(new \moodle_url('/local/mail/view.php'));
+
+        $renderer = \local_mail\output\renderer::get_instance();
 
         // Head not written.
 

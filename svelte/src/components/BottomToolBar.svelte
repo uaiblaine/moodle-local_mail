@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
-SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
+SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -18,7 +18,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     export let store: Store;
 </script>
 
-<div role="toolbar" class="local-mail-toolbar px-2 py-3 bg-light border-top border-bottom">
+<div role="toolbar" class="local-mail-toolbar px-2 py-3 border-top border-bottom">
     <div class="d-flex justify-content-around" role="group">
         {#if $store.params.tray == 'trash'}
             <RestoreButton {store} bottom={true} />
@@ -37,5 +37,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
         z-index: 1020;
         position: sticky;
         bottom: 0;
+        background-color: var(--bs-gray-200, var(--light));
+    }
+
+    .local-mail-toolbar :global(.btn:disabled) {
+        opacity: 0.2;
+        border-color: transparent;
     }
 </style>

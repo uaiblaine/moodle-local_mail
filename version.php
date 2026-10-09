@@ -33,9 +33,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2026081404;
-$plugin->requires = 2022112800;
+$plugin->version = 2026100800;
+$plugin->requires = 2024100700;
 $plugin->supported = [405, 502];
 $plugin->component = 'local_mail';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '2.18.0';
+$plugin->release = '2.18.1';

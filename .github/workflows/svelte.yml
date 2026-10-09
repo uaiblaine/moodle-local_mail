@@ -37,35 +37,17 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: local/mail/svelte
+        working-directory: svelte
     steps:
-      # Checked out at its Moodle path rather than at the workspace root, because
-      # svelte/src/lib/amd.ts imports the TinyMCE types through a path relative to
-      # the Moodle root. Five levels up from svelte/src/lib is the root on 4.5 and
-      # public/ on 5.x, so the plugin has to sit at local/mail for it to resolve.
-      - name: Check out the plugin at its Moodle path
+      - name: Check out the plugin
         uses: actions/checkout@v4
-        with:
-          path: local/mail
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: local/mail/svelte/package-lock.json
-
-      # The only file the plugin needs from core. Pinned to a tag rather than a
-      # branch so upstream cannot turn this gate red without a commit here; bump
-      # the tag when the supported range moves. Note the path is public/lib, the
-      # 5.x split layout — on a 4.05 tag the same file lives at lib/.
-      - name: Fetch the TinyMCE type declarations from Moodle core
-        working-directory: ${{ github.workspace }}
-        run: |
-          mkdir -p lib/editor/tiny/js/tinymce
-          curl -fsSL --retry 3 --retry-delay 2 \
-            -o lib/editor/tiny/js/tinymce/tinymce.d.ts \
-            "https://raw.githubusercontent.com/moodle/moodle/v5.2.2/public/lib/editor/tiny/js/tinymce/tinymce.d.ts"
+          cache-dependency-path: svelte/package-lock.json
 
       # npm ci, never npm install: it installs strictly from package-lock.json,
       # which is what makes comparing the rebuilt bytes meaningful, and it fails
@@ -87,7 +69,7 @@ jobs:
       # git diff does not report untracked files. Reporting them is also what tells
       # the developer which paths to add.
       - name: Verify the committed bundle matches its sources
-        working-directory: local/mail
+        working-directory: .
         run: |
           changes="$(git status --porcelain -- svelte/build/)"
           if [ -n "$changes" ]; then

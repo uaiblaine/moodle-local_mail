@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023-2024 Proyecto UNIMOODLE <direccion.area.estrategia.digital@uva.es>
-SPDX-FileCopyrightText: 2024-2025 Albert Gasset <albertgasset@fsfe.org>
+SPDX-FileCopyrightText: 2024-2026 Albert Gasset <albertgasset@fsfe.org>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
@@ -76,9 +76,18 @@ SPDX-License-Identifier: GPL-3.0-or-later
             use:truncate={buttonText}
             on:click={onButtonClick}
         >
+            <div class="local-mail-combo-box-left-icon">
+                <i class="fa fa-fw {leftIconClass}" aria-hidden="true" />
+            </div>
+
             <slot name="buttonContent">
                 {buttonText}
             </slot>
+            {#if rightIconClass}
+                <div class="local-mail-combo-box-right-icon">
+                    <i class="fa fa-fw {rightIconClass}" aria-hidden="true" />
+                </div>
+            {/if}
         </button>
     {:else}
         <div
@@ -90,32 +99,33 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </div>
     {/if}
 
-    <div class="local-mail-combo-box-left-icon">
-        <i class="fa fa-fw {leftIconClass}" aria-hidden="true" />
-    </div>
+    {#if mode != 'button'}
+        <div class="local-mail-combo-box-left-icon">
+            <i class="fa fa-fw {leftIconClass}" aria-hidden="true" />
+        </div>
 
-    {#if middleIconClass}
-        <button
-            type="button"
-            class="local-mail-combo-box-middle-icon btn"
-            title={middleIconLabel}
-            on:click={onMiddleIconClick}
-        >
-            <i class="fa fa-fw {middleIconClass}" aria-hidden="true" />
-        </button>
+        {#if middleIconClass}
+            <button
+                type="button"
+                class="local-mail-combo-box-middle-icon btn"
+                title={middleIconLabel}
+                on:click={onMiddleIconClick}
+            >
+                <i class="fa fa-fw {middleIconClass}" aria-hidden="true" />
+            </button>
+        {/if}
+
+        {#if rightIconClass}
+            <button
+                type="button"
+                class="local-mail-combo-box-right-icon btn"
+                title={rightIconLabel}
+                on:click={onRightIconClick}
+            >
+                <i class="fa fa-fw {rightIconClass}" aria-hidden="true" />
+            </button>
+        {/if}
     {/if}
-
-    {#if rightIconClass}
-        <button
-            type="button"
-            class="local-mail-combo-box-right-icon btn"
-            title={rightIconLabel}
-            on:click={onRightIconClick}
-        >
-            <i class="fa fa-fw {rightIconClass}" aria-hidden="true" />
-        </button>
-    {/if}
-
     <slot />
 </div>
 
