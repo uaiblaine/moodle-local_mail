@@ -1,5 +1,32 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- **The navbar's unread count and the mailbox's list no longer hold the session lock**, version
+  2026101300. Five read services now declare `'readonlysession' => true`, as core does for its
+  own reads:
+  - `local_mail_count_messages`, which `amd/src/navbar.js` calls on every page;
+  - `get_courses`, `get_labels` and `search_messages`, which the mailbox sends together with
+    `count_messages` in one batch for every list it shows;
+  - `search_users`, the recipient search of the draft form.
+
+  They no longer wait behind, or delay, the page's other requests of the same session.
+  - **It takes effect only on a site that sets `$CFG->enable_read_only_sessions`**, with its
+    session-mode caches mapped outside the session store.
+  - A batch that also opens a message (`get_message`) or saves a draft still takes the lock from
+    that call on.
+  - Nothing on these paths writes `$SESSION`, including the renderer and user pictures behind
+    `search_messages`. `tests/readonly_session_test.php` checks each service with argument sets
+    that reach its course, label and search branches.
+  - Measured on Moodle 5.2 with the site flag on, four simultaneous calls took:
+
+    | Call | Before (two runs) | After (two runs) |
+    |---|---|---|
+    | `count_messages` | 5.5 and 10.2 times one call | 1.6 times |
+    | Each of the other four, and the mailbox's list batch | 8.6 to 11.9 times | 1.5 to 1.7 times |
+
 ## [2.18.1] - 2026-10-08
 
 Merges upstream release 2.18 (2026-10-05) into this fork. Everything the fork

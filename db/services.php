@@ -66,6 +66,7 @@ $functions = [
         'description' => 'Get user courses.',
         'type' => 'read',
         'ajax' => true,
+        'readonlysession' => true,
     ],
     'local_mail_get_labels' => [
         'classname' => 'local_mail\\external',
@@ -73,6 +74,7 @@ $functions = [
         'description' => 'Get user labels.',
         'type' => 'read',
         'ajax' => true,
+        'readonlysession' => true,
     ],
     'local_mail_count_messages' => [
         'classname' => 'local_mail\\external',
@@ -80,6 +82,7 @@ $functions = [
         'description' => 'Count the number of messages.',
         'type' => 'read',
         'ajax' => true,
+        'readonlysession' => true,
     ],
     'local_mail_search_messages' => [
         'classname' => 'local_mail\\external',
@@ -87,6 +90,7 @@ $functions = [
         'description' => 'Search messages.',
         'type' => 'read',
         'ajax' => true,
+        'readonlysession' => true,
     ],
     'local_mail_get_message' => [
         'classname' => 'local_mail\\external',
@@ -178,6 +182,7 @@ $functions = [
         'description' => 'Search course users.',
         'type' => 'read',
         'ajax' => true,
+        'readonlysession' => true,
     ],
     'local_mail_get_message_form' => [
         'classname' => 'local_mail\\external',
