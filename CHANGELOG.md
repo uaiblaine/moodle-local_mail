@@ -2,8 +2,38 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **The labels a user keeps in their own user context are now complete under the Privacy API**,
+  version 2026102300. The provider already reported that context for a user with labels, but:
+  - its user list named nobody there, so a deletion driven by user lists never reached the
+    labels;
+  - deleting all the data of a user context (an expired user, for one) left the labels behind;
+  - a deletion for one user in another user's context removed the subject's own labels.
+
+  `tests/privacy/provider_labels_test.php` checks each case with a control, and asserts
+  `component_is_compliant()`, which core's own compliance test runs but this plugin's suite did
+  not.
+
+### Added
+
+- `LICENSE` (the GPL v3 text, a byte copy of `COPYING.txt`), which the Moodle plugins
+  directory requires in the package.
+- `tests/marketplace_readiness_test.php`, the fleet's file-reading check of the plugins
+  directory guidelines: licence files, English-only package, data-only language files, a README
+  that names every table and capability, per-plugin setting names, scoped CSS, boilerplate and
+  copyright lines, and the privacy cover of core rows stamped with the component.
+- README sections for the settings, the capabilities, the data the plugin stores (every table,
+  how long it is kept, what a data request exports and a deletion does) and translations.
+- `mutations/gates.conf`, the mutation spec of those guards (export-ignored).
+
 ### Changed
 
+- **`lang/pt_br` is left out of the release package** (`/lang/pt_br export-ignore`): translations
+  reach sites through AMOS, as the plugins directory requires. The plugin ships no pt_br pack
+  today; the line keeps a future one out of the zip.
+- The two scripts the Moodle App runs (`classes/output/mobile-init.js`, `mobile-view.js`) carry
+  the GPL boilerplate and a `@copyright` line beside their upstream SPDX headers.
 - **The navbar's unread count and the mailbox's list no longer hold the session lock**, version
   2026101300. Five read services now declare `'readonlysession' => true`, as core does for its
   own reads:

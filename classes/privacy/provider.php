@@ -149,7 +149,12 @@ class provider implements
     }
 
     /**
-     * Adds the users that have messages in the course of the given context to the user list.
+     * Adds the users that have messages in the course of the given context to the user list,
+     * or the owner of a user context when they have labels.
+     *
+     * Labels live in their owner's user context, as {@see self::get_contexts_for_userid()}
+     * reports them, so the user list of that context must name the owner too, or a deletion
+     * driven by user lists never reaches them.
      *
      * @param userlist $userlist List of users, with the context to search in.
      */
@@ -157,6 +162,12 @@ class provider implements
         global $DB;
 
         $context = $userlist->get_context();
+
+        if ($context->contextlevel == CONTEXT_USER) {
+            $sql = 'SELECT userid FROM {local_mail_labels} WHERE userid = :userid';
+            $userlist->add_from_sql('userid', $sql, ['userid' => $context->instanceid]);
+            return;
+        }
 
         if ($context->contextlevel != CONTEXT_COURSE) {
             return;
@@ -269,13 +280,18 @@ class provider implements
     }
 
     /**
-     * Deletes the messages of all the users of a course, ignoring any other context level.
+     * Deletes the messages of all the users of a course, or the labels of the owner of a user
+     * context, ignoring any other context level.
      *
      * @param \context $context Context to delete the data of.
      */
     public static function delete_data_for_all_users_in_context(\context $context): void {
         if ($context->contextlevel == CONTEXT_COURSE) {
             message::delete_course_data($context->get_course_context());
+        } else if ($context->contextlevel == CONTEXT_USER) {
+            foreach (label::get_by_user(user::get($context->instanceid)) as $label) {
+                $label->delete();
+            }
         }
     }
 
@@ -289,7 +305,9 @@ class provider implements
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
         $user = new user($contextlist->get_user());
         foreach ($contextlist->get_contexts() as $context) {
-            if ($context->contextlevel == CONTEXT_USER) {
+            // The labels are deleted only from their owner's own context: an approved list may
+            // name another user's context, and that one holds none of this user's data.
+            if ($context->contextlevel == CONTEXT_USER && $context->instanceid == $user->id) {
                 foreach (label::get_by_user($user) as $label) {
                     $label->delete();
                 }
