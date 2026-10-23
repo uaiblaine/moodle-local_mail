@@ -15,6 +15,9 @@
 #   - CONTRIBUTING.md SHIPS.
 # tests/ also SHIPS, per Moodle convention.
 #
+# Only English strings ship: translations reach sites through AMOS, so a
+# lang/pt_br added later stays out of the package (the plugins directory rule).
+#
 # Verify with:  git check-attr export-ignore -- <path>
 # (a path marked "set" is excluded from the archive; "unspecified" ships).
 
@@ -29,6 +32,8 @@
 /.prettierrc           export-ignore
 /.vscode               export-ignore
 /CLAUDE.md             export-ignore
+/lang/pt_br            export-ignore
+/mutations             export-ignore
 
 svelte/.gitignore      export-ignore
 svelte/.prettierignore export-ignore
