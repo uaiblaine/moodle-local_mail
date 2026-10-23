@@ -104,8 +104,8 @@ final class provider_labels_test extends \local_mail\test\testcase {
 
         // The context reported for the owner is the one the user list now answers for.
         $this->assertContains(
-            \context_user::instance($owner->id)->id,
-            provider::get_contexts_for_userid($owner->id)->get_contextids()
+            (int) \context_user::instance($owner->id)->id,
+            array_map('intval', provider::get_contexts_for_userid($owner->id)->get_contextids())
         );
         $this->assertSame(1, $this->count_labels($other));
     }
