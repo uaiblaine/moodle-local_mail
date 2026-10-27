@@ -251,3 +251,22 @@ agree.
 - Gates: full suite 178 tests on m503; `mutations/recipients.conf`, 15 mutants, every one red on
   pgsql and MariaDB with every named test red; `mdl ci moodle-local_mail --matrix`, 15 of 15 legs
   passed on the final tree.
+
+## 9. Stage 2 status (2026-10-27)
+
+Stage 1 merged as #13 (`5a98e02`). Stage 2 on `feature/contextual-entry-points-stage2`:
+
+- `local\entry_points`: the setting `local_mail/entrypoints` (all on until saved), the course in
+  which the viewer can use mail, and whether the viewer may mail a user there (`user_search`, so
+  rule G1 applies).
+- `local_mail_myprofile_navigation()`: the "Send mail" node in the contact section of a course
+  profile; never on the global profile, one's own profile, the site course or towards an
+  unreachable user.
+- `hook_callbacks::before_footer_html_generation()` (new `db/hooks.php`): on `/user/view.php` the
+  AMD module wires the node and adds the header button inside `.userprofile .page-context-header`;
+  on `/user/index.php` it adds the "Send mail" option to "With selected users..." with the
+  mechanism S0b proved.
+- Version 2026102701, README and CHANGELOG.
+- Gates: `tests/local/entry_points_test.php`; Behat `tests/behat/entry_points.feature` on m503,
+  4 scenarios / 43 steps passed; `mutations/entrypoints.conf`, 10 mutants, every one red on
+  pgsql and MariaDB. Static gates on the 4.5 and 5.3 legs passed.

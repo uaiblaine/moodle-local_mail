@@ -33,6 +33,7 @@
 
 use local_mail\course;
 use local_mail\exception;
+use local_mail\local\entry_points;
 use local_mail\message;
 use local_mail\output\strings;
 use local_mail\settings;
@@ -105,11 +106,9 @@ function local_mail_pluginfile(
  * existing `local_mail_count_messages` web service. The icon is a direct link to
  * the inbox; no popover is opened on click.
  *
- * Not reimplemented here: the Svelte "Send mail" button that the now-removed
- * svelte/src/navigation.ts entry point injected on /user/view.php (profile),
- * /user/index.php (participants) and /blocks/completion_progress/overview.php.
- * Any future version of it must be scoped to those specific pages, so that the
- * heavy courses/labels payload is not loaded on every page render.
+ * The "Send mail" entry points on the course profile and the participants page are
+ * not loaded here but only on those pages ({@see \local_mail\hook_callbacks}), so
+ * the navbar stays a link plus one count request.
  *
  * @param renderer_base $renderer
  * @return string The HTML
@@ -148,4 +147,36 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
     }
 
     return $output;
+}
+
+/**
+ * Adds "Send mail" to the contact section of a user's profile inside a course.
+ *
+ * The global profile passes no course and gets nothing: mail always belongs to a course.
+ *
+ * @param core_user\output\myprofile\tree $tree Profile tree.
+ * @param stdClass $user Owner of the profile.
+ * @param bool $iscurrentuser Whether the profile is the viewer's own.
+ * @param stdClass|null $course Course of the profile, null on the global profile.
+ */
+function local_mail_myprofile_navigation(core_user\output\myprofile\tree $tree, $user, $iscurrentuser, $course) {
+    if ($iscurrentuser || empty($course) || !entry_points::enabled(entry_points::PROFILE_NODE)) {
+        return;
+    }
+
+    $mailcourse = entry_points::mail_course((int) $course->id);
+    if (!$mailcourse || !entry_points::can_mail($mailcourse, (int) $user->id)) {
+        return;
+    }
+
+    $tree->add_node(new core_user\output\myprofile\node(
+        'contact',
+        'local_mail_sendmail',
+        strings::get('sendmail'),
+        null,
+        entry_points::compose_url($mailcourse, (int) $user->id),
+        null,
+        null,
+        'local-mail-sendmail',
+    ));
 }

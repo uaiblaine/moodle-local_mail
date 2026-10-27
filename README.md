@@ -36,6 +36,11 @@ All settings are stored per plugin (`local_mail/<name>`) and are found under
 - `globaltrays`, `coursetrays`, `coursetraysname`, `filterbycourse`,
   `coursebadges`, `coursebadgeslength` and `courselink`: which trays and course
   names the mailbox shows.
+- `entrypoints` (all on by default): where "Send mail" opens a short message
+  form inside a course: a link in the user details of a course profile, a
+  button beside the user's name there, and an option of the participants
+  page's "With selected users..." menu. Never on the global profile or the
+  site course, and only towards users the sender may mail in that course.
 - `incrementalsearch` (default on) and `incrementalsearchlimit` (default 1000):
   results while typing, over that many recent messages.
 - The retention policy, off by default (`retentionenabled`):

@@ -25,6 +25,12 @@
 
 ### Added
 
+- "Send mail" on core pages again, course-scoped, opening the quick-compose modal: a link in
+  the user details of a course profile, a button beside the user's name there, and an option
+  of the participants page's "With selected users..." menu (Bcc by default for several users).
+  Never on the global profile or the site course, and only towards users the sender may mail
+  in that course. Setting `local_mail/entrypoints` switches each one. Version 2026102701.
+
 - A quick-compose modal (`local_mail/quick_compose`, form `local_mail\form\quick_compose`):
   subject and HTML message to a fixed set of course users, sent straight to their inboxes, with
   To or Bcc and a link to the full editor. The sending rules live in one place,
