@@ -161,6 +161,24 @@ class user_search {
             $params['samerolecontextid2'] = $context->id;
         }
 
+        // Separate groups: a sender who cannot see every group reaches the members of their own
+        // groups and the users who can see every group. The send path validates recipients through
+        // this same query, so what the composer lists and what a send accepts stay the same set.
+        $restricted = $this->course->groupmode == SEPARATEGROUPS
+            && !has_capability('moodle/site:accessallgroups', $context, $this->user->id);
+        if ($restricted) {
+            [$allgroupssql, $allgroupsparams] = get_with_capability_sql($context, 'moodle/site:accessallgroups');
+            $reachsql = "u.id IN ($allgroupssql)";
+            $params = array_merge($params, $allgroupsparams);
+            $groupids = array_keys(groups_get_all_groups($this->course->id, $this->user->id));
+            if ($groupids) {
+                [$ownsql, $ownparams] = $DB->get_in_or_equal($groupids, SQL_PARAMS_NAMED, 'owngroup');
+                $reachsql .= " OR u.id IN (SELECT gm1.userid FROM {groups_members} gm1 WHERE gm1.groupid $ownsql)";
+                $params = array_merge($params, $ownparams);
+            }
+            $wheres .= " AND ($reachsql)";
+        }
+
         // Role.
         if ($this->roleid) {
             $joins .= ' JOIN {role_assignments} ra3 ON ra3.userid = u.id';
@@ -171,8 +189,16 @@ class user_search {
 
         // Group.
         if ($this->groupid) {
-            $wheres .= " AND u.id IN (SELECT gm.userid FROM {groups_members} gm WHERE gm.groupid = :groupid)";
+            $groupsql = "u.id IN (SELECT gm.userid FROM {groups_members} gm WHERE gm.groupid = :groupid)";
             $params['groupid'] = $this->groupid;
+            if ($restricted) {
+                // Users who see every group are reachable from every group, usually without being
+                // members of any, so a restricted sender finds them under each of their groups.
+                [$groupallsql, $groupallparams] = get_with_capability_sql($context, 'moodle/site:accessallgroups');
+                $groupsql = "($groupsql OR u.id IN ($groupallsql))";
+                $params = array_merge($params, $groupallparams);
+            }
+            $wheres .= " AND $groupsql";
         }
 
         // Full name.
