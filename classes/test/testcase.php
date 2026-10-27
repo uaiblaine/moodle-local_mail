@@ -347,6 +347,59 @@ abstract class testcase extends \advanced_testcase {
     }
 
     /**
+     * Builds a course with two groups and the people the separate-groups rule is about.
+     *
+     * Users: `teacher` (editing teacher, in no group, sees every group), `tutora` and `tutorb`
+     * (non-editing teachers with "moodle/site:accessallgroups" prohibited in the course, members of
+     * group A and B), `studenta1`, `studenta2` (group A), `studentb` (group B) and `studentnone`
+     * (no group). Students and teachers keep the default "local/mail:mailsamerole".
+     *
+     * @param int $groupmode Group mode of the course.
+     * @return mixed[] Array with keys: course, groups (a, b) and users (by the names above).
+     */
+    protected static function generate_groups_data(int $groupmode = SEPARATEGROUPS): array {
+        global $DB;
+
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course(['groupmode' => $groupmode]));
+        $groups = [
+            'a' => $generator->create_group(['courseid' => $course->id]),
+            'b' => $generator->create_group(['courseid' => $course->id]),
+        ];
+
+        $teacherroleid = (int) $DB->get_field('role', 'id', ['shortname' => 'teacher']);
+        assign_capability('moodle/site:accessallgroups', CAP_PROHIBIT, $teacherroleid, $course->get_context()->id);
+
+        $roles = [
+            'teacher' => 'editingteacher',
+            'tutora' => 'teacher',
+            'tutorb' => 'teacher',
+            'studenta1' => 'student',
+            'studenta2' => 'student',
+            'studentb' => 'student',
+            'studentnone' => 'student',
+        ];
+        $members = [
+            'tutora' => 'a',
+            'tutorb' => 'b',
+            'studenta1' => 'a',
+            'studenta2' => 'a',
+            'studentb' => 'b',
+        ];
+
+        $users = [];
+        foreach ($roles as $name => $role) {
+            $users[$name] = new user($generator->create_user());
+            $generator->enrol_user($users[$name]->id, $course->id, $role);
+            if (isset($members[$name])) {
+                $generator->create_group_member(['userid' => $users[$name]->id, 'groupid' => $groups[$members[$name]]->id]);
+            }
+        }
+
+        return ['course' => $course, 'groups' => $groups, 'users' => $users];
+    }
+
+    /**
      * Creates users, courses, labels and messages for the tests.
      *
      * Data:
@@ -1205,9 +1258,10 @@ abstract class testcase extends \advanced_testcase {
         $search->include = [$ivy->id];
         $cases[] = [$search, []];
 
-        // Other course.
+        // Other course, in separate groups: Henry is alone in group 3 and nobody there sees every
+        // group, so he reaches nobody (rule G1; user_search_test::test_separate_groups covers it).
         $search = new user_search($henry, $course3);
-        $cases[] = [$search, [$grace, $ivy]];
+        $cases[] = [$search, []];
 
         // All filters combined.
         $search = new user_search($henry, $course1);
@@ -1217,10 +1271,10 @@ abstract class testcase extends \advanced_testcase {
         $search->include = [$bob->id, $frank->id];
         $cases[] = [$search, [$bob]];
 
-        // Group in a course with separate groups.
+        // Group in a course with separate groups, searched by a user who is not in it.
         $search = new user_search($ivy, $course3);
         $search->groupid = $group3->id;
-        $cases[] = [$search, [$henry]];
+        $cases[] = [$search, []];
 
         return $cases;
     }

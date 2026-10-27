@@ -53,4 +53,49 @@ final class user_search_test extends test\testcase {
             self::assert_array_of_objects($expected, $result, $search);
         }
     }
+
+    public function test_separate_groups(): void {
+        ['course' => $course, 'groups' => $groups, 'users' => $u] = self::generate_groups_data();
+
+        $cases = [
+            // A student reaches their own group and whoever sees every group, not the other group.
+            [$u['studenta1'], 0, [$u['studenta2'], $u['tutora'], $u['teacher']]],
+            [$u['studentb'], 0, [$u['tutorb'], $u['teacher']]],
+            // A user in no group reaches only those who see every group.
+            [$u['studentnone'], 0, [$u['teacher']]],
+            // A tutor limited to a group is limited the same way.
+            [$u['tutora'], 0, [$u['studenta1'], $u['studenta2'], $u['teacher']]],
+            // Whoever sees every group reaches everybody.
+            [
+                $u['teacher'],
+                0,
+                [$u['tutora'], $u['tutorb'], $u['studenta1'], $u['studenta2'], $u['studentb'], $u['studentnone']],
+            ],
+            // Filtering by a group of one's own keeps the users who see every group.
+            [$u['studenta1'], $groups['a']->id, [$u['studenta2'], $u['tutora'], $u['teacher']]],
+            // An unrestricted sender filtering by a group gets that group's members only.
+            [$u['teacher'], $groups['a']->id, [$u['tutora'], $u['studenta1'], $u['studenta2']]],
+        ];
+
+        foreach ($cases as [$sender, $groupid, $expected]) {
+            $search = new user_search($sender, $course);
+            $search->groupid = $groupid;
+            self::assertEqualsCanonicalizing(array_column($expected, 'id'), array_keys($search->get()), $search);
+            self::assertEquals(count($expected), $search->count(), $search);
+        }
+
+        // Recipient ids from outside the composer go through the same rule.
+        $search = new user_search($u['studenta1'], $course);
+        $search->include = [$u['studentb']->id, $u['tutorb']->id, $u['tutora']->id];
+        self::assertEquals([$u['tutora']->id], array_keys($search->get()));
+    }
+
+    public function test_separate_groups_only(): void {
+        // The control: the same people in visible groups reach each other across groups.
+        ['course' => $course, 'users' => $u] = self::generate_groups_data(VISIBLEGROUPS);
+
+        $search = new user_search($u['studenta1'], $course);
+        $search->include = [$u['studentb']->id, $u['tutorb']->id];
+        self::assertEqualsCanonicalizing([$u['studentb']->id, $u['tutorb']->id], array_keys($search->get()));
+    }
 }

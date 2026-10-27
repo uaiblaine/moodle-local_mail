@@ -2198,42 +2198,7 @@ class external extends external_api {
             throw new exception('errormessagenotfound', $message->id);
         }
 
-        $recipients = $message->recipients();
-
-        if (!$recipients) {
-            throw new exception('erroremptyrecipients');
-        }
-
-        $search = new user_search($user, $message->course);
-        $search->include = array_column($recipients, 'id');
-        $validrecipients = $search->get();
-
-        foreach ($recipients as $recipient) {
-            if (!isset($validrecipients[$recipient->id])) {
-                throw new exception('errorinvalidrecipients');
-            }
-        }
-
-        $maxrecipients = (int) get_config('local_mail', 'maxrecipients') ?: 100;
-        if (count($recipients) > $maxrecipients) {
-            throw new exception('errortoomanyrecipients', $maxrecipients);
-        }
-
-        if (!\core_text::strlen(trim($message->subject))) {
-            throw new exception('erroremptysubject');
-        }
-
-        $message->send(time());
-
-        event\message_sent::create_from_message($message)->trigger();
-
-        $renderer = \local_mail\output\renderer::get_instance();
-        foreach ($message->recipients() as $recipient) {
-            $notificationid = message_send($renderer->notification($message, $recipient));
-            if ($notificationid && get_user_preferences('local_mail_markasread', false, $recipient->id)) {
-                $message->set_unread($recipient, false);
-            }
-        }
+        local\sender::send($user, $message);
 
         return null;
     }

@@ -4,6 +4,14 @@
 
 ### Fixed
 
+- **Separate groups now hold when mail is sent, not only in the composer's list**, version
+  2026102700. In a course in separate-groups mode, a sender without
+  `moodle/site:accessallgroups` reaches the members of their own groups and the users who can see
+  every group. Before, the composer listed only group members, but the send accepted any enrolled
+  user with `local/mail:usemail`, so a recipient id from a link, a draft or a request crossed
+  groups. The composer's list follows the same rule, and lists the users who see every group under
+  each of the sender's groups.
+
 - **The labels a user keeps in their own user context are now complete under the Privacy API**,
   version 2026102300. The provider already reported that context for a user with labels, but:
   - its user list named nobody there, so a deletion driven by user lists never reached the
@@ -16,6 +24,11 @@
   not.
 
 ### Added
+
+- A quick-compose modal (`local_mail/quick_compose`, form `local_mail\form\quick_compose`):
+  subject and HTML message to a fixed set of course users, sent straight to their inboxes, with
+  To or Bcc and a link to the full editor. The sending rules live in one place,
+  `local_mail\local\sender`, which the mailbox's send service now calls too. Version 2026102700.
 
 - `LICENSE` (the GPL v3 text, a byte copy of `COPYING.txt`), which the Moodle plugins
   directory requires in the package.
