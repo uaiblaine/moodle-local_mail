@@ -93,6 +93,24 @@ if ($hassiteconfig) {
     $paramtype = PARAM_INT;
     $settings->add(new admin_setting_configtext($name, $visiblename, $description, $defaultsetting, $paramtype));
 
+    // Entry points on core pages.
+    $settings->add(new admin_setting_heading('local_mail_entrypoints', strings::get('entrypoints'), ''));
+
+    $name = 'local_mail/entrypoints';
+    $visiblename = strings::get('configentrypoints');
+    $description = strings::get('configentrypointsdesc');
+    $defaultsetting = [
+        \local_mail\local\entry_points::PROFILE_NODE => 1,
+        \local_mail\local\entry_points::PROFILE_HEADER => 1,
+        \local_mail\local\entry_points::PARTICIPANTS => 1,
+    ];
+    $choices = [
+        \local_mail\local\entry_points::PROFILE_NODE => strings::get('entrypointprofilenode'),
+        \local_mail\local\entry_points::PROFILE_HEADER => strings::get('entrypointprofileheader'),
+        \local_mail\local\entry_points::PARTICIPANTS => strings::get('entrypointparticipants'),
+    ];
+    $settings->add(new admin_setting_configmulticheckbox($name, $visiblename, $description, $defaultsetting, $choices));
+
     // Trays.
     $settings->add(new admin_setting_heading('local_mail_trays', strings::get('trays'), ''));
 

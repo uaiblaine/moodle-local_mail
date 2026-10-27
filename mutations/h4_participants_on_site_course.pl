@@ -1,0 +1,1 @@
+s/(private static function init_participants\(\): void \{.*?)\$course = entry_points::mail_course\(\(int\) \$PAGE->course->id\);\n\s*if \(!\$course\) \{\n\s*return;\n\s*\}/${1}\$course = \\local_mail\\course::get_many([(int) \$PAGE->course->id])[(int) \$PAGE->course->id] ?? null;\n        if (!\$course) {\n            return;\n        }/s;
