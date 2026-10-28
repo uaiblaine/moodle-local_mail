@@ -1164,8 +1164,6 @@ final class external_test extends test\testcase {
 
         $this->setUser($user1->id);
 
-        $eventsink = $this->redirectEvents();
-
         $result = external::set_deleted($draft->id, '1');
         self::assertNull($result);
         self::assertEquals(message::DELETED, message::get($draft->id)->deleted($user1));
@@ -1173,6 +1171,9 @@ final class external_test extends test\testcase {
         $result = external::set_deleted($draft->id, '0');
         self::assertNull($result);
         self::assertEquals(message::NOT_DELETED, message::get($draft->id)->deleted($user1));
+
+        // Moving to the trash and back has events of its own, tested in event_test.
+        $eventsink = $this->redirectEvents();
 
         $result = external::set_deleted($draft->id, '2');
         self::assertNull($result);
@@ -1279,7 +1280,14 @@ final class external_test extends test\testcase {
         self::assertEquals(message::DELETED_FOREVER, message::get($message5->id)->deleted($user1));
         self::assertEquals(message::DELETED, message::get($message6->id)->deleted($user1));
         self::assert_record_count(0, 'messages', ['id' => $draft->id]);
-        self::assert_message_event('\local_mail\event\draft_deleted', $draft, $eventsink);
+        $events = $eventsink->get_events();
+        $eventsink->close();
+        self::assertCount(2, $events);
+        self::assertEquals('\local_mail\event\draft_deleted', $events[0]->eventname);
+        self::assertEquals($draft->id, $events[0]->objectid);
+        // Message 1, message 2, message 5 and the draft.
+        self::assertEquals('\local_mail\event\trash_emptied', $events[1]->eventname);
+        self::assertEquals(4, $events[1]->other['count']);
 
         // Empty course trash.
 
@@ -2025,6 +2033,21 @@ final class external_test extends test\testcase {
         self::assertEqualsCanonicalizing([$user3, $user4], $draft->recipients(message::ROLE_CC));
         self::assertEqualsCanonicalizing([], $draft->recipients(message::ROLE_BCC));
 
+        // The user's own unsent draft: they can view it, but nobody received it.
+
+        $data = message_data::new($course, $user2);
+        $data->to = [$user1];
+        $data->subject = 'Unsent';
+        $owndraft = message::create($data);
+        self::assertTrue($user2->can_view_message($owndraft));
+        try {
+            external::reply_message($owndraft->id, false);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+            self::assertEquals($owndraft->id, $e->a);
+        }
+
         // User cannot view message.
 
         $course = new course($generator->create_course());
@@ -2118,6 +2141,21 @@ final class external_test extends test\testcase {
         self::assertGreaterThanOrEqual($now, $draft->time);
         self::assertEquals([], $draft->get_references());
         self::assert_attachments(['file1.txt' => 'File 1', 'file2.txt' => 'File 2'], $draft);
+
+        // The user's own unsent draft: they can view it, but nobody received it.
+
+        $data = message_data::new($course, $user2);
+        $data->to = [$user1];
+        $data->subject = 'Unsent';
+        $owndraft = message::create($data);
+        self::assertTrue($user2->can_view_message($owndraft));
+        try {
+            external::forward_message($owndraft->id);
+            self::fail();
+        } catch (exception $e) {
+            self::assertEquals('errormessagenotfound', $e->errorcode);
+            self::assertEquals($owndraft->id, $e->a);
+        }
 
         // User cannot view message.
 
@@ -2523,6 +2561,46 @@ final class external_test extends test\testcase {
         } catch (exception $e) {
             self::assertEquals('errortoomanyrecipients', $e->errorcode);
             self::assertEquals(3, $e->a);
+        }
+    }
+
+    public function test_guest_and_not_logged_in(): void {
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $generator->enrol_user($user1->id, $course->id);
+        $generator->enrol_user($user2->id, $course->id);
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $message = message::create($data);
+        $message->send(time());
+
+        // Functions that act on the mailbox, one for each way the user is read.
+        $calls = [
+            'set_unread' => fn() => external::set_unread($message->id, true),
+            'create_message' => fn() => external::create_message($course->id),
+            'count_messages' => fn() => external::count_messages(['courseid' => $course->id]),
+            'get_courses' => fn() => external::get_courses(),
+            'create_label' => fn() => external::create_label('Label'),
+        ];
+
+        // The control: a logged-in user gets through.
+        self::setUser($user2->id);
+        external::set_unread($message->id, false);
+        self::assertFalse(message::get($message->id)->unread($user2));
+
+        foreach (['guest' => fn() => self::setGuestUser(), 'not logged in' => fn() => self::setUser(null)] as $who => $login) {
+            $login();
+            foreach ($calls as $name => $call) {
+                try {
+                    $call();
+                    self::fail("No exception for $name as $who");
+                } catch (\require_login_exception $e) {
+                    self::assertEquals('requireloginerror', $e->errorcode, "$name as $who");
+                }
+            }
         }
     }
 }

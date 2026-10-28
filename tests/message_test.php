@@ -1025,4 +1025,31 @@ final class message_test extends test\testcase {
         self::assertEquals($course2, $reply->course);
         self::assert_message($reply);
     }
+
+    public function test_update_keeps_the_files_of_a_reply_in_its_course(): void {
+        $generator = self::getDataGenerator();
+        $course1 = new course($generator->create_course());
+        $course2 = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $data = message_data::new($course1, $user1);
+        $data->to = [$user2];
+        $data->subject = 'Subject';
+        $message = message::create($data);
+        $message->send(time());
+        $reply = message::create(message_data::reply($message, $user2, false));
+
+        // The request names another course, as an edited form can: the reply keeps its own.
+        $data = message_data::draft($reply);
+        $data->course = $course2;
+        self::create_draft_file($data->draftitemid, 'file.txt', 'File');
+        $reply->update($data);
+
+        self::assertEquals($course1, $reply->course);
+        self::assertEquals(1, $reply->attachments);
+        self::assert_attachments(['file.txt' => 'File'], $reply);
+        self::assert_message($reply);
+        $fs = get_file_storage();
+        self::assertEmpty($fs->get_area_files($course2->get_context()->id, 'local_mail', 'message', $reply->id));
+    }
 }

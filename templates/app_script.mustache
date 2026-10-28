@@ -1,0 +1,30 @@
+{{!
+    SPDX-FileCopyrightText: 2026 Anderson Blaine
+
+    SPDX-License-Identifier: GPL-3.0-or-later
+}}
+{{!
+    @template local_mail/app_script
+
+    Tags that load a compiled entry script of the mailbox app.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * none
+
+    Context variables required for this template:
+    * cssurls: Stylesheets of the script, printed here only when the page head is already out.
+    * jsurl: URL of the entry script, an ES module.
+
+    Example context (json):
+    {
+        "cssurls": ["https://example.com/local/mail/svelte/build/view-abc123.css"],
+        "jsurl": "https://example.com/local/mail/svelte/build/view-def456.js"
+    }
+}}
+{{#cssurls}}
+<link rel="stylesheet" href="{{.}}">
+{{/cssurls}}
+<script type="module" src="{{jsurl}}"></script>

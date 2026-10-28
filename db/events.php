@@ -37,4 +37,8 @@ $observers = [
         'eventname' => 'core\event\course_deleted',
         'callback'  => 'local_mail\observer::course_deleted',
     ],
+    [
+        'eventname' => 'core\event\user_deleted',
+        'callback'  => 'local_mail\observer::user_deleted',
+    ],
 ];

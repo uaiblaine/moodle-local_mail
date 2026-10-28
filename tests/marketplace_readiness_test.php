@@ -21,7 +21,7 @@ namespace local_mail;
  *
  * Each test is one rule of the plugin submission guidelines (Licensing,
  * Strings, Settings storage, CSS styles, Boilerplate, Privacy) or one finding
- * a directory reviewer raised on this fleet. They read files only, so they run
+ * a directory reviewer raised on a plugin submission. They read files only, so they run
  * wherever the PHPUnit suite runs. The class is meant to be copied between
  * plugins: only COMPONENT and the core write map change.
  *

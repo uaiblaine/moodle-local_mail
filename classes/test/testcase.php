@@ -1259,7 +1259,7 @@ abstract class testcase extends \advanced_testcase {
         $cases[] = [$search, []];
 
         // Other course, in separate groups: Henry is alone in group 3 and nobody there sees every
-        // group, so he reaches nobody (rule G1; user_search_test::test_separate_groups covers it).
+        // group, so he reaches nobody (user_search_test::test_separate_groups covers it).
         $search = new user_search($henry, $course3);
         $cases[] = [$search, []];
 

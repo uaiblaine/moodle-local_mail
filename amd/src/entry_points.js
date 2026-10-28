@@ -24,6 +24,8 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+// Only for the participants page's "With selected users..." menu: core/custom_interaction_events
+// fires its cie:accessibleChange through jQuery, which no native listener sees (Moodle 4.5 to 5.3).
 import $ from 'jquery';
 import {getString} from 'core/str';
 import Templates from 'core/templates';

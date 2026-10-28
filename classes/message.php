@@ -236,6 +236,39 @@ class message {
     }
 
     /**
+     * Removes a user from every message they did not send, with the labels they put on them.
+     *
+     * Covers sent messages they received, in any deleted state, and other users' drafts that
+     * name them. The rows go rather than being marked DELETED_FOREVER, because a row in that
+     * state still records that the user received the message, and the privacy provider no longer
+     * reports it. The messages stay for their other participants, who no longer see the user
+     * among the recipients. Messages the user sent are untouched: see set_deleted() with
+     * DELETED_CONTENT for erasing them.
+     *
+     * Raw SQL over ids, as in purge(): a user being deleted cannot be loaded as a participant.
+     *
+     * @param int $userid ID of the user.
+     * @param int $courseid ID of the course to limit the removal to, or 0 for every course.
+     */
+    public static function delete_recipient_rows(int $userid, int $courseid = 0): void {
+        global $DB;
+
+        $labelselect = 'role <> :role AND labelid IN (SELECT id FROM {local_mail_labels} WHERE userid = :userid)';
+        $userselect = 'role <> :role AND userid = :userid';
+        $params = ['role' => self::ROLE_FROM, 'userid' => $userid];
+        if ($courseid) {
+            $labelselect .= ' AND courseid = :courseid';
+            $userselect .= ' AND courseid = :courseid';
+            $params['courseid'] = $courseid;
+        }
+
+        $transaction = $DB->start_delegated_transaction();
+        $DB->delete_records_select('local_mail_message_labels', $labelselect, $params);
+        $DB->delete_records_select('local_mail_message_users', $userselect, $params);
+        $transaction->allow_commit();
+    }
+
+    /**
      * Permanently deletes messages, with their rows and their attachments.
      *
      * The only way a sent message ever leaves the database other than its course being
@@ -621,9 +654,10 @@ class message {
     }
 
     /**
-     * Set the delete status of the message.
+     * Sets the deleted status for the user.
      *
-     * Drafts are always removed from the database.
+     * A draft whose status reaches DELETED_FOREVER is physically deleted, with its references,
+     * user rows and labels; any other status change only updates the user's row.
      *
      * @param user $user User.
      * @param int $status New deleted status.
@@ -891,12 +925,14 @@ class message {
         $fs = get_file_storage();
 
         $oldcontext = $this->course->get_context();
-        $newcontext = $data->course->get_context();
 
-        // Course.
+        // Course. A reply or a forward stays in the course of the message it references.
         if (!$DB->record_exists('local_mail_message_refs', ['messageid' => $this->id])) {
             $this->course = $data->course;
         }
+
+        // Files go where the message is, which is where listing and serving look for them.
+        $newcontext = $this->course->get_context();
 
         // Subject.
         $this->subject = trim($data->subject);

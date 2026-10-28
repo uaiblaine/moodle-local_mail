@@ -110,9 +110,9 @@ final class privacy_provider_test extends test\testcase {
             foreach ($messages as $message) {
                 $hassenderdata = $message->sender()->id == $user->id &&
                     $message->deleted($user) != message::DELETED_CONTENT;
-                $hasrecipientdata = !$message->draft && $message->has_recipient($user) &&
-                    $message->deleted($user) != message::DELETED_FOREVER;
-                if ($hassenderdata || $hasrecipientdata) {
+                // Any recipient row holds the user's id: messages deleted forever and other
+                // users' drafts too.
+                if ($hassenderdata || $message->has_recipient($user)) {
                     $courses[$message->course->id] = true;
                 }
             }
@@ -154,13 +154,8 @@ final class privacy_provider_test extends test\testcase {
                 if ($message->deleted($sender) != message::DELETED_CONTENT) {
                     $courseusers[$sender->id] = true;
                 }
-                if ($message->draft) {
-                    continue;
-                }
                 foreach ($message->recipients() as $user) {
-                    if ($message->deleted($user) != message::DELETED_FOREVER) {
-                        $courseusers[$user->id] = true;
-                    }
+                    $courseusers[$user->id] = true;
                 }
             }
             $context = \context_course::instance($course->id);
@@ -338,6 +333,105 @@ final class privacy_provider_test extends test\testcase {
         self::assert_deleted_messages($messages, $user, $course);
     }
 
+    public function test_export_label_color(): void {
+        $user = user::get((int) $this->getDataGenerator()->create_user()->id);
+        $red = label::create($user, 'Red label', 'red');
+        $plain = label::create($user, 'Plain label');
+
+        provider::export_user_data(new approved_contextlist(
+            \core_user::get_user($user->id),
+            'local_mail',
+            [\context_user::instance($user->id)->id]
+        ));
+
+        $writer = writer::with_context(\context_user::instance($user->id));
+        $subcontext = [strings::get('pluginname'), strings::get('labels')];
+        self::assertEquals(
+            (object) ['name' => 'Red label', 'color' => get_string('colorred', 'local_mail')],
+            $writer->get_data(array_merge($subcontext, [$red->id]))
+        );
+        // A label without colour exports no colour name.
+        self::assertEquals(
+            (object) ['name' => 'Plain label', 'color' => ''],
+            $writer->get_data(array_merge($subcontext, [$plain->id]))
+        );
+    }
+
+    public function test_delete_data_for_user_removes_the_recipient(): void {
+        global $DB;
+
+        $generator = $this->getDataGenerator();
+        $course = new course($generator->create_course());
+        $context = $course->get_context();
+        $sender = new user($generator->create_user());
+        $recipient = new user($generator->create_user());
+        $other = new user($generator->create_user());
+        $onlydraft = new user($generator->create_user());
+        foreach ([$sender, $recipient, $other, $onlydraft] as $user) {
+            $generator->enrol_user($user->id, $course->id);
+        }
+        $label = label::create($recipient, 'Kept');
+
+        // Received and labelled, received and deleted forever, and on another user's draft.
+        $data = message_data::new($course, $sender);
+        $data->to = [$recipient, $other];
+        $data->subject = 'Received';
+        $received = message::create($data);
+        $received->send(time());
+        $received->set_labels($recipient, [$label]);
+        $data = message_data::new($course, $sender);
+        $data->to = [$recipient];
+        $data->subject = 'Deleted forever';
+        $forgotten = message::create($data);
+        $forgotten->send(time());
+        $forgotten->set_deleted($recipient, message::DELETED_FOREVER);
+        $data = message_data::new($course, $sender);
+        $data->to = [$recipient, $onlydraft];
+        $data->subject = 'Draft';
+        $draft = message::create($data);
+
+        // A user whose only row is on another user's draft is reported, as that row holds their id.
+        self::assertEquals([$context->id], provider::get_contexts_for_userid($onlydraft->id)->get_contextids());
+        $userlist = new userlist($context, 'local_mail');
+        provider::get_users_in_context($userlist);
+        self::assertContains($onlydraft->id, array_map('intval', $userlist->get_userids()));
+
+        provider::delete_data_for_user(new approved_contextlist(
+            \core_user::get_user($recipient->id),
+            'local_mail',
+            [$context->id]
+        ));
+
+        self::assertEquals(0, $DB->count_records('local_mail_message_users', ['userid' => $recipient->id]));
+        self::assertEquals(0, $DB->count_records('local_mail_message_labels', ['labelid' => $label->id]));
+        // Only the user context of the label is left: no course row reports the course.
+        self::assertEquals(
+            [\context_user::instance($recipient->id)->id],
+            provider::get_contexts_for_userid($recipient->id)->get_contextids()
+        );
+        // The control: the messages, and the rows of everybody else, stay.
+        foreach ([$received, $forgotten, $draft] as $message) {
+            self::assert_record_count(1, 'messages', ['id' => $message->id]);
+            self::assert_record_count(1, 'message_users', ['messageid' => $message->id, 'userid' => $sender->id]);
+        }
+        self::assert_record_count(1, 'message_users', ['messageid' => $received->id, 'userid' => $other->id]);
+        self::assert_record_count(1, 'message_users', ['messageid' => $draft->id, 'userid' => $onlydraft->id]);
+        self::assertEquals('Received', message::get($received->id)->subject);
+        self::assertEquals([$label->id => $label], label::get_by_user($recipient));
+    }
+
+    public function test_notification_preference_is_cores(): void {
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+        external::set_preferences(['notifications' => ['email']]);
+
+        // The preference the plugin writes for its message provider is exported by core_message.
+        \core_message\privacy\provider::export_user_preferences($user->id);
+        $preferences = (array) writer::with_context(\context_system::instance())->get_user_preferences('core_message');
+
+        self::assertEquals('email', $preferences['message_provider_local_mail_mail_enabled']->value);
+    }
+
     /**
      * Asserts that message for a user in a course has been deleted.
      *
@@ -358,14 +452,25 @@ final class privacy_provider_test extends test\testcase {
                 self::assert_record_count(0, 'message_users', ['messageid' => $message->id]);
                 self::assert_record_count(0, 'message_labels', ['messageid' => $message->id]);
                 self::assert_attachments([], $message);
-            } else if ($user->id == $sender->id || !$message->draft && $message->has_recipient($user)) {
+            } else if ($message->has_recipient($user)) {
+                // Received, deleted forever or another user's draft: no row keeps the user's id.
+                self::assert_record_count(0, 'message_users', ['messageid' => $message->id, 'userid' => $user->id]);
+                foreach ($userlabels as $label) {
+                    self::assert_record_count(0, 'message_labels', [
+                        'messageid' => $message->id,
+                        'labelid' => $label->id,
+                    ]);
+                }
+                // The message stays for its other participants.
+                self::assert_record_count(1, 'messages', ['id' => $message->id]);
+            } else if ($user->id == $sender->id) {
                 self::assert_record_data('message_users', [
                     'messageid' => $message->id,
                     'userid' => $user->id,
                 ], [
                     'unread' => 0,
                     'starred' => 0,
-                    'deleted' => $user->id == $sender->id ? message::DELETED_CONTENT : message::DELETED_FOREVER,
+                    'deleted' => message::DELETED_CONTENT,
                 ]);
                 foreach ($userlabels as $label) {
                     self::assert_record_count(0, 'message_labels', [
@@ -373,19 +478,17 @@ final class privacy_provider_test extends test\testcase {
                         'labelid' => $label->id,
                     ]);
                 }
-                if ($user->id == $sender->id) {
-                    self::assert_record_data('messages', [
-                        'id' => $message->id,
-                    ], [
-                        'subject' => '',
-                        'content' => '',
-                        'format' => FORMAT_PLAIN,
-                        'attachments' => 0,
-                        'normalizedsubject' => '',
-                        'normalizedcontent' => '',
-                    ]);
-                    self::assert_attachments([], $message);
-                }
+                self::assert_record_data('messages', [
+                    'id' => $message->id,
+                ], [
+                    'subject' => '',
+                    'content' => '',
+                    'format' => FORMAT_PLAIN,
+                    'attachments' => 0,
+                    'normalizedsubject' => '',
+                    'normalizedcontent' => '',
+                ]);
+                self::assert_attachments([], $message);
             } else {
                 self::assert_message($message);
             }

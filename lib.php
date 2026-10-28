@@ -125,22 +125,12 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
     $url = new moodle_url('/local/mail/view.php', ['t' => 'inbox']);
     $ismailpage = $PAGE->url->compare($url, URL_MATCH_BASE);
 
-    $mailicon = html_writer::tag('i', '', [
-        'class' => 'fa fa-fw fa-envelope-o icon m-0',
-        'style' => 'font-size: 16px',
-    ]);
-    $badge = '';
-    if (!$ismailpage) {
-        $badge = html_writer::span('', 'local-mail-navbar-count count-container', [
-            'hidden' => 'hidden',
-        ]);
-    }
-    $link = html_writer::tag('a', $mailicon . $badge, [
-        'href' => $url,
-        'class' => 'nav-link btn h-100 position-relative d-flex align-items-center px-2 py-0',
+    $output = $renderer->render_from_template('local_mail/navbar', [
+        'url' => $url->out(false),
         'title' => strings::get('pluginname'),
+        // The mailbox shows its own counts, so the badge and its request are left out there.
+        'showcount' => !$ismailpage,
     ]);
-    $output = html_writer::div($link, 'popover-region', ['id' => 'local-mail-navbar']);
 
     if (!$ismailpage) {
         $PAGE->requires->js_call_amd('local_mail/navbar', 'init');

@@ -98,4 +98,39 @@ final class user_search_test extends test\testcase {
         $search->include = [$u['studentb']->id, $u['tutorb']->id];
         self::assertEqualsCanonicalizing([$u['studentb']->id, $u['tutorb']->id], array_keys($search->get()));
     }
+
+    public function test_roles_assigned_in_a_parent_context(): void {
+        global $DB;
+
+        $generator = self::getDataGenerator();
+        $category = $generator->create_category();
+        $course = new course($generator->create_course(['category' => $category->id]));
+        $studentroleid = (int) $DB->get_field('role', 'id', ['shortname' => 'student']);
+        assign_capability('local/mail:mailsamerole', CAP_PREVENT, $studentroleid, $course->get_context()->id);
+        $users = [];
+        foreach (['student', 'peer', 'categorystudent', 'teacher'] as $name) {
+            $users[$name] = new user($generator->create_user());
+        }
+        $generator->enrol_user($users['student']->id, $course->id, 'student');
+        $generator->enrol_user($users['peer']->id, $course->id, 'student');
+        $generator->enrol_user($users['teacher']->id, $course->id, 'editingteacher');
+        // Enrolled without a role in the course, a student through the category.
+        $generator->enrol_user($users['categorystudent']->id, $course->id, 0);
+        role_assign($studentroleid, $users['categorystudent']->id, \context_coursecat::instance($category->id)->id);
+        $ids = array_map(fn(user $user) => $user->id, $users);
+
+        // A student without local/mail:mailsamerole reaches neither student, wherever the role is
+        // assigned; the teacher is the control.
+        $search = new user_search($users['student'], $course);
+        $search->include = $ids;
+        self::assertEquals([$users['teacher']->id], array_keys($search->get()));
+
+        // The role filter lists the student of the category among the students of the course.
+        $search = new user_search($users['teacher'], $course);
+        $search->roleid = $studentroleid;
+        self::assertEqualsCanonicalizing(
+            [$users['student']->id, $users['peer']->id, $users['categorystudent']->id],
+            array_keys($search->get())
+        );
+    }
 }

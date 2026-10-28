@@ -1,0 +1,30 @@
+{{!
+    SPDX-FileCopyrightText: 2026 Anderson Blaine
+
+    SPDX-License-Identifier: GPL-3.0-or-later
+}}
+{{!
+    @template local_mail/view
+
+    Mount point of the mailbox app and the data it starts from.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * none
+
+    The app (svelte/src/view.ts) mounts on the element with id local-mail-view and reads
+    window.local_mail_view_data.
+
+    Context variables required for this template:
+    * data: The initial data, JSON-encoded by view.php with the JSON_HEX_* flags, so that no
+      value can close the script element.
+
+    Example context (json):
+    {
+        "data": "{\"userid\": 2, \"mobile\": false}"
+    }
+}}
+<div id="local-mail-view"></div>
+<script>window.local_mail_view_data = {{{data}}};</script>

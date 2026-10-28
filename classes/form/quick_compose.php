@@ -103,7 +103,9 @@ class quick_compose extends dynamic_form {
     }
 
     /**
-     * Validates the recipients against the rules of every send.
+     * Validates the recipients with sender::check_recipients() and requires a non-empty subject,
+     * the two checks sender::send() repeats at send time, and a subject of at most 100
+     * characters, the limit the client-side rule shows.
      *
      * @param array $data Submitted data.
      * @param array $files Submitted files.
@@ -119,8 +121,13 @@ class quick_compose extends dynamic_form {
             $errors['recipientsummary'] = $e->getMessage();
         }
 
-        if (!\core_text::strlen(trim($data['subject'] ?? ''))) {
+        $subjectlength = \core_text::strlen(trim($data['subject'] ?? ''));
+        if (!$subjectlength) {
             $errors['subject'] = get_string('erroremptysubject', 'local_mail');
+        } else if ($subjectlength > 100) {
+            // A client-side rule never reaches the server, and message::update() would cut
+            // the subject silently instead of telling the sender.
+            $errors['subject'] = get_string('maximumchars', '', 100);
         }
 
         return $errors;

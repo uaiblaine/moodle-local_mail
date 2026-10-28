@@ -1,0 +1,17 @@
+# Local-only extra plugins for moodle-dev's `mdl ci` (bin/lib/local-extras.sh there).
+# GitHub's CI never reads this file, and it is export-ignored: format_mtube is a private,
+# vendor-licensed course format that the reusable workflow cannot check out, so the MooTube
+# tests (tests/local/mtube_provider_test.php, tests/behat/mtube_contacts.feature) skip on
+# GitHub by design and run in the local gate on the 5.3 legs.
+#
+# The checkout must be on format_mtube's `dev` branch (or a branch made from it): only dev
+# carries the development-site licence rule that lets it install on a CI site, whose bare
+# hostname is a development site; `main` is the vendor's production code.
+extra-plugins:
+  - repo: moodle-format_mtube-503
+    path: course/format/mtube
+    branches: [MOODLE_503_STABLE]
+    ref: dev
+    requires:
+      - repo: moodle-mod_interactivevideo
+        path: mod/interactivevideo

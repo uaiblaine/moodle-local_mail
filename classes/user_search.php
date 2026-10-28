@@ -147,18 +147,27 @@ class user_search {
         $wheres .= ' AND u.id <> :userid';
         $params['userid'] = $this->user->id;
 
+        /*
+         * The roles a user holds in the course are the ones assigned in its context and in every
+         * parent context (category, system), which the course inherits: the set core's
+         * get_user_roles() returns. The same-role rule and the role filter both read that set, so
+         * a teacher assigned in the category counts as a teacher of the course.
+         */
+        $rolecontextids = $context->get_parent_context_ids(true);
+
         // Exclude users with same role.
         if (!has_capability('local/mail:mailsamerole', $context, $this->user->id)) {
+            [$ctx1sql, $ctx1params] = $DB->get_in_or_equal($rolecontextids, SQL_PARAMS_NAMED, 'samerolectx1');
+            [$ctx2sql, $ctx2params] = $DB->get_in_or_equal($rolecontextids, SQL_PARAMS_NAMED, 'samerolectx2');
             $samerolesql = 'SELECT ra2.userid'
                 . ' FROM {role_assignments} ra1'
                 . ' JOIN {role_assignments} ra2 ON ra1.roleid = ra2.roleid'
                 . ' WHERE ra1.userid = :sameroleurserid'
-                . ' AND ra1.contextid = :samerolecontextid1'
-                . ' AND ra2.contextid = :samerolecontextid2';
+                . " AND ra1.contextid $ctx1sql"
+                . " AND ra2.contextid $ctx2sql";
             $wheres .= " AND u.id NOT IN ($samerolesql)";
             $params['sameroleurserid'] = $this->user->id;
-            $params['samerolecontextid1'] = $context->id;
-            $params['samerolecontextid2'] = $context->id;
+            $params = array_merge($params, $ctx1params, $ctx2params);
         }
 
         // Separate groups: a sender who cannot see every group reaches the members of their own
@@ -181,9 +190,10 @@ class user_search {
 
         // Role.
         if ($this->roleid) {
+            [$ctx3sql, $ctx3params] = $DB->get_in_or_equal($rolecontextids, SQL_PARAMS_NAMED, 'rolectx');
             $joins .= ' JOIN {role_assignments} ra3 ON ra3.userid = u.id';
-            $wheres .= ' AND ra3.contextid = :contextid AND ra3.roleid = :roleid';
-            $params['contextid'] = $context->id;
+            $wheres .= " AND ra3.contextid $ctx3sql AND ra3.roleid = :roleid";
+            $params = array_merge($params, $ctx3params);
             $params['roleid'] = $this->roleid;
         }
 

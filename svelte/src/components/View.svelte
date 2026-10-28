@@ -64,9 +64,38 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     $: captureBackButton = tray != null;
 
-    $: window.parent?.postMessage({ addon: 'local_mail', setLoading: loading }, '*');
-    $: window.parent?.postMessage({ addon: 'local_mail', setTitle: mobileTitle }, '*');
-    $: window.parent?.postMessage({ addon: 'local_mail', captureBack: captureBackButton }, '*');
+    /*
+     * Origin of the Moodle App page that frames the mailbox, or null when it cannot be named.
+     * The app serves its page from http(s)://localhost on Android and in a browser, but from a
+     * custom scheme on iOS, whose origin no target origin can name; there the messages keep
+     * '*', and they still reach window.parent only. Where the browser reports the framing
+     * origin (location.ancestorOrigins) it decides; the referrer is the fallback elsewhere.
+     */
+    const appOrigin = ((): string | null => {
+        const ancestors = window.location.ancestorOrigins;
+        const candidate = ancestors ? ancestors[0] : document.referrer;
+        try {
+            const url = new URL(candidate || '');
+            return url.protocol == 'https:' || url.protocol == 'http:' ? url.origin : null;
+        } catch {
+            return null;
+        }
+    })();
+
+    /*
+     * Messages for the app's page (classes/output/mobile-view.js), the only listener. Outside
+     * the app nothing listens, so nothing is posted, and no framing page learns the title or
+     * the links of the mailbox.
+     */
+    const postToApp = (data: Record<string, unknown>) => {
+        if ($store.mobile && window.parent !== window) {
+            window.parent.postMessage({ addon: 'local_mail', ...data }, appOrigin || '*');
+        }
+    };
+
+    $: postToApp({ setLoading: loading });
+    $: postToApp({ setTitle: mobileTitle });
+    $: postToApp({ captureBack: captureBackButton });
 
     onMount(() => {
         store.setViewportSize(window.innerWidth);
@@ -94,7 +123,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
     };
 
     const handleMessage = (event: MessageEvent) => {
-        if ($store.mobile && event.data.addon == 'local_mail' && event.data.backClicked) {
+        // Only the app's page that frames the mailbox may drive it.
+        if (!$store.mobile || window.parent === window || event.source !== window.parent) {
+            return;
+        }
+        if (appOrigin && event.origin != appOrigin) {
+            return;
+        }
+        if (event.data?.addon == 'local_mail' && event.data.backClicked) {
             store.navigateToMenu();
         }
     };
@@ -103,7 +139,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         if ($store.mobile && !event.defaultPrevented && event.target instanceof HTMLElement) {
             const link = event.target.closest('a');
             if (link) {
-                window.parent?.postMessage({ addon: 'local_mail', openUrl: link.href }, '*');
+                postToApp({ openUrl: link.href });
             }
             if (!event.defaultPrevented) {
                 event.preventDefault();

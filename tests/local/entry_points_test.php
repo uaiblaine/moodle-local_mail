@@ -162,8 +162,8 @@ final class entry_points_test extends \local_mail\test\testcase {
     }
 
     public function test_mtube_hook_without_the_seam(): void {
-        // The vendor's MooTube builds and the 5.2 checkout dispatch the extensions hook without
-        // register_messaging_provider(); the listener must leave such a hook alone.
+        // A format_mtube release that predates the messaging-provider extension point dispatches
+        // the hook without register_messaging_provider(); the listener must leave such a hook alone.
         $hook = new \stdClass();
         hook_callbacks::register_mtube_extensions($hook);
 

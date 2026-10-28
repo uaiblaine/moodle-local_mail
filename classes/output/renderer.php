@@ -224,9 +224,25 @@ class renderer extends \plugin_renderer_base {
     }
 
     /**
+     * Returns the mount point of the mailbox app and the data it starts from.
+     *
+     * The data is printed inside a script element. The JSON_HEX_* flags write <, >, &, ' and "
+     * as \u escapes, so no value, a customised lang string among them, can close that element.
+     *
+     * @param array $data Initial data of the app, read as window.local_mail_view_data.
+     * @return string
+     */
+    public function mailbox_view(array $data): string {
+        return $this->render_from_template('local_mail/view', [
+            'data' => json_encode($data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT),
+        ]);
+    }
+
+    /**
      * Returns the script tags needed for a svelte entry script.
      *
-     * CSS files are included in the head.
+     * CSS files are included in the head, or printed as link elements beside the script when
+     * the head has already been written, as HTML allows a stylesheet link in the body.
      *
      * @param string $file Source file name, e.g. "src/view.ts"
      * @return string
@@ -234,7 +250,7 @@ class renderer extends \plugin_renderer_base {
     public function svelte_script(string $file): string {
         global $CFG;
 
-        $html = '';
+        $latecssurls = [];
 
         if (!empty($CFG->local_mail_devserver)) {
             $jsurl = $CFG->local_mail_devserver . '/' . $file;
@@ -257,22 +273,16 @@ class renderer extends \plugin_renderer_base {
             }
             foreach ($cssurls as $cssurl) {
                 if ($this->page->requires->is_head_done()) {
-                    // Head already written, add CSS using javascript.
-                    $html .= \html_writer::script('(function() {
-                        var doc = document.getElementsByTagName("head")[0];
-                        var link = document.createElement("link");
-                        link.rel = "stylesheet";
-                        link.href = "' . $cssurl->out(false) . '";
-                        doc.appendChild(link);
-                    })();');
+                    $latecssurls[] = $cssurl->out(false);
                 } else {
                     $this->page->requires->css($cssurl);
                 }
             }
         }
 
-        $html .= \html_writer::tag('script', '', ['type' => 'module', 'src' => $jsurl]);
-
-        return $html;
+        return $this->render_from_template('local_mail/app_script', [
+            'cssurls' => $latecssurls,
+            'jsurl' => $jsurl,
+        ]);
     }
 }
