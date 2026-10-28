@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2.18.2] - 2026-10-28
+
 ### Security
 
 - **The mail web services reject a guest or a user who is not logged in with a login error**,
