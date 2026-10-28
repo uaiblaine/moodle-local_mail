@@ -57,6 +57,19 @@ class hook_callbacks {
     }
 
     /**
+     * Registers Mail as the channel to a MooTube course's contacts.
+     *
+     * The hook class belongs to format_mtube and is named only in the type below, which PHP does not
+     * resolve unless format_mtube dispatches it. Constructs the provider only: the hook fires while
+     * modinfo is being built.
+     *
+     * @param \format_mtube\hook\extensions_registration $hook
+     */
+    public static function register_mtube_extensions(\format_mtube\hook\extensions_registration $hook): void {
+        $hook->register_messaging_provider(new local\mtube_provider());
+    }
+
+    /**
      * Wires the profile node and adds the header button on `/user/view.php?id=<user>&course=<course>`.
      */
     private static function init_profile(): void {

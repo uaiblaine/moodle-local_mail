@@ -270,3 +270,37 @@ Stage 1 merged as #13 (`5a98e02`). Stage 2 on `feature/contextual-entry-points-s
 - Gates: `tests/local/entry_points_test.php`; Behat `tests/behat/entry_points.feature` on m503,
   4 scenarios / 43 steps passed; `mutations/entrypoints.conf`, 10 mutants, every one red on
   pgsql and MariaDB. Static gates on the 4.5 and 5.3 legs passed.
+
+## 10. Stages 3 and 4 (2026-10-27)
+
+Stage 2 merged as #14 (`b165073`). Stage 3 merged in `moodle-format_mtube-503` as #3
+(`4509cb7`); its `dev` was rebased onto it (`58bcf4e`). Stage 4 on
+`feature/contextual-entry-points-stage4`:
+
+- `local\mtube_provider` implements MooTube's `messaging_provider`: available where
+  `entry_points::mail_course()` finds the course, and `filter_reachable()` keeps, in the given
+  order, the candidates `user_search` lists (rule G1 included).
+- `db/hooks.php` listens to `\format_mtube\hook\extensions_registration`;
+  `hook_callbacks::register_mtube_extensions()` only constructs the provider (S0a: the
+  listener is silent where MooTube is absent).
+- `amd/src/mtube_contacts.js` fills MooTube's slots: an icon button beside each reachable contact
+  (`aria-label` "Send mail to {name}") and the "Contact the course team" button, which opens the
+  modal with To (the staff see each other).
+- Version 2026102702.
+
+Facts found on the way:
+
+- **A non-editing teacher does not hold `moodle/site:accessallgroups` by default** (core
+  `lib/db/access.php` gives it to `editingteacher` and `manager` only). Under rule G1, in a
+  separate-groups course, a non-editing teacher is therefore reachable only from the groups they
+  belong to, which is what P2 asks for. The Behat team scenario puts the tutor in the student's
+  group for that reason.
+- **With no course contact listed, MooTube renders no contacts block** (`format.php`, a
+  licence-hashed file, sets `showcoursecontacts` to 0), so there is no slot for the team button.
+  The teacher fallback of P2 applies when contacts are listed but none of them is reachable
+  (a tutor of another group, say), not when the list is empty. Changing that needs the vendor.
+
+Gates: `tests/local/mtube_provider_test.php` (skipped without MooTube, so only on m503/m503b);
+Behat `tests/behat/mtube_contacts.feature` on m503, 4 scenarios / 60 steps passed (skipped
+without MooTube through `the "format_mtube" plugin is installed`); 4 manual mutants on m503, every
+one red (the guard for a sender without mail needed a new assertion first).

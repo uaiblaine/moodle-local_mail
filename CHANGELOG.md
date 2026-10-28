@@ -25,6 +25,13 @@
 
 ### Added
 
+- **Mail is the messaging channel of the MooTube course format** (`format_mtube`) where that
+  format is installed: `local\mtube_provider` registers through its extensions hook and
+  `amd/src/mtube_contacts.js` puts an envelope beside each course contact the user may mail and,
+  when the course enables it, a "Contact the course team" button (To, the team sees each
+  other), both opening the quick-compose modal. Who is reachable is `user_search`'s decision,
+  separate groups included. Nothing loads without the format. Version 2026102702.
+
 - "Send mail" on core pages again, course-scoped, opening the quick-compose modal: a link in
   the user details of a course profile, a button beside the user's name there, and an option
   of the participants page's "With selected users..." menu (Bcc by default for several users).
