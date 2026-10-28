@@ -304,3 +304,24 @@ Gates: `tests/local/mtube_provider_test.php` (skipped without MooTube, so only o
 Behat `tests/behat/mtube_contacts.feature` on m503, 4 scenarios / 60 steps passed (skipped
 without MooTube through `the "format_mtube" plugin is installed`); 4 manual mutants on m503, every
 one red (the guard for a sender without mail needed a new assertion first).
+
+## 11. Stage 5: the participant card (2026-10-27)
+
+Stage 4 merged as #15 (`184f2d1`). Stage 5 has two halves:
+
+- `moodle-format_mtube-503`: `messaging_channel` decides the channel. The site setting
+  `format_mtube/messagingchannel` (D5) is shown only with a provider; it is the provider by
+  default, and core messaging hides every provider entry point. `get_participant_card` returns
+  `actions.messageprovider` ("Message via Mail") and disables core's "Message" when routed. The
+  card template renders the button. `load_participant_card_script()` loads the provider's
+  `initParticipantCard`.
+- local_mail: `initParticipantCard({courseid})` in `amd/src/mtube_contacts.js` listens on
+  `document` in the capture phase (S0d) and opens the modal for the card's owner; the card closes
+  through its own handler.
+
+The user report modal's message button and the participants list's bulk action are vendor
+JavaScript and stay on core messaging; they go into the vendor proposal (P5).
+
+Gates: mtube `tests/course_contacts_messaging_test.php` 12 tests, 5 mutants of the new guards
+red on m503; local_mail Behat `mtube_contacts.feature` 5 scenarios / 72 steps on m503 (the card
+scenario hovers a contact's name and sends through the card).

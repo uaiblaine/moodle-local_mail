@@ -79,3 +79,12 @@ Feature: Mail the course contacts of a MooTube course
     When I am on the "MT1" "Course" page logged in as "student1"
     Then I should see "Tia Teacher"
     And "Send mail to Tia Teacher" "button" should not exist
+
+  Scenario: A teacher writes to a participant from the participant card
+    Given the MooTube course "MT1" lists "teacher2" as contacts with mail "contact"
+    When I am on the "MT1" "Course" page logged in as "teacher1"
+    And I hover "Tom Tutor" "link"
+    Then I should see "Message via Mail"
+    And I click on "Message via Mail" "button"
+    And "Send mail" "dialogue" should be visible
+    And I should see "Tom Tutor" in the "Send mail" "dialogue"

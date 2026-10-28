@@ -14,7 +14,8 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Envelopes beside the course contacts of a MooTube course, and its "Contact the course team" button.
+ * Mail in a MooTube course: envelopes beside the course contacts, the "Contact the course team"
+ * button, and the participant card's "Message via Mail".
  *
  * format_mtube calls initCourseContacts() with the users already filtered by
  * local_mail\local\mtube_provider, and marks where each entry point goes in its
@@ -73,4 +74,31 @@ export const initCourseContacts = async({courseid, contacts, team}) => {
         button.addEventListener('click', () => open({courseid, userids: team, role: 'to', returnFocus: button}));
         teamslot.append(button);
     }
+};
+
+let cardListening = false;
+
+/**
+ * Handles the participant card's "Message via Mail" button.
+ *
+ * format_mtube's card intercepts every `[data-action]` click on `document` in the bubble phase and
+ * closes itself; this capture-phase listener runs first and leaves the event alone, so the card
+ * still closes.
+ *
+ * @param {Object} config
+ * @param {Number} config.courseid Course of the card.
+ */
+export const initParticipantCard = ({courseid}) => {
+    if (cardListening) {
+        return;
+    }
+    cardListening = true;
+
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest('.mtube-hover-card [data-action="mtube-messaging-compose"]');
+        const userid = parseInt(button?.dataset.userid ?? '', 10);
+        if (userid > 0) {
+            open({courseid, userids: [userid]});
+        }
+    }, true);
 };
