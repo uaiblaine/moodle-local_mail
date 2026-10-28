@@ -38,6 +38,27 @@ use local_mail\message_data;
  * @covers \local_mail\local\sender
  */
 final class sender_test extends \local_mail\test\testcase {
+    public function test_reachable_ids(): void {
+        ['course' => $course, 'users' => $u] = self::generate_groups_data();
+        $outsider = $this->getDataGenerator()->create_user();
+
+        $ids = [
+            $u['tutora']->id,
+            $u['studentb']->id,
+            (string) $u['teacher']->id,
+            $u['tutora']->id,
+            -1,
+            (int) $outsider->id,
+        ];
+
+        // Only the users the composer would list, once each, in the order given.
+        self::assertSame(
+            [(int) $u['tutora']->id, (int) $u['teacher']->id],
+            sender::reachable_ids($u['studenta1'], $course, $ids),
+        );
+        self::assertSame([], sender::reachable_ids($u['studenta1'], $course, []));
+    }
+
     public function test_check_recipients(): void {
         ['course' => $course, 'users' => $u] = self::generate_groups_data();
 

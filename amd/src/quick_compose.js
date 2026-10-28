@@ -63,7 +63,13 @@ export const open = ({courseid, userids, role = '', returnFocus = null}) => {
         const url = new URL(M.cfg.wwwroot + '/local/mail/view.php');
         url.searchParams.set('t', 'sent');
         url.searchParams.set('m', String(event.detail.messageid));
-        addToast(`${sent} <a href="${url.href}">${view}</a>`);
+        // The toast takes HTML: the strings go in as text nodes, so a translation cannot add markup.
+        const toast = document.createElement('span');
+        const link = document.createElement('a');
+        link.href = url.href;
+        link.textContent = view;
+        toast.append(`${sent} `, link);
+        addToast(toast.innerHTML);
     });
 
     modalForm.show();

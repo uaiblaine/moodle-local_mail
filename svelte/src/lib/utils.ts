@@ -31,9 +31,20 @@ export const colors: ReadonlyArray<string> = [
  * @returns The plain text representation of the HTML.
  */
 export function convertHtmlToText(html: string): string {
-    const el = document.createElement('DIV');
-    el.innerHTML = html;
-    return el.innerText || '';
+    // DOMParser builds an inert document: unlike an element of the live page, it loads no
+    // image and runs no handler while the markup is parsed.
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || '';
+}
+
+/**
+ * Escapes the characters that have a meaning in HTML.
+ *
+ * @param text The plain text to escape.
+ * @returns The text, safe to insert as HTML.
+ */
+export function escapeHtml(text: string): string {
+    return text.replace(/[&<>"']/gu, (char) => '&#' + char.charCodeAt(0) + ';');
 }
 
 /**

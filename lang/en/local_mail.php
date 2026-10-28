@@ -281,6 +281,7 @@ $string['to'] = 'To';
 $string['toomanyusersfound'] = 'Found more users than can be displayed. Enter some text or select a role or group to narrow the search.';
 $string['trash'] = 'Trash';
 $string['trays'] = 'Trays';
+$string['unavailablerecipient'] = 'Recipient you cannot mail';
 $string['undo'] = 'Undo';
 $string['unread'] = 'Unread';
 $string['unstarred'] = 'Not starred';

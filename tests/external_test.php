@@ -2174,6 +2174,9 @@ final class external_test extends test\testcase {
         $user5 = new user($generator->create_user());
         $generator->enrol_user($user1->id, $course1->id);
         $generator->enrol_user($user1->id, $course2->id);
+        foreach ([$user2, $user3, $user4, $user5] as $recipient) {
+            $generator->enrol_user($recipient->id, $course2->id);
+        }
         $time = make_timestamp(2021, 10, 11, 12, 0);
         $now = time();
         self::setUser($user1->id);
@@ -2272,6 +2275,114 @@ final class external_test extends test\testcase {
         external::update_message($reply->id, $data);
 
         self::assertEquals($message->course->id, message::get($reply->id)->course->id);
+    }
+
+    public function test_update_message_rejects_a_new_recipient_the_sender_cannot_mail(): void {
+        ['course' => $course, 'users' => $u] = self::generate_groups_data();
+        $outsider = new user($this->getDataGenerator()->create_user());
+        self::setUser($u['studenta1']->id);
+        $data = message_data::new($course, $u['studenta1']);
+        $data->to = [$u['tutora']];
+        $message = message::create($data);
+        $params = [
+            'courseid' => $course->id,
+            'to' => [$u['tutora']->id],
+            'cc' => [],
+            'bcc' => [],
+            'subject' => 'Subject',
+            'content' => 'Content',
+            'format' => FORMAT_HTML,
+            'draftitemid' => file_get_unused_draft_itemid(),
+        ];
+
+        // A user of the other group under separate groups, and a user enrolled nowhere the sender is.
+        foreach (['other group' => $u['studentb'], 'not enrolled' => $outsider] as $name => $unreachable) {
+            try {
+                external::update_message($message->id, ['cc' => [$unreachable->id]] + $params);
+                self::fail("No exception for: $name");
+            } catch (exception $e) {
+                self::assertEquals('errorinvalidrecipients', $e->errorcode, $name);
+            }
+            $message = message::get($message->id);
+            self::assertEquals([$u['tutora']], $message->recipients(), $name);
+        }
+
+        // A reachable user is accepted.
+        external::update_message($message->id, ['cc' => [$u['teacher']->id]] + $params);
+
+        $message = message::get($message->id);
+        self::assertEquals([$u['tutora']], $message->recipients(message::ROLE_TO));
+        self::assertEquals([$u['teacher']], $message->recipients(message::ROLE_CC));
+    }
+
+    public function test_update_message_keeps_a_recipient_already_on_the_draft(): void {
+        ['course' => $course, 'users' => $u] = self::generate_groups_data();
+        self::setUser($u['studenta1']->id);
+
+        // The draft already holds a user the sender cannot mail, stored before draft writes were
+        // checked or reachable when it was added.
+        $data = message_data::new($course, $u['studenta1']);
+        $data->to = [$u['studentb']];
+        $message = message::create($data);
+
+        external::update_message($message->id, [
+            'courseid' => $course->id,
+            'to' => [$u['studentb']->id],
+            'cc' => [$u['tutora']->id],
+            'bcc' => [],
+            'subject' => 'Subject',
+            'content' => 'Content',
+            'format' => FORMAT_HTML,
+            'draftitemid' => file_get_unused_draft_itemid(),
+        ]);
+
+        $message = message::get($message->id);
+        self::assertEquals([$u['studentb']], $message->recipients(message::ROLE_TO));
+        self::assertEquals([$u['tutora']], $message->recipients(message::ROLE_CC));
+    }
+
+    public function test_get_message_withholds_draft_recipients_the_sender_cannot_mail(): void {
+        global $DB;
+
+        ['course' => $course, 'users' => $u] = self::generate_groups_data();
+        // Generated names are random: a distinctive one makes the absence check meaningful.
+        $DB->update_record('user', ['id' => $u['studentb']->id, 'firstname' => 'Ysolde', 'lastname' => 'Quarrington']);
+        $u['studentb'] = user::get($u['studentb']->id);
+        self::setUser($u['studenta1']->id);
+        $data = message_data::new($course, $u['studenta1']);
+        $data->to = [$u['tutora'], $u['studentb']];
+        $data->subject = 'Subject';
+        $draft = message::create($data);
+        $sent = message::create($data);
+        $sent->send(time());
+
+        $result = external::get_message($draft->id);
+
+        external::validate_parameters(external::get_message_returns(), $result);
+        $recipients = array_column($result['recipients'], null, 'id');
+        self::assertEquals($u['tutora']->fullname(), $recipients[$u['tutora']->id]['fullname']);
+        self::assertTrue($recipients[$u['tutora']->id]['isvalid']);
+        self::assertEquals([
+            'type' => 'to',
+            'id' => $u['studentb']->id,
+            'firstname' => '',
+            'lastname' => '',
+            'fullname' => get_string('unavailablerecipient', 'local_mail'),
+            'pictureurl' => '',
+            'profileurl' => '',
+            'sortorder' => sprintf("1\n\n\n%010d", $u['studentb']->id),
+            'isvalid' => false,
+        ], $recipients[$u['studentb']->id]);
+        self::assertStringNotContainsString('Quarrington', json_encode($result));
+        self::assertStringNotContainsString('Ysolde', json_encode($result));
+
+        // A sent message shows who received it, whether or not the sender can mail them now.
+        $result = external::get_message($sent->id);
+
+        $recipients = array_column($result['recipients'], null, 'id');
+        self::assertEquals($u['studentb']->fullname(), $recipients[$u['studentb']->id]['fullname']);
+        self::assertEquals($u['studentb']->picture_url(), $recipients[$u['studentb']->id]['pictureurl']);
+        self::assertFalse($recipients[$u['studentb']->id]['isvalid']);
     }
 
     public function test_send_message(): void {

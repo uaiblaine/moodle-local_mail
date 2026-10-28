@@ -66,7 +66,9 @@ if ($courseid) {
 $data = message_data::new($course, $user);
 if ($recipients) {
     $role = in_array($role, ['to', 'cc', 'bcc']) ? $role : 'to';
-    $data->$role = user::get_many(explode(',', $recipients));
+    // A draft hands back the name and picture of every recipient it holds, so only users the
+    // sender may mail here are kept; the others are dropped without saying which.
+    $data->$role = user::get_many(local\sender::reachable_ids($user, $course, explode(',', $recipients)));
 }
 $message = message::create($data);
 

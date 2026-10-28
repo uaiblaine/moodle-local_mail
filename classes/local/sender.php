@@ -61,20 +61,38 @@ final class sender {
             throw new exception('erroremptyrecipients');
         }
 
-        $search = new user_search($sender, $course);
-        $search->include = $recipientids;
-        $validrecipients = $search->get();
-
-        foreach ($recipientids as $id) {
-            if (!isset($validrecipients[$id])) {
-                throw new exception('errorinvalidrecipients');
-            }
+        if (count(self::reachable_ids($sender, $course, $recipientids)) != count($recipientids)) {
+            throw new exception('errorinvalidrecipients');
         }
 
         $maxrecipients = (int) get_config('local_mail', 'maxrecipients') ?: 100;
         if (count($recipientids) > $maxrecipients) {
             throw new exception('errortoomanyrecipients', $maxrecipients);
         }
+    }
+
+    /**
+     * Returns which of the given users a sender may mail in a course.
+     *
+     * The test is the one {@see self::check_recipients()} applies at send. Draft writes use it
+     * too, because a draft hands back the name and picture of every recipient it holds.
+     *
+     * @param user $sender Sender.
+     * @param course $course Course of the message.
+     * @param int[] $ids IDs of the users.
+     * @return int[] The reachable IDs, without duplicates, in the given order.
+     */
+    public static function reachable_ids(user $sender, course $course, array $ids): array {
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        if (!$ids) {
+            return [];
+        }
+
+        $search = new user_search($sender, $course);
+        $search->include = $ids;
+        $reachable = $search->get();
+
+        return array_values(array_filter($ids, fn(int $id): bool => isset($reachable[$id])));
     }
 
     /**
