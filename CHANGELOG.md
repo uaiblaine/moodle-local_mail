@@ -25,6 +25,11 @@
 
 ### Added
 
+- **"Message via Mail" on the MooTube participant card** (`initParticipantCard` in
+  `amd/src/mtube_contacts.js`): a capture-phase listener opens the quick-compose modal for the
+  card's owner before the card's own handler closes it. The card offers the button only when
+  `local\mtube_provider` keeps the owner (format_mtube's stage 5). Version 2026102703.
+
 - **Mail is the messaging channel of the MooTube course format** (`format_mtube`) where that
   format is installed: `local\mtube_provider` registers through its extensions hook and
   `amd/src/mtube_contacts.js` puts an envelope beside each course contact the user may mail and,
