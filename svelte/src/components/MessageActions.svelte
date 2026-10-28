@@ -13,6 +13,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
     export let store: Store;
     export let message: Message;
     export let canReplyAll: boolean;
+    /** False hides replying and forwarding, for a message in a course whose mail is read only. */
+    export let canWrite: boolean;
 
     let expanded = false;
 
@@ -39,7 +41,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <i class="fa {starClass}" />
 </button>
 
-{#if $store.viewportSize < ViewportSize.SM}
+{#if canWrite && $store.viewportSize < ViewportSize.SM}
     <div class="dropdown" use:blur={closeMenu}>
         <button
             type="button"
@@ -79,7 +81,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </div>
 {/if}
 
-{#if $store.viewportSize >= ViewportSize.SM}
+{#if canWrite && $store.viewportSize >= ViewportSize.SM}
     <button
         type="button"
         title={$store.strings.reply}

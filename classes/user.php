@@ -166,13 +166,26 @@ class user {
     }
 
     /**
-     * Returns whether the user can use mail in a course.
+     * Returns whether the user can read mail in a course.
+     *
+     * True also in a course where the user cannot write ({@see self::can_use_mail()}), a frozen
+     * one among them: the user still opens, marks, labels and deletes its messages there.
+     *
+     * @param course $course Course.
+     * @return bool
+     */
+    public function can_read_mail(course $course): bool {
+        return array_key_exists($course->id, course::get_by_user($this));
+    }
+
+    /**
+     * Returns whether the user can write mail in a course: create, reply, forward and send.
      *
      * @param course $course Course.
      * @return bool
      */
     public function can_use_mail(course $course) {
-        return array_key_exists($course->id, course::get_by_user($this));
+        return array_key_exists($course->id, course::get_writable_by_user($this));
     }
 
     /**
@@ -232,7 +245,7 @@ class user {
     public function can_view_message(message $message): bool {
         return ($message->sender()->id == $this->id || !$message->draft && $message->has_recipient($this)) &&
             in_array($message->deleted($this), [message::NOT_DELETED, message::DELETED]) &&
-            $this->can_use_mail($message->course);
+            $this->can_read_mail($message->course);
     }
 
     /**

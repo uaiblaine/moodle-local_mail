@@ -43,6 +43,17 @@ $capabilities = [
             'manager'        => CAP_ALLOW,
         ],
     ],
+    'local/mail:viewmail' => [
+        'captype'      => 'read',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes'   => [
+            'student'        => CAP_ALLOW,
+            'teacher'        => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager'        => CAP_ALLOW,
+        ],
+        'clonepermissionsfrom' => 'local/mail:usemail',
+    ],
     'local/mail:mailsamerole' => [
         'riskbitmask'  => RISK_SPAM,
         'captype'      => 'write',

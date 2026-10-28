@@ -266,11 +266,12 @@ export async function createStore(data: InitialData) {
             return responses;
         }
 
-        // Fetch form if message is a draft.
+        // Fetch form if message is a draft the user can still edit: one in a course whose mail is
+        // read only is shown as a message instead.
         let draftForm: MessageForm | undefined;
         let draftRoles: ReadonlyArray<Role> | undefined;
         let draftGroups: ReadonlyArray<Group> | undefined;
-        if (message?.draft) {
+        if (message?.draft && courses.find((c) => c.id == message.course.id)?.canwrite) {
             const requests: ServiceRequest[] = [
                 {
                     methodname: 'get_roles',
@@ -372,9 +373,13 @@ export async function createStore(data: InitialData) {
     const createMessage = async (courseid: number | undefined) => {
         const oldParams = state.params;
 
+        // A course whose mail is read only gives way to the first course the user can write in.
+        const writable = state.courses.filter((c) => c.canwrite);
+        const targetid = writable.find((c) => c.id == courseid)?.id ?? writable[0].id;
+
         const request: CreateMessageRequest = {
             methodname: 'create_message',
-            courseid: courseid || state.courses[0].id,
+            courseid: targetid,
         };
 
         const responses = await callServicesAndSetError([request]);
@@ -386,7 +391,7 @@ export async function createStore(data: InitialData) {
                 courseid:
                     ['shortname', 'fullname'].includes(state.settings.filterbycourse) &&
                     oldParams.courseid
-                        ? courseid
+                        ? targetid
                         : undefined,
             });
         }

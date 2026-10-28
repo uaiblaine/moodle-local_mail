@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Mail in a frozen course stays readable**, version 2026102901. A new read capability,
+  `local/mail:viewmail`, lets a user read and organise a course's mail: open messages and
+  attachments, mark, star, label and delete them, empty the trash. Writing (composing,
+  replying, forwarding, editing and sending drafts) still needs `local/mail:usemail`. Context
+  freezing denies every write capability, so a frozen course used to vanish from the mailbox
+  with all its messages; it is now listed, read only, with a notice in place of the reply
+  buttons, and its drafts open as messages. `viewmail` is installed with every permission and
+  override `usemail` has, so nothing else changes on upgrade; `usemail` alone still grants
+  reading. `get_courses` returns a `canwrite` flag per course. The compose entry points (profile,
+  participants page, MooTube card) are offered only in courses the user can write in.
+
 ## [2.18.2] - 2026-10-28
 
 ### Security

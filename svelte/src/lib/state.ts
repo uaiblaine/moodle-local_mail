@@ -25,6 +25,8 @@ export interface Course {
     /** Unread messages received in the course that were generated rather than written. */
     readonly unreadupdates: number;
     readonly drafts: number;
+    /** False where the user can only read and organise mail, as in a frozen course. */
+    readonly canwrite: boolean;
 }
 
 export enum DeletedStatus {

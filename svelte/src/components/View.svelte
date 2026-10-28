@@ -36,6 +36,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     $: loading = $store.loading;
     $: tray = $store.params.tray;
     $: course = $store.courses.find((c) => c.id == $store.params.courseid);
+    $: canCompose = $store.courses.some((c) => c.canwrite);
     $: label = $store.labels.find((l) => l.id == $store.params.labelid);
 
     $: heading =
@@ -200,6 +201,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 <ComposeButton
                     strings={$store.strings}
                     iconOnly={tray && $store.viewportSize < ViewportSize.SM}
+                    disabled={!canCompose}
                     onClick={() => store.createMessage($store.params.courseid)}
                 />
                 {#if !tray}
@@ -221,6 +223,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 <div class="local-mail-view-side-column">
                     <ComposeButton
                         strings={$store.strings}
+                        disabled={!canCompose}
                         onClick={() => store.createMessage($store.params.courseid)}
                     />
                 </div>
@@ -255,6 +258,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 {:else if $store.message}
                     <Message {store} message={$store.message} />
                 {:else}
+                    {#if course && !course.canwrite}
+                        <div class="alert alert-info">
+                            <i class="fa fa-lock mr-2" />
+                            {$store.strings.coursereadonly}
+                        </div>
+                    {/if}
                     <List {store} />
 
                     <PerPageSelect {store} />

@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     export let strings: Strings;
     export let iconOnly = false;
+    export let disabled = false;
     export let onClick: () => void;
 </script>
 
@@ -18,6 +19,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     class="btn btn-primary text-truncate px-2 px-sm-3"
     class:flex-shrink-0={iconOnly}
     aria-label={strings.compose}
+    {disabled}
     on:click={onClick}
 >
     <i class="fa fa-edit mr-0 mr-sm-1" />

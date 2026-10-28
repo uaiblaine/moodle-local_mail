@@ -334,7 +334,7 @@ class external extends external_api {
     }
 
     /**
-     * Returns the courses in which the current user can use mail.
+     * Returns the courses in which the current user can read mail.
      *
      * @return array Courses of the user, with their number of unread messages and drafts.
      */
@@ -352,6 +352,7 @@ class external extends external_api {
     public static function get_courses_raw() {
         $user = self::current_user();
         $courses = course::get_by_user($user);
+        $writable = course::get_writable_by_user($user);
 
         if (!$courses) {
             return [];
@@ -396,6 +397,7 @@ class external extends external_api {
                 'unread' => $unread[$course->id] ?? 0,
                 'unreadupdates' => $unreadupdates[$course->id] ?? 0,
                 'drafts' => $drafts[$course->id] ?? 0,
+                'canwrite' => isset($writable[$course->id]),
             ];
         }
 
@@ -418,6 +420,7 @@ class external extends external_api {
                 'unread' => new external_value(PARAM_INT, 'Number of unread messages, of both categories'),
                 'unreadupdates' => new external_value(PARAM_INT, 'Number of unread messages in the updates category'),
                 'drafts' => new external_value(PARAM_INT, 'Number of drafts'),
+                'canwrite' => new external_value(PARAM_BOOL, 'Whether the user can write mail in the course'),
             ])
         );
     }
@@ -613,7 +616,7 @@ class external extends external_api {
 
         if ($query['courseid']) {
             $search->course = course::get($query['courseid']);
-            if (!$user->can_use_mail($search->course)) {
+            if (!$user->can_read_mail($search->course)) {
                 throw new exception('errorcoursenotfound', $search->course->id);
             }
         }
@@ -1407,7 +1410,7 @@ class external extends external_api {
         $course = null;
         if ($params['courseid']) {
             $course = course::get($params['courseid']);
-            if (!$user->can_use_mail($course)) {
+            if (!$user->can_read_mail($course)) {
                 throw new exception('errorcoursenotfound', $course->id);
             }
         }
@@ -2057,6 +2060,7 @@ class external extends external_api {
      *
      * @return int Id of the created message.
      * @throws exception If the replied message is not accessible to the user or is a draft.
+     * @throws exception If the user cannot write mail in its course.
      */
     public static function reply_message() {
         $params = self::validate_call(self::reply_message_parameters(), func_get_args());
@@ -2070,6 +2074,11 @@ class external extends external_api {
         // reply or a forward would hand its content to new recipients as a sent reference.
         if ($message->draft) {
             throw new exception('errormessagenotfound', $message->id);
+        }
+        // Viewing the message needs read access only; the draft created here needs write access,
+        // which a frozen course denies.
+        if (!$user->can_use_mail($message->course)) {
+            throw new exception('errorcoursenotfound', $message->course->id);
         }
 
         $data = message_data::reply($message, $user, $params['all']);
@@ -2102,6 +2111,7 @@ class external extends external_api {
      *
      * @return int Id of the created message.
      * @throws exception If the forwarded message is not accessible to the user or is a draft.
+     * @throws exception If the user cannot write mail in its course.
      */
     public static function forward_message() {
         $params = self::validate_call(self::forward_message_parameters(), func_get_args());
@@ -2115,6 +2125,11 @@ class external extends external_api {
         // reply or a forward would hand its content to new recipients as a sent reference.
         if ($message->draft) {
             throw new exception('errormessagenotfound', $message->id);
+        }
+        // Viewing the message needs read access only; the draft created here needs write access,
+        // which a frozen course denies.
+        if (!$user->can_use_mail($message->course)) {
+            throw new exception('errorcoursenotfound', $message->course->id);
         }
 
         $data = message_data::forward($message, $user);

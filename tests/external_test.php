@@ -314,6 +314,7 @@ final class external_test extends test\testcase {
                     'unread' => $unread,
                     'unreadupdates' => $unreadupdates,
                     'drafts' => $drafts,
+                    'canwrite' => $user->can_use_mail($course),
                 ];
             }
             $result = external::get_courses();

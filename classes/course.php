@@ -81,37 +81,72 @@ class course {
     }
 
     /**
-     * Gets courses in which the given user can use mail.
+     * Gets courses in which the given user can read mail.
      *
-     * A course is one when the user is enrolled with "local/mail:usemail" and can see it: a
-     * hidden course counts only for a user with "moodle/course:viewhiddencourses" there, the
-     * filter enrol_get_users_courses() applies, so a student does not keep mailing in a course
-     * hidden from them.
+     * A course is one when the user is enrolled with "local/mail:viewmail" or
+     * "local/mail:usemail" and can see it: a hidden course counts only for a user with
+     * "moodle/course:viewhiddencourses" there, the filter enrol_get_users_courses() applies, so
+     * a student does not keep mailing in a course hidden from them. Every listing is scoped to
+     * these courses; {@see self::get_writable_by_user()} is the subset the user can write in.
      *
      * @param user $user User.
      * @return self[] Array of courses indexed by ID.
      */
     public static function get_by_user(user $user): array {
+        self::load_user($user);
+
+        return self::get_many(self::cache()->get('courseids'));
+    }
+
+    /**
+     * Gets courses in which the given user can write, reply, forward and send mail.
+     *
+     * Those of {@see self::get_by_user()} where the user holds "local/mail:usemail". A frozen
+     * course is never one: context freezing denies every write capability, so its mail stays
+     * readable through "local/mail:viewmail" alone.
+     *
+     * @param user $user User.
+     * @return self[] Array of courses indexed by ID.
+     */
+    public static function get_writable_by_user(user $user): array {
+        self::load_user($user);
+
+        return self::get_many(self::cache()->get('writableids'));
+    }
+
+    /**
+     * Fills the cache with the courses of a user, unless it already holds them.
+     *
+     * Usemail counts as read access as well, so a role that kept it and lost viewmail is not
+     * left writing mail it cannot read.
+     *
+     * @param user $user User.
+     */
+    private static function load_user(user $user): void {
         $cache = self::cache();
 
         if ($user->id == $cache->get('userid')) {
-            return self::get_many($cache->get('courseids'));
+            return;
         }
 
         $courses = [];
+        $writableids = [];
         foreach (enrol_get_users_courses($user->id, true) as $record) {
             $context = \context_course::instance($record->id);
-            if (has_capability('local/mail:usemail', $context, $user->id, false)) {
+            $canwrite = has_capability('local/mail:usemail', $context, $user->id, false);
+            if ($canwrite || has_capability('local/mail:viewmail', $context, $user->id, false)) {
                 $courses[$record->id] = new self($record);
+            }
+            if ($canwrite) {
+                $writableids[] = (int) $record->id;
             }
         }
 
         $cache->purge();
         $cache->set_many($courses);
         $cache->set('courseids', array_keys($courses));
+        $cache->set('writableids', $writableids);
         $cache->set('userid', $user->id);
-
-        return $courses;
     }
 
     /**
