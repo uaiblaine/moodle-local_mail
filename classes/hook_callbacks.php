@@ -57,6 +57,24 @@ class hook_callbacks {
     }
 
     /**
+     * Registers Mail as the channel to a MooTube course's contacts.
+     *
+     * Only a MooTube build carrying the messaging provider seam (the fleet's 5.3 checkout) has
+     * register_messaging_provider(); the vendor's builds and the 5.2 checkout dispatch the same hook
+     * without it, so the method is checked before it is called. The parameter is untyped because the
+     * hook class exists only where format_mtube is installed. Constructs the provider only: the hook
+     * fires while modinfo is being built.
+     *
+     * @param object $hook A \format_mtube\hook\extensions_registration.
+     */
+    public static function register_mtube_extensions(object $hook): void {
+        if (!method_exists($hook, 'register_messaging_provider')) {
+            return;
+        }
+        $hook->register_messaging_provider(new local\mtube_provider());
+    }
+
+    /**
      * Wires the profile node and adds the header button on `/user/view.php?id=<user>&course=<course>`.
      */
     private static function init_profile(): void {

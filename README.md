@@ -16,6 +16,13 @@ Project page: https://moodle.org/plugins/local_mail
 This fork is developed and tested against Moodle 4.5, 5.0, 5.1, 5.2 and 5.3
 (`$plugin->supported = [405, 503]`), and requires Moodle 4.5.
 
+It depends on no other plugin. On a site with the MooTube course format
+(`format_mtube`, 5.3 build carrying its messaging provider seam), Mail
+registers itself as that format's messaging channel: an envelope beside each
+course contact on the course home, and a "Contact the course team" button when
+the course enables it in its MooTube settings. Without the format nothing of
+this is loaded.
+
 ## Installation
 
 Unpack archive inside `/path/to/moodle/local/mail`

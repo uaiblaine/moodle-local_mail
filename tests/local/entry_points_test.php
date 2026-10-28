@@ -161,6 +161,15 @@ final class entry_points_test extends \local_mail\test\testcase {
         );
     }
 
+    public function test_mtube_hook_without_the_seam(): void {
+        // The vendor's MooTube builds and the 5.2 checkout dispatch the extensions hook without
+        // register_messaging_provider(); the listener must leave such a hook alone.
+        $hook = new \stdClass();
+        hook_callbacks::register_mtube_extensions($hook);
+
+        self::assertEquals(new \stdClass(), $hook);
+    }
+
     /**
      * Runs the footer hook on a fresh page and returns the AMD code it queued.
      *

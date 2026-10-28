@@ -35,4 +35,9 @@ $callbacks = [
         'hook' => \core\hook\output\before_footer_html_generation::class,
         'callback' => \local_mail\hook_callbacks::class . '::before_footer_html_generation',
     ],
+    [
+        // Only dispatched where format_mtube is installed; registering it costs nothing elsewhere.
+        'hook' => \format_mtube\hook\extensions_registration::class,
+        'callback' => \local_mail\hook_callbacks::class . '::register_mtube_extensions',
+    ],
 ];
