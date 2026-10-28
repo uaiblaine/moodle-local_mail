@@ -133,6 +133,9 @@
 
 ### Changed
 
+- **`docs/` is left out of the release package** (`/docs export-ignore`): the plans and audit
+  reports there are for developers, as in the fleet's `.gitattributes` template.
+
 - **The navbar envelope, the mailbox page and the app's script tags render through Mustache
   templates** (`local_mail/navbar`, `local_mail/view`, `local_mail/app_script`), version
   2026102900, with no `html_writer` left in shipped code. The envelope's size moved to

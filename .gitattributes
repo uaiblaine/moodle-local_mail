@@ -33,6 +33,7 @@
 /.prettierrc           export-ignore
 /.vscode               export-ignore
 /CLAUDE.md             export-ignore
+/docs                  export-ignore
 /lang/pt_br            export-ignore
 /mutations             export-ignore
 
