@@ -992,6 +992,25 @@ class external extends external_api {
             if ($role == message::ROLE_BCC && $user->id != $recipient->id && $user->id != $sender->id) {
                 continue;
             }
+            $isvalid = isset($validrecipients[$recipient->id]);
+            if ($message->draft && !$isvalid) {
+                // A draft can hold users its author may not mail: ones stored before draft
+                // writes were checked, or ones who became unreachable since. Their identity is
+                // withheld; the id stays so that the form can still list and remove them. The
+                // sort key puts them after the named recipients without reading their names.
+                $result['recipients'][] = [
+                    'type' => message::role_names()[$role],
+                    'id' => $recipient->id,
+                    'firstname' => '',
+                    'lastname' => '',
+                    'fullname' => get_string('unavailablerecipient', 'local_mail'),
+                    'pictureurl' => '',
+                    'profileurl' => '',
+                    'sortorder' => sprintf("1\n\n\n%010d", $recipient->id),
+                    'isvalid' => false,
+                ];
+                continue;
+            }
             $result['recipients'][] = [
                 'type' => message::role_names()[$role],
                 'id' => $recipient->id,
@@ -1001,7 +1020,7 @@ class external extends external_api {
                 'pictureurl' => $recipient->picture_url(),
                 'profileurl' => $recipient->profile_url($course),
                 'sortorder' => $recipient->sortorder(),
-                'isvalid' => isset($validrecipients[$recipient->id]),
+                'isvalid' => $isvalid,
             ];
         }
 
@@ -2150,6 +2169,18 @@ class external extends external_api {
         $data->content = $params['data']['content'];
         $data->format = $params['data']['format'];
         $data->draftitemid = $params['data']['draftitemid'];
+        // A draft hands back the name and picture of every recipient it holds, so a user added
+        // now must be one the sender may mail in the course. Users already on the draft stay
+        // even if they are no longer reachable: update() drops every recipient missing from
+        // the payload, and an autosave must not do that silently. Sending checks them all.
+        $currentids = array_column($message->recipients(), 'id');
+        $newids = array_values(array_diff(
+            array_map('intval', array_merge($params['data']['to'], $params['data']['cc'], $params['data']['bcc'])),
+            array_map('intval', $currentids),
+        ));
+        if (count(local\sender::reachable_ids($user, $course, $newids)) != count(array_unique($newids))) {
+            throw new exception('errorinvalidrecipients');
+        }
         foreach (['to', 'cc', 'bcc'] as $rolename) {
             if ($params['data'][$rolename]) {
                 $data->$rolename = user::get_many($params['data'][$rolename]);

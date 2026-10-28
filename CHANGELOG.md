@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+### Security
+
+- **A course name is shown as text in the mailbox's course selector**, version 2026102800. The
+  selector highlighted the search match by injecting the name as HTML, after the client had
+  decoded its entities, so a name such as `&lt;img src=x onerror=...&gt;` survived `format_string`
+  and ran script in the mailbox of everyone enrolled in the course. Every plain segment is now
+  escaped before the matches are wrapped in `<mark>`, and the client decodes names in an inert
+  document. `tests/behat/course_name_escaping.feature` pins it.
+
+- **A draft no longer reveals the name of a user its author cannot mail**, version 2026102800.
+  `create.php` and `update_message` stored any user id as a draft recipient, and the draft handed
+  back that user's name, picture and profile link, so any id could be resolved to a person.
+  `create.php` now drops users the sender cannot mail (`local\sender::reachable_ids()`, the test
+  the send applies), `update_message` rejects a newly added one with `errorinvalidrecipients`
+  (users already on the draft stay, and the send still checks them), and `get_message` withholds
+  the identity of a draft's unreachable recipients, keeping the id so the form can remove them.
+  Sent messages are unchanged.
+
+- **The "Message sent" toast of the quick-compose modal builds its link from text nodes**,
+  version 2026102800, so a translation of its two strings cannot add markup.
+
 ### Fixed
 
 - **Separate groups now hold when mail is sent, not only in the composer's list**, version

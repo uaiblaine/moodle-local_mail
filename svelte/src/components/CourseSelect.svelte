@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script lang="ts">
     import type { Course, Settings, Strings } from '../lib/state';
-    import { formatCourseName, formatNumber } from '../lib/utils';
+    import { escapeHtml, formatCourseName, formatNumber } from '../lib/utils';
     import ComboBox from './ComboBox.svelte';
 
     export let settings: Settings;
@@ -32,10 +32,23 @@ SPDX-License-Identifier: GPL-3.0-or-later
     $: dropdownCourses = courses.filter((course) =>
         formatCourseName(course, settings.filterbycourse).match(inputPattern),
     );
-    $: courseHtml = (course: Course): string =>
-        formatCourseName(course, settings.filterbycourse).replaceAll(inputPattern, (match) =>
-            match.trim() ? '<mark>' + match + '</mark>' : match,
-        );
+    // The course name is plain text decoded from the server's entities, so it may hold
+    // markup characters: every segment is escaped and the only tags in the result are the
+    // <mark> elements added here.
+    $: courseHtml = (course: Course): string => {
+        const name = formatCourseName(course, settings.filterbycourse);
+        let html = '';
+        let last = 0;
+        for (const match of name.matchAll(inputPattern)) {
+            const index = match.index ?? 0;
+            html += escapeHtml(name.slice(last, index));
+            html += match[0].trim()
+                ? '<mark>' + escapeHtml(match[0]) + '</mark>'
+                : escapeHtml(match[0]);
+            last = index + match[0].length;
+        }
+        return html + escapeHtml(name.slice(last));
+    };
 
     const escape = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
 
