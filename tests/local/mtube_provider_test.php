@@ -26,9 +26,9 @@ namespace local_mail\local;
  * Tests for Mail as the MooTube course format's messaging channel.
  *
  * Skipped where format_mtube with its messaging provider seam is not installed, which is every CI
- * leg of this plugin and the 5.2 stacks: the provider implements that seam's interface. Test metadata stays in doc-comments while the plugin
- * supports 4.5 (see CLAUDE.md); the coverage target below leaves out the provider class, which
- * cannot be loaded on those legs.
+ * leg of this plugin and the 5.2 stacks: the provider implements that seam's interface. Test
+ * metadata stays in doc-comments while the plugin supports 4.5 (see CLAUDE.md); the coverage
+ * target below leaves out the provider class, which cannot be loaded on those legs.
  *
  * @package    local_mail
  * @copyright  2026 Anderson Blaine
