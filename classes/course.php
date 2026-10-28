@@ -34,6 +34,9 @@ class course {
     /** @var int Course ID. */
     public int $id;
 
+    /** @var int ID of the category the course is in. */
+    public int $category;
+
     /** @var string Short name. */
     public string $shortname;
 
@@ -53,6 +56,7 @@ class course {
      */
     public function __construct(\stdClass $record) {
         $this->id = (int) $record->id;
+        $this->category = (int) $record->category;
         $this->shortname = $record->shortname;
         $this->fullname = $record->fullname;
         $this->visible = $record->visible;
@@ -165,7 +169,7 @@ class course {
             [$sqlid, $params] = $DB->get_in_or_equal($missingids, SQL_PARAMS_NAMED, 'courseid');
             $select = "id $sqlid AND id <> :siteid";
             $params['siteid'] = SITEID;
-            $fields = 'id, shortname, fullname, visible, groupmode';
+            $fields = 'id, category, shortname, fullname, visible, groupmode';
             $records = $DB->get_records_select('course', $select, $params, '', $fields);
             foreach ($missingids as $id) {
                 if (isset($records[$id])) {

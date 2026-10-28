@@ -40,6 +40,7 @@ final class course_test extends test\testcase {
 
         self::assertInstanceOf(course::class, $course);
         self::assertEquals((int) $record->id, $course->id);
+        self::assertEquals((int) $record->category, $course->category);
         self::assertEquals($record->shortname, $course->shortname);
         self::assertEquals($record->fullname, $course->fullname);
         self::assertEquals((bool) $record->visible, $course->visible);
@@ -58,6 +59,7 @@ final class course_test extends test\testcase {
         // Get from cache.
         $course = new course((object) [
             'id' => 123,
+            'category' => 1,
             'shortname' => 'Course 123',
             'fullname' => 'Course 123',
             'visible' => '1',
@@ -165,6 +167,7 @@ final class course_test extends test\testcase {
         // Get from cache.
         $course = new course((object) [
             'id' => 123,
+            'category' => 1,
             'shortname' => 'Course 123',
             'fullname' => 'Course 123',
             'visible' => '1',

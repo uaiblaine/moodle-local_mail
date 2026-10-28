@@ -15,6 +15,16 @@
   reading. `get_courses` returns a `canwrite` flag per course. The compose entry points (profile,
   participants page, MooTube card) are offered only in courses the user can write in.
 
+### Changed
+
+- **The course link (`courselink`) reads as a way into the course**, version 2026102901. The
+  bare name above the heading is now a small outlined chip, "Category > Course ->": the course's
+  direct category in muted text, then the short or full name the setting picks, then an arrow;
+  the border and the underline answer hover and focus. Below the small breakpoint the category
+  is dropped. `get_courses` returns `categoryname`, filled only when the user can view the
+  category (`core_course_category::can_view_category()`), so a hidden category's name never
+  reaches a student, and left empty on a site with a single category.
+
 ## [2.18.2] - 2026-10-28
 
 ### Security
