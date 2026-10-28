@@ -196,7 +196,7 @@ final class output_renderer_test extends test\testcase {
         $head = $OUTPUT->standard_head_html();
 
         $url = preg_quote($CFG->wwwroot . '/local/mail/svelte/build/', '/') . 'view-[\w-]+\.js';
-        $pattern = '/^<script type="module" src="' . $url . '"><\/script>$/';
+        $pattern = '/^<script type="module" src="' . $url . '"><\/script>\s*$/';
         self::assertMatchesRegularExpression($pattern, $html);
 
         $url = preg_quote($CFG->wwwroot . '/local/mail/svelte/build/', '/') . 'view-[\w-]+\.css';
@@ -209,7 +209,7 @@ final class output_renderer_test extends test\testcase {
 
         $jsurl = preg_quote($CFG->wwwroot . '/local/mail/svelte/build/', '/') . 'view-[\w-]+\.js';
         $cssurl = preg_quote($CFG->wwwroot . '/local/mail/svelte/build/', '/') . 'view-[\w-]+\.css';
-        $pattern = '/^<script>.*"' . $cssurl . '".*<\/script>\s*<script type="module" src="' . $jsurl . '"><\/script>$/s';
+        $pattern = '/^<link rel="stylesheet" href="' . $cssurl . '">\s*<script type="module" src="' . $jsurl . '"><\/script>\s*$/';
         self::assertMatchesRegularExpression($pattern, $html);
 
         // Invalid script name.
@@ -225,8 +225,30 @@ final class output_renderer_test extends test\testcase {
 
         set_config('local_mail_devserver', 'http://localhost:5173');
         $url = preg_quote('http://localhost:5173/src/view.ts', '/');
-        $pattern = '/^<script type="module" src="' . $url . '"><\/script>$/';
+        $pattern = '/^<script type="module" src="' . $url . '"><\/script>\s*$/';
         $result = $renderer->svelte_script('src/view.ts');
         self::assertMatchesRegularExpression($pattern, $result);
+    }
+
+    public function test_mailbox_view(): void {
+        global $PAGE;
+
+        $PAGE->set_url(new \moodle_url('/local/mail/view.php'));
+        $renderer = \local_mail\output\renderer::get_instance();
+        $text = '</script><script>alert("x")</script> & \'';
+
+        $html = $renderer->mailbox_view(['userid' => 2, 'strings' => ['pluginname' => $text]]);
+
+        self::assertStringStartsWith('<div id="local-mail-view"></div>', $html);
+        // One script element, which the data cannot close, and the data decodes back intact.
+        self::assertEquals(1, substr_count($html, '</script>'));
+        self::assertStringNotContainsString('<script>alert', $html);
+        self::assertEquals(1, preg_match('/<script>window\.local_mail_view_data = (.*);<\/script>/', $html, $matches));
+        self::assertEquals(['userid' => 2, 'strings' => ['pluginname' => $text]], json_decode($matches[1], true));
+        foreach (['<', '>', '&', "'"] as $char) {
+            self::assertStringNotContainsString($char, $matches[1], "Unescaped $char");
+        }
+        // Quotes inside a value are escaped too; the ones around keys and values are JSON's own.
+        self::assertStringContainsString('alert(\\u0022x\\u0022)', $matches[1]);
     }
 }

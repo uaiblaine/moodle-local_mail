@@ -90,7 +90,10 @@ Mail is kept until it is removed: a draft is deleted by its author; a sent
 message stays while any participant still holds it, and is deleted only by the
 retention policy (when `retentionpurge` is on) or with its course, when every
 table row and attachment of that course goes. Labels are kept until their owner
-deletes them. Uninstalling the plugin removes its tables, its files and both
+deletes them. Deleting a user account removes their drafts, their labels and
+their place in every message they did not send (received mail and other users'
+drafts); the messages they sent stay for their recipients, signed by a deleted
+user. Uninstalling the plugin removes its tables, its files and both
 preferences.
 
 All of it is covered by the Privacy API. A data request exports the user's
@@ -99,12 +102,22 @@ labels, the two preferences and every message of the user in each course
 read, starred, deleted and label state; Bcc recipients only to the sender and
 to themselves). A deletion request removes the user's labels; in each course
 it erases the subject, content and attachments of the messages the user sent,
-for every recipient, and removes the messages they received from their view.
+for every recipient, and removes the user from every other message: the rows
+of the messages they received, deleted ones included, and of other users'
+drafts that name them, so no row of those keeps their id.
 Deleting a course context removes all its mail; deleting a user context
 removes that user's labels.
 
 Notifications of new mail go through Moodle's messaging (message provider
-`mail`), whose data belongs to core.
+`mail`), whose data belongs to core, as does the preference
+`message_provider_local_mail_mail_enabled` the mail preferences set: core's
+messaging exports it.
+
+Changes to the mailbox are logged as events: drafts created, updated, viewed
+and deleted; messages sent, viewed, moved to the trash, restored and deleted
+forever; trash emptied; labels created, updated and deleted, and the labels of
+a message changed. Marking a message read or starred and changing a preference
+are not logged.
 
 ## Contributing
 

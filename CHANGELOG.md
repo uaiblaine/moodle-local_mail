@@ -4,6 +4,36 @@
 
 ### Security
 
+- **The mail web services reject a guest or a user who is not logged in with a login error**,
+  version 2026102900, instead of failing on a missing user. One check in `external` covers every
+  function that acts on a mailbox.
+
+- **A reply or a forward can no longer start from the sender's own unsent draft**, version
+  2026102900. The check was an `assert()`, which production compiles out, so the draft's content
+  could reach new recipients as a sent reference. `reply_message` and `forward_message` now throw
+  `errormessagenotfound`.
+
+- **Nobody is a reachable recipient for a sender who cannot use mail in the course**, version
+  2026102900. `local\sender::reachable_ids()` and `check_recipients()` relied on every caller
+  checking the sender first; they now check it themselves, and the profile entry points use them.
+
+- **Deleting a user's data through the Privacy API leaves no row with their id in the messages
+  they did not send**, version 2026102900. The rows of messages they received were only marked
+  deleted forever, and other users' drafts that named them were left alone, while the provider
+  no longer reported either. Both are now removed and reported until removed. Deleting a user
+  account (`core\event\user_deleted`) removes their drafts, their labels and the same rows; the
+  messages they sent stay for their recipients.
+
+- **The mailbox app talks only to the Moodle App page that frames it**, version 2026102900.
+  Messages are posted only inside the app, to the framing page's origin where it can be named,
+  and incoming messages count only from the parent window and that origin.
+
+- **The initial data of the mailbox page is printed with `JSON_HEX_TAG | JSON_HEX_AMP |
+  JSON_HEX_APOS | JSON_HEX_QUOT`**, version 2026102900, so no value can close its script element.
+
+- **"Message via Mail" on the MooTube participant card answers only inside format_mtube's card
+  popover**, version 2026102900, not to a lookalike button in the page content.
+
 - **A course name is shown as text in the mailbox's course selector**, version 2026102800. The
   selector highlighted the search match by injecting the name as HTML, after the client had
   decoded its entities, so a name such as `&lt;img src=x onerror=...&gt;` survived `format_string`
@@ -24,6 +54,21 @@
   version 2026102800, so a translation of its two strings cannot add markup.
 
 ### Fixed
+
+- **The attachments of a reply or a forward stay in the course of its message**, version
+  2026102900. A request naming another course saved them in that course's context and deleted
+  them from the right one, so the reply showed no attachments.
+
+- **The quick-compose modal rejects a subject over 100 characters on the server**, version
+  2026102900, instead of letting `message::update()` cut it silently.
+
+- **Roles assigned in a category or the system count in the course**, version 2026102900. The
+  same-role rule (`local/mail:mailsamerole`) and the composer's role filter read only course
+  role assignments, so a student of the category escaped the first and was missing from the
+  second.
+
+- **The privacy export names a label's colour through literal strings**, version 2026102900,
+  and exports no colour name for a label without one.
 
 - **Separate groups now hold when mail is sent, not only in the composer's list**, version
   2026102700. In a course in separate-groups mode, a sender without
@@ -46,10 +91,15 @@
 
 ### Added
 
+- **Events for the remaining mailbox changes**, version 2026102900: `label_created`,
+  `label_updated`, `label_deleted`, `message_labels_updated`, `message_deleted` (to the trash),
+  `message_restored`, `message_deleted_forever` and `trash_emptied`. Marking a message read or
+  starred and changing a preference stay unlogged.
+
 - **"Message via Mail" on the MooTube participant card** (`initParticipantCard` in
   `amd/src/mtube_contacts.js`): a capture-phase listener opens the quick-compose modal for the
   card's owner before the card's own handler closes it. The card offers the button only when
-  `local\mtube_provider` keeps the owner (format_mtube's stage 5). Version 2026102703.
+  `local\mtube_provider` keeps the owner. Version 2026102703.
 
 - **Mail is the messaging channel of the MooTube course format** (`format_mtube`) where that
   format is installed: `local\mtube_provider` registers through its extensions hook and
@@ -71,8 +121,8 @@
 
 - `LICENSE` (the GPL v3 text, a byte copy of `COPYING.txt`), which the Moodle plugins
   directory requires in the package.
-- `tests/marketplace_readiness_test.php`, the fleet's file-reading check of the plugins
-  directory guidelines: licence files, English-only package, data-only language files, a README
+- `tests/marketplace_readiness_test.php`, a file-reading check of the plugins directory
+  guidelines: licence files, English-only package, data-only language files, a README
   that names every table and capability, per-plugin setting names, scoped CSS, boilerplate and
   copyright lines, and the privacy cover of core rows stamped with the component.
 - README sections for the settings, the capabilities, the data the plugin stores (every table,
@@ -80,6 +130,15 @@
 - `mutations/gates.conf`, the mutation spec of those guards (export-ignored).
 
 ### Changed
+
+- **The navbar envelope, the mailbox page and the app's script tags render through Mustache
+  templates** (`local_mail/navbar`, `local_mail/view`, `local_mail/app_script`), version
+  2026102900, with no `html_writer` left in shipped code. The envelope's size moved to
+  `styles.css`; a stylesheet of the app printed after the page head is a `link` element instead
+  of a script that adds one.
+
+- `svelte/build` rebuilt for the app's message checks, version 2026102900: `view-C1mNtmK0.js`
+  replaces `view-DXp_xZuU.js`.
 
 - **`lang/pt_br` is left out of the release package** (`/lang/pt_br export-ignore`): translations
   reach sites through AMOS, as the plugins directory requires. The plugin ships no pt_br pack

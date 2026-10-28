@@ -175,4 +175,26 @@ final class sender_test extends \local_mail\test\testcase {
         $data->content = 'Content';
         return message::create($data);
     }
+
+    public function test_sender_without_mail_reaches_nobody(): void {
+        ['course' => $course, 'users' => $u] = self::generate_groups_data();
+        $generator = $this->getDataGenerator();
+        $outsider = new \local_mail\user($generator->create_user());
+        $nomail = new \local_mail\user($generator->create_user());
+        $generator->enrol_user($nomail->id, $course->id, $generator->create_role());
+        $ids = [$u['tutora']->id, $u['teacher']->id];
+
+        // The control: a sender who uses mail in the course reaches both.
+        self::assertSame(array_map('intval', $ids), sender::reachable_ids($u['studenta1'], $course, $ids));
+
+        foreach (['not enrolled' => $outsider, 'enrolled without local/mail:usemail' => $nomail] as $name => $sender) {
+            self::assertSame([], sender::reachable_ids($sender, $course, $ids), $name);
+            try {
+                sender::check_recipients($sender, $course, $ids);
+                self::fail("No exception for: $name");
+            } catch (exception $e) {
+                self::assertEquals('errorinvalidrecipients', $e->errorcode, $name);
+            }
+        }
+    }
 }

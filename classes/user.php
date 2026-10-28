@@ -187,14 +187,11 @@ class user {
         }
 
         /*
-         * Somebody who took part in this message and no longer sees it does not get it
-         * back through a thread. Without this, deleting a message you had replied to
-         * left you a working link to its attachments through your own reply, which is
-         * what made hiding a message from its own recipient pointless.
-         *
-         * Being brought into a thread you were never part of is a different matter and
-         * still grants access to the history below: somebody chose to reply and include
-         * you, and that is a deliberate act of sharing.
+         * A participant who can no longer view the message does not get its files back
+         * through a reply that references it. A user added to the thread without having
+         * taken part gets the files of the references they can view, since the reply is
+         * unreadable otherwise. Keep in step with the reference loop of
+         * external::get_message_response().
          */
         if ($message->has_participant($this)) {
             return false;

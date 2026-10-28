@@ -25,7 +25,6 @@ namespace local_mail\local;
 use local_mail\course;
 use local_mail\settings;
 use local_mail\user;
-use local_mail\user_search;
 
 /**
  * Decides where a "Send mail" entry point appears on core pages.
@@ -94,14 +93,18 @@ final class entry_points {
             return false;
         }
 
-        $search = new user_search($user, $course);
-        $search->include = [$userid];
-
-        return isset($search->get()[$userid]);
+        // The send's own test, which also requires the viewer to use mail in the course.
+        return sender::reachable_ids($user, $course, [$userid]) === [$userid];
     }
 
     /**
      * Returns the URL of the full editor with a draft to one user, for pages without JavaScript.
+     *
+     * The link carries the viewer's sesskey and create.php writes a draft on a GET, the pattern
+     * core uses for its own action links: a page without JavaScript needs a plain link, and the
+     * key, checked by require_sesskey(), is what keeps another site from creating drafts in the
+     * viewer's name. The key goes only to this same-origin URL. create.php drops any recipient
+     * the viewer cannot mail.
      *
      * @param course $course Course.
      * @param int $userid ID of the recipient.

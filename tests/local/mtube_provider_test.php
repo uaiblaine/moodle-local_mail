@@ -25,10 +25,10 @@ namespace local_mail\local;
 /**
  * Tests for Mail as the MooTube course format's messaging channel.
  *
- * Skipped where format_mtube with its messaging provider seam is not installed, which is every CI
- * leg of this plugin and the 5.2 stacks: the provider implements that seam's interface. Test
- * metadata stays in doc-comments while the plugin supports 4.5 (see CLAUDE.md); the coverage
- * target below leaves out the provider class, which cannot be loaded on those legs.
+ * Skipped where format_mtube with its messaging-provider extension point is not installed: the
+ * provider implements that extension point's interface. Test metadata stays in doc-comments
+ * while the plugin supports 4.5 (see CLAUDE.md); the coverage target below leaves out the
+ * provider class, which cannot be loaded without format_mtube.
  *
  * @package    local_mail
  * @copyright  2026 Anderson Blaine
@@ -38,7 +38,7 @@ namespace local_mail\local;
 final class mtube_provider_test extends \local_mail\test\testcase {
     public function setUp(): void {
         parent::setUp();
-        // The vendor's builds and the fleet's 5.2 checkout have the extensions hook but not the seam.
+        // A format_mtube release that predates the extension point has the hook but not the interface.
         if (!interface_exists(\format_mtube\local\extensions\messaging_provider::class)) {
             $this->markTestSkipped('format_mtube with the messaging provider seam is not installed.');
         }

@@ -39,4 +39,40 @@ class observer {
     public static function course_deleted(\core\event\course_deleted $event) {
         message::delete_course_data($event->get_context());
     }
+
+    /**
+     * Triggered via user_deleted event: removes what belonged to the user alone.
+     *
+     * Their drafts, their labels, and their place in every message they did not send
+     * ({@see message::delete_recipient_rows()}). The messages they sent stay, signed by a
+     * deleted user, as core keeps a deleted user's posts: their recipients still hold them. An
+     * erasure request through the privacy API erases those too.
+     *
+     * @param \core\event\user_deleted $event The user deletion event.
+     */
+    public static function user_deleted(\core\event\user_deleted $event) {
+        global $DB;
+
+        $user = user::get((int) $event->objectid);
+
+        // One transaction, so a failure part-way leaves none of the user's mail behind half-erased.
+        $transaction = $DB->start_delegated_transaction();
+
+        $select = 'userid = :userid AND role = :role AND draft = 1';
+        $params = ['userid' => $user->id, 'role' => message::ROLE_FROM];
+        $draftids = $DB->get_fieldset_select('local_mail_message_users', 'messageid', $select, $params);
+        foreach (array_chunk($draftids, 100) as $ids) {
+            foreach (message::get_many($ids) as $draft) {
+                $draft->set_deleted($user, message::DELETED_FOREVER);
+            }
+        }
+
+        message::delete_recipient_rows($user->id);
+
+        foreach (label::get_by_user($user) as $label) {
+            $label->delete();
+        }
+
+        $transaction->allow_commit();
+    }
 }

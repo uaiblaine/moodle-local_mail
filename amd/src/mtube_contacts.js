@@ -81,9 +81,12 @@ let cardListening = false;
 /**
  * Handles the participant card's "Message via Mail" button.
  *
- * format_mtube's card intercepts every `[data-action]` click on `document` in the bubble phase and
- * closes itself; this capture-phase listener runs first and leaves the event alone, so the card
- * still closes.
+ * Capture phase, no stopPropagation: the card's own handler must still run so the card closes.
+ *
+ * Only a button inside the card's popover counts: the `.mtube-hover-card` element format_mtube
+ * appends to `body`, holding a `.mtube-participant-card`. A lookalike in the page content does
+ * not open the modal. This only narrows what the page can trigger; the server checks the
+ * recipient again before anything is sent.
  *
  * @param {Object} config
  * @param {Number} config.courseid Course of the card.
@@ -95,8 +98,12 @@ export const initParticipantCard = ({courseid}) => {
     cardListening = true;
 
     document.addEventListener('click', (event) => {
-        const button = event.target.closest('.mtube-hover-card [data-action="mtube-messaging-compose"]');
-        const userid = parseInt(button?.dataset.userid ?? '', 10);
+        const button = event.target.closest('[data-action="mtube-messaging-compose"]');
+        const card = button?.closest('body > .mtube-hover-card .mtube-participant-card');
+        if (!card) {
+            return;
+        }
+        const userid = parseInt(button.dataset.userid ?? '', 10);
         if (userid > 0) {
             open({courseid, userids: [userid]});
         }

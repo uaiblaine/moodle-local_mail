@@ -9,3 +9,8 @@
     top: 50%;
     transform: translateY(-16px);
 }
+
+/* The icon's size, which the theme's .icon rule would otherwise set. */
+#local-mail-navbar .local-mail-navbar-icon {
+    font-size: 16px;
+}

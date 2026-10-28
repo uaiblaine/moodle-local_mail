@@ -350,7 +350,7 @@ class external extends external_api {
      * @return array Courses of the user, with their number of unread messages and drafts.
      */
     public static function get_courses_raw() {
-        $user = user::current();
+        $user = self::current_user();
         $courses = course::get_by_user($user);
 
         if (!$courses) {
@@ -450,7 +450,7 @@ class external extends external_api {
     public static function get_labels_raw() {
         $result = [];
 
-        $user = user::current();
+        $user = self::current_user();
 
         $search = new message_search($user);
         $search->roles = [message::ROLE_TO, message::ROLE_CC, message::ROLE_BCC];
@@ -607,7 +607,7 @@ class external extends external_api {
      * @throws \invalid_parameter_exception If the query contains an invalid role name.
      */
     private static function validate_query_parameter(array $query): message_search {
-        $user = user::current();
+        $user = self::current_user();
 
         $search = new message_search($user);
 
@@ -901,7 +901,7 @@ class external extends external_api {
     public static function get_message() {
         $params = self::validate_call(self::get_message_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
 
         $message = message::get($params['messageid']);
 
@@ -1026,19 +1026,11 @@ class external extends external_api {
 
         foreach ($message->get_references() as $ref) {
             /*
-             * A message somebody deleted is not handed back to them by a thread. This
-             * loop otherwise emits the subject, the whole body, the sender and live
-             * attachment URLs of every ancestor with no check at all, and create()
-             * flattens the ancestry, so a reply exposed every message above it and not
-             * merely its parent. Deleting mail, or a retention policy deleting it, was
-             * therefore undone by pressing Reply.
-             *
-             * The check is deliberately limited to people who took part in the
-             * reference. Somebody brought into a thread they were never part of still
-             * sees the history, which is what makes a reply readable at all, and is a
-             * deliberate act of sharing by whoever included them. This mirrors
-             * user::can_view_files() exactly; the two rules have to agree or a URL that
-             * is no longer rendered would still serve the file.
+             * Skip a reference the user took part in but can no longer view (deleted by them
+             * or by retention), so a reply does not hand it back. A user added to the thread
+             * without having taken part still sees the history, since the reply is unreadable
+             * otherwise. Keep in step with user::can_view_files(): if the two rules differ, a
+             * URL that is no longer rendered would still serve the file.
              */
             if ($ref->has_participant($user) && !$user->can_view_message($ref)) {
                 continue;
@@ -1214,7 +1206,7 @@ class external extends external_api {
     public static function view_message() {
         $params = self::validate_call(self::view_message_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
 
         $message = message::get($params['messageid']);
 
@@ -1263,7 +1255,7 @@ class external extends external_api {
     public static function set_unread() {
         $params = self::validate_call(self::set_unread_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
         $message = message::get($params['messageid']);
 
         if (!$user->can_view_message($message)) {
@@ -1305,7 +1297,7 @@ class external extends external_api {
     public static function set_starred() {
         $params = self::validate_call(self::set_starred_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
         $message = message::get($params['messageid']);
 
         if (!$user->can_view_message($message)) {
@@ -1355,17 +1347,27 @@ class external extends external_api {
             throw new \invalid_parameter_exception('Invalid deleted status');
         }
 
-        $user = user::current();
+        $user = self::current_user();
         $message = message::get($params['messageid']);
 
         if (!$user->can_view_message($message)) {
             throw new exception('errormessagenotfound', $message->id);
         }
 
+        $previous = $message->deleted($user);
         $message->set_deleted($user, $params['deleted']);
 
-        if ($message->draft && $params['deleted'] == message::DELETED_FOREVER) {
+        if ($params['deleted'] == $previous) {
+            // Nothing changed, so there is nothing to record.
+            return null;
+        } else if ($params['deleted'] == message::DELETED) {
+            event\message_deleted::create_from_message($message)->trigger();
+        } else if ($params['deleted'] == message::NOT_DELETED) {
+            event\message_restored::create_from_message($message)->trigger();
+        } else if ($message->draft) {
             event\draft_deleted::create_from_message($message)->trigger();
+        } else {
+            event\message_deleted_forever::create_from_message($message)->trigger();
         }
 
         return null;
@@ -1400,7 +1402,7 @@ class external extends external_api {
     public static function empty_trash() {
         $params = self::validate_call(self::empty_trash_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
 
         $course = null;
         if ($params['courseid']) {
@@ -1414,6 +1416,7 @@ class external extends external_api {
         $search->course = $course;
         $search->deleted = true;
         $batchsize = 100;
+        $count = 0;
 
         do {
             $messages = $search->get(0, $batchsize);
@@ -1423,7 +1426,10 @@ class external extends external_api {
                     event\draft_deleted::create_from_message($message)->trigger();
                 }
             }
+            $count += count($messages);
         } while (count($messages) >= $batchsize);
+
+        event\trash_emptied::create_from_course($course, $count)->trigger();
 
         return null;
     }
@@ -1466,7 +1472,7 @@ class external extends external_api {
     public static function create_label() {
         $params = self::validate_call(self::create_label_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
 
         $normalizedname = label::nromalized_name($params['name']);
         if (strlen($normalizedname) == 0) {
@@ -1491,11 +1497,13 @@ class external extends external_api {
         }
 
         $label = label::create($user, $normalizedname, $params['color']);
+        event\label_created::create_from_label($label)->trigger();
 
         foreach ($messages as $message) {
             $labels = $message->get_labels($user);
             $labels[] = $label;
             $message->set_labels($user, $labels);
+            event\message_labels_updated::create_from_message($message)->trigger();
         }
 
         return $label->id;
@@ -1534,7 +1542,7 @@ class external extends external_api {
     public static function update_label() {
         $params = self::validate_call(self::update_label_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
 
         $label = label::get($params['labelid']);
         if ($label->userid != $user->id) {
@@ -1557,6 +1565,8 @@ class external extends external_api {
         }
 
         $label->update($normalizedname, $params['color']);
+
+        event\label_updated::create_from_label($label)->trigger();
 
         return null;
     }
@@ -1590,7 +1600,7 @@ class external extends external_api {
     public static function delete_label() {
         $params = self::validate_call(self::delete_label_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
 
         $label = label::get($params['labelid']);
         if ($label->userid != $user->id) {
@@ -1598,6 +1608,8 @@ class external extends external_api {
         }
 
         $label->delete();
+
+        event\label_deleted::create_from_label($label)->trigger();
 
         return null;
     }
@@ -1637,7 +1649,7 @@ class external extends external_api {
     public static function set_labels() {
         $params = self::validate_call(self::set_labels_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
         $message = message::get($params['messageid']);
 
         if (!$user->can_view_message($message)) {
@@ -1652,6 +1664,8 @@ class external extends external_api {
         }
 
         $message->set_labels($user, $labels);
+
+        event\message_labels_updated::create_from_message($message)->trigger();
 
         return null;
     }
@@ -1685,7 +1699,7 @@ class external extends external_api {
     public static function get_roles() {
         $params = self::validate_call(self::get_roles_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
         $course = course::get($params['courseid']);
 
         if (!$user->can_use_mail($course)) {
@@ -1733,7 +1747,7 @@ class external extends external_api {
     public static function get_groups() {
         $params = self::validate_call(self::get_groups_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
         $course = course::get($params['courseid']);
 
         if (!$user->can_use_mail($course)) {
@@ -1823,7 +1837,7 @@ class external extends external_api {
     public static function search_users() {
         $params = self::validate_call(self::search_users_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
         $course = course::get($params['query']['courseid']);
         if (!$user->can_use_mail($course)) {
             throw new exception('errorcoursenotfound', $course->id);
@@ -1926,7 +1940,7 @@ class external extends external_api {
 
         $params = self::validate_call(self::get_message_form_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
         $message = message::get($params['messageid']);
         if (!$user->can_edit_message($message)) {
             throw new exception('errormessagenotfound', $message->id);
@@ -2003,7 +2017,7 @@ class external extends external_api {
     public static function create_message() {
         $params = self::validate_call(self::create_message_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
         $course = course::get($params['courseid']);
         if (!$user->can_use_mail($course)) {
             throw new exception('errorcoursenotfound', $course->id);
@@ -2042,14 +2056,19 @@ class external extends external_api {
      * Creates a draft message that replies to an existing message.
      *
      * @return int Id of the created message.
-     * @throws exception If the replied message is not accessible to the user.
+     * @throws exception If the replied message is not accessible to the user or is a draft.
      */
     public static function reply_message() {
         $params = self::validate_call(self::reply_message_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
         $message = message::get($params['messageid']);
         if (!$user->can_view_message($message)) {
+            throw new exception('errormessagenotfound', $message->id);
+        }
+        // The sender can view their own unsent draft, but it is not mail anyone received: a
+        // reply or a forward would hand its content to new recipients as a sent reference.
+        if ($message->draft) {
             throw new exception('errormessagenotfound', $message->id);
         }
 
@@ -2082,14 +2101,19 @@ class external extends external_api {
      * Creates a draft message that forwards an existing message.
      *
      * @return int Id of the created message.
-     * @throws exception If the forwarded message is not accessible to the user.
+     * @throws exception If the forwarded message is not accessible to the user or is a draft.
      */
     public static function forward_message() {
         $params = self::validate_call(self::forward_message_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
         $message = message::get($params['messageid']);
         if (!$user->can_view_message($message)) {
+            throw new exception('errormessagenotfound', $message->id);
+        }
+        // The sender can view their own unsent draft, but it is not mail anyone received: a
+        // reply or a forward would hand its content to new recipients as a sent reference.
+        if ($message->draft) {
             throw new exception('errormessagenotfound', $message->id);
         }
 
@@ -2152,7 +2176,7 @@ class external extends external_api {
     public static function update_message() {
         $params = self::validate_call(self::update_message_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
 
         $message = message::get($params['messageid']);
         if (!$user->can_edit_message($message)) {
@@ -2222,7 +2246,7 @@ class external extends external_api {
     public static function send_message() {
         $params = self::validate_call(self::send_message_parameters(), func_get_args());
 
-        $user = user::current();
+        $user = self::current_user();
 
         $message = message::get($params['messageid']);
         if (!$user->can_edit_message($message)) {
@@ -2259,5 +2283,24 @@ class external extends external_api {
         $values = array_slice($args, 0, count($description->keys));
         $params = array_combine($keys, $values);
         return self::validate_parameters($description, $params);
+    }
+
+    /**
+     * Returns the user the call acts for.
+     *
+     * validate_call() lets a guest and a user with a pending action (a password change, a
+     * policy to accept) through, since validate_context() accepts them, and user::current()
+     * returns null for both; every function that acts on a mailbox reads the user here, so
+     * such a caller gets a login error instead of a TypeError on a null user.
+     *
+     * @return user The logged-in user.
+     * @throws \require_login_exception If the caller is a guest, not logged in, or has a pending action.
+     */
+    private static function current_user(): user {
+        $user = user::current();
+        if (!$user) {
+            throw new \require_login_exception('Mail requires a logged-in user who is not a guest');
+        }
+        return $user;
     }
 }

@@ -24,7 +24,8 @@
 namespace local_mail;
 
 /**
- * Unit tests for the event observers, checking that deleting a course purges its mail data.
+ * Unit tests for the event observers: deleting a course purges its mail data, and deleting a
+ * user removes what was theirs alone.
  *
  * @package    local_mail
  * @copyright  2023-2025 Proyecto UNIMOODLE, Albert Gasset
@@ -94,5 +95,53 @@ final class observer_test extends test\testcase {
         self::assert_message($message4);
         self::assert_attachments(['file4.txt' => 'File 4'], $message4);
         self::assertEmpty($fs->get_area_files($context->id, 'local_mail', 'message'));
+    }
+
+    public function test_user_deleted(): void {
+        global $DB;
+
+        $generator = self::getDataGenerator();
+        $course = new course($generator->create_course());
+        $user1 = new user($generator->create_user());
+        $user2 = new user($generator->create_user());
+        $user3 = new user($generator->create_user());
+        $label = label::create($user2, 'Label');
+
+        // Sent by the user who is deleted, received by them, their draft, another user's draft to them.
+        $data = message_data::new($course, $user2);
+        $data->to = [$user1];
+        $data->subject = 'Sent';
+        $sent = message::create($data);
+        $sent->send(time());
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2, $user3];
+        $data->subject = 'Received';
+        $received = message::create($data);
+        $received->send(time());
+        $received->set_labels($user2, [$label]);
+        $data = message_data::new($course, $user2);
+        $data->to = [$user1];
+        self::create_draft_file($data->draftitemid, 'file.txt', 'File');
+        $owndraft = message::create($data);
+        $data = message_data::new($course, $user1);
+        $data->to = [$user2, $user3];
+        $otherdraft = message::create($data);
+        self::assert_attachments(['file.txt' => 'File'], $owndraft);
+
+        delete_user($DB->get_record('user', ['id' => $user2->id]));
+
+        // Nothing of theirs alone is left.
+        self::assert_record_count(0, 'messages', ['id' => $owndraft->id]);
+        self::assert_attachments([], $owndraft);
+        self::assertEquals(0, $DB->count_records('local_mail_labels', ['userid' => $user2->id]));
+        self::assertEquals(0, $DB->count_records('local_mail_message_labels', ['labelid' => $label->id]));
+        self::assert_record_count(0, 'message_users', ['messageid' => $received->id, 'userid' => $user2->id]);
+        self::assert_record_count(0, 'message_users', ['messageid' => $otherdraft->id, 'userid' => $user2->id]);
+
+        // The control: what they sent stays for its recipient, and the other messages for the rest.
+        self::assert_record_count(1, 'message_users', ['messageid' => $sent->id, 'userid' => $user2->id]);
+        self::assertEquals('Sent', message::get($sent->id)->subject);
+        self::assert_record_count(1, 'message_users', ['messageid' => $received->id, 'userid' => $user3->id]);
+        self::assert_record_count(1, 'message_users', ['messageid' => $otherdraft->id, 'userid' => $user3->id]);
     }
 }

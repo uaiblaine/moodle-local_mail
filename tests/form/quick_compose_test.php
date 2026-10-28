@@ -186,6 +186,29 @@ final class quick_compose_test extends \local_mail\test\testcase {
         self::assertFalse(self::submit($data)->is_validated());
     }
 
+    public function test_rejects_long_subject(): void {
+        ['course' => $course, 'users' => $u] = self::generate_groups_data();
+        self::setUser($u['studenta1']->id);
+
+        $data = [
+            'courseid' => $course->id,
+            'recipients' => (string) $u['tutora']->id,
+            'role' => 'to',
+            'subject' => str_repeat('é', 100),
+            'content' => ['text' => 'Hello', 'format' => FORMAT_HTML],
+        ];
+        // The control: 100 characters, multibyte ones included, validate.
+        self::assertTrue(self::submit($data)->is_validated());
+
+        $data['subject'] .= 'x';
+        $form = self::submit($data);
+        self::assertFalse($form->is_validated());
+        self::assertEquals(
+            ['subject' => get_string('maximumchars', '', 100)],
+            $form->validation((array) $form->get_submitted_data() + $data, [])
+        );
+    }
+
     public function test_access(): void {
         ['course' => $course, 'users' => $u] = self::generate_groups_data();
         $generator = $this->getDataGenerator();

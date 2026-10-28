@@ -108,11 +108,22 @@ class provider implements
         $collection->add_user_preference('local_mail_mailsperpage', 'privacy:metadata:preference:local_mail_mailsperpage');
         $collection->add_user_preference('local_mail_markasread', 'privacy:metadata:preference:local_mail_markasread');
 
+        // The preferences dialog also writes message_provider_local_mail_mail_enabled, the
+        // processors of the "mail" message provider. It is core's notification preference for
+        // that provider, the one core's notification preferences page writes, and core_message
+        // declares and exports every message_provider_* preference, so it is not repeated here.
+
         return $collection;
     }
 
     /**
      * Returns the contexts of the courses with messages of the user, and the user context if it has labels.
+     *
+     * A course counts while the user has any row in it other than the sender's row of a message
+     * whose content was erased, which is kept by design ({@see self::delete_data_for_user()}).
+     * That includes messages the user received and deleted forever, and other users' drafts that
+     * name the user: neither is exported, as the user can no longer read the first and never
+     * received the second, but both hold the user's id and are deleted.
      *
      * @param int $userid ID of the user to search data for.
      * @return contextlist List of contexts that contain data of the user.
@@ -131,16 +142,12 @@ class provider implements
             . ' JOIN {context} ctx ON ctx.instanceid = mu.courseid'
             . ' WHERE ctx.contextlevel = :contextlevel'
             . ' AND mu.userid = :userid'
-            . ' AND (mu.draft = 0 OR mu.role = :rolefrom1)'
-            . ' AND (mu.deleted IN (:notdeleted, :deleted) OR mu.role = :rolefrom2 AND mu.deleted = :deletedforever)';
+            . ' AND (mu.role <> :rolefrom OR mu.deleted <> :deletedcontent)';
         $params = [
             'contextlevel' => CONTEXT_COURSE,
             'userid' => $userid,
-            'rolefrom1' => message::ROLE_FROM,
-            'rolefrom2' => message::ROLE_FROM,
-            'notdeleted' => message::NOT_DELETED,
-            'deleted' => message::DELETED,
-            'deletedforever' => message::DELETED_FOREVER,
+            'rolefrom' => message::ROLE_FROM,
+            'deletedcontent' => message::DELETED_CONTENT,
         ];
 
         $contextlist->add_from_sql($sql, $params);
@@ -173,18 +180,15 @@ class provider implements
             return;
         }
 
+        // The same rows as get_contexts_for_userid() counts.
         $sql = 'SELECT DISTINCT mu.userid'
             . ' FROM {local_mail_message_users} mu'
             . ' WHERE mu.courseid = :courseid'
-            . ' AND (mu.draft = 0 OR mu.role = :rolefrom1)'
-            . ' AND (mu.deleted IN (:notdeleted, :deleted) OR mu.role = :rolefrom2 AND mu.deleted = :deletedforever)';
+            . ' AND (mu.role <> :rolefrom OR mu.deleted <> :deletedcontent)';
         $params = [
             'courseid' => $context->instanceid,
-            'rolefrom1' => message::ROLE_FROM,
-            'rolefrom2' => message::ROLE_FROM,
-            'notdeleted' => message::NOT_DELETED,
-            'deleted' => message::DELETED,
-            'deletedforever' => message::DELETED_FOREVER,
+            'rolefrom' => message::ROLE_FROM,
+            'deletedcontent' => message::DELETED_CONTENT,
         ];
 
         $userlist->add_from_sql('userid', $sql, $params);
@@ -206,7 +210,7 @@ class provider implements
             $subcontext = [strings::get('pluginname'), strings::get('labels'), $label->id];
             $data = [
                 'name' => $label->name,
-                'color' => get_string('color' . $label->color, 'local_mail'),
+                'color' => self::color_name($label->color),
             ];
             writer::with_context($context)->export_data($subcontext, (object) $data);
         }
@@ -299,6 +303,8 @@ class provider implements
      * Deletes the labels of the user in its user context and its messages in the approved course contexts.
      *
      * Messages sent by the user keep their metadata, but their content is erased for all the recipients.
+     * The user is removed from every other message of the course: the ones they received, whatever
+     * their deleted state, and other users' drafts that name them ({@see message::delete_recipient_rows()}).
      *
      * @param approved_contextlist $contextlist Approved contexts to delete data in, with the user they belong to.
      */
@@ -315,10 +321,10 @@ class provider implements
                 foreach (self::iterate_messages($user, $context->instanceid) as $message) {
                     if ($message->role($user) == message::ROLE_FROM) {
                         $message->set_deleted($user, $message::DELETED_CONTENT);
-                    } else {
-                        $message->set_deleted($user, $message::DELETED_FOREVER);
                     }
                 }
+                // After the loop, which reads these rows through an open recordset.
+                message::delete_recipient_rows($user->id, $context->instanceid);
             }
         }
     }
@@ -333,6 +339,29 @@ class provider implements
             $contextid = $userlist->get_context()->id;
             self::delete_data_for_user(new approved_contextlist($user, 'local_mail', [$contextid]));
         }
+    }
+
+    /**
+     * Returns the name of a label colour, as the label form shows it.
+     *
+     * @param string $color One of label::COLORS, or empty for a label without colour.
+     * @return string The localised name, or empty for no colour.
+     */
+    private static function color_name(string $color): string {
+        return match ($color) {
+            'blue' => get_string('colorblue', 'local_mail'),
+            'cyan' => get_string('colorcyan', 'local_mail'),
+            'gray' => get_string('colorgray', 'local_mail'),
+            'green' => get_string('colorgreen', 'local_mail'),
+            'indigo' => get_string('colorindigo', 'local_mail'),
+            'orange' => get_string('colororange', 'local_mail'),
+            'pink' => get_string('colorpink', 'local_mail'),
+            'purple' => get_string('colorpurple', 'local_mail'),
+            'red' => get_string('colorred', 'local_mail'),
+            'teal' => get_string('colorteal', 'local_mail'),
+            'yellow' => get_string('coloryellow', 'local_mail'),
+            default => '',
+        };
     }
 
     /**

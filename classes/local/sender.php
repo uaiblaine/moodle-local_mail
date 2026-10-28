@@ -47,7 +47,8 @@ final class sender {
      *
      * A recipient is valid when the composer would list them: enrolled with
      * "local/mail:usemail", not of the sender's role unless "local/mail:mailsamerole" allows it,
-     * and reachable under separate groups ({@see user_search}).
+     * and reachable under separate groups ({@see user_search}). No recipient is valid when the
+     * sender cannot use mail in the course ({@see self::reachable_ids()}).
      *
      * @param user $sender Sender.
      * @param course $course Course of the message.
@@ -75,7 +76,9 @@ final class sender {
      * Returns which of the given users a sender may mail in a course.
      *
      * The test is the one {@see self::check_recipients()} applies at send. Draft writes use it
-     * too, because a draft hands back the name and picture of every recipient it holds.
+     * too, because a draft hands back the name and picture of every recipient it holds. Nobody
+     * is reachable for a sender who cannot use mail in the course: user_search lists the
+     * course's users without checking the sender's own access, so this API checks it itself.
      *
      * @param user $sender Sender.
      * @param course $course Course of the message.
@@ -84,7 +87,7 @@ final class sender {
      */
     public static function reachable_ids(user $sender, course $course, array $ids): array {
         $ids = array_values(array_unique(array_map('intval', $ids)));
-        if (!$ids) {
+        if (!$ids || !$sender->can_use_mail($course)) {
             return [];
         }
 
@@ -114,6 +117,11 @@ final class sender {
             throw new exception('erroremptysubject');
         }
 
+        /*
+         * Sent first, notified after: the message is in every recipient's mailbox once send()
+         * returns, and a notification is only a pointer to it. A processor failing part way
+         * through the loop must not undo a send the recipients can already read.
+         */
         $message->send(time());
 
         message_sent::create_from_message($message)->trigger();

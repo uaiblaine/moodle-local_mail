@@ -59,11 +59,10 @@ class hook_callbacks {
     /**
      * Registers Mail as the channel to a MooTube course's contacts.
      *
-     * Only a MooTube build carrying the messaging provider seam (the fleet's 5.3 checkout) has
-     * register_messaging_provider(); the vendor's builds and the 5.2 checkout dispatch the same hook
-     * without it, so the method is checked before it is called. The parameter is untyped because the
-     * hook class exists only where format_mtube is installed. Constructs the provider only: the hook
-     * fires while modinfo is being built.
+     * A format_mtube release that predates the messaging-provider extension point dispatches this
+     * hook without register_messaging_provider(), so check method_exists() before calling it. The
+     * parameter is untyped because the hook class exists only where format_mtube is installed.
+     * Constructs the provider only: the hook fires while modinfo is being built.
      *
      * @param object $hook A \format_mtube\hook\extensions_registration.
      */

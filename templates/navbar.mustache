@@ -1,0 +1,36 @@
+{{!
+    SPDX-FileCopyrightText: 2026 Anderson Blaine
+
+    SPDX-License-Identifier: GPL-3.0-or-later
+}}
+{{!
+    @template local_mail/navbar
+
+    Envelope link to the inbox in the navigation bar, with the unread-count badge.
+
+    Classes required for JS:
+    * local-mail-navbar-count: the badge local_mail/navbar fills and shows.
+
+    Data attributes required for JS:
+    * none
+
+    Context variables required for this template:
+    * url: URL of the inbox.
+    * title: Name of the plugin, the link's title.
+    * showcount: Whether to print the badge, false on the mailbox itself.
+
+    Example context (json):
+    {
+        "url": "https://example.com/local/mail/view.php?t=inbox",
+        "title": "Mail",
+        "showcount": true
+    }
+}}
+<div class="popover-region" id="local-mail-navbar">
+    <a href="{{url}}" class="nav-link btn h-100 position-relative d-flex align-items-center px-2 py-0" title="{{title}}">
+        <i class="fa fa-fw fa-envelope-o icon m-0 local-mail-navbar-icon"></i>
+        {{#showcount}}
+        <span class="local-mail-navbar-count count-container" hidden="hidden"></span>
+        {{/showcount}}
+    </a>
+</div>

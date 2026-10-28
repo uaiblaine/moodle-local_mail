@@ -83,6 +83,11 @@ class course {
     /**
      * Gets courses in which the given user can use mail.
      *
+     * A course is one when the user is enrolled with "local/mail:usemail" and can see it: a
+     * hidden course counts only for a user with "moodle/course:viewhiddencourses" there, the
+     * filter enrol_get_users_courses() applies, so a student does not keep mailing in a course
+     * hidden from them.
+     *
      * @param user $user User.
      * @return self[] Array of courses indexed by ID.
      */

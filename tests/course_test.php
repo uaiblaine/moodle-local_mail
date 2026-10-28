@@ -97,6 +97,12 @@ final class course_test extends test\testcase {
         self::assertFalse(course::cache()->has($course5->id));
         self::assertFalse(course::cache()->has($course6->id));
 
+        // The control for the hidden course: a teacher, who can see it, mails there.
+
+        $generator->enrol_user($user2->id, $course5->id, 'editingteacher');
+
+        self::assertArrayHasKey($course5->id, course::get_by_user($user2));
+
         // User with no courses.
 
         $result = course::get_by_user($user3);
