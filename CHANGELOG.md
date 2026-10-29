@@ -34,6 +34,13 @@
   pins the frozen course in the browser: the notice in place of the reply buttons, the draft
   without Send at phone width, and their unfrozen controls.
 
+- **One's own draft in a read-only course names its recipients again.** Nobody may be mailed in
+  a frozen course, so every recipient of a draft there read "Recipient you cannot mail". Where
+  the user can only read, a recipient is now named while they can still read mail in the course
+  (enrolled, `viewmail` or `usemail`, within reach under separate groups); the same-role rule,
+  which decides who may be mailed, is not applied. One who left the course stays withheld, and
+  a writable course keeps the may-mail rule. `user_search` gains a `readers` mode for this.
+
 ## [2.18.2] - 2026-10-28
 
 ### Security

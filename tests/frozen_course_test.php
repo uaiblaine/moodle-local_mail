@@ -254,4 +254,67 @@ final class frozen_course_test extends test\testcase {
         self::assertEquals($usemail, $viewmail);
         self::assertEquals(CAP_PROHIBIT, $viewmail["$roleid/$context->id"]);
     }
+
+    public function test_frozen_draft_names_its_recipients(): void {
+        $generator = self::getDataGenerator();
+        $classmate = new user($generator->create_user());
+        $leaver = new user($generator->create_user());
+        $generator->enrol_user($classmate->id, $this->course->id, 'student');
+        $generator->enrol_user($leaver->id, $this->course->id, 'student');
+        self::setUser($this->student->id);
+        $data = message_data::new($this->course, $this->student);
+        $data->subject = 'Group draft';
+        $data->to = [$this->teacher, $classmate, $leaver];
+        $draft = message::create($data);
+        $enrol = enrol_get_plugin('manual');
+        $instance = enrol_get_instances($this->course->id, true);
+        $enrol->unenrol_user(reset($instance), $leaver->id);
+
+        $this->freeze(true);
+
+        $result = external::get_message($draft->id);
+        external::validate_parameters(external::get_message_returns(), $result);
+        $recipients = array_column($result['recipients'], null, 'id');
+
+        // Nobody may be mailed in a frozen course, yet the recipients still in it are named:
+        // a teacher, and a classmate whose role the same-role rule would weigh.
+        self::assertEquals($this->teacher->fullname(), $recipients[$this->teacher->id]['fullname']);
+        self::assertFalse($recipients[$this->teacher->id]['isvalid']);
+        self::assertEquals($classmate->fullname(), $recipients[$classmate->id]['fullname']);
+        self::assertFalse($recipients[$classmate->id]['isvalid']);
+
+        // One who left the course stays withheld.
+        self::assertEquals(get_string('unavailablerecipient', 'local_mail'), $recipients[$leaver->id]['fullname']);
+        self::assertSame('', $recipients[$leaver->id]['pictureurl']);
+    }
+
+    public function test_writable_draft_keeps_withholding_unreachable_recipients(): void {
+        global $DB;
+
+        $generator = self::getDataGenerator();
+        $classmate = new user($generator->create_user());
+        $generator->enrol_user($classmate->id, $this->course->id, 'student');
+        self::setUser($this->student->id);
+        $data = message_data::new($this->course, $this->student);
+        $data->subject = 'Classmate draft';
+        $data->to = [$classmate];
+        $draft = message::create($data);
+
+        // The course stays writable; students lose the right to mail their own role.
+        $roleid = (int) $DB->get_field('role', 'id', ['shortname' => 'student']);
+        assign_capability('local/mail:mailsamerole', CAP_PROHIBIT, $roleid, $this->course->get_context()->id);
+        course::cache()->purge();
+        self::assertTrue($this->student->can_use_mail($this->course));
+
+        $result = external::get_message($draft->id);
+        $recipients = array_column($result['recipients'], null, 'id');
+
+        // Writable course: the may-mail rule still decides, so the classmate is withheld.
+        self::assertEquals(get_string('unavailablerecipient', 'local_mail'), $recipients[$classmate->id]['fullname']);
+
+        // Control: frozen, the same classmate is named.
+        $this->freeze(true);
+        $recipients = array_column(external::get_message($draft->id)['recipients'], null, 'id');
+        self::assertEquals($classmate->fullname(), $recipients[$classmate->id]['fullname']);
+    }
 }
