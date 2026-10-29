@@ -1,1 +1,1 @@
-s/return isset\(\$search->get\(\)\[\$userid\]\);/return true;/;
+s/return sender::reachable_ids\(\$user, \$course, \[\$userid\]\) === \[\$userid\];/return true;/;

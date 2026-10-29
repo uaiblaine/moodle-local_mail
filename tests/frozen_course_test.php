@@ -136,6 +136,8 @@ final class frozen_course_test extends test\testcase {
     }
 
     public function test_external_reads_in_frozen_course(): void {
+        global $DB;
+
         $this->freeze(true);
         self::setUser($this->student->id);
 
@@ -149,7 +151,13 @@ final class frozen_course_test extends test\testcase {
 
         self::assertEquals(1, external::count_messages(['courseid' => $this->course->id, 'roles' => ['to']]));
         self::assertEquals(1, external::count_messages(['roles' => ['to']]));
+        $found = external::search_messages(['courseid' => $this->course->id, 'roles' => ['to']]);
+        self::assertEquals([$this->message->id], array_column($found, 'id'));
         self::assertEquals($this->message->id, external::get_message($this->message->id)['id']);
+
+        // Organising includes discarding one's own draft, which nobody else can read.
+        external::set_deleted($this->draft->id, message::DELETED_FOREVER);
+        self::assertFalse($DB->record_exists('local_mail_messages', ['id' => $this->draft->id]));
 
         external::set_unread($this->message->id, false);
         external::set_starred($this->message->id, true);
