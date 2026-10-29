@@ -42,7 +42,10 @@ All settings are stored per plugin (`local_mail/<name>`) and are found under
   `autosaveinterval` (default 5 seconds): limits of the message form.
 - `globaltrays`, `coursetrays`, `coursetraysname`, `filterbycourse`,
   `coursebadges`, `coursebadgeslength` and `courselink`: which trays and course
-  names the mailbox shows.
+  names the mailbox shows. `courselink` (short or full name, hidden by default)
+  puts a link to the selected course above the heading, shown as a chip that
+  reads "Category > Course"; the category is named only to users who can view
+  it, and not at all on a site with a single category.
 - `entrypoints` (all on by default): where "Send mail" opens a short message
   form inside a course: a link in the user details of a course profile, a
   button beside the user's name there, and an option of the participants
@@ -70,6 +73,18 @@ All settings are stored per plugin (`local_mail/<name>`) and are found under
   included). Installed with the permissions of `usemail`, overrides included.
 - `local/mail:mailsamerole` — also send mail to users who hold the same role
   in the course (same defaults; carries `RISK_SPAM`).
+
+## Frozen courses
+
+When context freezing (`contextlocking`) freezes a course or its category,
+every write capability is denied there, `local/mail:usemail` included, while
+`local/mail:viewmail` stays. Mail in that course becomes read only: the course
+is still listed and its messages open, can be marked, starred, labelled and
+moved to the trash, and one's own drafts can be read and discarded; nothing
+can be composed, replied to, forwarded, edited or sent there, and the mailbox
+says so in place of the reply buttons. The "Send mail" entry points of the
+course pages are not offered. Unfreezing the course restores writing; nothing
+is deleted by freezing.
 
 ## Data stored
 

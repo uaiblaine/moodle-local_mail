@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [2.18.3] - 2026-10-29
+
+Version 2026102902. Read-only mail in frozen courses, the course link chip, and
+the fixes and tests that followed them. Upgrade from 2.18.2 directly; the new
+capability is installed with the permissions of `local/mail:usemail`.
+
 ### Added
 
 - **Mail in a frozen course stays readable**, version 2026102901. A new read capability,
