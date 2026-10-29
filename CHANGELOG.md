@@ -25,6 +25,15 @@
   category (`core_course_category::can_view_category()`), so a hidden category's name never
   reaches a student, and left empty on a site with a single category.
 
+### Fixed
+
+- **A draft in a read-only course offers no Send button at phone width**, version 2026102902.
+  Below the medium breakpoint the top toolbar showed Send for every draft, including one
+  opened as a message in a frozen course, where the server refuses the send. It now shows the
+  button only beside the draft form, as the wide layout does. `tests/behat/frozen_course.feature`
+  pins the frozen course in the browser: the notice in place of the reply buttons, the draft
+  without Send at phone width, and their unfrozen controls.
+
 ## [2.18.2] - 2026-10-28
 
 ### Security
