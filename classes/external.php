@@ -1027,13 +1027,24 @@ class external extends external_api {
         $search->include = array_column($recipients, 'id');
         $validrecipients = $search->get();
 
+        // In a course the user can only read, a frozen one among them, nobody may be mailed, so
+        // every recipient of their draft would be withheld. They are named while they can still
+        // read mail in the course: the draft cannot be edited there, so it cannot gain one.
+        $readablerecipients = [];
+        if ($message->draft && !$user->can_use_mail($course)) {
+            $search = new user_search($user, $course);
+            $search->include = array_column($recipients, 'id');
+            $search->readers = true;
+            $readablerecipients = $search->get();
+        }
+
         foreach ($recipients as $recipient) {
             $role = $message->role($recipient);
             if ($role == message::ROLE_BCC && $user->id != $recipient->id && $user->id != $sender->id) {
                 continue;
             }
             $isvalid = isset($validrecipients[$recipient->id]);
-            if ($message->draft && !$isvalid) {
+            if ($message->draft && !$isvalid && !isset($readablerecipients[$recipient->id])) {
                 // A draft can hold users its author may not mail: ones stored before draft
                 // writes were checked, or ones who became unreachable since. Their identity is
                 // withheld; the id stays so that the form can still list and remove them. The

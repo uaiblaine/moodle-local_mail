@@ -50,6 +50,18 @@ class user_search {
     public array $include = [];
 
     /**
+     * Search the users who can read mail in the course instead of those the user may mail.
+     *
+     * Reading needs "local/mail:viewmail" or "local/mail:usemail", and the same-role rule, which
+     * decides who may be mailed, is not applied. Enrolment and separate groups still apply. Used to
+     * name the recipients of a draft in a course the user can only read, a frozen one among them,
+     * where nobody may be mailed.
+     *
+     * @var bool
+     */
+    public bool $readers = false;
+
+    /**
      * Constructs the criteria for searching users.
      *
      * @param user $user Search users visible by this user.
@@ -138,7 +150,8 @@ class user_search {
         $params = $ejoin->params;
 
         // Capability.
-        $capjoin = get_with_capability_join($context, 'local/mail:usemail', 'u.id');
+        $capability = $this->readers ? ['local/mail:viewmail', 'local/mail:usemail'] : 'local/mail:usemail';
+        $capjoin = get_with_capability_join($context, $capability, 'u.id');
         $joins .= ' ' . $capjoin->joins;
         $wheres .= ' AND ' . $capjoin->wheres;
         $params = array_merge($params, $capjoin->params);
@@ -156,7 +169,7 @@ class user_search {
         $rolecontextids = $context->get_parent_context_ids(true);
 
         // Exclude users with same role.
-        if (!has_capability('local/mail:mailsamerole', $context, $this->user->id)) {
+        if (!$this->readers && !has_capability('local/mail:mailsamerole', $context, $this->user->id)) {
             [$ctx1sql, $ctx1params] = $DB->get_in_or_equal($rolecontextids, SQL_PARAMS_NAMED, 'samerolectx1');
             [$ctx2sql, $ctx2params] = $DB->get_in_or_equal($rolecontextids, SQL_PARAMS_NAMED, 'samerolectx2');
             $samerolesql = 'SELECT ra2.userid'
