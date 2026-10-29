@@ -67,4 +67,65 @@ class behat_local_mail extends behat_base {
         $options['coursecontactsmessaging'] = $mode;
         $format->update_course_format_options(['formatoptionstext' => json_encode($options)]);
     }
+
+    /**
+     * Sends a mail message from one user to another in a course.
+     *
+     * The plugin has no data generator, and composing through the form is not what the
+     * scenarios using this step test.
+     *
+     * @Given :sender has sent mail :subject to :recipient in course :shortname
+     * @param string $sender Username of the sender.
+     * @param string $subject Subject of the message.
+     * @param string $recipient Username of the recipient.
+     * @param string $shortname Course short name.
+     */
+    public function has_sent_mail(string $sender, string $subject, string $recipient, string $shortname): void {
+        $this->create_mail($sender, $subject, $recipient, $shortname)->send(time());
+    }
+
+    /**
+     * Saves a mail draft from one user to another in a course.
+     *
+     * @Given :sender has a mail draft :subject to :recipient in course :shortname
+     * @param string $sender Username of the sender.
+     * @param string $subject Subject of the draft.
+     * @param string $recipient Username of the recipient.
+     * @param string $shortname Course short name.
+     */
+    public function has_a_mail_draft(string $sender, string $subject, string $recipient, string $shortname): void {
+        $this->create_mail($sender, $subject, $recipient, $shortname);
+    }
+
+    /**
+     * Creates a draft through the plugin's own API.
+     *
+     * The draft area is reserved in the context of the current user, so the sender is set as
+     * the current user while the draft is created; the browser session is not affected.
+     *
+     * @param string $sender Username of the sender.
+     * @param string $subject Subject of the draft.
+     * @param string $recipient Username of the recipient.
+     * @param string $shortname Course short name.
+     * @return \local_mail\message The draft.
+     */
+    private function create_mail(string $sender, string $subject, string $recipient, string $shortname): \local_mail\message {
+        global $DB, $USER;
+
+        $courseid = (int) $DB->get_field('course', 'id', ['shortname' => $shortname], MUST_EXIST);
+        $senderid = (int) $DB->get_field('user', 'id', ['username' => $sender], MUST_EXIST);
+        $recipientid = (int) $DB->get_field('user', 'id', ['username' => $recipient], MUST_EXIST);
+
+        $previoususer = $USER;
+        \core\session\manager::set_user(\core_user::get_user($senderid));
+        try {
+            $data = \local_mail\message_data::new(\local_mail\course::get($courseid), \local_mail\user::get($senderid));
+            $data->subject = $subject;
+            $data->content = $subject;
+            $data->to = [\local_mail\user::get($recipientid)];
+            return \local_mail\message::create($data);
+        } finally {
+            \core\session\manager::set_user($previoususer);
+        }
+    }
 }

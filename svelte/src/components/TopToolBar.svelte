@@ -62,7 +62,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
     {#if $store.viewportSize >= ViewportSize.MD}
         <PagingButtons {store} />
-    {:else if $store.message?.draft}
+    {:else if $store.message?.draft && $store.draftForm}
+        <!-- The same test View applies to show the form: no form for a read-only draft. -->
         <SendButton {store} />
     {/if}
 </div>
