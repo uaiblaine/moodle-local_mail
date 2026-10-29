@@ -38,4 +38,4 @@ $plugin->requires = 2024100700;
 $plugin->supported = [405, 503];
 $plugin->component = 'local_mail';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '2.18.2';
+$plugin->release = '2.18.3';
