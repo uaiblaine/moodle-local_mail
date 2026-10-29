@@ -65,7 +65,10 @@ final class entry_points {
     }
 
     /**
-     * Returns the course if the current user can use mail in it.
+     * Returns the course if the current user can write mail in it.
+     *
+     * Every entry point composes, so a course whose mail the user can only read (a frozen
+     * one) offers none.
      *
      * @param int $courseid ID of the course.
      * @return course|null Null for the site course, a missing course or a course without mail.
@@ -77,7 +80,7 @@ final class entry_points {
         }
 
         // The courses of a user's enrolments, which never include the site course.
-        return course::get_by_user($user)[$courseid] ?? null;
+        return course::get_writable_by_user($user)[$courseid] ?? null;
     }
 
     /**

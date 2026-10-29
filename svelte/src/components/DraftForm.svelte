@@ -34,6 +34,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     let formNode: HTMLFormElement | undefined;
 
     $: courseid = message.course.id;
+    $: writableCourses = $store.courses.filter((c) => c.canwrite);
     $: subject = message.subject;
     $: recipients = new Map(message.recipients.map((user) => [user.id, user]));
 
@@ -86,7 +87,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     };
 
     const handleCourseChange = (id?: number) => {
-        courseid = id || $store.courses[0].id;
+        courseid = id || writableCourses[0].id;
         save();
         store.navigate(
             {
@@ -165,7 +166,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <CourseSelect
                 settings={$store.settings}
                 strings={$store.strings}
-                courses={$store.courses}
+                courses={writableCourses}
                 label={$store.strings.course}
                 selected={courseid}
                 required={true}

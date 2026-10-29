@@ -63,6 +63,11 @@ All settings are stored per plugin (`local_mail/<name>`) and are found under
 - `local/mail:usemail` — use the mailbox in a course: read, write and send
   messages to its participants (students, teachers and managers by default;
   carries `RISK_SPAM`).
+- `local/mail:viewmail` — read and organise the mail of a course without
+  writing: open messages and attachments, mark them, label them and move them
+  to the trash. It is a read capability, so it is the access left in a frozen
+  course (context freezing removes every write capability, `usemail`
+  included). Installed with the permissions of `usemail`, overrides included.
 - `local/mail:mailsamerole` — also send mail to users who hold the same role
   in the course (same defaults; carries `RISK_SPAM`).
 

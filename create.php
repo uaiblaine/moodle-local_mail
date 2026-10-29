@@ -55,7 +55,7 @@ if ($courseid) {
         throw new exception('errorcoursenotfound', $courseid);
     }
 } else {
-    $usercourses = course::get_by_user($user);
+    $usercourses = course::get_writable_by_user($user);
     if (!$usercourses) {
         throw new exception('errornocourses');
     }

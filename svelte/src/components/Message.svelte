@@ -21,6 +21,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
     export let store: Store;
     export let message: Message;
 
+    $: canWrite = $store.courses.find((c) => c.id == message.course.id)?.canwrite ?? false;
+
     $: canReplyAll =
         message.sender.id == $store.userid
             ? message.recipients.filter((u) => u.type == 'cc').length > 0
@@ -45,7 +47,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                     {message.fulltime}
                 </div>
                 <div class="local-mail-message-actions d-flex flex-shrink-0">
-                    <NessageActions {store} {message} {canReplyAll} />
+                    <NessageActions {store} {message} {canReplyAll} {canWrite} />
                 </div>
             </div>
         </div>
@@ -57,9 +59,18 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <MessageAttachments strings={$store.strings} {message} />
         {/if}
         <hr />
-        <div class="local-mail-message-buttons d-flex flex-column flex-sm-row justify-content-end">
-            <MessageButtons {store} {message} {canReplyAll} />
-        </div>
+        {#if canWrite}
+            <div
+                class="local-mail-message-buttons d-flex flex-column flex-sm-row justify-content-end"
+            >
+                <MessageButtons {store} {message} {canReplyAll} />
+            </div>
+        {:else}
+            <div class="alert alert-info mb-0">
+                <i class="fa fa-lock mr-2" />
+                {$store.strings.coursereadonly}
+            </div>
+        {/if}
     </div>
 </div>
 
