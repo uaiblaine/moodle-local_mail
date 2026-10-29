@@ -315,6 +315,7 @@ final class external_test extends test\testcase {
                     'unreadupdates' => $unreadupdates,
                     'drafts' => $drafts,
                     'canwrite' => $user->can_use_mail($course),
+                    'categoryname' => '',
                 ];
             }
             $result = external::get_courses();
@@ -327,6 +328,51 @@ final class external_test extends test\testcase {
         $user = new user($generator->create_user());
         $this->setUser($user->id);
         self::assertEquals([], external::get_courses());
+    }
+
+    public function test_get_courses_category_name(): void {
+        $generator = $this->getDataGenerator();
+        $category1 = $generator->create_category(['name' => 'Visible category']);
+        $category2 = $generator->create_category(['name' => 'Hidden category', 'visible' => 0]);
+        $course1 = $generator->create_course(['category' => $category1->id]);
+        // Visible, or a student would not be enrolled in a listed course: one created in a hidden
+        // category is hidden by default.
+        $course2 = $generator->create_course(['category' => $category2->id, 'visible' => 1]);
+        $user = $generator->create_user();
+        $generator->enrol_user($user->id, $course1->id);
+        $generator->enrol_user($user->id, $course2->id);
+        $this->setUser($user->id);
+
+        $result = external::get_courses();
+        external::validate_parameters(external::get_courses_returns(), $result);
+        $names = array_column($result, 'categoryname', 'id');
+        self::assertSame('Visible category', $names[$course1->id]);
+        self::assertSame('', $names[$course2->id]);
+
+        // Control: a viewer allowed to see hidden categories gets the hidden one's name.
+        $roleid = $generator->create_role();
+        assign_capability('moodle/category:viewhiddencategories', CAP_ALLOW, $roleid, \context_system::instance());
+        $generator->role_assign($roleid, $user->id, \context_coursecat::instance($category2->id));
+
+        $names = array_column(external::get_courses(), 'categoryname', 'id');
+        self::assertSame('Hidden category', $names[$course2->id]);
+    }
+
+    public function test_get_courses_category_name_simple_site(): void {
+        $generator = $this->getDataGenerator();
+        $course = $generator->create_course();
+        $user = $generator->create_user();
+        $generator->enrol_user($user->id, $course->id);
+        $this->setUser($user->id);
+
+        // The default category is the only one, so it tells nobody anything.
+        self::assertTrue(\core_course_category::is_simple_site());
+        self::assertSame('', external::get_courses()[0]['categoryname']);
+
+        // Control: a second category makes the default one worth naming.
+        $generator->create_category();
+        $category = \core_course_category::get($course->category);
+        self::assertEquals($category->get_formatted_name(), external::get_courses()[0]['categoryname']);
     }
 
     public function test_get_labels(): void {

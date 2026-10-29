@@ -385,6 +385,8 @@ class external extends external_api {
         $search->draft = true;
         $drafts = $search->count_per_course();
 
+        $categorynames = self::get_category_names($user, $courses);
+
         $result = [];
         foreach ($courses as $course) {
             $context = $course->get_context();
@@ -398,10 +400,44 @@ class external extends external_api {
                 'unreadupdates' => $unreadupdates[$course->id] ?? 0,
                 'drafts' => $drafts[$course->id] ?? 0,
                 'canwrite' => isset($writable[$course->id]),
+                'categoryname' => $categorynames[$course->category] ?? '',
             ];
         }
 
         return $result;
+    }
+
+    /**
+     * Returns the names of the categories of some courses that a user can view.
+     *
+     * Only the direct category of each course, never its ancestors. The test is the one core
+     * applies before listing a category, {@see \core_course_category::can_view_category()}: a
+     * hidden category, or one without "moodle/category:viewcourselist", is left out, so its
+     * name never reaches a student enrolled in a course inside it. A site with a single
+     * visible category gets no names, since that category tells nobody anything.
+     *
+     * @param user $user User who views the names.
+     * @param course[] $courses Courses.
+     * @return string[] Formatted names, indexed by category ID.
+     */
+    private static function get_category_names(user $user, array $courses): array {
+        global $DB;
+
+        if (!$courses || \core_course_category::is_simple_site()) {
+            return [];
+        }
+
+        $ids = array_unique(array_map(fn(course $course): int => $course->category, $courses));
+        $records = $DB->get_records_list('course_categories', 'id', $ids, '', 'id, name, visible');
+
+        $names = [];
+        foreach ($records as $record) {
+            if (\core_course_category::can_view_category($record, $user->id)) {
+                $names[$record->id] = util::format_string($record->name, \context_coursecat::instance($record->id));
+            }
+        }
+
+        return $names;
     }
 
     /**
@@ -421,6 +457,7 @@ class external extends external_api {
                 'unreadupdates' => new external_value(PARAM_INT, 'Number of unread messages in the updates category'),
                 'drafts' => new external_value(PARAM_INT, 'Number of drafts'),
                 'canwrite' => new external_value(PARAM_BOOL, 'Whether the user can write mail in the course'),
+                'categoryname' => new external_value(PARAM_RAW, 'Name of the course category, empty if the user cannot view it'),
             ])
         );
     }

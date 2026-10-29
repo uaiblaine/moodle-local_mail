@@ -27,6 +27,8 @@ export interface Course {
     readonly drafts: number;
     /** False where the user can only read and organise mail, as in a frozen course. */
     readonly canwrite: boolean;
+    /** Name of the course's direct category, empty if the user cannot view it. */
+    readonly categoryname: string;
 }
 
 export enum DeletedStatus {
