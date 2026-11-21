@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **The navbar envelope costs the same on every page, whatever the number of enrolments.**
+  It used to build the user's whole list of mail courses to learn whether it was empty: one
+  enrolment query returning every course, two capability checks per course and one request-cache
+  write per course, on every page (878 writes for a user enrolled in 1000 courses). It now asks
+  `course::exists_for_user()`, which looks at the user's courses in id order, the first ten in
+  one query and the rest in a second only when none of those qualifies, stops at the first course the user
+  can read mail in, and writes no cache. When the page has already loaded the list (the mailbox
+  page), it answers from it with no query. What the navbar shows is unchanged.
+
 ## [2.18.3] - 2026-10-29
 
 Version 2026102902. Read-only mail in frozen courses, the course link chip, and

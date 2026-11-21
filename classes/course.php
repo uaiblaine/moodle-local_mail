@@ -31,6 +31,9 @@ namespace local_mail;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course {
+    /** @var int Courses {@see self::exists_for_user()} looks at in its first query. */
+    public const PROBE_SIZE = 10;
+
     /** @var int Course ID. */
     public int $id;
 
@@ -100,6 +103,81 @@ class course {
         self::load_user($user);
 
         return self::get_many(self::cache()->get('courseids'));
+    }
+
+    /**
+     * Whether the user can read mail in at least one course, that is {@see self::get_by_user()} is not empty.
+     *
+     * The navbar asks this on every page, so it builds no list and writes no cache: it reuses the
+     * list when this request already loaded it for the user, and otherwise looks at the user's
+     * courses in id order, at most PROBE_SIZE in a first query and the rest in a second one only
+     * when none of those qualifies. A user who can read mail in an early course costs one bounded
+     * query, whatever the number of enrolments.
+     *
+     * The query mirrors enrol_get_all_users_courses($userid, true) and the hidden-course filter of
+     * enrol_get_users_courses(), the two {@see self::load_user()} relies on; keep them in step.
+     *
+     * @param user $user User.
+     * @return bool
+     */
+    public static function exists_for_user(user $user): bool {
+        global $DB;
+
+        $cache = self::cache();
+        if ($user->id == $cache->get('userid')) {
+            return (bool) $cache->get('courseids');
+        }
+
+        // The guard of enrol_get_all_users_courses().
+        if (empty($user->id) || isguestuser($user->id)) {
+            return false;
+        }
+
+        $ctxselect = \context_helper::get_preload_record_columns_sql('ctx');
+        $sql = "SELECT c.id, c.visible, $ctxselect
+                  FROM {course} c
+                  JOIN (SELECT DISTINCT e.courseid
+                          FROM {enrol} e
+                          JOIN {user_enrolments} ue ON ue.enrolid = e.id AND ue.userid = :userid
+                         WHERE ue.status = :active AND e.status = :enabled
+                               AND ue.timestart < :now1 AND (ue.timeend = 0 OR ue.timeend > :now2)
+                       ) en ON en.courseid = c.id
+             LEFT JOIN {context} ctx ON ctx.instanceid = c.id AND ctx.contextlevel = :contextlevel
+                 WHERE c.id <> :siteid
+              ORDER BY c.id";
+        $now = \core\di::get(\core\clock::class)->time();
+        $params = [
+            'userid' => $user->id,
+            'active' => ENROL_USER_ACTIVE,
+            'enabled' => ENROL_INSTANCE_ENABLED,
+            'now1' => $now,
+            'now2' => $now,
+            'contextlevel' => CONTEXT_COURSE,
+            'siteid' => SITEID,
+        ];
+
+        // The first page decides for almost every user; the second one covers the rest.
+        foreach ([[0, self::PROBE_SIZE], [self::PROBE_SIZE, 0]] as [$limitfrom, $limitnum]) {
+            $records = $DB->get_records_sql($sql, $params, $limitfrom, $limitnum);
+            foreach ($records as $record) {
+                \context_helper::preload_from_record($record);
+                $context = \context_course::instance($record->id);
+                if (!$record->visible && !has_capability('moodle/course:viewhiddencourses', $context, $user->id)) {
+                    continue;
+                }
+                if (
+                    has_capability('local/mail:usemail', $context, $user->id, false)
+                    || has_capability('local/mail:viewmail', $context, $user->id, false)
+                ) {
+                    return true;
+                }
+            }
+            if (count($records) < self::PROBE_SIZE) {
+                break;
+            }
+        }
+
+        return false;
     }
 
     /**
