@@ -118,7 +118,8 @@ function local_mail_render_navbar_output(\renderer_base $renderer) {
 
     $user = user::current();
 
-    if (!settings::is_installed() || WS_SERVER || AJAX_SCRIPT || !$user || !course::get_by_user($user)) {
+    // On every page: a yes-or-no question, so the bounded probe, not the list of courses.
+    if (!settings::is_installed() || WS_SERVER || AJAX_SCRIPT || !$user || !course::exists_for_user($user)) {
         return '';
     }
 

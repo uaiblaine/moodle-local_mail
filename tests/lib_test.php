@@ -105,6 +105,42 @@ final class lib_test extends test\testcase {
         self::assertFalse($result);
     }
 
+    public function test_render_navbar_output_writes_no_cache(): void {
+        global $CFG, $DB, $PAGE;
+
+        $generator = $this->getDataGenerator();
+        $user = new user($generator->create_user());
+        $count = 15;
+        for ($i = 0; $i < $count; $i++) {
+            $generator->enrol_user($user->id, $generator->create_course()->id);
+        }
+
+        // Cache statistics are recorded only under perfdebug, by cache instances made after it is set.
+        $CFG->perfdebug = 15;
+        \cache_factory::instance()->reset_cache_instances();
+        $sets = function (): int {
+            $stats = \cache_helper::get_stats()['local_mail/courses']['stores'] ?? [];
+            return (int) array_sum(array_column($stats, 'sets'));
+        };
+
+        $PAGE->set_url(new \moodle_url('/course/index.php'));
+        $output = new \core_renderer($PAGE, RENDERER_TARGET_GENERAL);
+        self::setUser($user->id);
+        local_mail_render_navbar_output($output);
+
+        $before = $sets();
+        $reads = $DB->perf_get_reads();
+        $result = local_mail_render_navbar_output($output);
+
+        self::assertStringContainsString('id="local-mail-navbar"', $result);
+        self::assertSame(0, $sets() - $before);
+        self::assertSame(1, $DB->perf_get_reads() - $reads);
+
+        // The control: the list of courses writes one entry per course, and the counter sees it.
+        course::get_by_user($user);
+        self::assertSame($count + 3, $sets() - $before);
+    }
+
     public function test_render_navbar_output(): void {
         global $PAGE;
 
