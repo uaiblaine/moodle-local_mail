@@ -58,6 +58,23 @@ final class output_mobile_test extends test\testcase {
         self::assertEquals(['disabled' => true], output\mobile::init());
     }
 
+    public function test_init_writes_no_course_list(): void {
+        $generator = self::getDataGenerator();
+        $user = new user($generator->create_user());
+        $course = $generator->create_course();
+        $generator->enrol_user($user->id, $course->id);
+        self::setUser($user->id);
+
+        self::assertArrayHasKey('javascript', output\mobile::init());
+        self::assertFalse(course::cache()->get('userid'));
+        self::assertFalse(course::cache()->has($course->id));
+
+        // The control: the list of courses fills the same cache for the same user.
+        course::get_by_user($user);
+        self::assertEquals($user->id, course::cache()->get('userid'));
+        self::assertTrue(course::cache()->has($course->id));
+    }
+
     public function test_view(): void {
         global $CFG;
 

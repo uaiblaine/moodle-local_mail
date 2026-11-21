@@ -44,7 +44,8 @@ class mobile {
 
         $user = user::current();
 
-        if (!settings::is_installed() || !$user || !course::get_by_user($user)) {
+        // A yes-or-no question: the bounded probe, not the list of courses.
+        if (!settings::is_installed() || !$user || !course::exists_for_user($user)) {
             return ['disabled' => true];
         }
 

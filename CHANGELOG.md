@@ -12,6 +12,9 @@
   one query and the rest in a second only when none of those qualifies, stops at the first course the user
   can read mail in, and writes no cache. When the page has already loaded the list (the mailbox
   page), it answers from it with no query. What the navbar shows is unchanged.
+- **The app menu entry asks the same probe.** `output\mobile::init()`, which decides whether the
+  Moodle app shows Mail in its menu, used the whole list for the same yes-or-no question; it now
+  asks `course::exists_for_user()` too. What the app shows is unchanged.
 
 ## [2.18.3] - 2026-10-29
 
